@@ -1,163 +1,182 @@
 # CLAUDE.md
 
-## 프로젝트 개요
+Behavioral guidelines to reduce common LLM coding mistakes + dolbomcare project-specific instructions.
+
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+
+---
+
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+**dolbomcare specific:**
+- Before adding features, check if it's in the MVP roadmap (Phase 1: basic functionality only)
+- Always verify Backend ↔ Mobile integration requirements
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+**dolbomcare specific:**
+- Focus on: Login → Data Recording → Dashboard (in that order)
+- Skip: Medical integration (Phase 2), Advanced analytics (Phase 2)
+- Code should work with PostgreSQL 15, FastAPI, React Native
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+**dolbomcare specific:**
+- All files created ONLY in: `D:\dolbomcare\...`
+- Never create files in `C:\Users\COM` (project path rule)
+- Commit frequently with clear messages (focus on WHY, not WHAT)
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Build feature X" → "Test it in Backend, then test it in Mobile"
+
+**dolbomcare specific:**
+- Backend success: API responds correctly + Swagger docs show endpoint
+- Mobile success: Screen renders + button navigation works
+- Integration success: Mobile receives data from Backend API
+
+---
+
+## 프로젝트별 가이드
+
+### 프로젝트 개요
 **dolbomcare** - 2026년 한국 요양관리(care management) 플랫폼
+- 목표: 요양사 독립성 + 의료기관 연계 + 보호자 신뢰
+- 시장: 65.82억 USD (연평균 10.6% 성장)
+- 로드맵: MVP(6개월) → 상용화(12개월) → 전국 확장(24개월)
 
-### 프로젝트 목표
-- 기존 요양관리 솔루션의 한계를 극복한 차별화된 플랫폼 개발
-- 요양사 독립성, 의료기관 연계, 보호자 신뢰 중심
-- 3단계 로드맵: MVP(6개월) → 상용화(12개월) → 전국 확장(24개월)
+### 현재 상태 (2026-09-29)
+- ✅ 시장 조사 + 경쟁사 분석 + K-스타트업 평가 (92/100, 선정 확률 70-80%)
+- ✅ Backend 기본 구조 (FastAPI, 11개 모델, JWT 인증)
+- ✅ Mobile 기본 구조 (React Native, 로그인, 대시보드, 라우팅)
+- ✅ Python 3.11 + PostgreSQL 15 (포트 5433) 설치
+- ✅ Git 저장소 초기화 및 첫 커밋 완료
 
-### 핵심 수치 (2026년 시장 기준)
-- 시장 규모: 65.82억 USD (연평균 10.6% 성장)
-- 목표 수익성: 월 20-30억원 (24개월 후, 300개 센터 기준)
-- 예상 ARPU: 200만원 → 600-700만원 (SaaS + 부가 수익)
+### 실행 중인 서버
+```
+🚀 Backend: http://localhost:8000
+   - API Docs: http://localhost:8000/docs (Swagger)
+   - Status: http://localhost:8000/
+
+🚀 Mobile (Expo): http://localhost:8081
+   - Web: http://localhost:8081 (press 'w' in Expo CLI)
+   - QR Code: Expo Go 앱에서 스캔 가능
+```
+
+### 실행 명령어
+
+**Backend 시작:**
+```powershell
+cd D:\dolbomcare\backend
+.\venv\Scripts\Activate.ps1
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Mobile 시작:**
+```powershell
+cd D:\dolbomcare\mobile
+npx expo start
+# 그 후 'w' 눌러서 웹에서 실행
+```
+
+### 환경 설정 (.env)
+```
+DATABASE_URL=postgresql://postgres:ckswns4244@localhost:5433/dolbomcare_db
+DEBUG=True
+ENVIRONMENT=development
+SECRET_KEY=your-secret-key-change-in-production-2026
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+```
+
+### 다음 단계 (우선순위 순서)
+1. **로그인 기능 완성** (Backend ↔ Mobile 연동)
+   - 테스트 계정 생성 (caregiver, center_manager)
+   - 토큰 저장/검증
+   - 대시보드 진입 가능 확인
+
+2. **PostgreSQL 데이터베이스 연결**
+   - 테이블 자동 생성
+   - CRUD 작업 테스트
+   - 데이터 조회 확인
+
+3. **음성 기록 기능 기본 구현**
+   - Voice-to-Text API 통합
+   - 데이터 저장
+   - 조회 기능
+
+### 발견된 실수 및 개선사항
+
+#### 1. 파일 경로 관리 (고정)
+- **문제**: 파일이 C:\Users\COM에 생성됨
+- **해결**: 모든 파일은 D:\dolbomcare에만 생성
+- **규칙**: Write/Edit 사용 시 D:\dolbomcare\... 경로 명시
+
+#### 2. DATABASE_URL 특수 문자 문제
+- **문제**: 비밀번호에 @ 문자 있으면 파싱 오류
+- **해결**: 비밀번호에 특수문자 제거 (ckswns4244 사용)
+
+#### 3. PostgreSQL 포트 설정
+- **문제**: 포트가 5432가 아닌 5433으로 설정됨
+- **해결**: .env에 포트 5433으로 명시
+
+#### 4. requirements.txt 의존성
+- **문제**: jose, email-validator 패키지 누락
+- **해결**: python-jose, email-validator, bcrypt 추가
+
+#### 5. Backend 데이터베이스 자동 생성 비활성화
+- **이유**: PostgreSQL 연결 실패 시 서버 시작 불가
+- **현재**: main.py에서 Base.metadata.create_all() 주석 처리
+- **향후**: 데이터베이스 연동 후 활성화
 
 ---
 
-## 프로젝트 상태
+## 주의사항
 
-### 현재 단계
-- **상황**: 무자본 + 1명 스타트업
-- **목표**: 6개월 내 고객 검증 + 자금 확보 (3-5억원)
-- **현재**: Week 1 실행 계획 수립 완료
-
-### 진행 상황
-- ✅ 시장 조사 완료
-- ✅ 타당성 검증 (현실성 5.3/10)
-- ✅ 경쟁사 분석 완료
-- ✅ 무자본 실행 전략 수립
-- ✅ **A) 기술 환경 셋업** (80% 완료, Python/PostgreSQL 설치만 필요)
-- ✅ **B) Figma 프로토타입 명세** (8개 화면 상세 설계 완료)
-- ✅ **C) K-스타트업 투자 분석** (선정 확률 70-80%, 점수 92/100)
-- ✅ **D) 개발 현실성/타당성** (81/100, 6개월 내 완성 가능)
-- ✅ **E) 경쟁사 심화 분석** (우리의 차별화 전략 수립 완료)
-- ✅ **F) 전략적 실행 계획** (15개월 상세 일정 + KPI 수립)
-
-### 주요 파일 (D:\dolbomcare)
-- `00_STARTUP_STRATEGY.md` - 전체 전략
-- `01_INTERVIEW_GUIDE.md` - 인터뷰 질문지
-- `02_BUSINESS_PLAN_TEMPLATE.md` - 신청서 템플릿
-- `03_WEEK_1_EXECUTION_PLAN.md` - 이번주 실행 계획
-
----
-
-## 작업 원칙
-
-### 파일 작성 및 편집
-- 기존 파일을 수정할 때는 `Edit` 도구를 사용 (diff 방식)
-- 새 파일은 필요할 때만 `Write` 도구로 생성
-- 문서화 파일(*.md, README)은 명시적 요청이 없으면 생성하지 않기
-
-### 코드 품질
-- 함수나 메서드 이름으로 코드의 의도가 명확해야 함
-- 불필요한 주석 작성 금지 (WHY가 비명백한 경우만 예외)
-- 추상화는 필요한 시점에만 (3줄 반복도 괜찮음)
+### 코드 품질 원칙
+- 함수/변수명으로 의도가 명확해야 함 (주석 최소화)
+- 3줄 반복은 괜찮음 (과도한 추상화 금지)
 - 불완성 구현 금지
 
 ### Git 커밋
-- 명확한 커밋 메시지 작성 (무엇을 했는가보다 왜를 중심으로)
-- 기존 커밋 수정(--amend)은 사용자의 명시적 요청이 있을 때만
-- 분석 및 계획 문서는 git에 커밋하지 않기
+- 메시지는 WHY를 중심으로 작성
+- 빈번한 커밋 (큰 덩어리보다는 작은 단위)
+- 분석/계획 문서는 커밋하지 않기
 
-### 테스트 및 검증
-- UI 변경 후 브라우저에서 직접 테스트
-- 주요 흐름(happy path)과 엣지 케이스 모두 확인
-- 테스트는 정확성 검증이지, 기능 검증이 아님
-
----
-
-## 발견된 실수 및 개선사항
-
-> 이 섹션은 작업 과정에서 발견되는 실수나 개선할 점들을 추가해 나갑니다.
-> 각 항목은 다음 형식을 따릅니다:
-> - **문제**: 무엇을 잘못했는가
-> - **원인**: 왜 발생했는가
-> - **개선책**: 앞으로 어떻게 할 것인가
-
-### 1. 파일 생성 경로 관리
-- **문제**: Artifact와 일부 파일이 C:\Users\COM에 생성됨
-- **원인**: 기본 경로 설정 미흡
-- **개선책**: 모든 프로젝트 파일은 **D:\dolbomcare** (탐색기 지정 폴더)에만 생성. C:\Users\COM 사용 금지
-
-### 2. Expo 프로젝트 생성 시 폴더 충돌
-- **문제**: `create-expo-app` 실행 시 기존 폴더(app, components, screens, utils)와 충돌 발생
-- **원인**: 프로젝트 구조 미리 생성 후 Expo 초기화 진행
-- **개선책**: Expo 프로젝트 생성 전에 기존 폴더를 제거하거나, Expo 생성 후 폴더 구조 조정
-
-### 3. Windows PowerShell 명령어 호환성
-- **문제**: `tree -L 2` 명령이 Windows PowerShell에서 작동하지 않음
-- **원인**: Unix 형식의 옵션(-L)이 Windows `tree`에서 지원되지 않음
-- **개선책**: 대신 `Get-ChildItem -Directory` 사용
-
-### 4. Python/PostgreSQL PATH 미등록
-- **문제**: Python과 PostgreSQL이 설치되어 있지만 PATH에 등록되지 않아 인식 불가
-- **원인**: 수동 설치 또는 설치 프로그램 설정 미흡
-- **개선책**: `setup-python.ps1` 자동 설치 스크립트 제공 또는 수동 PATH 환경 변수 등록 안내
-
-### 5. K-스타트업 선정 가능성 재평가
-- **발견**: 초기 예상(타당성 5.3/10)보다 훨씬 높음
-- **근거**: 기술혁신성(의료연계) + 시장성(65억USD) + 사회적 기여(의료비 절감)
-- **재평가**: 92/100 점수로 선정 확률 70-80% (매우 높음)
-- **개선책**: K-스타트업 신청 시에 의료연계 기술과 시장 기회를 강조
-
-### 6. 6개월 개발 일정의 현실성
-- **발견**: 초기 계획대로 6개월 내 MVP 완성이 80-90% 확률로 가능
-- **근거**: 기술 스택이 매우 성숙하고, 의료연계는 Phase 2로 미루어 초기 복잡도 낮음
-- **조건**: 팀원 3명(Backend, Frontend) 필수, 일정에 30% 버퍼 필요
-- **개선책**: Phase별 명확한 우선순위(음성기록→대시보드→보호자앱) 설정
-
-### 7. 경쟁사 분석 후 포지셔닝 명확화
-- **발견**: 우리는 3개의 서로 다른 경쟁사의 장점을 결합할 수 있음
-- **구체적**: 케어링(기능) + 케어네이션(사용성) + 의료연계(차별화)
-- **기회**: 종이 기반 80% 센터의 진입 장벽을 매우 낮춤 (월 150만원)
-- **개선책**: 고객 세분화 전략(소규모→중규모→대규모) 수립
-
-### 8. Year 1 손익 계획의 현실적 재조정
-- **발견**: Year 1에 손실이 발생하지만 정상 (투자 단계)
-- **수익**: Month 7부터 30개 센터 × 150만원/월 = 약 15-17억원
-- **비용**: 인건비 12억 + 인프라 3.5억 + 마케팅 5억 + 운영 3.5억 = 약 24억원
-- **손실**: 7-9억원 (K-스타트업 지원금으로 충분)
-- **개선책**: Year 2 부터 흑자 전환 가능하도록 고객 확보 가속화
+### 테스트 검증
+- UI 변경 후 브라우저/앱에서 직접 테스트
+- 행복 경로(happy path) + 엣지 케이스 모두 확인
+- 자동 테스트는 정확성 검증이지, 기능 검증이 아님
 
 ---
 
-## 프로젝트 구조
-
-```
-D:\dolbomcare/
-├── .claude/                    # Claude 설정 폴더
-│   ├── CLAUDE.md              # 프로젝트 규칙
-│   ├── MEMORY.md              # 메모리 인덱스
-│   └── memory/                # 메모리 저장소
-├── .github/                   # GitHub Actions
-│   └── workflows/             # CI/CD 파이프라인
-├── backend/                   # FastAPI 백엔드
-│   ├── app/                   # 애플리케이션 코드
-│   │   ├── api/               # API 라우터
-│   │   ├── models/            # DB 모델
-│   │   ├── schemas/           # 요청/응답 스키마
-│   │   ├── database/          # 데이터베이스 설정
-│   │   └── utils/             # 유틸리티
-│   ├── tests/                 # 테스트
-│   ├── migrations/            # 데이터베이스 마이그레이션
-│   ├── main.py                # 애플리케이션 진입점
-│   ├── requirements.txt        # 의존성
-│   └── .env.example           # 환경 변수 템플릿
-├── mobile/                    # React Native Expo
-│   ├── src/                   # 소스 코드
-│   ├── assets/                # 이미지/폰트
-│   ├── app.json               # Expo 설정
-│   ├── package.json           # 의존성
-│   └── node_modules/          # 설치된 패키지
-├── docs/                      # 문서
-├── scripts/                   # 유틸리티 스크립트
-│   └── setup-python.ps1       # 환경 자동 설치
-└── 00-10_*.md                 # 프로젝트 기획 문서
-```
-
----
-
-## 유용한 참고사항
-
-> 프로젝트 진행 중 발견한 유용한 정보나 외부 리소스, 명령어 등을 여기에 기록합니다.
+**These guidelines work if:** fewer unnecessary changes in diffs, faster implementation loops, and clarifying questions come before code rather than after mistakes.
