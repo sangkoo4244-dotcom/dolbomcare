@@ -4,7 +4,6 @@ from app.api import health
 from app.api import users
 from app.database import Base, engine
 
-# 데이터베이스 테이블 생성
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(

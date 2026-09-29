@@ -1,18 +1,46 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Stack } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
-
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      setIsLoggedIn(!!token);
+    } catch (error) {
+      console.error('Auth check failed:', error);
+    } finally {
+      setIsReady(true);
+      await SplashScreen.hideAsync();
+    }
+  };
+
+  if (!isReady) {
+    return null;
+  }
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animationEnabled: true,
+      }}
+    >
+      {isLoggedIn ? (
+        <Stack.Screen name="(dashboard)" options={{ animationEnabled: false }} />
+      ) : (
+        <Stack.Screen name="index" options={{ animationEnabled: false }} />
+      )}
+    </Stack>
   );
 }

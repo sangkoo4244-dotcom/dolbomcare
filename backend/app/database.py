@@ -1,15 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
-
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://dolbomcare_user:password@localhost:5432/dolbomcare_db"
-)
+# SQLite for development (임시 - PostgreSQL은 나중에 설정)
+DATABASE_URL = "sqlite:///./dolbomcare.db"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
