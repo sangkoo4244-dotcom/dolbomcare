@@ -13,6 +13,10 @@ class User(Base):
     role = Column(String)  # 'center_manager', 'caregiver', 'guardian'
     center_id = Column(Integer, ForeignKey("centers.id"), nullable=True)
     phone = Column(String, nullable=True)
+    hire_date = Column(Date, nullable=True)  # 고용 시작일
+    position = Column(String, nullable=True)  # 직급: '요양사', '팀장', '관리사' 등
+    emergency_contact = Column(String, nullable=True)  # 긴급 연락처
+    employment_status = Column(String, default="active")  # 'active', 'inactive', 'leave'
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

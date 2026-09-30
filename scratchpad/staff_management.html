@@ -67,86 +67,106 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
-        /* 직원 테이블 */
-        .staff-container {
+        /* 직원 그리드 */
+        .staff-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+        }
+
+        .staff-card {
             background: white;
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e8e8e8;
+            transition: all 0.2s ease;
         }
 
-        .staff-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
+        .staff-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
         }
 
-        .staff-table thead {
-            background: #f8f9fa;
-            border-bottom: 2px solid #ddd;
-        }
-
-        .staff-table th {
-            padding: 12px 16px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 13px;
-            color: #2c3e50;
-        }
-
-        .staff-table td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-        }
-
-        .staff-table tr:hover {
-            background: #f9f9f9;
-        }
-
-        .staff-row {
+        .staff-header {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .staff-info {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr auto;
-            gap: 16px;
-            align-items: center;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
         }
 
         .staff-name {
-            font-weight: 600;
+            font-size: 18px;
+            font-weight: 700;
             color: #2c3e50;
         }
 
-        .staff-email {
+        .staff-position {
             font-size: 13px;
-            color: #666;
+            color: #667eea;
+            font-weight: 600;
+            margin-top: 4px;
         }
 
-        .staff-status {
-            padding: 4px 12px;
+        .staff-status-badge {
+            padding: 6px 12px;
             border-radius: 12px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             text-align: center;
             background: #e8f5e9;
             color: #2e7d32;
         }
 
+        .staff-status-badge.inactive {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .staff-status-badge.leave {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .staff-info {
+            margin-bottom: 16px;
+        }
+
+        .staff-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 13px;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .staff-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .staff-label {
+            color: #999;
+            font-weight: 500;
+        }
+
+        .staff-value {
+            color: #333;
+            font-weight: 600;
+            text-align: right;
+        }
+
         .staff-actions {
             display: flex;
             gap: 8px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
         }
 
         .btn-sm {
-            padding: 6px 12px;
+            flex: 1;
+            padding: 8px 12px;
             font-size: 12px;
             border-radius: 6px;
             border: none;
@@ -175,24 +195,26 @@
 
         .empty-message {
             text-align: center;
-            padding: 40px;
+            padding: 60px 20px;
             color: #999;
+            font-size: 16px;
         }
 
         .loading {
             text-align: center;
-            padding: 40px;
+            padding: 60px 20px;
             color: #666;
         }
 
         .spinner {
             display: inline-block;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             border: 3px solid #f3f3f3;
             border-top: 3px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            margin-bottom: 16px;
         }
 
         @keyframes spin {
@@ -223,7 +245,9 @@
             padding: 30px;
             border-radius: 12px;
             width: 90%;
-            max-width: 500px;
+            max-width: 550px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
 
@@ -246,7 +270,7 @@
             font-weight: 600;
         }
 
-        .form-input {
+        .form-input, .form-select {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ddd;
@@ -255,10 +279,16 @@
             font-family: inherit;
         }
 
-        .form-input:focus {
+        .form-input:focus, .form-select:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
         }
 
         .form-actions {
@@ -293,15 +323,12 @@
                 gap: 16px;
             }
 
-            .staff-info {
+            .staff-grid {
                 grid-template-columns: 1fr;
-                gap: 8px;
             }
 
-            .staff-table th,
-            .staff-table td {
-                padding: 8px;
-                font-size: 12px;
+            .form-row {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -317,11 +344,9 @@
             <button class="btn btn-primary" id="addStaffBtn">+ 직원 추가</button>
         </div>
 
-        <div class="staff-container">
-            <div id="staffList" class="loading">
-                <div class="spinner"></div>
-                <p>로드 중...</p>
-            </div>
+        <div id="staffList" class="loading">
+            <div class="spinner"></div>
+            <p>로드 중...</p>
         </div>
     </main>
 
@@ -331,21 +356,51 @@
             <button class="modal-close" onclick="closeModal()">&times;</button>
             <div class="modal-header" id="modalTitle">직원 추가</div>
             <form id="staffForm" onsubmit="submitStaff(event)">
-                <div class="form-group">
-                    <label class="form-label">이름</label>
-                    <input type="text" id="staffName" class="form-input" placeholder="직원 이름" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">이름 *</label>
+                        <input type="text" id="staffName" class="form-input" placeholder="직원 이름" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">직급</label>
+                        <input type="text" id="staffPosition" class="form-input" placeholder="예: 요양사, 팀장">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">이메일</label>
-                    <input type="email" id="staffEmail" class="form-input" placeholder="example@dolbomcare.com" required>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">이메일 *</label>
+                        <input type="email" id="staffEmail" class="form-input" placeholder="example@dolbomcare.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">전화번호</label>
+                        <input type="tel" id="staffPhone" class="form-input" placeholder="010-0000-0000">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">전화번호</label>
-                    <input type="tel" id="staffPhone" class="form-input" placeholder="010-0000-0000">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">긴급연락처</label>
+                        <input type="tel" id="staffEmergency" class="form-input" placeholder="010-0000-0000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">고용 시작일</label>
+                        <input type="date" id="staffHireDate" class="form-input">
+                    </div>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label">근무 상태</label>
+                    <select id="staffStatus" class="form-select">
+                        <option value="active">근무 중</option>
+                        <option value="inactive">비활성</option>
+                        <option value="leave">휴직</option>
+                    </select>
+                </div>
+
                 <div class="form-actions">
-                    <button type="button" class="btn btn-sm" style="background: #e9ecef; color: #2c3e50;" onclick="closeModal()">취소</button>
-                    <button type="submit" class="btn btn-sm btn-primary">저장</button>
+                    <button type="button" class="btn btn-sm" style="background: #e9ecef; color: #2c3e50; border: none; cursor: pointer; padding: 8px 16px;" onclick="closeModal()">취소</button>
+                    <button type="submit" class="btn btn-sm btn-primary" style="border: none; cursor: pointer; padding: 8px 16px;">저장</button>
                 </div>
             </form>
         </div>
@@ -355,6 +410,7 @@
         const API_URL = 'http://localhost:8000/api/v1';
         let currentUser = null;
         let editingStaffId = null;
+        let staffListData = [];
 
         window.addEventListener('load', () => {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -367,7 +423,6 @@
 
             currentUser = user;
             loadStaffList();
-
             document.getElementById('addStaffBtn').addEventListener('click', openAddModal);
         });
 
@@ -379,50 +434,66 @@
                 if (!response.ok) throw new Error('Failed to load staff');
 
                 const data = await response.json();
-                const staffList = data.users || [];
+                staffListData = data.users || [];
 
-                if (staffList.length === 0) {
+                if (staffListData.length === 0) {
                     document.getElementById('staffList').innerHTML =
                         '<div class="empty-message">등록된 직원이 없습니다</div>';
                     return;
                 }
 
-                let html = `
-                    <table class="staff-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 25%;">이름</th>
-                                <th style="width: 30%;">이메일</th>
-                                <th style="width: 20%;">전화번호</th>
-                                <th style="width: 25%;">관리</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
+                let html = '<div class="staff-grid">';
 
-                staffList.forEach(staff => {
+                staffListData.forEach(staff => {
+                    const statusText = {
+                        'active': '근무',
+                        'inactive': '비활성',
+                        'leave': '휴직'
+                    }[staff.employment_status] || '근무';
+
+                    const statusClass = staff.employment_status === 'active' ? '' : staff.employment_status;
+                    const hireDate = staff.hire_date ? new Date(staff.hire_date).toLocaleDateString('ko-KR') : '-';
+
                     html += `
-                        <tr>
-                            <td><strong>${staff.full_name || '(이름 없음)'}</strong></td>
-                            <td>${staff.email || '-'}</td>
-                            <td>${staff.phone || '-'}</td>
-                            <td>
-                                <div class="staff-actions">
-                                    <button class="btn-sm btn-edit" onclick="editStaff(${staff.id}, '${staff.full_name}', '${staff.email}', '${staff.phone || ''}')">수정</button>
-                                    <button class="btn-sm btn-delete" onclick="deleteStaff(${staff.id})">삭제</button>
+                        <div class="staff-card">
+                            <div class="staff-header">
+                                <div>
+                                    <div class="staff-name">${staff.full_name || '(이름 없음)'}</div>
+                                    <div class="staff-position">${staff.position || '요양사'}</div>
                                 </div>
-                            </td>
-                        </tr>
+                                <div class="staff-status-badge ${statusClass}">${statusText}</div>
+                            </div>
+
+                            <div class="staff-info">
+                                <div class="staff-info-row">
+                                    <span class="staff-label">📧 이메일</span>
+                                    <span class="staff-value">${staff.email || '-'}</span>
+                                </div>
+                                <div class="staff-info-row">
+                                    <span class="staff-label">📱 전화</span>
+                                    <span class="staff-value">${staff.phone || '-'}</span>
+                                </div>
+                                <div class="staff-info-row">
+                                    <span class="staff-label">🆘 긴급</span>
+                                    <span class="staff-value">${staff.emergency_contact || '-'}</span>
+                                </div>
+                                <div class="staff-info-row">
+                                    <span class="staff-label">📅 고용일</span>
+                                    <span class="staff-value">${hireDate}</span>
+                                </div>
+                            </div>
+
+                            <div class="staff-actions">
+                                <button class="btn-sm btn-edit" onclick="editStaff(${staff.id})">수정</button>
+                                <button class="btn-sm btn-delete" onclick="deleteStaff(${staff.id})">삭제</button>
+                            </div>
+                        </div>
                     `;
                 });
 
-                html += `
-                        </tbody>
-                    </table>
-                `;
-
+                html += '</div>';
                 document.getElementById('staffList').innerHTML = html;
-                console.log('✅ 직원 목록 로드 완료:', staffList);
+                console.log('✅ 직원 목록 로드 완료:', staffListData);
             } catch (error) {
                 console.error('❌ 직원 로드 실패:', error);
                 document.getElementById('staffList').innerHTML =
@@ -434,15 +505,23 @@
             editingStaffId = null;
             document.getElementById('modalTitle').textContent = '직원 추가';
             document.getElementById('staffForm').reset();
+            document.getElementById('staffStatus').value = 'active';
             document.getElementById('staffModal').classList.add('active');
         }
 
-        function editStaff(staffId, name, email, phone) {
+        function editStaff(staffId) {
+            const staff = staffListData.find(s => s.id === staffId);
+            if (!staff) return;
+
             editingStaffId = staffId;
             document.getElementById('modalTitle').textContent = '직원 정보 수정';
-            document.getElementById('staffName').value = name;
-            document.getElementById('staffEmail').value = email;
-            document.getElementById('staffPhone').value = phone;
+            document.getElementById('staffName').value = staff.full_name || '';
+            document.getElementById('staffEmail').value = staff.email || '';
+            document.getElementById('staffPhone').value = staff.phone || '';
+            document.getElementById('staffPosition').value = staff.position || '';
+            document.getElementById('staffEmergency').value = staff.emergency_contact || '';
+            document.getElementById('staffHireDate').value = staff.hire_date || '';
+            document.getElementById('staffStatus').value = staff.employment_status || 'active';
             document.getElementById('staffModal').classList.add('active');
         }
 
@@ -455,11 +534,17 @@
         async function submitStaff(event) {
             event.preventDefault();
 
-            const name = document.getElementById('staffName').value.trim();
-            const email = document.getElementById('staffEmail').value.trim();
-            const phone = document.getElementById('staffPhone').value.trim();
+            const staffData = {
+                full_name: document.getElementById('staffName').value.trim(),
+                email: document.getElementById('staffEmail').value.trim(),
+                phone: document.getElementById('staffPhone').value.trim(),
+                position: document.getElementById('staffPosition').value.trim(),
+                emergency_contact: document.getElementById('staffEmergency').value.trim(),
+                hire_date: document.getElementById('staffHireDate').value,
+                employment_status: document.getElementById('staffStatus').value
+            };
 
-            if (!name || !email) {
+            if (!staffData.full_name || !staffData.email) {
                 alert('이름과 이메일은 필수입니다');
                 return;
             }
@@ -475,14 +560,13 @@
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                         },
-                        body: JSON.stringify({
-                            full_name: name,
-                            email: email,
-                            phone: phone
-                        })
+                        body: JSON.stringify(staffData)
                     });
 
-                    if (!response.ok) throw new Error('Failed to update staff');
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.detail || 'Failed to update staff');
+                    }
                     alert('직원 정보가 수정되었습니다');
                 } else {
                     // 추가
@@ -493,16 +577,17 @@
                             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                         },
                         body: JSON.stringify({
-                            full_name: name,
-                            email: email,
-                            phone: phone,
+                            ...staffData,
                             password: 'password123',
                             role: 'caregiver',
                             center_id: centerId
                         })
                     });
 
-                    if (!response.ok) throw new Error('Failed to add staff');
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.detail || 'Failed to add staff');
+                    }
                     alert('직원이 추가되었습니다');
                 }
 
@@ -510,12 +595,12 @@
                 loadStaffList();
             } catch (error) {
                 console.error('❌ 직원 저장 실패:', error);
-                alert('직원 저장에 실패했습니다');
+                alert('직원 저장에 실패했습니다: ' + error.message);
             }
         }
 
         async function deleteStaff(staffId) {
-            if (!confirm('이 직원을 삭제하시겠습니까?')) return;
+            if (!confirm('이 직원을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
 
             try {
                 const response = await fetch(`${API_URL}/users/${staffId}`, {

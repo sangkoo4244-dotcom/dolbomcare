@@ -4,7 +4,7 @@ from app.schemas import LoginRequest, LoginResponse, UserCreate, UserResponse
 from app.models import User
 from app.database import get_db
 from passlib.context import CryptContext
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from jose import jwt
 from typing import Optional
 from pydantic import BaseModel
@@ -15,6 +15,10 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
+    hire_date: Optional[date] = None
+    position: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    employment_status: Optional[str] = None
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = "your-secret-key-change-in-production"
@@ -106,6 +110,10 @@ async def list_users(
                 "email": u.email,
                 "full_name": u.full_name,
                 "phone": u.phone,
+                "hire_date": u.hire_date.isoformat() if u.hire_date else None,
+                "position": u.position,
+                "emergency_contact": u.emergency_contact,
+                "employment_status": u.employment_status,
                 "role": u.role,
                 "center_id": u.center_id,
                 "is_active": u.is_active,
@@ -132,6 +140,14 @@ async def update_user(
         user.email = user_update.email
     if user_update.phone:
         user.phone = user_update.phone
+    if user_update.hire_date:
+        user.hire_date = user_update.hire_date
+    if user_update.position:
+        user.position = user_update.position
+    if user_update.emergency_contact:
+        user.emergency_contact = user_update.emergency_contact
+    if user_update.employment_status:
+        user.employment_status = user_update.employment_status
 
     db.commit()
     db.refresh(user)
@@ -141,6 +157,10 @@ async def update_user(
         "email": user.email,
         "full_name": user.full_name,
         "phone": user.phone,
+        "hire_date": user.hire_date.isoformat() if user.hire_date else None,
+        "position": user.position,
+        "emergency_contact": user.emergency_contact,
+        "employment_status": user.employment_status,
         "role": user.role,
         "center_id": user.center_id,
         "is_active": user.is_active
