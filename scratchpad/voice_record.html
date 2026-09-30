@@ -824,12 +824,25 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('기록 저장 실패');
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMsg = errorData.detail || `HTTP ${response.status}`;
+                    console.error('❌ API 오류:', errorMsg);
+                    throw new Error(`기록 저장 실패: ${errorMsg}`);
                 }
 
                 const data = await response.json();
 
-                const residentName = residents.find(r => r.id == residentId).name;
+                if (!data.data || !data.data.billing_amount) {
+                    console.error('❌ 응답 형식 오류:', data);
+                    throw new Error('응답 데이터가 올바르지 않습니다');
+                }
+
+                const resident = residents.find(r => r.id == residentId);
+                if (!resident) {
+                    throw new Error('이용자 정보를 찾을 수 없습니다');
+                }
+
+                const residentName = resident.name;
                 const billingAmount = data.data.billing_amount;
 
                 // 성공 표시
