@@ -356,7 +356,8 @@
         async function loadManagerData() {
             try {
                 // 센터 전체 기록 (현재 센터만)
-                const todayRes = await fetch(`${API_URL}/records/today/center?center_id=${currentUser.center_id}`);
+                const centerId = currentUser.center_id || 1;
+                const todayRes = await fetch(`${API_URL}/records/today/center?center_id=${centerId}`);
                 if (todayRes.ok) {
                     const data = await todayRes.json();
                     document.getElementById('managerCompleted').textContent = `${data.total_records || 0}건`;

@@ -642,7 +642,9 @@
         async function loadResidents() {
             try {
                 // API에서 현재 센터의 이용자 목록만 조회
-                const response = await fetch(`${API_URL}/residents/?center_id=${currentUser.center_id}`);
+                const centerId = currentUser.center_id || 1;
+                console.log(`📍 음성기록: 센터 ID ${centerId}로 이용자 조회`);
+                const response = await fetch(`${API_URL}/residents/?center_id=${centerId}`);
                 const data = await response.json();
                 residents = data.residents || [];
 

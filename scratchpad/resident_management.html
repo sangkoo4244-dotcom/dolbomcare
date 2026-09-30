@@ -711,23 +711,30 @@
         // 이용자 목록 로드 (현재 센터만)
         async function loadResidents() {
             try {
-                const response = await fetch(`${API_URL}/residents/?center_id=${currentUser.center_id}`, {
+                // center_id가 없으면 모든 이용자 조회 (테스트용)
+                const centerId = currentUser.center_id || 1;
+                console.log(`📍 센터 ID로 조회: ${centerId}, 사용자:`, currentUser);
+
+                const response = await fetch(`${API_URL}/residents/?center_id=${centerId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 });
 
-                if (!response.ok) throw new Error('이용자 조회 실패');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || '이용자 조회 실패');
+                }
 
                 const data = await response.json();
-                residents = data.residents;
+                residents = data.residents || [];
 
+                console.log(`✅ 이용자 ${residents.length}명 로드 완료:`, residents);
                 renderTable();
-                console.log('✅ 이용자 로드 완료:', data);
             } catch (error) {
                 console.error('❌ 이용자 조회 오류:', error);
-                showError('이용자 정보를 불러올 수 없습니다');
+                showError(`이용자 정보를 불러올 수 없습니다: ${error.message}`);
             }
         }
 
