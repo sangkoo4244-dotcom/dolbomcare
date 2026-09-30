@@ -7,8 +7,14 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt
 from typing import Optional
+from pydantic import BaseModel
 
 router = APIRouter()
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = "your-secret-key-change-in-production"
@@ -78,13 +84,17 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
 @router.get("/")
 async def list_users(
     role: Optional[str] = Query(None),
+    center_id: Optional[int] = Query(None),
     db: Session = Depends(get_db)
 ):
-    """사용자 목록 조회 (선택적으로 역할로 필터링)"""
+    """사용자 목록 조회 (선택적으로 역할, 센터로 필터링)"""
     query = db.query(User)
 
     if role:
         query = query.filter(User.role == role)
+
+    if center_id:
+        query = query.filter(User.center_id == center_id)
 
     users = query.all()
 
@@ -95,10 +105,55 @@ async def list_users(
                 "id": u.id,
                 "email": u.email,
                 "full_name": u.full_name,
+                "phone": u.phone,
                 "role": u.role,
+                "center_id": u.center_id,
                 "is_active": u.is_active,
                 "created_at": u.created_at.isoformat() if u.created_at else None
             }
             for u in users
         ]
     }
+
+@router.put("/{user_id}")
+async def update_user(
+    user_id: int,
+    user_update: UserUpdate,
+    db: Session = Depends(get_db)
+):
+    """사용자 정보 수정"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user_update.full_name:
+        user.full_name = user_update.full_name
+    if user_update.email:
+        user.email = user_update.email
+    if user_update.phone:
+        user.phone = user_update.phone
+
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "phone": user.phone,
+        "role": user.role,
+        "center_id": user.center_id,
+        "is_active": user.is_active
+    }
+
+@router.delete("/{user_id}")
+async def delete_user(user_id: int, db: Session = Depends(get_db)):
+    """사용자 삭제"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db.delete(user)
+    db.commit()
+
+    return {"message": "User deleted successfully"}

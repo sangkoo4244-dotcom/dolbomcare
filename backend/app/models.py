@@ -12,6 +12,7 @@ class User(Base):
     full_name = Column(String)
     role = Column(String)  # 'center_manager', 'caregiver', 'guardian'
     center_id = Column(Integer, ForeignKey("centers.id"), nullable=True)
+    phone = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
