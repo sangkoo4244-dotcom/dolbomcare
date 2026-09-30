@@ -103,7 +103,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
         # DailyRecord 생성
         with open("/tmp/debug.log", "a") as f:
             f.write(f"  Creating DailyRecord...\n")
-        now = datetime.utcnow()
+        now = datetime.now()  # 로컬 시간 사용 (UTC 대신)
         daily_record = DailyRecord(
             resident_id=request.resident_id,
             caregiver_id=request.caregiver_id,
@@ -220,7 +220,7 @@ async def upload_audio(
         daily_record = DailyRecord(
             resident_id=resident_id,
             caregiver_id=caregiver_id,
-            recorded_date=datetime.utcnow(),
+            recorded_date=datetime.now(),  # 로컬 시간 사용
             morning_care=True,
             meal_intake="full",
             medicine_given=False,
@@ -252,7 +252,7 @@ async def upload_audio(
             service_category=service_category,
             service_type="basic_care",
             amount=amount,
-            recorded_date=datetime.utcnow(),
+            recorded_date=datetime.now(),  # 로컬 시간 사용
             approval_status="pending",  # 센터장 승인 대기
             status="draft"  # 아직 미제출 상태
         )
@@ -279,7 +279,7 @@ async def get_center_today_records(
     """
     센터의 오늘의 전체 기록 조회
     """
-    today = datetime.utcnow().date()
+    today = datetime.now().date()  # 로컬 시간 사용
     today_start = datetime.combine(today, time.min)
     today_end = datetime.combine(today, time.max)
 
@@ -370,7 +370,7 @@ async def get_today_center_records(
     센터 전체의 오늘 기록 조회 (센터장용)
     해당 센터 요양관리사의 오늘 기록만 조회
     """
-    today = datetime.utcnow().date()
+    today = datetime.now().date()  # 로컬 시간 사용
     today_start = datetime.combine(today, time.min)
     today_end = datetime.combine(today, time.max)
 
