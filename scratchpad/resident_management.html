@@ -716,6 +716,22 @@
             checkAuth();
             loadResidents();
 
+            // 생년월일 입력 이벤트 등록
+            const addBirthDate = document.getElementById('addBirthDate');
+            const editBirthDate = document.getElementById('editBirthDate');
+
+            if (addBirthDate) {
+                addBirthDate.addEventListener('change', () => {
+                    calculateAge('addBirthDate', 'addAge');
+                });
+            }
+
+            if (editBirthDate) {
+                editBirthDate.addEventListener('change', () => {
+                    calculateAge('editBirthDate', 'editAge');
+                });
+            }
+
             // 이용자 추가 버튼 이벤트
             const addBtn = document.getElementById('addResidentBtn');
             if (addBtn) {
