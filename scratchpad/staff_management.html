@@ -79,6 +79,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 16px;
+            table-layout: fixed;
         }
 
         .staff-table thead {
@@ -92,7 +93,16 @@
             font-weight: 600;
             font-size: 13px;
             color: #2c3e50;
+            word-break: break-word;
         }
+
+        .staff-table th:nth-child(1) { width: 15%; }
+        .staff-table th:nth-child(2) { width: 12%; }
+        .staff-table th:nth-child(3) { width: 12%; }
+        .staff-table th:nth-child(4) { width: 22%; }
+        .staff-table th:nth-child(5) { width: 12%; }
+        .staff-table th:nth-child(6) { width: 10%; }
+        .staff-table th:nth-child(7) { width: 17%; }
 
         .staff-table td {
             padding: 12px 16px;
@@ -100,6 +110,8 @@
             font-size: 14px;
             vertical-align: middle;
             height: 50px;
+            word-break: break-word;
+            overflow: hidden;
         }
 
         .staff-table tbody tr:hover {
