@@ -554,7 +554,7 @@
             <div class="card">
                 <div class="card-title">
                     <span class="card-emoji">💳</span>
-                    자동 청구 계산
+                    자동 청구액 계산
                 </div>
 
                 <div class="summary-card" id="summaryCard">
@@ -579,7 +579,7 @@
                             <span style="font-weight: 600; color: #333;" id="monthlyLimit">-</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span>월 청부액(예상)</span>
+                            <span>1회 청구액</span>
                             <span style="font-weight: 600; color: #FF9500;" id="estimatedBilling">-</span>
                         </div>
                         <div style="font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;" id="patientPayInfo">-</div>
@@ -714,9 +714,9 @@
                         document.getElementById('monthlyLimit').textContent =
                             `${monthlyLimit.toLocaleString()}원`;
                         document.getElementById('estimatedBilling').textContent =
-                            `${visitAmount.toLocaleString()}원 (1회 기록당)`;
+                            `${visitAmount.toLocaleString()}원 (1회 청구액)`;
                         document.getElementById('patientPayInfo').textContent =
-                            `본인부담: ${patientPayPerVisit.toLocaleString()}원 (${Math.round(finalPatientRate * 100)}%)`;
+                            `본인부담금: ${patientPayPerVisit.toLocaleString()}원 (${Math.round(finalPatientRate * 100)}%)`;
 
                     } catch (error) {
                         console.error('이용자 정보 로드 실패:', error);
@@ -776,9 +776,9 @@
             document.getElementById('monthlyLimit').textContent =
                 `${monthlyLimit.toLocaleString()}원`;
             document.getElementById('estimatedBilling').textContent =
-                `${visitAmount.toLocaleString()}원 (1회 기록당)`;
+                `${visitAmount.toLocaleString()}원 (1회 청구액)`;
             document.getElementById('patientPayInfo').textContent =
-                `본인부담: ${patientPayPerVisit.toLocaleString()}원 (${Math.round(patientRate * 100)}%)`;
+                `본인부담금: ${patientPayPerVisit.toLocaleString()}원 (${Math.round(patientRate * 100)}%)`;
         }
 
         // 서비스 유형 선택
