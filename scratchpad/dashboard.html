@@ -301,6 +301,10 @@
                                 <span class="stat-label">제출 건수</span>
                                 <span class="stat-value" id="managerBillingSubmit">-</span>
                             </div>
+                            <div class="card-stat">
+                                <span class="stat-label">완료 건수</span>
+                                <span class="stat-value" id="managerBillingPaid">-</span>
+                            </div>
                             <button class="btn btn-blue" onclick="window.location.href='./billing_management.html'">청부 관리</button>
                         </div>
 
@@ -308,11 +312,11 @@
                         <div class="card">
                             <div class="card-title">👥 직원 관리</div>
                             <div class="card-stat">
-                                <span class="stat-label">월 급여 지급액</span>
-                                <span class="stat-value" style="font-size: 14px;" id="managerPayroll">-</span>
+                                <span class="stat-label">등록 직원</span>
+                                <span class="stat-value" id="managerStaffCountCard">-</span>
                             </div>
                             <div class="card-stat">
-                                <span class="stat-label">오늘 근무 중</span>
+                                <span class="stat-label">근무 상태</span>
                                 <span class="stat-value" id="managerWorking">-</span>
                             </div>
                             <button class="btn btn-blue" onclick="window.location.href='./staff_management.html'">직원 관리</button>
@@ -426,10 +430,13 @@
                 const staffRes = await fetch(`${API_URL}/users/?role=caregiver&center_id=${centerId}`);
                 if (staffRes.ok) {
                     const data = await staffRes.json();
-                    document.getElementById('managerStaffCount').textContent = `${data.total_users || 0}명`;
-                    console.log('✅ 직원 정보:', data.total_users);
+                    const staffCount = data.total_users || 0;
+                    document.getElementById('managerStaffCount').textContent = `${staffCount}명`;
+                    document.getElementById('managerStaffCountCard').textContent = `${staffCount}명`;
+                    document.getElementById('managerWorking').textContent = `${staffCount}명 근무`;
+                    console.log('✅ 직원 정보:', staffCount);
                 } else {
-                    console.warn('⚠️ 직원 조회 실패');
+                    console.warn('⚠️ 직원 조회 실패:', staffRes.status);
                 }
 
                 // 청구 정보 (현재 센터)
