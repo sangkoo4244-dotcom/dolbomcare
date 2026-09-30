@@ -407,6 +407,27 @@
             justify-content: flex-end;
         }
 
+        .date-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+            padding: 12px 0 8px 0;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #e8e8ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-header::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+
         .delete-btn {
             padding: 6px 12px;
             background: #FF3B30;
@@ -921,6 +942,63 @@
             }, 3000);
         }
 
+        // 날짜를 "YYYY-MM-DD" 형식으로 포맷
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 오늘, 어제 등 상대적 날짜 라벨
+        function getDateLabel(recordDate) {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            const recordDateStr = formatDate(recordDate);
+            const todayStr = formatDate(today);
+            const yesterdayStr = formatDate(yesterday);
+
+            if (recordDateStr === todayStr) return '📅 오늘';
+            if (recordDateStr === yesterdayStr) return '📅 어제';
+
+            const days = Math.floor((today - recordDate) / (1000 * 60 * 60 * 24));
+            if (days < 7) return `📅 ${days}일 전`;
+
+            return `📅 ${recordDate.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}`;
+        }
+
+        // 기록을 날짜별로 그룹화
+        function groupRecordsByDate(records) {
+            const grouped = {};
+
+            records.forEach(record => {
+                const date = new Date(record.recorded_at);
+                const dateKey = formatDate(date);
+
+                if (!grouped[dateKey]) {
+                    grouped[dateKey] = [];
+                }
+                grouped[dateKey].push(record);
+            });
+
+            // 각 그룹을 시간순으로 정렬 (최신순)
+            Object.keys(grouped).forEach(dateKey => {
+                grouped[dateKey].sort((a, b) =>
+                    new Date(b.recorded_at) - new Date(a.recorded_at)
+                );
+            });
+
+            // 날짜 역순 정렬 (최신순)
+            return Object.keys(grouped)
+                .sort((a, b) => new Date(b) - new Date(a))
+                .reduce((result, dateKey) => {
+                    result[dateKey] = grouped[dateKey];
+                    return result;
+                }, {});
+        }
+
         // 오늘의 기록 로드
         async function loadTodayRecords() {
             try {
@@ -959,50 +1037,61 @@
                     `;
                 }
 
-                html += data.records.map((record, idx) => {
-                    const serviceType = {
-                        'basic_care': '🛏️ 기본 요양',
-                        'meal_service': '🍽️ 식사 서비스',
-                        'medical_care': '💊 의료 처치'
-                    }[record.service_type] || record.service_type;
+                // 날짜별 그룹화
+                const groupedRecords = groupRecordsByDate(data.records);
 
-                    const amount = record.billing_amount || 0;
-                    const timeStr = new Date(record.recorded_at).toLocaleTimeString('ko-KR', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
+                // 각 날짜 그룹별로 HTML 생성
+                Object.entries(groupedRecords).forEach(([dateKey, records]) => {
+                    const recordDate = new Date(dateKey);
+                    const dateLabel = getDateLabel(recordDate);
 
-                    const isOwnRecord = record.caregiver_id === currentUser.id;
-                    const canDelete = isManager || isOwnRecord;
+                    html += `<div class="date-header">${dateLabel}</div>`;
 
-                    const checkbox = canDelete
-                        ? `<input type="checkbox" class="record-checkbox" data-record-id="${record.id}" onchange="updateSelectedCount()">`
-                        : '';
+                    html += records.map((record, idx) => {
+                        const serviceType = {
+                            'basic_care': '🛏️ 기본 요양',
+                            'meal_service': '🍽️ 식사 서비스',
+                            'medical_care': '💊 의료 처치'
+                        }[record.service_type] || record.service_type;
 
-                    const deleteBtn = canDelete
-                        ? `<button class="delete-btn" onclick="deleteRecord(${record.id})">삭제</button>`
-                        : '';
+                        const amount = record.billing_amount || 0;
+                        const timeStr = new Date(record.recorded_at).toLocaleTimeString('ko-KR', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
 
-                    return `
-                        <li class="record-item" id="record-${record.id}">
-                            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
-                                ${checkbox}
-                                <div class="record-info">
-                                    <div class="record-resident">${residents.find(r => r.id == record.resident_id)?.name || '이용자'}</div>
-                                    <div class="record-service">${serviceType}</div>
-                                    <div class="record-time">${timeStr}</div>
+                        const isOwnRecord = record.caregiver_id === currentUser.id;
+                        const canDelete = isManager || isOwnRecord;
+
+                        const checkbox = canDelete
+                            ? `<input type="checkbox" class="record-checkbox" data-record-id="${record.id}" onchange="updateSelectedCount()">`
+                            : '';
+
+                        const deleteBtn = canDelete
+                            ? `<button class="delete-btn" onclick="deleteRecord(${record.id})">삭제</button>`
+                            : '';
+
+                        return `
+                            <li class="record-item" id="record-${record.id}">
+                                <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                    ${checkbox}
+                                    <div class="record-info">
+                                        <div class="record-resident">${residents.find(r => r.id == record.resident_id)?.name || '이용자'}</div>
+                                        <div class="record-service">${serviceType}</div>
+                                        <div class="record-time">${timeStr}</div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="record-actions">
-                                <div class="record-amount">₩ ${amount.toLocaleString()}원</div>
-                                ${deleteBtn}
-                            </div>
-                        </li>
-                    `;
-                }).join('');
+                                <div class="record-actions">
+                                    <div class="record-amount">₩ ${amount.toLocaleString()}원</div>
+                                    ${deleteBtn}
+                                </div>
+                            </li>
+                        `;
+                    }).join('');
+                });
 
                 recordsList.innerHTML = html;
-                console.log('✅ 기록 로드 완료:', data);
+                console.log('✅ 기록 로드 완료 (날짜별 그룹화):', data);
             } catch (error) {
                 console.error('❌ 기록 조회 오류:', error);
             }
