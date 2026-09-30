@@ -559,7 +559,7 @@
         <div class="table-container">
             <div class="table-header">
                 <div class="table-title">📋 이용자 현황</div>
-                <button class="add-resident-btn" onclick="openAddModal()">➕ 이용자 추가</button>
+                <button id="addBtn" class="add-resident-btn" onclick="openAddModal()" style="display: none;">➕ 이용자 추가</button>
             </div>
 
             <div id="tableContent">
@@ -700,6 +700,12 @@
             document.getElementById('userRole').textContent =
                 user.role === 'caregiver' ? '요양사' :
                 user.role === 'center_manager' ? '센터장' : '사용자';
+
+            // 센터장만 "이용자 추가" 버튼 표시
+            if (user.role === 'center_manager') {
+                const addBtn = document.getElementById('addBtn');
+                if (addBtn) addBtn.style.display = 'inline-block';
+            }
         }
 
         // 이용자 목록 로드 (현재 센터만)
@@ -728,6 +734,7 @@
         // 테이블 렌더링
         function renderTable() {
             const tableContent = document.getElementById('tableContent');
+            const isManager = currentUser.role === 'center_manager';
 
             if (residents.length === 0) {
                 tableContent.innerHTML = `
@@ -781,7 +788,7 @@
                         </td>
                         <td>${resident.age}세</td>
                         <td>
-                            <select class="select care-grade-select" data-resident-id="${resident.id}">
+                            <select class="select care-grade-select" data-resident-id="${resident.id}" ${!isManager ? 'disabled' : ''}>
                                 <option value="1" ${resident.care_grade == 1 ? 'selected' : ''}>1등급</option>
                                 <option value="2" ${resident.care_grade == 2 ? 'selected' : ''}>2등급</option>
                                 <option value="3" ${resident.care_grade == 3 ? 'selected' : ''}>3등급</option>
@@ -790,7 +797,7 @@
                             </select>
                         </td>
                         <td>
-                            <select class="select client-type-select" data-resident-id="${resident.id}">
+                            <select class="select client-type-select" data-resident-id="${resident.id}" ${!isManager ? 'disabled' : ''}>
                                 <option value="일반" ${resident.client_type == '일반' ? 'selected' : ''}>일반</option>
                                 <option value="차상위계층" ${resident.client_type == '차상위계층' ? 'selected' : ''}>차상위계층</option>
                                 <option value="기초생활보장" ${resident.client_type == '기초생활보장' ? 'selected' : ''}>기초생활</option>
@@ -798,7 +805,7 @@
                             </select>
                         </td>
                         <td>
-                            <select class="select health-status-select" data-resident-id="${resident.id}">
+                            <select class="select health-status-select" data-resident-id="${resident.id}" ${!isManager ? 'disabled' : ''}>
                                 <option value="stable" ${resident.health_status == 'stable' ? 'selected' : ''}>정상</option>
                                 <option value="warning" ${resident.health_status == 'warning' ? 'selected' : ''}>주의</option>
                                 <option value="critical" ${resident.health_status == 'critical' ? 'selected' : ''}>위험</option>
@@ -806,9 +813,9 @@
                         </td>
                         <td>
                             <div class="action-buttons">
-                                <button class="action-btn edit" onclick="openEditModal(${resident.id})">✏️ 편집</button>
+                                <button class="action-btn edit" onclick="openEditModal(${resident.id})" ${!isManager ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>✏️ 편집</button>
                                 <button class="action-btn save" onclick="saveResident(${resident.id})">💾 저장</button>
-                                <button class="action-btn delete" onclick="deleteResident(${resident.id})">🗑️ 삭제</button>
+                                <button class="action-btn delete" onclick="deleteResident(${resident.id})" ${!isManager ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>🗑️ 삭제</button>
                             </div>
                         </td>
                     </tr>
