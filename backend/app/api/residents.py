@@ -129,10 +129,10 @@ async def create_resident(
     user_role: str,
     db: Session = Depends(get_db)
 ):
-    """이용자 생성 (센터장만 가능)"""
-    # 권한 검증: center_manager만 생성 가능
-    if user_role not in ["center_manager"]:
-        raise HTTPException(status_code=403, detail="이용자 추가 권한이 없습니다 (센터장만 추가 가능)")
+    """이용자 생성 (센터장, 요양사 가능)"""
+    # 권한 검증: center_manager, caregiver 가능
+    if user_role not in ["center_manager", "caregiver"]:
+        raise HTTPException(status_code=403, detail="이용자 추가 권한이 없습니다")
 
     # 센터 존재 여부 확인
     center = db.query(Center).filter(Center.id == resident_data.center_id).first()

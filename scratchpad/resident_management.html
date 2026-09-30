@@ -770,8 +770,8 @@
                 user.role === 'caregiver' ? '요양사' :
                 user.role === 'center_manager' ? '센터장' : '사용자';
 
-            // 센터장만 "이용자 추가" 버튼 표시
-            if (user.role === 'center_manager') {
+            // 센터장, 요양사 "이용자 추가" 버튼 표시
+            if (user.role === 'center_manager' || user.role === 'caregiver') {
                 const addBtn = document.getElementById('addBtn');
                 if (addBtn) addBtn.style.display = 'inline-block';
             }
