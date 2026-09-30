@@ -207,7 +207,7 @@
                                 <span class="stat-value" id="caregiverRecords">-</span>
                             </div>
                             <div class="card-stat">
-                                <span class="stat-label">청구 예정일</span>
+                                <span class="stat-label">청구 마감일</span>
                                 <span class="stat-value" style="font-size: 14px;" id="caregiverPayDay">-</span>
                             </div>
                             <button class="btn btn-blue" onclick="window.location.href='./salary.html'">자세히 보기</button>
@@ -340,13 +340,22 @@
                     document.getElementById('caregiverCompleted').textContent = `${data.total_records || 0}건`;
                 }
 
-                // 급여
+                // 청구액
                 const salaryRes = await fetch(`${API_URL}/salary/current?caregiver_id=${currentUser.id}`);
                 if (salaryRes.ok) {
                     const data = await salaryRes.json();
                     document.getElementById('caregiverSalary').textContent = `${(data.total_amount || 0).toLocaleString()}원`;
                     document.getElementById('caregiverRecords').textContent = `${data.total_records || 0}건`;
-                    document.getElementById('caregiverPayDay').textContent = data.estimated_payment_date;
+
+                    // 청구 마감일: 매월 20일
+                    const today = new Date();
+                    const billingDeadline = new Date(today.getFullYear(), today.getMonth(), 20);
+                    // 20일이 지났으면 다음달 20일
+                    if (today.getDate() > 20) {
+                        billingDeadline.setMonth(billingDeadline.getMonth() + 1);
+                    }
+                    const deadlineStr = `${billingDeadline.getMonth() + 1}월 20일`;
+                    document.getElementById('caregiverPayDay').textContent = deadlineStr;
                 }
             } catch (error) {
                 console.error('요양사 데이터 로드 실패:', error);
