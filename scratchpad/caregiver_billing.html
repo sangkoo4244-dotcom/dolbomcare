@@ -381,10 +381,16 @@
                     })
                 });
 
-                if (!response.ok) throw new Error('승인 실패');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || '승인 실패');
+                }
+
+                const result = await response.json();
                 showToast('✅ 청부가 승인되었습니다');
-                loadBillingRecords();
+                setTimeout(() => loadBillingRecords(), 500);
             } catch (error) {
+                console.error('승인 오류:', error);
                 alert('❌ 승인 중 오류: ' + error.message);
             }
         }
@@ -404,10 +410,16 @@
                     })
                 });
 
-                if (!response.ok) throw new Error('거절 실패');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || '거절 실패');
+                }
+
+                const result = await response.json();
                 showToast('✅ 청부가 거절되었습니다');
-                loadBillingRecords();
+                setTimeout(() => loadBillingRecords(), 500);
             } catch (error) {
+                console.error('거절 오류:', error);
                 alert('❌ 거절 중 오류: ' + error.message);
             }
         }
