@@ -1042,7 +1042,8 @@
 
                 // 각 날짜 그룹별로 HTML 생성
                 Object.entries(groupedRecords).forEach(([dateKey, records]) => {
-                    const recordDate = new Date(dateKey);
+                    const [year, month, day] = dateKey.split('-');
+                    const recordDate = new Date(year, month - 1, day);  // 로컬 시간대로 파싱
                     const dateLabel = getDateLabel(recordDate);
 
                     html += `<div class="date-header">${dateLabel}</div>`;
