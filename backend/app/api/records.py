@@ -58,24 +58,29 @@ class CreateRecordRequest(BaseModel):
     notes: str = ""
 
 @router.post("/create")
-async def create_record(
-    request: CreateRecordRequest,
-    db: Session = Depends(get_db)
-):
-    """
-    일일 기록 생성 및 청구 자동 계산
-    음성 → 텍스트 → 청구액 자동 계산
-    """
+async def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
+    """일일 기록 생성 및 청구 자동 계산"""
+    import sys
+    sys.stdout.flush()
+    print("[DEBUG] create_record 시작", flush=True)
+    sys.stdout.flush()
     try:
+        print(f"[DEBUG] 요양사 조회 시작...")
         caregiver = db.query(User).filter(User.id == request.caregiver_id).first()
         if not caregiver:
+            print(f"[ERROR] 요양사 {request.caregiver_id} 없음")
             raise HTTPException(status_code=404, detail="Caregiver not found")
+        print(f"[DEBUG] 요양사 찾음: {caregiver.id}")
 
+        print(f"[DEBUG] 이용자 조회 시작...")
         resident = db.query(Resident).filter(Resident.id == request.resident_id).first()
         if not resident:
+            print(f"[ERROR] 이용자 {request.resident_id} 없음")
             raise HTTPException(status_code=404, detail="Resident not found")
+        print(f"[DEBUG] 이용자 찾음: {resident.id}, center_id={resident.center_id}")
 
         # 1. 일일 기록 저장
+        print(f"[DEBUG] DailyRecord 생성 시작...")
         daily_record = DailyRecord(
             resident_id=request.resident_id,
             caregiver_id=request.caregiver_id,
@@ -89,6 +94,7 @@ async def create_record(
         db.add(daily_record)
         db.commit()
         db.refresh(daily_record)
+        print(f"[DEBUG] DailyRecord 저장 완료: id={daily_record.id}")
 
         # 2. 청구 기록 자동 생성 (1회 방문당 청구)
         care_grade = resident.care_grade if resident.care_grade else 1
@@ -103,6 +109,7 @@ async def create_record(
         base_amount = VISIT_AMOUNTS_BY_GRADE.get(care_grade, 78875)
         amount = int(base_amount * insurance_rate)
 
+        print(f"[DEBUG] BillingRecord 생성 시작: amount={amount}")
         billing_record = BillingRecord(
             daily_record_id=daily_record.id,
             caregiver_id=request.caregiver_id,
@@ -118,6 +125,7 @@ async def create_record(
         db.add(billing_record)
         db.commit()
         db.refresh(billing_record)
+        print(f"[DEBUG] BillingRecord 저장 완료: id={billing_record.id}")
 
         return {
             "status": "success",
