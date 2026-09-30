@@ -12,95 +12,148 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
             display: flex;
-            align-items: center;
             justify-content: center;
-            padding: 16px;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
             width: 100%;
-            max-width: 420px;
+            max-width: 520px;
         }
 
         .card {
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-            animation: slideUp 0.5s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            border-radius: 20px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.18);
+            overflow: hidden;
         }
 
         .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 60px 20px;
             text-align: center;
-            margin-bottom: 32px;
+            color: white;
         }
 
         .logo {
-            font-size: 32px;
-            font-weight: 700;
-            color: #007AFF;
-            margin-bottom: 8px;
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            letter-spacing: -2px;
         }
 
         .subtitle {
-            font-size: 14px;
-            color: #666;
-        }
-
-        .role-selector {
-            margin-bottom: 28px;
-        }
-
-        .role-label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 12px;
-        }
-
-        .role-buttons {
-            display: flex;
-            gap: 12px;
-        }
-
-        .role-btn {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            background: white;
-            font-size: 14px;
+            font-size: 15px;
+            opacity: 0.95;
             font-weight: 500;
-            color: #333;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        /* 테스트 계정 카드 */
+        .test-accounts-section {
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 2px solid #e8ecff;
+        }
+
+        .test-accounts-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .account-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .account-card {
+            background: white;
+            border: 2px solid #e0e5ff;
+            border-radius: 10px;
+            padding: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-align: center;
         }
 
-        .role-btn:hover {
-            border-color: #007AFF;
-            color: #007AFF;
+        .account-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+            border-color: #667eea;
         }
 
-        .role-btn.active {
-            background: #007AFF;
-            color: white;
-            border-color: #007AFF;
+        .account-card.caregiver {
+            border-color: #28a745;
+        }
+
+        .account-card.caregiver:hover {
+            background: #f0fdf4;
+            border-color: #28a745;
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.15);
+        }
+
+        .account-card.manager {
+            border-color: #667eea;
+        }
+
+        .account-card.manager:hover {
+            background: #f5f7ff;
+            border-color: #667eea;
+        }
+
+        .account-role {
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .account-card.caregiver .account-role {
+            color: #28a745;
+        }
+
+        .account-card.manager .account-role {
+            color: #667eea;
+        }
+
+        .account-email {
+            font-size: 11px;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+
+        .account-password {
+            font-size: 10px;
+            color: #999;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* 폼 섹션 */
+        .form-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f0f0;
         }
 
         .form-group {
@@ -109,72 +162,91 @@
 
         .form-label {
             display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 6px;
         }
 
         .form-input {
             width: 100%;
             padding: 12px 14px;
-            border: 1px solid #ddd;
+            border: 2px solid #e0e0e0;
             border-radius: 8px;
             font-size: 14px;
-            transition: border-color 0.3s ease;
+            transition: all 0.2s;
+            font-family: inherit;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: #007AFF;
-            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+            border-color: #667eea;
+            background: #f8faff;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .form-input:disabled {
-            background: #f5f5f5;
-            color: #999;
+        .role-selector {
+            margin-bottom: 24px;
         }
 
-        .error-message {
-            background: #FFE5E5;
-            border: 1px solid #FF6B6B;
-            color: #C92A2A;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            margin-bottom: 16px;
-            display: none;
-            animation: shake 0.3s ease-in-out;
-        }
-
-        .error-message.show {
+        .role-label {
             display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+        .role-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .role-btn {
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .role-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .role-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
         }
 
         .login-button {
             width: 100%;
             padding: 14px;
-            background: #007AFF;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 15px;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
             margin-top: 8px;
         }
 
         .login-button:hover:not(:disabled) {
-            background: #0051D5;
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 122, 255, 0.3);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.35);
+        }
+
+        .login-button:active:not(:disabled) {
+            transform: translateY(0);
         }
 
         .login-button:disabled {
@@ -182,167 +254,168 @@
             cursor: not-allowed;
         }
 
+        .error-message, .success-message {
+            display: none;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            border-left: 4px solid #c33;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #3c3;
+            border-left: 4px solid #3c3;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
         .spinner {
             display: inline-block;
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
+            border-top: 2px solid white;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
+            animation: spin 0.6s linear infinite;
+            margin-right: 6px;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .divider {
             height: 1px;
-            background: #ddd;
+            background: #f0f0f0;
             margin: 24px 0;
         }
 
-        .test-accounts {
-            background: #F0F8FF;
-            border-left: 4px solid #007AFF;
-            padding: 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #333;
-        }
-
-        .test-accounts h3 {
-            font-size: 13px;
-            font-weight: 600;
-            color: #007AFF;
-            margin-bottom: 8px;
-        }
-
-        .test-account {
-            margin-bottom: 8px;
-            line-height: 1.5;
-        }
-
-        .test-account strong {
-            color: #007AFF;
-        }
-
-        .api-info {
+        .footer-info {
             text-align: center;
             font-size: 12px;
             color: #999;
-            margin-top: 16px;
             padding-top: 16px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid #f0f0f0;
         }
 
-        .success-message {
-            background: #E5FFE5;
-            border: 1px solid #4CAF50;
-            color: #2E7D32;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            margin-bottom: 16px;
-            display: none;
-            animation: slideUp 0.3s ease-out;
-        }
+        @media (max-width: 500px) {
+            .header {
+                padding: 40px 20px;
+            }
 
-        .success-message.show {
-            display: block;
+            .logo {
+                font-size: 36px;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+
+            .account-cards {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="card">
+            <!-- 헤더 -->
             <div class="header">
                 <div class="logo">돌봄케어</div>
                 <div class="subtitle">요양원 통합관리 플랫폼</div>
             </div>
 
-            <!-- 테스트 계정 빠른 선택 -->
-            <div style="background: #f0f4ff; border-radius: 8px; padding: 15px; margin-bottom: 20px; border: 2px solid #667eea;">
-                <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #667eea;">📋 테스트 계정</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <!-- 요양사 -->
-                    <button type="button" onclick="selectTestAccount('caregiver@test.com', 'test123', 'caregiver')"
-                            style="background: white; border: 2px solid #28a745; border-radius: 6px; padding: 10px; cursor: pointer; text-align: left; transition: all 0.2s;">
-                        <div style="font-weight: 600; color: #28a745; font-size: 12px;">👤 요양사</div>
-                        <div style="font-size: 11px; color: #666; margin-top: 4px;">caregiver@test.com</div>
-                        <div style="font-size: 11px; color: #999;">pw: test123</div>
-                    </button>
-
-                    <!-- 센터장 -->
-                    <button type="button" onclick="selectTestAccount('manager@test.com', 'test123', 'center_manager')"
-                            style="background: white; border: 2px solid #667eea; border-radius: 6px; padding: 10px; cursor: pointer; text-align: left; transition: all 0.2s;">
-                        <div style="font-weight: 600; color: #667eea; font-size: 12px;">👨‍💼 센터장</div>
-                        <div style="font-size: 11px; color: #666; margin-top: 4px;">manager@test.com</div>
-                        <div style="font-size: 11px; color: #999;">pw: test123</div>
-                    </button>
-                </div>
-            </div>
-
-            <div class="role-selector">
-                <label class="role-label">역할 선택</label>
-                <div class="role-buttons">
-                    <button class="role-btn active" data-role="caregiver">요양사</button>
-                    <button class="role-btn" data-role="center_manager">센터장</button>
-                </div>
-            </div>
-
-            <div id="successMessage" class="success-message"></div>
-            <div id="errorMessage" class="error-message"></div>
-
-            <form id="loginForm">
-                <div class="form-group">
-                    <label class="form-label">이메일</label>
-                    <input
-                        type="email"
-                        id="email"
-                        class="form-input"
-                        placeholder="example@dolbomcare.com"
-                        value="caregiver@dolbomcare.com"
-                        required
-                    >
+            <!-- 콘텐츠 -->
+            <div class="content">
+                <!-- 테스트 계정 -->
+                <div class="test-accounts-section">
+                    <div class="test-accounts-title">📋 테스트 계정 (클릭으로 자동입력)</div>
+                    <div class="account-cards">
+                        <button type="button" class="account-card caregiver"
+                                onclick="selectTestAccount('caregiver@test.com', 'test123', 'caregiver')">
+                            <div class="account-role">👤 요양사</div>
+                            <div class="account-email">caregiver@test.com</div>
+                            <div class="account-password">pw: test123</div>
+                        </button>
+                        <button type="button" class="account-card manager"
+                                onclick="selectTestAccount('manager@test.com', 'test123', 'center_manager')">
+                            <div class="account-role">👨‍💼 센터장</div>
+                            <div class="account-email">manager@test.com</div>
+                            <div class="account-password">pw: test123</div>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">비밀번호</label>
-                    <input
-                        type="password"
-                        id="password"
-                        class="form-input"
-                        placeholder="비밀번호를 입력하세요"
-                        value="password123"
-                        required
-                    >
-                </div>
+                <div id="errorMessage" class="error-message"></div>
+                <div id="successMessage" class="success-message"></div>
 
-                <button type="submit" class="login-button" id="loginBtn">
-                    로그인
-                </button>
-            </form>
+                <!-- 로그인 폼 -->
+                <form id="loginForm">
+                    <div class="role-selector">
+                        <label class="role-label">역할 선택</label>
+                        <div class="role-buttons">
+                            <button type="button" class="role-btn active" data-role="caregiver">요양사</button>
+                            <button type="button" class="role-btn" data-role="center_manager">센터장</button>
+                        </div>
+                    </div>
 
-            <div class="divider"></div>
+                    <div class="form-group">
+                        <label class="form-label">📧 이메일</label>
+                        <input
+                            type="email"
+                            id="email"
+                            class="form-input"
+                            placeholder="이메일을 입력하세요"
+                            required
+                        >
+                    </div>
 
-            <div class="test-accounts">
-                <h3>📝 테스트 계정</h3>
-                <div class="test-account">
-                    <strong>요양사:</strong> caregiver@test.com
-                </div>
-                <div class="test-account">
-                    <strong>센터장:</strong> manager@test.com
-                </div>
-                <div class="test-account">
-                    <strong>비밀번호:</strong> password123
-                </div>
-            </div>
+                    <div class="form-group">
+                        <label class="form-label">🔑 비밀번호</label>
+                        <input
+                            type="password"
+                            id="password"
+                            class="form-input"
+                            placeholder="비밀번호를 입력하세요"
+                            required
+                        >
+                    </div>
 
-            <div class="api-info">
-                Backend: http://localhost:8000/api/v1
+                    <button type="submit" class="login-button" id="loginBtn">로그인</button>
+                </form>
+
+                <div class="divider"></div>
+
+                <div class="footer-info">
+                    💡 테스트 계정의 비밀번호는 test123입니다
+                </div>
             </div>
         </div>
     </div>
@@ -370,7 +443,8 @@
 
         // 역할 선택 버튼
         document.querySelectorAll('.role-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
                 document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 selectedRole = btn.dataset.role;
@@ -387,130 +461,46 @@
             const errorMsg = document.getElementById('errorMessage');
             const successMsg = document.getElementById('successMessage');
 
-            // 에러 메시지 숨기기
             errorMsg.classList.remove('show');
             successMsg.classList.remove('show');
 
-            // 로딩 상태
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span class="spinner"></span>로그인 중...';
 
             try {
-                console.log('🔍 로그인 시작:', email);
-                console.log('📡 API URL:', `${API_URL}/auth/login`);
-
                 const response = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        email,
-                        password,
-                    }),
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email, password})
                 });
 
-                console.log('📊 응답 상태:', response.status);
-                console.log('✅ 응답 받음');
-
                 const data = await response.json();
-                console.log('📦 응답 데이터:', data);
 
                 if (!response.ok) {
                     throw new Error(data.detail || '로그인 실패');
                 }
 
-                console.log('✅ 로그인 성공!');
-
-                // 성공 메시지
                 successMsg.textContent = '✅ 로그인 성공! 대시보드로 이동 중...';
                 successMsg.classList.add('show');
-
-                // 토큰 저장
-                console.log('💾 토큰 저장 중...');
-                console.log('📦 로그인 응답:', data);
-                console.log('👤 user 객체:', data.user);
-                console.log('🆔 center_id:', data.user?.center_id);
 
                 localStorage.setItem('access_token', data.access_token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 localStorage.setItem('user_role', selectedRole);
 
-                console.log('✅ 저장된 user:', JSON.parse(localStorage.getItem('user')));
-                console.log('✅ 토큰 저장 완료');
-                console.log('📍 대시보드로 이동 중... ./dashboard.html');
-
-                // 대시보드로 이동 (1초 후)
                 setTimeout(() => {
-                    console.log('🎯 window.location.href = ./dashboard.html');
                     window.location.href = './dashboard.html';
                 }, 1000);
 
             } catch (error) {
                 console.error('❌ 로그인 오류:', error);
-                console.error('📋 오류 상세:', error.message);
-                errorMsg.textContent = `❌ ${error.message || '로그인 중 오류가 발생했습니다'}`;
+                errorMsg.textContent = `❌ ${error.message}`;
                 errorMsg.classList.add('show');
-            } finally {
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = '로그인';
             }
         });
 
-        // 테스트 로그인 함수
-        function testLogin(email, role) {
-            console.log('📝 테스트 로그인:', email, role);
-
-            // localStorage에 직접 테스트 데이터 입력
-            const user = {
-                id: email === 'manager@test.com' ? 2 : 4,
-                email: email,
-                full_name: email === 'manager@test.com' ? 'Center Manager' : 'Caregiver',
-                role: role,
-                center_id: 1,  // 중요: center_id 설정
-                is_active: true,
-                created_at: new Date().toISOString()
-            };
-
-            localStorage.setItem('access_token', 'test-token-' + Math.random());
-            localStorage.setItem('user', JSON.stringify(user));
-            localStorage.setItem('user_role', role);
-
-            console.log('✅ 테스트 데이터 저장됨');
-            console.log('   User:', user);
-
-            // 1초 후 대시보드로 이동
-            setTimeout(() => {
-                window.location.href = './dashboard.html';
-            }, 500);
-        }
-
-        // 테스트 로그인 버튼 이벤트
-        document.addEventListener('DOMContentLoaded', () => {
-            // 요양사 테스트 로그인
-            const testCaregiverBtn = document.createElement('button');
-            testCaregiverBtn.type = 'button';
-            testCaregiverBtn.className = 'login-button';
-            testCaregiverBtn.style.cssText = 'background: #28a745; margin-top: 15px; width: 100%;';
-            testCaregiverBtn.textContent = '✓ 요양사로 빠른 테스트';
-            testCaregiverBtn.onclick = () => testLogin('caregiver@test.com', 'caregiver');
-
-            // 센터장 테스트 로그인
-            const testManagerBtn = document.createElement('button');
-            testManagerBtn.type = 'button';
-            testManagerBtn.className = 'login-button';
-            testManagerBtn.style.cssText = 'background: #667eea; margin-top: 8px; width: 100%;';
-            testManagerBtn.textContent = '✓ 센터장으로 빠른 테스트';
-            testManagerBtn.onclick = () => testLogin('manager@test.com', 'center_manager');
-
-            // 로그인 폼 다음에 추가
-            const form = document.getElementById('loginForm');
-            const container = form.parentElement;
-            container.insertBefore(testCaregiverBtn, form.nextSibling);
-            container.insertBefore(testManagerBtn, testCaregiverBtn.nextSibling);
-        });
-
-        // 페이지 로드 시 토큰이 있으면 대시보드로 이동
+        // 페이지 로드 시
         window.addEventListener('load', () => {
             const token = localStorage.getItem('access_token');
             if (token) {
