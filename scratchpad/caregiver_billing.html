@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>돌봄케어 - 나의 청부 현황</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        main {
+            padding: 20px;
+            margin-left: 250px;
+            width: calc(100% - 250px);
+            min-height: 100vh;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e8e8e8;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: auto;
+        }
+
+        thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #ddd;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #2c3e50;
+            white-space: nowrap;
+            border-right: 1px solid #eee;
+        }
+
+        th:last-child {
+            border-right: none;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            border-right: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        td:last-child {
+            border-right: none;
+        }
+
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .rejection-reason {
+            font-size: 12px;
+            color: #721c24;
+            margin-top: 4px;
+        }
+
+        .loading, .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+    <script src="./navbar.js"></script>
+</head>
+<body>
+    <main>
+        <div class="page-header">
+            <h1 class="page-title">📊 나의 청부 현황</h1>
+            <p class="page-subtitle">센터장 승인을 기다리는 청부 기록을 확인하세요</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">전체 기록</div>
+                <div class="stat-value" id="totalRecords">0건</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">승인 대기</div>
+                <div class="stat-value" id="pendingCount">0건</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">승인됨</div>
+                <div class="stat-value" id="approvedCount">0건</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">거절</div>
+                <div class="stat-value" id="rejectedCount">0건</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div id="billingTable" class="loading">
+                <div>로드 중...</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api/v1';
+        let currentUser = null;
+
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('access_token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+            if (!token || !user.id) {
+                alert('로그인이 필요합니다');
+                window.location.href = './login.html';
+                return;
+            }
+
+            currentUser = user;
+            loadBillingRecords();
+        });
+
+        async function loadBillingRecords() {
+            try {
+                const tableDiv = document.getElementById('billingTable');
+                tableDiv.innerHTML = '<div class="loading">로드 중...</div>';
+
+                // 요양사의 청부 기록 조회
+                const response = await fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}`);
+                if (!response.ok) throw new Error('기록 조회 실패');
+
+                const data = await response.json();
+                const records = data.records || [];
+
+                // 통계 업데이트
+                const pendingCount = records.filter(r => r.approval_status === 'pending').length;
+                const approvedCount = records.filter(r => r.approval_status === 'approved').length;
+                const rejectedCount = records.filter(r => r.approval_status === 'rejected').length;
+
+                document.getElementById('totalRecords').textContent = `${records.length}건`;
+                document.getElementById('pendingCount').textContent = `${pendingCount}건`;
+                document.getElementById('approvedCount').textContent = `${approvedCount}건`;
+                document.getElementById('rejectedCount').textContent = `${rejectedCount}건`;
+
+                // 테이블 렌더링
+                renderBillingTable(records);
+
+                console.log('✅ 청부 기록 로드 완료:', records.length + '건');
+            } catch (error) {
+                console.error('❌ 기록 로드 실패:', error);
+                document.getElementById('billingTable').innerHTML =
+                    '<div class="empty-state">청부 기록을 불러올 수 없습니다</div>';
+            }
+        }
+
+        function renderBillingTable(records) {
+            const tableDiv = document.getElementById('billingTable');
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>기록일</th>
+                            <th>이용자</th>
+                            <th>서비스 유형</th>
+                            <th style="text-align: right;">청부액</th>
+                            <th>승인 상태</th>
+                            <th>비고</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            if (records.length === 0) {
+                html += '<tr><td colspan="6" style="text-align: center; padding: 40px;">기록이 없습니다</td></tr>';
+            } else {
+                records.forEach(record => {
+                    const statusClass = `status-${record.approval_status}`;
+                    const statusLabel = {
+                        'pending': '⏳ 승인 대기',
+                        'approved': '✅ 승인됨',
+                        'rejected': '❌ 거절됨'
+                    }[record.approval_status] || record.approval_status;
+
+                    const serviceLabel = {
+                        'basic_care': '기본 요양',
+                        'meal_service': '식사 서비스',
+                        'medical_care': '의료 처치',
+                        'emergency': '응급 대응'
+                    }[record.service_type] || record.service_type;
+
+                    const recordedDate = new Date(record.recorded_date).toLocaleDateString('ko-KR');
+
+                    let noteHtml = '';
+                    if (record.approval_status === 'rejected' && record.rejection_reason) {
+                        noteHtml = `<div class="rejection-reason">사유: ${record.rejection_reason}</div>`;
+                    }
+
+                    html += `
+                        <tr>
+                            <td>${recordedDate}</td>
+                            <td>${record.resident_id}</td>
+                            <td>${serviceLabel}</td>
+                            <td style="text-align: right;">${record.amount.toLocaleString()}원</td>
+                            <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                            <td>${noteHtml}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            tableDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

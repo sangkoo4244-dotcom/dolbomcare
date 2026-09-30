@@ -145,6 +145,21 @@
             color: #155724;
         }
 
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .action-buttons {
             display: flex;
             gap: 8px;
@@ -376,8 +391,15 @@
                 html += '<tr><td colspan="6" style="text-align: center; padding: 40px;">기록이 없습니다</td></tr>';
             } else {
                 billingRecords.forEach(record => {
-                    const statusClass = `status-${record.status}`;
+                    const statusClass = `status-${record.approval_status || record.status}`;
                     const statusLabel = {
+                        'pending': '⏳ 승인 대기',
+                        'approved': '✅ 승인됨',
+                        'rejected': '❌ 거절됨',
+                        'draft': '📝 미제출',
+                        'submitted': '📤 제출 완료',
+                        'paid': '💰 지급 완료'
+                    }[record.approval_status] || {
                         'draft': '미제출',
                         'submitted': '제출 완료',
                         'paid': '지급 완료'
@@ -401,7 +423,11 @@
                             <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
                             <td>
                                 <div class="action-buttons">
-                                    ${record.status === 'draft' ?
+                                    ${record.approval_status === 'pending' ?
+                                        `<button class="action-btn submit" onclick="approveRecord(${record.id})">승인</button>
+                                         <button class="action-btn" style="background: #dc3545; color: white;" onclick="rejectRecord(${record.id})">거절</button>` :
+                                        ''}
+                                    ${record.approval_status === 'approved' && record.status === 'draft' ?
                                         `<button class="action-btn submit" onclick="submitRecord(${record.id})">제출</button>` :
                                         ''}
                                     ${record.status === 'submitted' ?
@@ -440,6 +466,51 @@
             } catch (error) {
                 console.error('❌ 제출 실패:', error);
                 alert('제출 중 오류가 발생했습니다');
+            }
+        }
+
+        async function approveRecord(recordId) {
+            if (!confirm('이 청부 기록을 승인하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/billing/${recordId}/approve?approved_by=${currentUser.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('승인 실패');
+
+                alert('청부 기록이 승인되었습니다');
+                loadBillingRecords();
+            } catch (error) {
+                console.error('❌ 승인 실패:', error);
+                alert('승인 중 오류가 발생했습니다');
+            }
+        }
+
+        async function rejectRecord(recordId) {
+            const reason = prompt('거절 사유를 입력하세요:', '');
+            if (reason === null) return;
+
+            if (!confirm('이 청부 기록을 거절하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/billing/${recordId}/reject?reason=${encodeURIComponent(reason)}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('거절 실패');
+
+                alert('청부 기록이 거절되었습니다');
+                loadBillingRecords();
+            } catch (error) {
+                console.error('❌ 거절 실패:', error);
+                alert('거절 중 오류가 발생했습니다');
             }
         }
 

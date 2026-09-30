@@ -16,6 +16,7 @@ function renderNavbar() {
             { icon: '🏠', label: '대시보드', url: './dashboard.html' },
             { icon: '🎙️', label: '음성 기록', url: './voice_record.html' },
             { icon: '👤', label: '이용자 관리', url: './resident_management.html' },
+            { icon: '📊', label: '나의 청부', url: './caregiver_billing.html' },
             { icon: '💳', label: '청부 조회', url: './salary.html' },
             { icon: '📢', label: '공지사항', url: './announcements.html', comingSoon: true },
         ],
