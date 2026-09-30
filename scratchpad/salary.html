@@ -252,9 +252,9 @@
         <!-- 월별 급여 내역 -->
         <div class="card">
             <div class="card-title">📅 월별 청구액 내역</div>
-            <div id="salaryHistoryContainer" class="loading">
-                <div class="spinner"></div>
-                <p>로드 중...</p>
+            <div id="salaryHistoryContainer" style="text-align: center; padding: 30px;">
+                <p style="color: #666; margin-bottom: 16px;">개별 청구 기록과 승인 상태는 아래에서 확인하세요</p>
+                <a href="./caregiver_billing.html" class="btn btn-primary" style="display: inline-block; padding: 10px 24px; text-decoration: none;">📊 나의 청부 현황 보기</a>
             </div>
         </div>
 
@@ -306,6 +306,13 @@
         }
 
         async function loadSalaryHistory() {
+            // 월별 내역은 "나의 청부" 페이지에서 확인하도록 변경
+            // 이 섹션은 더 이상 사용하지 않습니다
+            return;
+        }
+
+        // 이전 함수 (사용하지 않음)
+        async function loadSalaryHistoryOld() {
             try {
                 const user = JSON.parse(localStorage.getItem('user'));
                 if (!user) {
