@@ -329,14 +329,14 @@
                             <th style="text-align: right;">청부액</th>
                             <th>승인 상태</th>
                             <th>비고</th>
-                            ${isManager ? '<th>관리</th>' : ''}
+                            <th>관리</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
             if (records.length === 0) {
-                html += `<tr><td colspan="${isManager ? 7 : 6}" style="text-align: center; padding: 40px;">기록이 없습니다</td></tr>`;
+                html += `<tr><td colspan="7" style="text-align: center; padding: 40px;">기록이 없습니다</td></tr>`;
             } else {
                 records.forEach(record => {
                     const statusClass = `status-${record.approval_status}`;
@@ -396,7 +396,7 @@
                             <td style="text-align: right;">${record.amount.toLocaleString()}원</td>
                             <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
                             <td>${noteHtml}</td>
-                            ${isManager ? `<td>${actionHtml}</td>` : ''}
+                            <td>${actionHtml || '-'}</td>
                         </tr>
                     `;
                 });
