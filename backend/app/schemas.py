@@ -12,6 +12,7 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
+    center_id: Optional[int] = None
     is_active: bool
     created_at: datetime
 
