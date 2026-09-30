@@ -365,24 +365,24 @@
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <label class="form-label">긴급연락처</label>
+                    <input type="tel" id="staffEmergency" class="form-input" placeholder="보호자/가족 연락처">
+                </div>
+
                 <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">긴급연락처</label>
-                        <input type="tel" id="staffEmergency" class="form-input" placeholder="010-0000-0000">
-                    </div>
                     <div class="form-group">
                         <label class="form-label">고용 시작일</label>
                         <input type="date" id="staffHireDate" class="form-input">
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">근무 상태</label>
-                    <select id="staffStatus" class="form-select">
-                        <option value="active">근무 중</option>
-                        <option value="inactive">비활성</option>
-                        <option value="leave">휴직</option>
-                    </select>
+                    <div class="form-group">
+                        <label class="form-label">근무 상태</label>
+                        <select id="staffStatus" class="form-select">
+                            <option value="active">근무 중</option>
+                            <option value="inactive">비활성</option>
+                            <option value="leave">휴직</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-actions">
@@ -435,8 +435,9 @@
                             <tr>
                                 <th>이름</th>
                                 <th>직급</th>
-                                <th>이메일</th>
                                 <th>전화</th>
+                                <th>이메일</th>
+                                <th>고용일</th>
                                 <th>상태</th>
                                 <th>관리</th>
                             </tr>
@@ -452,6 +453,7 @@
                     }[staff.employment_status] || '근무';
 
                     const statusClass = `status-${staff.employment_status || 'active'}`;
+                    const hireDate = staff.hire_date ? new Date(staff.hire_date).toLocaleDateString('ko-KR') : '-';
 
                     html += `
                         <tr>
@@ -459,8 +461,9 @@
                                 <div class="staff-name">${staff.full_name || '(이름 없음)'}</div>
                             </td>
                             <td>${staff.position || '-'}</td>
-                            <td>${staff.email || '-'}</td>
                             <td>${staff.phone || '-'}</td>
+                            <td>${staff.email || '-'}</td>
+                            <td>${hireDate}</td>
                             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                             <td>
                                 <div class="staff-actions">
