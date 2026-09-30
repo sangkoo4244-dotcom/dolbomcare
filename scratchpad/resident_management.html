@@ -697,10 +697,8 @@
 
             // 이용자 추가 버튼 이벤트
             const addBtn = document.getElementById('addResidentBtn');
-            if (addBtn && currentUser.role === 'center_manager') {
+            if (addBtn) {
                 addBtn.addEventListener('click', openAddModal);
-            } else if (addBtn) {
-                addBtn.style.display = 'none';
             }
         });
 
