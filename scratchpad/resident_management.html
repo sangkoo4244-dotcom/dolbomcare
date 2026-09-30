@@ -614,6 +614,27 @@
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label class="form-label">요양등급</label>
+                        <select id="editGrade" class="form-input">
+                            <option value="1">1등급 (최중증)</option>
+                            <option value="2">2등급 (중증)</option>
+                            <option value="3">3등급 (중중증)</option>
+                            <option value="4">4등급 (중등증)</option>
+                            <option value="5">5등급 (경증)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">클라이언트 유형</label>
+                        <select id="editClientType" class="form-input">
+                            <option value="일반">일반</option>
+                            <option value="차상위계층">차상위계층</option>
+                            <option value="기초생활보장">기초생활보장</option>
+                            <option value="의료급여">의료급여</option>
+                        </select>
+                    </div>
+
                     <div class="form-actions">
                         <button type="submit" class="submit-btn">저장하기</button>
                         <button type="button" class="cancel-btn" onclick="closeEditModal()">취소</button>
@@ -891,6 +912,8 @@
             document.getElementById('editBirthDate').value = resident.birth_date || '';
             document.getElementById('editAge').value = resident.age;
             document.getElementById('editHealth').value = resident.health_status;
+            document.getElementById('editGrade').value = resident.care_grade || 3;
+            document.getElementById('editClientType').value = resident.client_type || '일반';
 
             // 이용자 ID를 모달에 저장 (submit 시 사용)
             document.getElementById('editForm').dataset.residentId = residentId;
@@ -912,6 +935,8 @@
             const birthDate = document.getElementById('editBirthDate').value;
             const age = parseInt(document.getElementById('editAge').value);
             const health = document.getElementById('editHealth').value;
+            const grade = parseInt(document.getElementById('editGrade').value);
+            const clientType = document.getElementById('editClientType').value;
 
             if (!name || !birthDate || !age || !health) {
                 showError('모든 항목을 입력하세요');
@@ -924,7 +949,7 @@
 
             try {
                 const response = await fetch(
-                    `${API_URL}/residents/${residentId}?name=${encodeURIComponent(name)}&birth_date=${birthDate}&age=${age}&health_status=${health}`,
+                    `${API_URL}/residents/${residentId}?name=${encodeURIComponent(name)}&birth_date=${birthDate}&age=${age}&health_status=${health}&care_grade=${grade}&client_type=${encodeURIComponent(clientType)}`,
                     {
                         method: 'PUT',
                         headers: {
