@@ -179,11 +179,44 @@
             const token = localStorage.getItem('access_token');
             const user = JSON.parse(localStorage.getItem('user') || '{}');
 
+            // 🔍 로그인 정보 디버그
+            console.log('=== 🔍 로그인 정보 ===');
+            console.log('Token:', token ? '있음 ✅' : '없음 ❌');
+            console.log('User:', user);
+            console.log('User ID:', user.id);
+            console.log('User Role:', user.role);
+            console.log('Center ID:', user.center_id);
+
             if (!token || !user.id) {
+                console.error('❌ 로그인 정보 없음');
                 alert('로그인이 필요합니다');
                 window.location.href = './login.html';
                 return;
             }
+
+            // ✅ 로그인 정보 화면에 표시
+            const debugInfo = document.createElement('div');
+            debugInfo.style.cssText = `
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                background: #f0f0f0;
+                border: 1px solid #ccc;
+                padding: 10px;
+                border-radius: 6px;
+                font-size: 11px;
+                z-index: 9999;
+                max-width: 300px;
+                font-family: monospace;
+            `;
+            debugInfo.innerHTML = `
+                <div><strong>👤 로그인됨</strong></div>
+                <div>Email: ${user.email}</div>
+                <div>Role: ${user.role}</div>
+                <div>Center ID: ${user.center_id}</div>
+                <div>User ID: ${user.id}</div>
+            `;
+            document.body.appendChild(debugInfo);
 
             currentUser = user;
             renderDashboard(user);
@@ -463,6 +496,47 @@
                 }
             } catch (error) {
                 console.error('❌ 센터장 데이터 로드 실패:', error);
+
+                // API 실패 메시지 화면에 표시
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: #fee;
+                    border: 2px solid #c33;
+                    padding: 30px;
+                    border-radius: 10px;
+                    z-index: 10000;
+                    text-align: center;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #c33;
+                    max-width: 400px;
+                `;
+                errorDiv.innerHTML = `
+                    <div style="margin-bottom: 20px;">❌ 데이터 로드 실패</div>
+                    <div style="font-size: 13px; color: #666; margin-bottom: 15px;">
+                        Backend 서버가 응답하지 않습니다.
+                    </div>
+                    <div style="font-size: 12px; color: #999; font-family: monospace; margin: 10px 0;">
+                        Error: ${error.message}
+                    </div>
+                    <button onclick="location.reload()" style="
+                        background: #c33;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 13px;
+                        margin-top: 15px;
+                    ">
+                        새로고침
+                    </button>
+                `;
+                document.body.appendChild(errorDiv);
             }
         }
     </script>
