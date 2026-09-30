@@ -18,6 +18,7 @@
         }
 
         .navbar {
+            display: none;  /* navbar.js의 사이드바를 사용하므로 숨김 */
             background: white;
             border-bottom: 1px solid #e0e0e0;
             padding: 0;
@@ -409,12 +410,12 @@
     </div>
 
     <!-- Main Content -->
-    <div class="container" id="mainContent">
+    <main class="container" id="mainContent">
         <div class="loading">
             <div class="spinner"></div>
             <p>대시보드 로딩 중...</p>
         </div>
-    </div>
+    </main>
 
     <script>
         const API_URL = 'http://localhost:8000/api/v1';
