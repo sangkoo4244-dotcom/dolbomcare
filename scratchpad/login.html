@@ -393,8 +393,14 @@
                 console.log('👤 user 객체:', data.user);
                 console.log('🆔 center_id:', data.user?.center_id);
 
+                // center_id가 없으면 기본값 1로 설정 (임시 해결책)
+                const user = {
+                    ...data.user,
+                    center_id: data.user.center_id || 1
+                };
+
                 localStorage.setItem('access_token', data.access_token);
-                localStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('user', JSON.stringify(user));
                 localStorage.setItem('user_role', selectedRole);
 
                 console.log('✅ 저장된 user:', JSON.parse(localStorage.getItem('user')));
