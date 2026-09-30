@@ -618,7 +618,7 @@
         window.addEventListener('load', () => {
             checkAuth();
             loadResidents();
-            // loadTodayRecords();  // TODO: /records/today 엔드포인트 500 에러 수정 필요
+            loadTodayRecords();
         });
 
         // 인증 확인
@@ -861,7 +861,7 @@
                 selectedServiceType = null;
 
                 // 기록 목록 새로고침
-                // loadTodayRecords();  // TODO: 엔드포인트 오류 수정 필요
+                loadTodayRecords();
 
                 console.log('✅ 기록 저장 완료:', data);
             } catch (error) {
@@ -1003,7 +1003,7 @@
                 }
 
                 showToast('✅ 기록이 삭제되었습니다');
-                // loadTodayRecords(); // 목록 새로고침 - TODO: /records/today 엔드포인트 수정 필요
+                loadTodayRecords(); // 목록 새로고침
 
                 // 대시보드에 데이터 갱신 신호 전송
                 window.localStorage.setItem('dashboardRefresh', Date.now().toString());
