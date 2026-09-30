@@ -57,20 +57,25 @@ class CreateRecordRequest(BaseModel):
     service_type: str
     notes: str = ""
 
+@router.post("/test")
+def test_endpoint():
+    """테스트 엔드포인트"""
+    return {"message": "POST 작동 확인"}
+
 @router.post("/create")
-async def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
-    """일일 기록 생성 및 청구 자동 계산"""
-    import sys
-    sys.stdout.flush()
-    print("[DEBUG] create_record 시작", flush=True)
-    sys.stdout.flush()
+def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
+    """일일 기록 생성 및 청부 자동 계산"""
+    with open("/tmp/debug.log", "a") as f:
+        f.write(f"[{datetime.utcnow()}] START create_record\n")
+        f.write(f"  caregiver_id={request.caregiver_id}, resident_id={request.resident_id}\n")
     try:
-        print(f"[DEBUG] 요양사 조회 시작...")
-        caregiver = db.query(User).filter(User.id == request.caregiver_id).first()
-        if not caregiver:
-            print(f"[ERROR] 요양사 {request.caregiver_id} 없음")
-            raise HTTPException(status_code=404, detail="Caregiver not found")
-        print(f"[DEBUG] 요양사 찾음: {caregiver.id}")
+        with open("/tmp/debug.log", "a") as f:
+            f.write(f"  Querying resident {request.resident_id}...\n")
+        resident = db.query(Resident).filter(Resident.id == request.resident_id).first()
+        with open("/tmp/debug.log", "a") as f:
+            f.write(f"  Resident found: {resident is not None}\n")
+        if not resident:
+            raise HTTPException(status_code=404, detail="Resident not found")
 
         print(f"[DEBUG] 이용자 조회 시작...")
         resident = db.query(Resident).filter(Resident.id == request.resident_id).first()
@@ -79,12 +84,25 @@ async def create_record(request: CreateRecordRequest, db: Session = Depends(get_
             raise HTTPException(status_code=404, detail="Resident not found")
         print(f"[DEBUG] 이용자 찾음: {resident.id}, center_id={resident.center_id}")
 
-        # 1. 일일 기록 저장
-        print(f"[DEBUG] DailyRecord 생성 시작...")
+        # 청계 계산
+        with open("/tmp/debug.log", "a") as f:
+            f.write(f"  Calculating billing...\n")
+        care_grade = resident.care_grade or 1
+        client_type = resident.client_type or "일반"
+        rates = PATIENT_PAY_RATE.get("재가급여", {})
+        patient_rate = rates.get(client_type, 0.15)
+        insurance_rate = 1 - patient_rate
+        base_amount = VISIT_AMOUNTS_BY_GRADE.get(care_grade, 78875)
+        amount = int(base_amount * insurance_rate)
+
+        # DailyRecord 생성
+        with open("/tmp/debug.log", "a") as f:
+            f.write(f"  Creating DailyRecord...\n")
+        now = datetime.utcnow()
         daily_record = DailyRecord(
             resident_id=request.resident_id,
             caregiver_id=request.caregiver_id,
-            recorded_date=datetime.utcnow(),
+            recorded_date=now,
             morning_care=request.service_type == "basic_care",
             meal_intake="full" if request.service_type == "meal_service" else "partial",
             medicine_given=request.service_type == "medical_care",
@@ -92,40 +110,28 @@ async def create_record(request: CreateRecordRequest, db: Session = Depends(get_
             audio_file_url=None
         )
         db.add(daily_record)
-        db.commit()
-        db.refresh(daily_record)
-        print(f"[DEBUG] DailyRecord 저장 완료: id={daily_record.id}")
+        db.flush()
+        daily_id = daily_record.id
 
-        # 2. 청구 기록 자동 생성 (1회 방문당 청구)
-        care_grade = resident.care_grade if resident.care_grade else 1
-        client_type = resident.client_type if resident.client_type else "일반"
-
-        service_category = "재가급여"
-        category_rates = PATIENT_PAY_RATE.get(service_category, PATIENT_PAY_RATE["재가급여"])
-        patient_rate = category_rates.get(client_type, 0.15)
-        insurance_rate = 1 - patient_rate
-
-        # 1회 방문당 청구액 (월 기준액 / 월 표준 방문 수)
-        base_amount = VISIT_AMOUNTS_BY_GRADE.get(care_grade, 78875)
-        amount = int(base_amount * insurance_rate)
-
-        print(f"[DEBUG] BillingRecord 생성 시작: amount={amount}")
+        # BillingRecord 생성
+        with open("/tmp/debug.log", "a") as f:
+            f.write(f"  Creating BillingRecord...\n")
         billing_record = BillingRecord(
-            daily_record_id=daily_record.id,
+            daily_record_id=daily_id,
             caregiver_id=request.caregiver_id,
             resident_id=request.resident_id,
             center_id=resident.center_id,
-            service_category=service_category,
+            service_category="재가급여",
             service_type=request.service_type,
             amount=amount,
-            recorded_date=datetime.utcnow(),
-            approval_status="pending",  # 센터장 승인 대기
-            status="draft"  # 아직 미제출 상태
+            recorded_date=now,
+            status="draft"
         )
         db.add(billing_record)
         db.commit()
-        db.refresh(billing_record)
-        print(f"[DEBUG] BillingRecord 저장 완료: id={billing_record.id}")
+
+        with open("/tmp/debug.log", "a") as f:
+            f.write(f"  SUCCESS: daily_id={daily_id}, billing_id={billing_record.id}\n")
 
         return {
             "status": "success",
@@ -141,8 +147,11 @@ async def create_record(request: CreateRecordRequest, db: Session = Depends(get_
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[ERROR] create_record: {type(e).__name__}: {e}")
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        import traceback
+        with open("/tmp/debug.log", "a") as f:
+            f.write(f"  ERROR: {type(e).__name__}: {e}\n")
+            f.write(f"  {traceback.format_exc()}\n")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/upload-audio")
 async def upload_audio(
