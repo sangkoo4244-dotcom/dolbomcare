@@ -755,6 +755,10 @@
             const token = localStorage.getItem('access_token');
             const user = JSON.parse(localStorage.getItem('user'));
 
+            console.log('🔐 로그인 정보 확인:', user);
+            console.log('📌 center_id 값:', user?.center_id);
+            console.log('📋 user 전체 키:', user ? Object.keys(user) : '없음');
+
             if (!token || !user) {
                 window.location.href = './login.html';
                 return;

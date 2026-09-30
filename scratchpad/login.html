@@ -389,9 +389,15 @@
 
                 // 토큰 저장
                 console.log('💾 토큰 저장 중...');
+                console.log('📦 로그인 응답:', data);
+                console.log('👤 user 객체:', data.user);
+                console.log('🆔 center_id:', data.user?.center_id);
+
                 localStorage.setItem('access_token', data.access_token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 localStorage.setItem('user_role', selectedRole);
+
+                console.log('✅ 저장된 user:', JSON.parse(localStorage.getItem('user')));
                 console.log('✅ 토큰 저장 완료');
                 console.log('📍 대시보드로 이동 중... ./dashboard.html');
 
