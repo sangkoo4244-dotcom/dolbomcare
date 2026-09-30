@@ -375,11 +375,8 @@
                         }
                     } else {
                         // 요양사: 상태별 액션
-                        if (record.status === 'draft') {
-                            // draft 상태: 삭제 가능
-                            actionHtml = `<button class="btn-delete" onclick="deleteBilling(${record.id}, 'caregiver')">삭제</button>`;
-                        } else if (record.approval_status === 'rejected') {
-                            // 반려 상태: 다시 제출 또는 삭제
+                        if (record.status === 'draft' || record.approval_status === 'rejected') {
+                            // draft 상태 또는 반려 상태: 삭제 가능
                             actionHtml = `
                                 <div class="action-buttons">
                                     <button class="btn-delete" onclick="deleteBilling(${record.id}, 'caregiver')">삭제</button>
