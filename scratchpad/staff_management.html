@@ -96,13 +96,12 @@
             word-break: break-word;
         }
 
-        .staff-table th:nth-child(1) { width: 15%; }
-        .staff-table th:nth-child(2) { width: 12%; }
-        .staff-table th:nth-child(3) { width: 12%; }
-        .staff-table th:nth-child(4) { width: 22%; }
-        .staff-table th:nth-child(5) { width: 12%; }
-        .staff-table th:nth-child(6) { width: 10%; }
-        .staff-table th:nth-child(7) { width: 17%; }
+        .staff-table th:nth-child(1) { width: 20%; }
+        .staff-table th:nth-child(2) { width: 15%; }
+        .staff-table th:nth-child(3) { width: 20%; }
+        .staff-table th:nth-child(4) { width: 15%; }
+        .staff-table th:nth-child(5) { width: 10%; }
+        .staff-table th:nth-child(6) { width: 20%; }
 
         .staff-table td {
             padding: 12px 16px;
@@ -452,8 +451,7 @@
                     <table class="staff-table">
                         <thead>
                             <tr>
-                                <th>이름</th>
-                                <th>직급</th>
+                                <th>이름/직급</th>
                                 <th>전화</th>
                                 <th>이메일</th>
                                 <th>고용일</th>
@@ -478,8 +476,8 @@
                         <tr>
                             <td>
                                 <div class="staff-name">${staff.full_name || '(이름 없음)'}</div>
+                                <div class="staff-position">${staff.position || '요양사'}</div>
                             </td>
-                            <td>${staff.position || '-'}</td>
                             <td>${staff.phone || '-'}</td>
                             <td>${staff.email || '-'}</td>
                             <td>${hireDate}</td>
