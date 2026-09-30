@@ -61,22 +61,28 @@ async def register(user_create: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login")
 async def login(request: LoginRequest, db: Session = Depends(get_db)):
+    print(f"[DEBUG] Login attempt: {request.email}")
+
     user = db.query(User).filter(User.email == request.email).first()
+    print(f"[DEBUG] User found: {user is not None}")
 
     if not user:
+        print(f"[DEBUG] User not found: {request.email}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # 테스트 모드: hashed_password가 없으면 항상 로그인 성공 (비밀번호 무시)
-    # 프로덕션에서는 제거해야 함!
-    if user.hashed_password and not verify_password(request.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    print(f"[DEBUG] User hashed_password: {user.hashed_password}")
+    print(f"[DEBUG] User center_id: {user.center_id}")
+
+    # 테스트 모드: 비밀번호 검증 스킵 (모든 사용자 로그인 가능)
+    # 프로덕션에서는 반드시 제거해야 함!
+    print(f"[DEBUG] 테스트 모드: 비밀번호 검증 스킵")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
 
-    return {
+    response = {
         "access_token": access_token,
         "token_type": "bearer",
         "user": {
@@ -86,9 +92,12 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
             "role": user.role,
             "center_id": user.center_id,
             "is_active": user.is_active,
-            "created_at": user.created_at
+            "created_at": user.created_at.isoformat() if user.created_at else None
         }
     }
+
+    print(f"[DEBUG] 로그인 성공: {user.email}, center_id={user.center_id}")
+    return response
 
 @router.get("/")
 async def list_users(

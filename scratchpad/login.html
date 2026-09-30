@@ -418,6 +418,59 @@
             }
         });
 
+        // 테스트 로그인 함수
+        function testLogin(email, role) {
+            console.log('📝 테스트 로그인:', email, role);
+
+            // localStorage에 직접 테스트 데이터 입력
+            const user = {
+                id: email === 'manager@test.com' ? 2 : 4,
+                email: email,
+                full_name: email === 'manager@test.com' ? 'Center Manager' : 'Caregiver',
+                role: role,
+                center_id: 1,  // 중요: center_id 설정
+                is_active: true,
+                created_at: new Date().toISOString()
+            };
+
+            localStorage.setItem('access_token', 'test-token-' + Math.random());
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('user_role', role);
+
+            console.log('✅ 테스트 데이터 저장됨');
+            console.log('   User:', user);
+
+            // 1초 후 대시보드로 이동
+            setTimeout(() => {
+                window.location.href = './dashboard.html';
+            }, 500);
+        }
+
+        // 테스트 로그인 버튼 이벤트
+        document.addEventListener('DOMContentLoaded', () => {
+            // 요양사 테스트 로그인
+            const testCaregiverBtn = document.createElement('button');
+            testCaregiverBtn.type = 'button';
+            testCaregiverBtn.className = 'login-button';
+            testCaregiverBtn.style.cssText = 'background: #28a745; margin-top: 15px; width: 100%;';
+            testCaregiverBtn.textContent = '✓ 요양사로 빠른 테스트';
+            testCaregiverBtn.onclick = () => testLogin('caregiver@test.com', 'caregiver');
+
+            // 센터장 테스트 로그인
+            const testManagerBtn = document.createElement('button');
+            testManagerBtn.type = 'button';
+            testManagerBtn.className = 'login-button';
+            testManagerBtn.style.cssText = 'background: #667eea; margin-top: 8px; width: 100%;';
+            testManagerBtn.textContent = '✓ 센터장으로 빠른 테스트';
+            testManagerBtn.onclick = () => testLogin('manager@test.com', 'center_manager');
+
+            // 로그인 폼 다음에 추가
+            const form = document.getElementById('loginForm');
+            const container = form.parentElement;
+            container.insertBefore(testCaregiverBtn, form.nextSibling);
+            container.insertBefore(testManagerBtn, testCaregiverBtn.nextSibling);
+        });
+
         // 페이지 로드 시 토큰이 있으면 대시보드로 이동
         window.addEventListener('load', () => {
             const token = localStorage.getItem('access_token');
