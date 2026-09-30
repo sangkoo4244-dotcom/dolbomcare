@@ -397,8 +397,8 @@
 
                 // 대시보드로 이동 (1초 후)
                 setTimeout(() => {
-                    console.log('🎯 window.location.href = ./dashboard.html');
-                    window.location.href = './dashboard.html';
+                    console.log('🎯 window.location.href = ./dashboard-v2.html');
+                    window.location.href = './dashboard-v2.html';
                 }, 1000);
 
             } catch (error) {
@@ -416,7 +416,7 @@
         window.addEventListener('load', () => {
             const token = localStorage.getItem('access_token');
             if (token) {
-                window.location.href = './dashboard.html';
+                window.location.href = './dashboard-v2.html';
             }
         });
     </script>
