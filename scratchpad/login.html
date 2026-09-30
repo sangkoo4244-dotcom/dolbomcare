@@ -356,16 +356,16 @@
             <div class="content">
                 <!-- 테스트 계정 -->
                 <div class="test-accounts-section">
-                    <div class="test-accounts-title">📋 테스트 계정 (클릭으로 자동입력)</div>
+                    <div class="test-accounts-title">📋 빠른 로그인 (클릭하면 바로 진입)</div>
                     <div class="account-cards">
                         <button type="button" class="account-card caregiver"
-                                onclick="selectTestAccount('caregiver@test.com', 'test123', 'caregiver')">
+                                onclick="quickLogin('caregiver@test.com', 'caregiver', 4, 1)">
                             <div class="account-role">👤 요양사</div>
                             <div class="account-email">caregiver@test.com</div>
                             <div class="account-password">pw: test123</div>
                         </button>
                         <button type="button" class="account-card manager"
-                                onclick="selectTestAccount('manager@test.com', 'test123', 'center_manager')">
+                                onclick="quickLogin('manager@test.com', 'center_manager', 2, 1)">
                             <div class="account-role">👨‍💼 센터장</div>
                             <div class="account-email">manager@test.com</div>
                             <div class="account-password">pw: test123</div>
@@ -423,6 +423,33 @@
     <script>
         const API_URL = 'http://localhost:8000/api/v1';
         let selectedRole = 'caregiver';
+
+        // 빠른 로그인 (Backend 없이도 작동)
+        function quickLogin(email, role, userId, centerId) {
+            const user = {
+                id: userId,
+                email: email,
+                full_name: role === 'center_manager' ? 'Center Manager' : 'Caregiver',
+                role: role,
+                center_id: centerId,
+                is_active: true,
+                created_at: new Date().toISOString()
+            };
+
+            localStorage.setItem('access_token', 'test-token-' + Math.random().toString(36).substr(2, 9));
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('user_role', role);
+
+            console.log('✅ 로그인 성공 (테스트 모드):', email);
+
+            const successMsg = document.getElementById('successMessage');
+            successMsg.textContent = '✅ 로그인 성공! 대시보드로 이동 중...';
+            successMsg.classList.add('show');
+
+            setTimeout(() => {
+                window.location.href = './dashboard.html';
+            }, 800);
+        }
 
         // 테스트 계정 자동 선택
         function selectTestAccount(email, password, role) {
