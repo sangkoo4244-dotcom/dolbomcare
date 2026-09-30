@@ -597,7 +597,7 @@
 
                     <div class="form-group">
                         <label class="form-label">생년월일</label>
-                        <input type="date" id="editBirthDate" class="form-input">
+                        <input type="date" id="editBirthDate" class="form-input" onchange="calculateAge('editBirthDate', 'editAge')">
                     </div>
 
                     <div class="form-group">
@@ -659,7 +659,7 @@
 
                     <div class="form-group">
                         <label class="form-label">생년월일 *</label>
-                        <input type="date" id="addBirthDate" class="form-input" required>
+                        <input type="date" id="addBirthDate" class="form-input" required onchange="calculateAge('addBirthDate', 'addAge')">
                     </div>
 
                     <div class="form-group">
@@ -1186,6 +1186,26 @@
                 submitBtn.disabled = false;
                 submitBtn.textContent = '등록하기';
             }
+        }
+
+        // 생년월일에서 나이 자동 계산
+        function calculateAge(birthDateFieldId, ageFieldId) {
+            const birthDateInput = document.getElementById(birthDateFieldId);
+            const ageInput = document.getElementById(ageFieldId);
+
+            if (!birthDateInput.value) return;
+
+            const birthDate = new Date(birthDateInput.value);
+            const today = new Date();
+
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            ageInput.value = age;
         }
 
         // 로그아웃
