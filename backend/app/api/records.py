@@ -16,6 +16,18 @@ CARE_GRADE_LIMITS = {
     5: 235000,   # 5등급
 }
 
+# 등급별 월 기준 방문 수 (1회당 청구액을 계산하기 위함)
+STANDARD_VISITS_PER_MONTH = 20
+
+# 1회 방문 기본 청구액 (등급별)
+VISIT_AMOUNTS_BY_GRADE = {
+    1: int(1577500 / STANDARD_VISITS_PER_MONTH),  # 약 78,875원
+    2: int(1399500 / STANDARD_VISITS_PER_MONTH),  # 약 69,975원
+    3: int(1193000 / STANDARD_VISITS_PER_MONTH),  # 약 59,650원
+    4: int(1082500 / STANDARD_VISITS_PER_MONTH),  # 약 54,125원
+    5: int(235000 / STANDARD_VISITS_PER_MONTH),   # 약 11,750원
+}
+
 # 서비스 카테고리별 본인부담율 (건강보험공단 기준)
 PATIENT_PAY_RATE = {
     "재가급여": {  # 방문요양 등
@@ -78,20 +90,21 @@ async def create_record(
         db.commit()
         db.refresh(daily_record)
 
-        # 2. 청구 기록 자동 생성
+        # 2. 청구 기록 자동 생성 (1회 방문당 청구)
         care_grade = resident.care_grade if resident.care_grade else 1
         client_type = resident.client_type if resident.client_type else "일반"
-
-        monthly_limit = CARE_GRADE_LIMITS.get(care_grade, 1577500)
 
         service_category = "재가급여"
         category_rates = PATIENT_PAY_RATE.get(service_category, PATIENT_PAY_RATE["재가급여"])
         patient_rate = category_rates.get(client_type, 0.15)
         insurance_rate = 1 - patient_rate
 
-        amount = int(monthly_limit * insurance_rate)
+        # 1회 방문당 청구액 (월 기준액 / 월 표준 방문 수)
+        base_amount = VISIT_AMOUNTS_BY_GRADE.get(care_grade, 78875)
+        amount = int(base_amount * insurance_rate)
 
         billing_record = BillingRecord(
+            daily_record_id=daily_record.id,
             caregiver_id=request.caregiver_id,
             resident_id=request.resident_id,
             center_id=resident.center_id,
@@ -158,21 +171,21 @@ async def upload_audio(
         db.commit()
         db.refresh(daily_record)
 
-        # 음성 파일로 청구 기록 생성 (월별 청구 대기)
+        # 음성 파일로 청구 기록 생성 (1회 방문당 청부)
         care_grade = resident.care_grade if resident.care_grade else 1
         client_type = resident.client_type if resident.client_type else "일반"
-
-        monthly_limit = CARE_GRADE_LIMITS.get(care_grade, 1577500)
 
         service_category = "재가급여"
         category_rates = PATIENT_PAY_RATE.get(service_category, PATIENT_PAY_RATE["재가급여"])
         patient_rate = category_rates.get(client_type, 0.15)
         insurance_rate = 1 - patient_rate
 
-        # 월 청부액 (월 한도액 기준)
-        amount = int(monthly_limit * insurance_rate)
+        # 1회 방문당 청부액
+        base_amount = VISIT_AMOUNTS_BY_GRADE.get(care_grade, 78875)
+        amount = int(base_amount * insurance_rate)
 
         billing_record = BillingRecord(
+            daily_record_id=daily_record.id,
             caregiver_id=caregiver_id,
             resident_id=resident_id,
             center_id=resident.center_id,
@@ -222,8 +235,8 @@ async def get_today_records(
         BillingRecord.caregiver_id == caregiver_id
     ).all()
 
-    # 기록 ID별 청부액/서비스유형 매핑
-    billing_map = {b.id: {"amount": b.amount, "service_type": b.service_type} for b in billings}
+    # 일일 기록 ID별 청부액/서비스유형 매핑
+    billing_map = {b.daily_record_id: {"amount": b.amount, "service_type": b.service_type} for b in billings if b.daily_record_id}
     billing_total = sum(b.amount for b in billings)
 
     return {
@@ -248,24 +261,29 @@ async def get_today_records(
 
 @router.get("/today/center")
 async def get_today_center_records(
+    center_id: int,
     db: Session = Depends(get_db)
 ):
     """
     센터 전체의 오늘 기록 조회 (센터장용)
-    모든 요양관리사의 오늘 기록을 합산
+    해당 센터 요양관리사의 오늘 기록만 조회
     """
     today = datetime.utcnow().date()
     today_start = datetime.combine(today, time.min)
     today_end = datetime.combine(today, time.max)
 
-    # 오늘 생성된 모든 기록
-    records = db.query(DailyRecord).filter(
+    # 해당 센터의 오늘 기록만 조회
+    records = db.query(DailyRecord).join(
+        Resident, DailyRecord.resident_id == Resident.id
+    ).filter(
+        Resident.center_id == center_id,
         DailyRecord.recorded_date >= today_start,
         DailyRecord.recorded_date <= today_end
     ).all()
 
-    # 관련 청부 기록
+    # 해당 센터의 청부 기록만 조회
     billings = db.query(BillingRecord).filter(
+        BillingRecord.center_id == center_id,
         BillingRecord.recorded_date >= today_start,
         BillingRecord.recorded_date <= today_end
     ).all()

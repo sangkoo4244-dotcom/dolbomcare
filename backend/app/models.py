@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, Boolean, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Float, Boolean, Text, ForeignKey, Date
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -32,10 +32,13 @@ class Resident(Base):
     id = Column(Integer, primary_key=True, index=True)
     center_id = Column(Integer, ForeignKey("centers.id"))
     name = Column(String, index=True)
+    birth_date = Column(Date, nullable=True)  # 생년월일 (YYYY-MM-DD)
     age = Column(Integer)
     admission_date = Column(DateTime)
     health_status = Column(String)  # 'stable', 'warning', 'critical'
     guardian_id = Column(Integer, ForeignKey("users.id"))
+    care_grade = Column(Integer, default=1)  # 1~5등급, null=인지지원등급
+    client_type = Column(String, default="일반")  # '일반', '차상위계층', '기초생활보장', '의료급여'
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class DailyRecord(Base):
@@ -78,4 +81,20 @@ class Salary(Base):
     deductions = Column(Integer, default=0)
     total = Column(Integer)
     status = Column(String)  # 'pending', 'approved', 'paid'
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class BillingRecord(Base):
+    __tablename__ = "billing_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    daily_record_id = Column(Integer, ForeignKey("daily_records.id"), nullable=True)
+    caregiver_id = Column(Integer, ForeignKey("users.id"))
+    resident_id = Column(Integer, ForeignKey("residents.id"))
+    center_id = Column(Integer, ForeignKey("centers.id"))
+    service_category = Column(String, default="재가급여")  # '재가급여' or '시설급여'
+    service_type = Column(String)  # 'basic_care', 'meal_service', 'medical_care', 'emergency'
+    amount = Column(Integer)  # 청구액 (원)
+    status = Column(String, default="pending")  # 'pending', 'submitted', 'paid'
+    recorded_date = Column(DateTime, index=True)
+    submitted_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from app.schemas import LoginRequest, LoginResponse, UserCreate, UserResponse
 from app.models import User
@@ -6,6 +6,7 @@ from app.database import get_db
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt
+from typing import Optional
 
 router = APIRouter()
 
@@ -71,4 +72,32 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
             "is_active": user.is_active,
             "created_at": user.created_at
         }
+    }
+
+@router.get("/")
+async def list_users(
+    role: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """사용자 목록 조회 (선택적으로 역할로 필터링)"""
+    query = db.query(User)
+
+    if role:
+        query = query.filter(User.role == role)
+
+    users = query.all()
+
+    return {
+        "total_users": len(users),
+        "users": [
+            {
+                "id": u.id,
+                "email": u.email,
+                "full_name": u.full_name,
+                "role": u.role,
+                "is_active": u.is_active,
+                "created_at": u.created_at.isoformat() if u.created_at else None
+            }
+            for u in users
+        ]
     }

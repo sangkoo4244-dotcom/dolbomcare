@@ -665,15 +665,6 @@
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">건강상태 *</label>
-                        <select id="addHealth" class="form-input" required>
-                            <option value="stable">정상</option>
-                            <option value="warning">주의</option>
-                            <option value="critical">위험</option>
-                        </select>
-                    </div>
-
                     <div class="form-actions">
                         <button type="submit" class="submit-btn">등록하기</button>
                         <button type="button" class="cancel-btn" onclick="closeAddModal()">취소</button>
@@ -711,10 +702,10 @@
                 user.role === 'center_manager' ? '센터장' : '사용자';
         }
 
-        // 이용자 목록 로드
+        // 이용자 목록 로드 (현재 센터만)
         async function loadResidents() {
             try {
-                const response = await fetch(`${API_URL}/residents/`, {
+                const response = await fetch(`${API_URL}/residents/?center_id=${currentUser.center_id}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -934,8 +925,7 @@
             const clientType = typeSelect.value;
             const healthStatus = healthSelect.value;
 
-            const buttons = document.querySelectorAll(`#resident-${residentId} .save-btn`);
-            const saveBtn = buttons[0]; // 첫 번째 버튼 (저장)
+            const saveBtn = document.querySelector(`#resident-${residentId} .action-btn.save`);
             saveBtn.disabled = true;
             saveBtn.textContent = '저장 중...';
 
@@ -981,8 +971,7 @@
                 return;
             }
 
-            const buttons = document.querySelectorAll(`#resident-${residentId} .save-btn`);
-            const deleteBtn = buttons[1]; // 두 번째 버튼 (삭제)
+            const deleteBtn = document.querySelector(`#resident-${residentId} .action-btn.delete`);
             deleteBtn.disabled = true;
             deleteBtn.textContent = '삭제 중...';
 
@@ -1094,7 +1083,7 @@
                     health_status: health,
                     care_grade: grade,
                     client_type: type,
-                    center_id: 1  // 테스트 센터 ID (강남 요양원)
+                    center_id: currentUser.center_id  // 현재 센터
                 };
 
                 console.log('📝 등록 데이터:', residentData);

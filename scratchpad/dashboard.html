@@ -148,6 +148,18 @@
 
             currentUser = user;
             renderDashboard(user);
+
+            // 다른 탭에서 데이터 갱신 신호 감시
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'dashboardRefresh') {
+                    console.log('📊 대시보드 데이터 갱신 신호 감지');
+                    if (currentUser.role === 'caregiver') {
+                        loadCaregiverData();
+                    } else {
+                        loadManagerData();
+                    }
+                }
+            });
         });
 
         function renderDashboard(user) {
@@ -343,8 +355,8 @@
 
         async function loadManagerData() {
             try {
-                // 센터 전체 기록
-                const todayRes = await fetch(`${API_URL}/records/today/center`);
+                // 센터 전체 기록 (현재 센터만)
+                const todayRes = await fetch(`${API_URL}/records/today/center?center_id=${currentUser.center_id}`);
                 if (todayRes.ok) {
                     const data = await todayRes.json();
                     document.getElementById('managerCompleted').textContent = `${data.total_records || 0}건`;
