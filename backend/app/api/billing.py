@@ -380,11 +380,11 @@ async def delete_billing(
     is_manager = user_role == "center_manager"
 
     if user_role == "caregiver":
-        # 요양사: draft 상태의 자신 것만 삭제 가능
+        # 요양사: draft 또는 rejected 상태의 자신 것만 삭제 가능
         if not is_owner:
             raise HTTPException(status_code=403, detail="자신의 청부만 삭제 가능합니다")
-        if billing.status != "draft":
-            raise HTTPException(status_code=400, detail="임시 저장된 청부만 삭제 가능합니다")
+        if billing.status != "draft" and billing.approval_status != "rejected":
+            raise HTTPException(status_code=400, detail="임시 저장되었거나 거절된 청부만 삭제 가능합니다")
     elif is_manager:
         # 센터장: pending/rejected 상태만 삭제 가능
         if billing.approval_status not in ["pending", "rejected"]:
