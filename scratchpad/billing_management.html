@@ -331,6 +331,15 @@
                 const tableDiv = document.getElementById('billingTable');
                 tableDiv.innerHTML = '<div class="loading">로드 중...</div>';
 
+                // 주민 정보 로드
+                const residentsRes = await fetch(`${API_URL}/residents/`);
+                const residentsData = residentsRes.ok ? await residentsRes.json() : { residents: [] };
+                const residents = residentsData.residents || [];
+                const residentMap = {};
+                residents.forEach(r => {
+                    residentMap[r.id] = r.name;
+                });
+
                 // 월별 청부 정보 조회
                 const monthlyRes = await fetch(`${API_URL}/billing/monthly/${yearMonth}`);
                 if (!monthlyRes.ok) throw new Error('청부 정보 조회 실패');
@@ -359,7 +368,7 @@
                            recordDate.getMonth() + 1 === parseInt(month);
                 });
 
-                renderBillingTable();
+                renderBillingTable(residentMap);
 
                 console.log('✅ 청부 기록 로드 완료:', billingRecords.length + '건');
             } catch (error) {
@@ -369,7 +378,7 @@
             }
         }
 
-        function renderBillingTable() {
+        function renderBillingTable(residentMap = {}) {
             const tableDiv = document.getElementById('billingTable');
 
             let html = `
@@ -377,7 +386,7 @@
                     <thead>
                         <tr>
                             <th>기록일</th>
-                            <th>이용자 ID</th>
+                            <th>이용자</th>
                             <th>서비스 유형</th>
                             <th style="text-align: right;">청부액</th>
                             <th>상태</th>
@@ -413,11 +422,12 @@
                     }[record.service_type] || record.service_type;
 
                     const recordedDate = new Date(record.recorded_date).toLocaleDateString('ko-KR');
+                    const residentName = residentMap[record.resident_id] || `ID: ${record.resident_id}`;
 
                     html += `
                         <tr>
                             <td>${recordedDate}</td>
-                            <td>${record.resident_id}</td>
+                            <td>${residentName}</td>
                             <td>${serviceLabel}</td>
                             <td style="text-align: right;">${record.amount.toLocaleString()}원</td>
                             <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>

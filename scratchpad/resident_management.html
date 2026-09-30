@@ -1143,6 +1143,9 @@
             submitBtn.textContent = '등록 중...';
 
             try {
+                console.log('👤 현재 사용자:', currentUser);
+                console.log('🔍 center_id:', currentUser.center_id);
+
                 const residentData = {
                     name,
                     birth_date: birthDate,
@@ -1163,9 +1166,18 @@
                     body: JSON.stringify(residentData)
                 });
 
+                console.log('📡 응답 상태:', response.status, response.statusText);
+
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || '등록 실패');
+                    let error;
+                    try {
+                        error = await response.json();
+                        console.log('📦 오류 응답:', error);
+                    } catch (e) {
+                        console.log('⚠️ JSON 파싱 실패:', await response.text());
+                        throw new Error('서버 오류 (응답 파싱 실패)');
+                    }
+                    throw new Error(error.detail || error.message || '등록 실패');
                 }
 
                 const data = await response.json();

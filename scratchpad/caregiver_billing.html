@@ -258,6 +258,15 @@
                 const tableDiv = document.getElementById('billingTable');
                 tableDiv.innerHTML = '<div class="loading">로드 중...</div>';
 
+                // 주민 정보 로드
+                const residentsRes = await fetch(`${API_URL}/residents/`);
+                const residentsData = residentsRes.ok ? await residentsRes.json() : { residents: [] };
+                const residents = residentsData.residents || [];
+                const residentMap = {};
+                residents.forEach(r => {
+                    residentMap[r.id] = r.name;
+                });
+
                 // 센터장은 전체 청부, 요양사는 자신의 청부만 조회
                 let url = `${API_URL}/billing/`;
                 if (currentUser.role === 'caregiver') {
@@ -281,7 +290,7 @@
                 document.getElementById('rejectedCount').textContent = `${rejectedCount}건`;
 
                 // 테이블 렌더링
-                renderBillingTable(records);
+                renderBillingTable(records, residentMap);
 
                 console.log('✅ 청부 기록 로드 완료:', records.length + '건');
             } catch (error) {
@@ -291,7 +300,7 @@
             }
         }
 
-        function renderBillingTable(records) {
+        function renderBillingTable(records, residentMap = {}) {
             const tableDiv = document.getElementById('billingTable');
             const isManager = currentUser.role === 'center_manager';
 
@@ -330,6 +339,7 @@
                     }[record.service_type] || record.service_type;
 
                     const recordedDate = new Date(record.recorded_date).toLocaleDateString('ko-KR');
+                    const residentName = residentMap[record.resident_id] || `ID: ${record.resident_id}`;
 
                     let noteHtml = '';
                     if (record.approval_status === 'rejected' && record.rejection_reason) {
@@ -349,7 +359,7 @@
                     html += `
                         <tr>
                             <td>${recordedDate}</td>
-                            <td>${record.resident_id}</td>
+                            <td>${residentName}</td>
                             <td>${serviceLabel}</td>
                             <td style="text-align: right;">${record.amount.toLocaleString()}원</td>
                             <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
