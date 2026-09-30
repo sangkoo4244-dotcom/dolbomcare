@@ -11,6 +11,8 @@ from app.models import User, Center, Resident
 from app.api.users import get_password_hash
 
 def create_test_accounts():
+    # 기존 테이블 완전 삭제 후 재생성
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
