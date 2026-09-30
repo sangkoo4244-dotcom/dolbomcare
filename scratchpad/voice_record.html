@@ -979,6 +979,10 @@
                         ? `<input type="checkbox" class="record-checkbox" data-record-id="${record.id}" onchange="updateSelectedCount()">`
                         : '';
 
+                    const deleteBtn = canDelete
+                        ? `<button class="delete-btn" onclick="deleteRecord(${record.id})">삭제</button>`
+                        : '';
+
                     return `
                         <li class="record-item" id="record-${record.id}">
                             <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
@@ -991,6 +995,7 @@
                             </div>
                             <div class="record-actions">
                                 <div class="record-amount">₩ ${amount.toLocaleString()}원</div>
+                                ${deleteBtn}
                             </div>
                         </li>
                     `;
