@@ -1,0 +1,3 @@
+- [오늘 작업 현황](today_status.md) — 2026-09-30 청부 현황/나이계산/center_id 문제 진행상황
+- [center_id 버그 해결](center_id_fix.md) — 로그인 응답에서 center_id 누락 문제 및 임시 해결책
+- [이용자 추가 기능](resident_add_status.md) — 422 오류 해결, 내일 완전 테스트 필요
