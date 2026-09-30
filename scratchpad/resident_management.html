@@ -88,6 +88,14 @@
 
         .header {
             margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .header-content {
+            flex: 1;
         }
 
         .header-title {
@@ -549,8 +557,11 @@
         <a class="back-link" onclick="window.location.href='./dashboard.html'">← 대시보드로 돌아가기</a>
 
         <div class="header">
-            <h1 class="header-title">👥 이용자 관리</h1>
-            <p class="header-subtitle">센터 이용자의 요양등급과 클라이언트 타입을 관리합니다</p>
+            <div class="header-content">
+                <h1 class="header-title">👥 이용자 관리</h1>
+                <p class="header-subtitle">센터 이용자의 요양등급과 클라이언트 타입을 관리합니다</p>
+            </div>
+            <button id="addResidentBtn" class="btn-primary" style="white-space: nowrap; align-self: flex-start; margin-top: 4px;">+ 이용자 추가</button>
         </div>
 
         <div id="successMessage" class="success-message"></div>
@@ -683,7 +694,26 @@
         window.addEventListener('load', () => {
             checkAuth();
             loadResidents();
+
+            // 이용자 추가 버튼 이벤트
+            const addBtn = document.getElementById('addResidentBtn');
+            if (addBtn && currentUser.role === 'center_manager') {
+                addBtn.addEventListener('click', openAddModal);
+            } else if (addBtn) {
+                addBtn.style.display = 'none';
+            }
         });
+
+        function openAddModal() {
+            document.getElementById('residentName').value = '';
+            document.getElementById('residentAge').value = '';
+            document.getElementById('residentBirthDate').value = '';
+            document.getElementById('residentGrade').value = '1';
+            document.getElementById('residentType').value = '일반';
+            document.getElementById('residentHealth').value = 'stable';
+            document.getElementById('residentModal').style.display = 'flex';
+            document.getElementById('editForm').dataset.residentId = '';
+        }
 
         // 인증 확인
         function checkAuth() {
