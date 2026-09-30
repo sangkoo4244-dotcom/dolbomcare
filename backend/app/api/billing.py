@@ -100,9 +100,10 @@ async def get_monthly_billing(
     ).all()
 
     total_amount = sum(r.amount for r in records)
-    submitted_count = len([r for r in records if r.status == "submitted"])
+    # draft: 미제출, pending/submitted: 제출됨, paid: 완료
+    submitted_count = len([r for r in records if r.status in ["draft", "pending", "submitted"]])
     paid_count = len([r for r in records if r.status == "paid"])
-    pending_count = len([r for r in records if r.status == "pending"])
+    pending_count = len([r for r in records if r.status == "draft"])
 
     # 청구 시간 절감: 기본 40시간에서 70% 절감 → 12시간
     # 시간당 평균 급여 15,000원 기준
