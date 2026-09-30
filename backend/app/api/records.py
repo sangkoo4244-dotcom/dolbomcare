@@ -294,6 +294,127 @@ async def get_center_today_records(
         "center_id": center_id
     }
 
+@router.get("/recent")
+async def get_recent_records(
+    caregiver_id: int,
+    days: int = 7,
+    db: Session = Depends(get_db)
+):
+    """
+    지난 N일간의 기록 조회 (기본: 7일)
+    """
+    try:
+        from datetime import date, datetime as dt, time as time_cls, timedelta
+
+        today = date.today()
+        start_date = today - timedelta(days=days - 1)
+        start_datetime = dt.combine(start_date, time_cls.min)
+        end_datetime = dt.combine(today, time_cls.max)
+
+        records = db.query(DailyRecord).filter(
+            DailyRecord.caregiver_id == caregiver_id,
+            DailyRecord.recorded_date >= start_datetime,
+            DailyRecord.recorded_date <= end_datetime
+        ).order_by(DailyRecord.recorded_date.desc()).all()
+
+        billings = db.query(BillingRecord).filter(
+            BillingRecord.recorded_date >= start_datetime,
+            BillingRecord.recorded_date <= end_datetime,
+            BillingRecord.caregiver_id == caregiver_id
+        ).all()
+
+        billing_map = {}
+        for b in billings:
+            if b.daily_record_id:
+                billing_map[b.daily_record_id] = {
+                    "amount": b.amount,
+                    "service_type": b.service_type
+                }
+
+        billing_total = sum(b.amount for b in billings if b.amount)
+
+        response_records = []
+        for r in records:
+            billing_info = billing_map.get(r.id, {})
+            response_records.append({
+                "id": r.id,
+                "caregiver_id": r.caregiver_id,
+                "resident_id": r.resident_id,
+                "service_type": billing_info.get("service_type", "basic_care"),
+                "morning_care": r.morning_care,
+                "meal_intake": r.meal_intake,
+                "medicine_given": r.medicine_given,
+                "notes": r.notes,
+                "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
+                "billing_amount": billing_info.get("amount", 0)
+            })
+
+        return {
+            "days": days,
+            "total_records": len(records),
+            "total_billing_amount": billing_total,
+            "records": response_records
+        }
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"[ERROR] get_recent_records: {type(e).__name__}: {e}\n{error_trace}")
+        raise HTTPException(status_code=500, detail=f"기록 조회 중 오류 발생: {str(e)}")
+
+@router.get("/all")
+async def get_all_records(
+    caregiver_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    모든 기록 조회
+    """
+    try:
+        records = db.query(DailyRecord).filter(
+            DailyRecord.caregiver_id == caregiver_id
+        ).order_by(DailyRecord.recorded_date.desc()).all()
+
+        billings = db.query(BillingRecord).filter(
+            BillingRecord.caregiver_id == caregiver_id
+        ).all()
+
+        billing_map = {}
+        for b in billings:
+            if b.daily_record_id:
+                billing_map[b.daily_record_id] = {
+                    "amount": b.amount,
+                    "service_type": b.service_type
+                }
+
+        billing_total = sum(b.amount for b in billings if b.amount)
+
+        response_records = []
+        for r in records:
+            billing_info = billing_map.get(r.id, {})
+            response_records.append({
+                "id": r.id,
+                "caregiver_id": r.caregiver_id,
+                "resident_id": r.resident_id,
+                "service_type": billing_info.get("service_type", "basic_care"),
+                "morning_care": r.morning_care,
+                "meal_intake": r.meal_intake,
+                "medicine_given": r.medicine_given,
+                "notes": r.notes,
+                "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
+                "billing_amount": billing_info.get("amount", 0)
+            })
+
+        return {
+            "total_records": len(records),
+            "total_billing_amount": billing_total,
+            "records": response_records
+        }
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"[ERROR] get_all_records: {type(e).__name__}: {e}\n{error_trace}")
+        raise HTTPException(status_code=500, detail=f"기록 조회 중 오류 발생: {str(e)}")
+
 @router.get("/today")
 async def get_today_records(
     caregiver_id: int,
