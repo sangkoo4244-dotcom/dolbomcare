@@ -55,6 +55,8 @@
             padding: 20px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             border: 1px solid #e8e8e8;
+            display: flex;
+            flex-direction: column;
         }
 
         .card.main-card {
@@ -132,7 +134,7 @@
             font-weight: 600;
             transition: all 0.2s ease;
             text-decoration: none;
-            margin-top: 12px;
+            margin-top: auto;
             width: 100%;
             text-align: center;
         }
@@ -448,6 +450,13 @@
                     document.getElementById('managerBilling').textContent = `${(data.total_amount || 0).toLocaleString()}원`;
                     document.getElementById('managerBillingSubmit').textContent = `${data.submitted_count || 0}건`;
                     document.getElementById('managerBillingPaid').textContent = `${data.paid_count || 0}건`;
+
+                    // 월별 리포트 업데이트
+                    const totalRecords = data.total_records || 0;
+                    const avgBilling = totalRecords > 0 ? Math.floor(data.total_amount / totalRecords) : 0;
+                    document.getElementById('managerMonthlyRecords').textContent = `${totalRecords}건`;
+                    document.getElementById('managerMonthlyBilling').textContent = `${avgBilling.toLocaleString()}원`;
+
                     console.log('✅ 청구 정보:', data.total_amount, `(${data.submitted_count}건 제출, ${data.paid_count}건 완료)`);
                 } else {
                     console.warn('⚠️ 청구 정보 조회 실패');

@@ -561,6 +561,7 @@
                 const centerId = currentUser.center_id || 1;
 
                 if (editingStaffId) {
+                    // 기존 직원 수정
                     const response = await fetch(`${API_URL}/users/${editingStaffId}`, {
                         method: 'PUT',
                         headers: {
@@ -572,11 +573,13 @@
 
                     if (!response.ok) {
                         const error = await response.json();
-                        throw new Error(error.detail || 'Failed to update staff');
+                        throw new Error(error.detail || '직원 수정 실패');
                     }
+                    console.log('✅ 직원 정보 수정 완료:', editingStaffId);
                     alert('직원 정보가 수정되었습니다');
                 } else {
-                    const response = await fetch(`${API_URL}/users/`, {
+                    // 새 직원 추가
+                    const response = await fetch(`${API_URL}/auth/register`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -586,14 +589,17 @@
                             ...staffData,
                             password: 'password123',
                             role: 'caregiver',
-                            center_id: centerId
+                            center_id: centerId,
+                            full_name: staffData.full_name,
+                            email: staffData.email
                         })
                     });
 
                     if (!response.ok) {
                         const error = await response.json();
-                        throw new Error(error.detail || 'Failed to add staff');
+                        throw new Error(error.detail || '직원 추가 실패');
                     }
+                    console.log('✅ 직원 추가 완료');
                     alert('직원이 추가되었습니다');
                 }
 
