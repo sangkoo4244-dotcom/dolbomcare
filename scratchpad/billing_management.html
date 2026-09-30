@@ -303,6 +303,13 @@
             const token = localStorage.getItem('access_token');
             const user = JSON.parse(localStorage.getItem('user') || '{}');
 
+            console.log('=== 센터장 청부관리 페이지 로드 ===');
+            console.log('Token:', token ? '있음' : '없음');
+            console.log('User 객체:', user);
+            console.log('User ID:', user.id);
+            console.log('User Center ID:', user.center_id);
+            console.log('User Role:', user.role);
+
             if (!token || !user.id) {
                 alert('로그인이 필요합니다');
                 window.location.href = './login.html';
@@ -310,6 +317,12 @@
             }
 
             currentUser = user;
+
+            console.log('CurrentUser 설정됨:', {
+                id: currentUser.id,
+                center_id: currentUser.center_id,
+                role: currentUser.role
+            });
 
             const today = new Date();
             const yearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -354,7 +367,13 @@
 
                 // 모든 청부 기록 조회
                 const centerId = currentUser.center_id || 1;
-                const recordsRes = await fetch(`${API_URL}/billing/?center_id=${centerId}`);
+                const billingUrl = `${API_URL}/billing/?center_id=${centerId}`;
+
+                console.log('📡 청부 조회 API 호출:');
+                console.log('   centerId:', centerId);
+                console.log('   URL:', billingUrl);
+
+                const recordsRes = await fetch(billingUrl);
                 if (!recordsRes.ok) throw new Error('기록 조회 실패');
 
                 const recordsData = await recordsRes.json();
