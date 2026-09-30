@@ -66,106 +66,87 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
-        /* 직원 그리드 */
-        .staff-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-            gap: 20px;
-        }
-
-        .staff-card {
+        /* 직원 테이블 */
+        .staff-table-container {
             background: white;
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             border: 1px solid #e8e8e8;
-            transition: all 0.2s ease;
         }
 
-        .staff-card:hover {
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-            transform: translateY(-2px);
+        .staff-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
         }
 
-        .staff-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #f0f0f0;
+        .staff-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .staff-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #2c3e50;
+        }
+
+        .staff-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        .staff-table tbody tr:hover {
+            background: #f9f9f9;
         }
 
         .staff-name {
-            font-size: 18px;
-            font-weight: 700;
+            font-weight: 600;
             color: #2c3e50;
         }
 
         .staff-position {
-            font-size: 13px;
+            font-size: 12px;
             color: #667eea;
             font-weight: 600;
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
-        .staff-status-badge {
-            padding: 6px 12px;
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
             border-radius: 12px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
             text-align: center;
+        }
+
+        .status-active {
             background: #e8f5e9;
             color: #2e7d32;
         }
 
-        .staff-status-badge.inactive {
+        .status-inactive {
             background: #ffebee;
             color: #c62828;
         }
 
-        .staff-status-badge.leave {
+        .status-leave {
             background: #fff3e0;
             color: #e65100;
-        }
-
-        .staff-info {
-            margin-bottom: 16px;
-        }
-
-        .staff-info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            font-size: 13px;
-            border-bottom: 1px solid #f5f5f5;
-        }
-
-        .staff-info-row:last-child {
-            border-bottom: none;
-        }
-
-        .staff-label {
-            color: #999;
-            font-weight: 500;
-        }
-
-        .staff-value {
-            color: #333;
-            font-weight: 600;
-            text-align: right;
         }
 
         .staff-actions {
             display: flex;
             gap: 8px;
-            padding-top: 16px;
-            border-top: 1px solid #f0f0f0;
         }
 
         .btn-sm {
-            flex: 1;
-            padding: 8px 12px;
+            padding: 6px 12px;
             font-size: 12px;
             border-radius: 6px;
             border: none;
@@ -322,8 +303,13 @@
                 gap: 16px;
             }
 
-            .staff-grid {
-                grid-template-columns: 1fr;
+            .staff-table {
+                font-size: 12px;
+            }
+
+            .staff-table th,
+            .staff-table td {
+                padding: 8px;
             }
 
             .form-row {
@@ -343,9 +329,11 @@
             <button class="btn btn-primary" id="addStaffBtn">+ 직원 추가</button>
         </div>
 
-        <div id="staffList" class="loading">
-            <div class="spinner"></div>
-            <p>로드 중...</p>
+        <div class="staff-table-container">
+            <div id="staffList" class="loading">
+                <div class="spinner"></div>
+                <p>로드 중...</p>
+            </div>
         </div>
     </main>
 
@@ -362,7 +350,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">직급</label>
-                        <input type="text" id="staffPosition" class="form-input" placeholder="예: 요양사, 팀장">
+                        <input type="text" id="staffPosition" class="form-input" placeholder="예: 요양사">
                     </div>
                 </div>
 
@@ -441,7 +429,20 @@
                     return;
                 }
 
-                let html = '<div class="staff-grid">';
+                let html = `
+                    <table class="staff-table">
+                        <thead>
+                            <tr>
+                                <th>이름</th>
+                                <th>직급</th>
+                                <th>이메일</th>
+                                <th>전화</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
 
                 staffListData.forEach(staff => {
                     const statusText = {
@@ -450,47 +451,32 @@
                         'leave': '휴직'
                     }[staff.employment_status] || '근무';
 
-                    const statusClass = staff.employment_status === 'active' ? '' : staff.employment_status;
-                    const hireDate = staff.hire_date ? new Date(staff.hire_date).toLocaleDateString('ko-KR') : '-';
+                    const statusClass = `status-${staff.employment_status || 'active'}`;
 
                     html += `
-                        <div class="staff-card">
-                            <div class="staff-header">
-                                <div>
-                                    <div class="staff-name">${staff.full_name || '(이름 없음)'}</div>
-                                    <div class="staff-position">${staff.position || '요양사'}</div>
+                        <tr>
+                            <td>
+                                <div class="staff-name">${staff.full_name || '(이름 없음)'}</div>
+                            </td>
+                            <td>${staff.position || '-'}</td>
+                            <td>${staff.email || '-'}</td>
+                            <td>${staff.phone || '-'}</td>
+                            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                            <td>
+                                <div class="staff-actions">
+                                    <button class="btn-sm btn-edit" onclick="editStaff(${staff.id})">수정</button>
+                                    <button class="btn-sm btn-delete" onclick="deleteStaff(${staff.id})">삭제</button>
                                 </div>
-                                <div class="staff-status-badge ${statusClass}">${statusText}</div>
-                            </div>
-
-                            <div class="staff-info">
-                                <div class="staff-info-row">
-                                    <span class="staff-label">📧 이메일</span>
-                                    <span class="staff-value">${staff.email || '-'}</span>
-                                </div>
-                                <div class="staff-info-row">
-                                    <span class="staff-label">📱 전화</span>
-                                    <span class="staff-value">${staff.phone || '-'}</span>
-                                </div>
-                                <div class="staff-info-row">
-                                    <span class="staff-label">🆘 긴급</span>
-                                    <span class="staff-value">${staff.emergency_contact || '-'}</span>
-                                </div>
-                                <div class="staff-info-row">
-                                    <span class="staff-label">📅 고용일</span>
-                                    <span class="staff-value">${hireDate}</span>
-                                </div>
-                            </div>
-
-                            <div class="staff-actions">
-                                <button class="btn-sm btn-edit" onclick="editStaff(${staff.id})">수정</button>
-                                <button class="btn-sm btn-delete" onclick="deleteStaff(${staff.id})">삭제</button>
-                            </div>
-                        </div>
+                            </td>
+                        </tr>
                     `;
                 });
 
-                html += '</div>';
+                html += `
+                        </tbody>
+                    </table>
+                `;
+
                 document.getElementById('staffList').innerHTML = html;
                 console.log('✅ 직원 목록 로드 완료:', staffListData);
             } catch (error) {
@@ -552,7 +538,6 @@
                 const centerId = currentUser.center_id || 1;
 
                 if (editingStaffId) {
-                    // 수정
                     const response = await fetch(`${API_URL}/users/${editingStaffId}`, {
                         method: 'PUT',
                         headers: {
@@ -568,7 +553,6 @@
                     }
                     alert('직원 정보가 수정되었습니다');
                 } else {
-                    // 추가
                     const response = await fetch(`${API_URL}/users/`, {
                         method: 'POST',
                         headers: {
