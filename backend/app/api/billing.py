@@ -363,6 +363,42 @@ async def reject_billing(
         }
     }
 
+@router.post("/{billing_id}/submit")
+async def submit_billing_for_approval(
+    billing_id: int,
+    request: ApprovalRequest,
+    db: Session = Depends(get_db)
+):
+    """청부를 센터장 승인을 위해 제출 (요양사만 가능)"""
+    if request.user_role != "caregiver":
+        raise HTTPException(status_code=403, detail="요양사만 제출 가능합니다")
+
+    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    if not billing:
+        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+
+    if billing.caregiver_id != request.user_id:
+        raise HTTPException(status_code=403, detail="자신의 청부만 제출 가능합니다")
+
+    if billing.status != "draft":
+        raise HTTPException(status_code=400, detail="임시 저장 상태의 청부만 제출 가능합니다")
+
+    # 제출 처리
+    billing.approval_status = "pending"
+    billing.status = "submitted"
+    db.commit()
+    db.refresh(billing)
+
+    return {
+        "status": "success",
+        "message": "청부가 센터장 승인을 위해 제출되었습니다",
+        "data": {
+            "id": billing.id,
+            "approval_status": billing.approval_status,
+            "status": billing.status
+        }
+    }
+
 @router.delete("/{billing_id}")
 async def delete_billing(
     billing_id: int,

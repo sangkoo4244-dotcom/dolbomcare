@@ -194,6 +194,21 @@
             background: #ee5a52;
         }
 
+        .btn-submit {
+            padding: 6px 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            background: #5568d3;
+        }
+
         .loading, .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -376,9 +391,10 @@
                     } else {
                         // 요양사: 상태별 액션
                         if (record.status === 'draft' || record.approval_status === 'rejected') {
-                            // draft 상태 또는 반려 상태: 삭제 가능
+                            // draft 상태 또는 반려 상태: 제출 또는 삭제
                             actionHtml = `
                                 <div class="action-buttons">
+                                    <button class="btn-submit" onclick="submitBilling(${record.id})">제출</button>
                                     <button class="btn-delete" onclick="deleteBilling(${record.id}, 'caregiver')">삭제</button>
                                 </div>
                             `;
@@ -516,6 +532,51 @@
             const reason = prompt('거절 사유를 입력하세요:');
             if (reason !== null) {
                 rejectBilling(recordId, reason);
+            }
+        }
+
+        // 청부 제출 (요양사)
+        async function submitBilling(recordId) {
+            if (!confirm('이 청부를 센터장 승인을 위해 제출하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                if (!currentUser || !currentUser.id) {
+                    throw new Error('사용자 정보가 없습니다. 다시 로그인하세요.');
+                }
+
+                console.log('제출 요청:', {recordId, userId: currentUser.id, role: currentUser.role});
+
+                const response = await fetch(`${API_URL}/billing/${recordId}/submit`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        user_role: currentUser.role
+                    })
+                });
+
+                console.log('응답 상태:', response.status);
+
+                if (!response.ok) {
+                    let errorMsg = '제출 실패';
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.detail || errorMsg;
+                    } catch (e) {
+                        errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorMsg);
+                }
+
+                const result = await response.json();
+                console.log('제출 성공:', result);
+                showToast('✅ 청부가 센터장 승인을 위해 제출되었습니다');
+                setTimeout(() => loadBillingRecords(), 500);
+            } catch (error) {
+                console.error('❌ 제출 오류:', error);
+                alert('❌ 제출 중 오류: ' + error.message);
             }
         }
 
