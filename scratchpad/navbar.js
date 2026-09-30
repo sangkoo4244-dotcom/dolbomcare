@@ -21,7 +21,7 @@ function renderNavbar() {
         ],
         center_manager: [
             { icon: '🏠', label: '대시보드', url: './dashboard.html' },
-            { icon: '👥', label: '직원 관리', url: './staff_management.html', comingSoon: true },
+            { icon: '👥', label: '직원 관리', url: './staff_management.html' },
             { icon: '👤', label: '이용자 관리', url: './resident_management.html' },
             { icon: '📅', label: '일정 관리', url: './scheduling.html', comingSoon: true },
             { icon: '🎙️', label: '음성 기록', url: './voice_record.html' },
