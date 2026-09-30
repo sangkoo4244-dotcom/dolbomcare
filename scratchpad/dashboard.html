@@ -143,6 +143,35 @@
         .card.indigo { border-left-color: #5856D6; }
         .card.red { border-left-color: #FF3B30; }
 
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #34C759, #FFD60A, #FF9500);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .percentage {
+            font-weight: 600;
+            color: #333;
+        }
+
         .card-title {
             font-size: 18px;
             font-weight: 600;
@@ -388,6 +417,7 @@
 
     <script>
         const API_URL = 'http://localhost:8000/api/v1';
+        let currentUser = null;  // 글로벌 사용자 정보
 
         // 페이지 로드 시 토큰 확인
         window.addEventListener('load', () => {
@@ -422,6 +452,7 @@
         }
 
         function renderDashboard(user) {
+            currentUser = user;  // 글로벌 변수 설정
             const mainContent = document.getElementById('mainContent');
             const isCaregiver = user.role === 'caregiver';
 
@@ -440,45 +471,109 @@
                         </div>
                         <div class="card-stat">
                             <span class="stat-label">할당된 이용자</span>
-                            <span class="stat-value">3명</span>
+                            <span class="stat-value" id="assignedResidents">-명</span>
                         </div>
                         <div class="card-stat">
                             <span class="stat-label">완료된 기록</span>
-                            <span class="stat-value stat-good">2건</span>
+                            <span class="stat-value stat-good" id="completedRecords">-건</span>
                         </div>
                         <div class="card-stat">
                             <span class="stat-label">대기 중</span>
-                            <span class="stat-value stat-warning">1건</span>
+                            <span class="stat-value stat-warning" id="pendingRecords">-건</span>
+                        </div>
+                        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <div class="progress-label">
+                                <span>완료율</span>
+                                <span class="percentage" id="completionPercentage">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="completionProgressFill" style="width: 0%"></div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 음성 기록 -->
+                    <!-- 음성 기록 + 청구 자동화 -->
                     <div class="card green">
                         <div class="card-title">
                             <span class="card-emoji">🎙️</span>
                             음성 기록
+                            <span style="display: inline-block; background: #FF3B30; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px;">AI 청구</span>
                         </div>
-                        <div class="card-content">이용자의 일일 상태를 음성으로 기록하세요.</div>
-                        <button class="card-button btn-green">+ 새 기록 시작</button>
+                        <div class="card-content">음성 기록 → AI 요약 → 청구액 자동 계산</div>
+                        <div class="card-stat">
+                            <span class="stat-label">오늘 기록</span>
+                            <span class="stat-value stat-good" id="todayRecordsCount">-건</span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="stat-label">예상 청구액</span>
+                            <span class="stat-value" style="color: #FF9500;" id="todayEstimatedAmount">-원</span>
+                        </div>
+                        <button class="card-button btn-green" onclick="window.location.href='./voice_record.html'">+ 새 기록 시작</button>
                     </div>
 
-                    <!-- 건강 지표 -->
+                    <!-- 건강 지표 + 실시간 알림 -->
                     <div class="card orange">
                         <div class="card-title">
                             <span class="card-emoji">❤️</span>
                             건강 지표
+                            <span style="display: inline-block; background: #FF3B30; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px;">실시간</span>
                         </div>
                         <div class="card-stat">
                             <span class="stat-label">정상</span>
-                            <span class="stat-value stat-good">8명</span>
+                            <span class="stat-value stat-good" id="healthStable">-명</span>
                         </div>
                         <div class="card-stat">
                             <span class="stat-label">주의</span>
-                            <span class="stat-value stat-warning">2명</span>
+                            <span class="stat-value stat-warning" id="healthWarning">-명</span>
                         </div>
                         <div class="card-stat">
                             <span class="stat-label">위험</span>
-                            <span class="stat-value stat-critical">0명</span>
+                            <span class="stat-value stat-critical" id="healthCritical">-명</span>
+                        </div>
+                        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+                            <div class="progress-label">
+                                <span>상태 분포</span>
+                            </div>
+                            <div style="display: flex; gap: 2px; height: 12px; border-radius: 6px; overflow: hidden; background: #f0f0f0;">
+                                <div id="healthDistributionStable" style="background: #34C759; transition: width 0.3s ease;"></div>
+                                <div id="healthDistributionWarning" style="background: #FFD60A; transition: width 0.3s ease;"></div>
+                                <div id="healthDistributionCritical" style="background: #FF3B30; transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                        <div id="healthAlert" style="font-size: 12px; color: #FF9500; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0; display: none;">
+                        </div>
+                    </div>
+
+                    <!-- 청구 현황 NEW -->
+                    <div class="card indigo" id="billingCard">
+                        <div class="card-title">
+                            <span class="card-emoji">💳</span>
+                            청구 현황
+                            <span style="display: inline-block; background: #FF3B30; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px;">NEW</span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="stat-label">오늘 청구액</span>
+                            <span class="stat-value stat-good" id="todayBillingAmount">-</span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="stat-label">이번 달 청구액</span>
+                            <span class="stat-value" id="totalBillingAmount">-</span>
+                        </div>
+                        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #e0e0e0;">
+                            <div class="progress-label">
+                                <span>청부율 (한도액 대비)</span>
+                                <span class="percentage" id="billingPercentage">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="billingProgressFill" style="width: 0%"></div>
+                            </div>
+                            <div style="font-size: 12px; color: #666; text-align: right;">
+                                <span id="billingRatio">-원 / -원</span>
+                            </div>
+                        </div>
+                        <div class="card-stat" style="margin-top: 12px;">
+                            <span class="stat-label">공단 제출</span>
+                            <span class="stat-value stat-good" id="submittedCount">-</span>
                         </div>
                     </div>
 
@@ -488,8 +583,17 @@
                             <span class="card-emoji">👥</span>
                             이용자 관리
                         </div>
-                        <div class="card-content">센터 내 이용자를 관리하세요.</div>
-                        <button class="card-button btn-purple">이용자 관리</button>
+                        <div class="card-stat">
+                            <span class="stat-label">등록된 이용자</span>
+                            <span class="stat-value" id="managedResidents">-명</span>
+                        </div>
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); font-size: 12px;">
+                            <div style="color: #666; margin-bottom: 8px;">최근 등록:</div>
+                            <div id="recentResidentsList" style="max-height: 80px; overflow-y: auto;">
+                                <div style="color: #999; font-size: 11px;">로드 중...</div>
+                            </div>
+                        </div>
+                        <button class="card-button btn-purple" onclick="window.location.href='./resident_management.html'">이용자 관리</button>
                     </div>
 
                     <!-- 보고서 -->
@@ -500,6 +604,27 @@
                         </div>
                         <div class="card-content">월별 통계 및 현황을 확인하세요.</div>
                         <button class="card-button btn-indigo">보고서 조회</button>
+                    </div>
+
+                    <!-- 직원 관리 NEW -->
+                    <div class="card" style="border-left-color: #AF52DE;">
+                        <div class="card-title">
+                            <span class="card-emoji">👨‍💼</span>
+                            요양사 청부 현황
+                            <span style="display: inline-block; background: #FF3B30; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px;">NEW</span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="stat-label">등록된 요양사</span>
+                            <span class="stat-value" id="staffCount">-명</span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="stat-label">오늘 청부액</span>
+                            <span class="stat-value stat-good" id="todayStaffBilling">-원</span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="stat-label">이번 달 총 청부액</span>
+                            <span class="stat-value" id="staffSalary">-원</span>
+                        </div>
                     </div>
 
                     <!-- 설정 -->
@@ -541,6 +666,227 @@
 
             // 로그아웃 버튼
             document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            // 모든 동적 데이터 로드
+            loadAssignedResidents();
+            loadHealthMetrics();
+            loadStaffData();
+            loadBillingData();
+            loadTodayRecordsData();
+        }
+
+        // 할당된 이용자 수 로드
+        async function loadAssignedResidents() {
+            try {
+                const response = await fetch(`${API_URL}/residents/`);
+                if (!response.ok) throw new Error('Failed to fetch residents');
+
+                const data = await response.json();
+                const count = data.total_residents || 0;
+                const residents = data.residents || [];
+
+                document.getElementById('assignedResidents').textContent = `${count}명`;
+                document.getElementById('managedResidents').textContent = `${count}명`;
+
+                // 최근 등록된 이용자 목록 (최근 3명)
+                const recentResidents = residents.slice(-3).reverse();
+                const residentsHtml = recentResidents.length > 0
+                    ? recentResidents.map(r => `<div style="font-size: 11px; padding: 4px 0; color: #333;">• ${r.name} (${r.care_grade}등급)</div>`).join('')
+                    : '<div style="color: #999; font-size: 11px;">등록된 이용자가 없습니다.</div>';
+
+                document.getElementById('recentResidentsList').innerHTML = residentsHtml;
+                console.log('✅ 할당된 이용자 로드:', count, '최근:', recentResidents.length);
+            } catch (error) {
+                console.error('❌ 할당된 이용자 로드 실패:', error);
+            }
+        }
+
+        // 건강 지표 로드
+        async function loadHealthMetrics() {
+            try {
+                const response = await fetch(`${API_URL}/residents/`);
+                if (!response.ok) throw new Error('Failed to fetch residents');
+
+                const data = await response.json();
+                const residents = data.residents || [];
+
+                // 건강 상태별 집계
+                const stable = residents.filter(r => r.health_status === 'stable').length;
+                const warning = residents.filter(r => r.health_status === 'warning').length;
+                const critical = residents.filter(r => r.health_status === 'critical').length;
+                const total = residents.length;
+
+                document.getElementById('healthStable').textContent = `${stable}명`;
+                document.getElementById('healthWarning').textContent = `${warning}명`;
+                document.getElementById('healthCritical').textContent = `${critical}명`;
+
+                // 상태 분포 시각화
+                if (total > 0) {
+                    const stablePercent = (stable / total) * 100;
+                    const warningPercent = (warning / total) * 100;
+                    const criticalPercent = (critical / total) * 100;
+
+                    document.getElementById('healthDistributionStable').style.width = `${stablePercent}%`;
+                    document.getElementById('healthDistributionWarning').style.width = `${warningPercent}%`;
+                    document.getElementById('healthDistributionCritical').style.width = `${criticalPercent}%`;
+                }
+
+                // 경고 메시지 표시
+                const alertEl = document.getElementById('healthAlert');
+                if (warning > 0 || critical > 0) {
+                    const warningResident = residents.find(r => r.health_status === 'warning' || r.health_status === 'critical');
+                    if (warningResident) {
+                        alertEl.textContent = `⚠️ ${warningResident.name}님 상태 변화 감지`;
+                        alertEl.style.display = 'block';
+                    }
+                } else {
+                    alertEl.style.display = 'none';
+                }
+
+                console.log('✅ 건강 지표 로드:', { stable, warning, critical });
+            } catch (error) {
+                console.error('❌ 건강 지표 로드 실패:', error);
+            }
+        }
+
+        // 직원 정보 로드
+        async function loadStaffData() {
+            try {
+                const currentDate = new Date();
+                const yearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+
+                // 1. 등록된 요양사 수 조회
+                const staffResponse = await fetch(`${API_URL}/users/?role=caregiver`);
+                if (!staffResponse.ok) throw new Error('Failed to fetch staff');
+
+                const staffData = await staffResponse.json();
+                const staffCount = staffData.total_users || 0;
+
+                // 2. 오늘 청부액 조회 (현재 사용자)
+                let todayBilling = 0;
+                const todayResponse = await fetch(`${API_URL}/records/today?caregiver_id=${currentUser.id}`);
+                if (todayResponse.ok) {
+                    const todayData = await todayResponse.json();
+                    todayBilling = todayData.total_billing_amount || 0;
+                }
+
+                // 3. 이번 달 총 청부액 조회
+                const billingResponse = await fetch(`${API_URL}/billing/monthly/${yearMonth}`);
+                if (!billingResponse.ok) throw new Error('Failed to fetch billing');
+
+                const billingData = await billingResponse.json();
+                const monthlySalary = billingData.total_amount || 0;
+
+                // UI 업데이트
+                document.getElementById('staffCount').textContent = `${staffCount}명`;
+                document.getElementById('todayStaffBilling').textContent = `${todayBilling.toLocaleString()}원`;
+                document.getElementById('staffSalary').textContent = `${monthlySalary.toLocaleString()}원`;
+
+                console.log('✅ 요양사 청부 현황 로드:', { staffCount, todayBilling, monthlySalary });
+            } catch (error) {
+                console.error('❌ 요양사 청부 현황 로드 실패:', error);
+            }
+        }
+
+        // 오늘의 기록 데이터 로드
+        async function loadTodayRecordsData() {
+            try {
+                const response = await fetch(`http://localhost:8000/api/v1/records/today?caregiver_id=${currentUser.id}`);
+                if (!response.ok) throw new Error('Failed to fetch today records');
+
+                const data = await response.json();
+                const recordCount = data.total_records || 0;
+                const billingAmount = data.total_billing_amount || 0;
+
+                // UI 업데이트
+                document.getElementById('completedRecords').textContent = `${recordCount}건`;
+                document.getElementById('todayRecordsCount').textContent = `${recordCount}건`;
+                document.getElementById('todayEstimatedAmount').textContent = `${billingAmount.toLocaleString()}원`;
+                document.getElementById('pendingRecords').textContent = `0건`;
+
+                // 완료 비율 계산
+                const assignedText = document.getElementById('assignedResidents').textContent;
+                const assignedCount = parseInt(assignedText) || 0;
+
+                if (assignedCount > 0) {
+                    const completionPercentage = Math.round((recordCount / assignedCount) * 100);
+                    document.getElementById('completionPercentage').textContent = `${completionPercentage}%`;
+                    document.getElementById('completionProgressFill').style.width = `${Math.min(completionPercentage, 100)}%`;
+                } else {
+                    document.getElementById('completionPercentage').textContent = `0%`;
+                    document.getElementById('completionProgressFill').style.width = `0%`;
+                }
+
+                console.log('✅ 오늘 기록 로드:', { recordCount, billingAmount, completionPercentage: Math.round((recordCount / (assignedCount || 1)) * 100) });
+            } catch (error) {
+                console.error('❌ 오늘 기록 로드 실패:', error);
+            }
+        }
+
+        async function loadBillingData() {
+            const currentDate = new Date();
+            const yearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+
+            try {
+                // 1️⃣ 오늘의 청구액 로드
+                // 오늘 기록 API를 사용하여 현재 사용자의 청부액 조회
+                let todayBillingAmount = 0;
+
+                const todayResponse = await fetch(`http://localhost:8000/api/v1/records/today?caregiver_id=${currentUser.id}`);
+                if (todayResponse.ok) {
+                    const todayData = await todayResponse.json();
+                    todayBillingAmount = todayData.total_billing_amount || 0;
+                }
+
+                document.getElementById('todayBillingAmount').textContent =
+                    `${todayBillingAmount.toLocaleString()}원`;
+                console.log('✅ 오늘 청구액 로드:', todayBillingAmount);
+
+                // 2️⃣ 이번 달 청구액 로드
+                const monthlyResponse = await fetch(`http://localhost:8000/api/v1/billing/monthly/${yearMonth}`);
+                if (!monthlyResponse.ok) throw new Error('Failed to fetch billing data');
+
+                const monthlyData = await monthlyResponse.json();
+                const monthlyAmount = monthlyData.total_amount || 0;
+
+                // UI 업데이트
+                document.getElementById('totalBillingAmount').textContent =
+                    `${monthlyAmount.toLocaleString()}원`;
+                document.getElementById('submittedCount').textContent =
+                    `${monthlyData.submitted_count}건`;
+
+                // 3️⃣ 청부율 계산 (모든 이용자의 한도액 합산)
+                const resResponse = await fetch(`http://localhost:8000/api/v1/residents/`);
+                if (resResponse.ok) {
+                    const resData = await resResponse.json();
+                    const CARE_GRADE_LIMITS = {1: 1577500, 2: 1399500, 3: 1193000, 4: 1082500, 5: 235000};
+
+                    // 모든 이용자의 월 한도액 합산
+                    let totalMonthlyLimit = 0;
+                    resData.residents?.forEach(resident => {
+                        const grade = resident.care_grade || 1;
+                        totalMonthlyLimit += CARE_GRADE_LIMITS[grade] || 1577500;
+                    });
+
+                    // 청부율 계산
+                    const billingPercentage = totalMonthlyLimit > 0
+                        ? Math.round((monthlyAmount / totalMonthlyLimit) * 100)
+                        : 0;
+
+                    // UI 업데이트
+                    document.getElementById('billingPercentage').textContent = `${billingPercentage}%`;
+                    document.getElementById('billingProgressFill').style.width = `${Math.min(billingPercentage, 100)}%`;
+                    document.getElementById('billingRatio').textContent =
+                        `${monthlyAmount.toLocaleString()}원 / ${totalMonthlyLimit.toLocaleString()}원`;
+
+                    console.log('✅ 청부율 계산 완료:', {billingPercentage, monthlyAmount, totalMonthlyLimit});
+                }
+
+                console.log('✅ 청구 현황 로드 완료:', monthlyData);
+            } catch (error) {
+                console.error('❌ 청구 현황 로드 실패:', error);
+                // 실패해도 페이지는 계속 표시 (기본값 유지)
+            }
         }
 
         function logout() {
