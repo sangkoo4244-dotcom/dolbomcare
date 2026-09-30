@@ -188,7 +188,7 @@
                             <div class="card-title">💰 급여 현황</div>
                             <div class="card-stat">
                                 <span class="stat-label">이번달 급여</span>
-                                <span class="stat-value" id="caregiver Salary">-</span>
+                                <span class="stat-value" id="caregiverSalary">-</span>
                             </div>
                             <div class="card-stat">
                                 <span class="stat-label">기록 건수</span>
@@ -332,7 +332,7 @@
                 const salaryRes = await fetch(`${API_URL}/salary/current?caregiver_id=${currentUser.id}`);
                 if (salaryRes.ok) {
                     const data = await salaryRes.json();
-                    document.getElementById('caregiver Salary').textContent = `${(data.total_amount || 0).toLocaleString()}원`;
+                    document.getElementById('caregiverSalary').textContent = `${(data.total_amount || 0).toLocaleString()}원`;
                     document.getElementById('caregiverRecords').textContent = `${data.total_records || 0}건`;
                     document.getElementById('caregiverPayDay').textContent = data.estimated_payment_date;
                 }
