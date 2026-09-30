@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import health
 from app.api import users
+from app.api import billing
+from app.api import records
+from app.api import residents
+from app.api import salary
 from app.database import Base, engine
 
 Base.metadata.create_all(bind=engine)
@@ -23,7 +27,12 @@ app.add_middleware(
 
 # 라우터 포함
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
+app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(users.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(billing.router, prefix="/api/v1/billing", tags=["billing"])
+app.include_router(records.router, prefix="/api/v1/records", tags=["records"])
+app.include_router(residents.router, prefix="/api/v1/residents", tags=["residents"])
+app.include_router(salary.router, prefix="/api/v1/salary", tags=["salary"])
 
 @app.get("/")
 async def root():
