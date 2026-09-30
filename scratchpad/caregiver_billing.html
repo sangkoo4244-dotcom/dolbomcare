@@ -372,6 +372,13 @@
             if (!confirm('이 청부를 승인하시겠습니까?')) return;
 
             try {
+                // 사용자 정보 확인
+                if (!currentUser || !currentUser.id) {
+                    throw new Error('사용자 정보가 없습니다. 다시 로그인하세요.');
+                }
+
+                console.log('승인 요청:', {recordId, userId: currentUser.id, role: currentUser.role});
+
                 const response = await fetch(`${API_URL}/billing/${recordId}/approve`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -381,16 +388,25 @@
                     })
                 });
 
+                console.log('응답 상태:', response.status);
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || '승인 실패');
+                    let errorMsg = '승인 실패';
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.detail || errorMsg;
+                    } catch (e) {
+                        errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorMsg);
                 }
 
                 const result = await response.json();
+                console.log('승인 성공:', result);
                 showToast('✅ 청부가 승인되었습니다');
                 setTimeout(() => loadBillingRecords(), 500);
             } catch (error) {
-                console.error('승인 오류:', error);
+                console.error('❌ 승인 오류:', error);
                 alert('❌ 승인 중 오류: ' + error.message);
             }
         }
@@ -400,6 +416,12 @@
             if (reason === null) return;
 
             try {
+                if (!currentUser || !currentUser.id) {
+                    throw new Error('사용자 정보가 없습니다. 다시 로그인하세요.');
+                }
+
+                console.log('거절 요청:', {recordId, userId: currentUser.id, role: currentUser.role, reason});
+
                 const response = await fetch(`${API_URL}/billing/${recordId}/reject`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -410,16 +432,25 @@
                     })
                 });
 
+                console.log('응답 상태:', response.status);
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || '거절 실패');
+                    let errorMsg = '거절 실패';
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.detail || errorMsg;
+                    } catch (e) {
+                        errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorMsg);
                 }
 
                 const result = await response.json();
+                console.log('거절 성공:', result);
                 showToast('✅ 청부가 거절되었습니다');
                 setTimeout(() => loadBillingRecords(), 500);
             } catch (error) {
-                console.error('거절 오류:', error);
+                console.error('❌ 거절 오류:', error);
                 alert('❌ 거절 중 오류: ' + error.message);
             }
         }
