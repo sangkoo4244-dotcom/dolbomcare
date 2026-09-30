@@ -13,13 +13,13 @@ function renderNavbar() {
     // 역할별 메뉴 정의
     const menuItems = {
         caregiver: [
-            { icon: '🏠', label: '대시보드', url: './dashboard.html' },
+            { icon: '🏠', label: '대시보드', url: './dashboard-v2.html' },
             { icon: '🎙️', label: '음성 기록', url: './voice_record.html' },
             { icon: '💰', label: '급여 조회', url: './salary.html', comingSoon: true },
             { icon: '📢', label: '공지사항', url: './announcements.html', comingSoon: true },
         ],
         center_manager: [
-            { icon: '🏠', label: '대시보드', url: './dashboard.html' },
+            { icon: '🏠', label: '대시보드', url: './dashboard-v2.html' },
             { icon: '👥', label: '직원 관리', url: './staff_management.html', comingSoon: true },
             { icon: '👤', label: '이용자 관리', url: './resident_management.html' },
             { icon: '📅', label: '일정 관리', url: './scheduling.html', comingSoon: true },
