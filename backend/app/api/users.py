@@ -69,6 +69,7 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
             "email": user.email,
             "full_name": user.full_name,
             "role": user.role,
+            "center_id": user.center_id,
             "is_active": user.is_active,
             "created_at": user.created_at
         }

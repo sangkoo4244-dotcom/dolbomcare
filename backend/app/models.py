@@ -11,6 +11,7 @@ class User(Base):
     hashed_password = Column(String)
     full_name = Column(String)
     role = Column(String)  # 'center_manager', 'caregiver', 'guardian'
+    center_id = Column(Integer, ForeignKey("centers.id"), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

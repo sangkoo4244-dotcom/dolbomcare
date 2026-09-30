@@ -7,6 +7,38 @@ from datetime import datetime, date
 
 router = APIRouter()
 
+@router.get("/")
+async def get_residents(
+    center_id: int = None,
+    db: Session = Depends(get_db)
+):
+    """이용자 목록 조회 (center_id로 필터링 가능)"""
+    query = db.query(Resident)
+
+    if center_id:
+        query = query.filter(Resident.center_id == center_id)
+
+    residents = query.all()
+
+    return {
+        "total_residents": len(residents),
+        "residents": [
+            {
+                "id": r.id,
+                "center_id": r.center_id,
+                "name": r.name,
+                "birth_date": r.birth_date.isoformat() if r.birth_date else None,
+                "age": r.age,
+                "care_grade": r.care_grade,
+                "client_type": r.client_type,
+                "health_status": r.health_status,
+                "admission_date": r.admission_date.isoformat() if r.admission_date else None,
+                "created_at": r.created_at.isoformat() if r.created_at else None
+            }
+            for r in residents
+        ]
+    }
+
 @router.get("/center/{center_id}")
 async def get_residents_by_center(
     center_id: int,

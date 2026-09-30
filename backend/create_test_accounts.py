@@ -57,11 +57,12 @@ def create_test_accounts():
     # 센터 생성
     existing_center = db.query(Center).filter(Center.name == "강남 요양원").first()
     if not existing_center:
+        manager = db.query(User).filter(User.email == "manager@dolbomcare.com").first()
         center = Center(
             name="강남 요양원",
             address="서울시 강남구",
             phone="02-1234-5678",
-            manager_id=db.query(User).filter(User.email == "manager@dolbomcare.com").first().id,
+            manager_id=manager.id,
             residents_count=10,
             caregivers_count=5
         )
@@ -72,6 +73,20 @@ def create_test_accounts():
     else:
         center = existing_center
         print(f"✅ 센터 이미 존재: {center.name}")
+
+    # 사용자에게 center_id 할당
+    caregiver = db.query(User).filter(User.email == "caregiver@dolbomcare.com").first()
+    manager = db.query(User).filter(User.email == "manager@dolbomcare.com").first()
+
+    if caregiver and caregiver.center_id != center.id:
+        caregiver.center_id = center.id
+        db.commit()
+        print(f"✅ 요양사에게 센터 할당: {center.name}")
+
+    if manager and manager.center_id != center.id:
+        manager.center_id = center.id
+        db.commit()
+        print(f"✅ 센터장에게 센터 할당: {center.name}")
 
     # 이용자 생성 (등급 정보 + 생년월일 + 건강상태 포함)
     resident_data = [
