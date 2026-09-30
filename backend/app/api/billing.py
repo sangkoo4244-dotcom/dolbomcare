@@ -289,3 +289,114 @@ async def list_billing_records(
             for r in records
         ]
     }
+
+# ===== 상태별 처리 API =====
+
+@router.post("/{billing_id}/approve")
+async def approve_billing(
+    billing_id: int,
+    request: ApprovalRequest,
+    db: Session = Depends(get_db)
+):
+    """청부 승인 (센터장만 가능)"""
+    # 권한 확인
+    if request.user_role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 승인 가능합니다")
+
+    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    if not billing:
+        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+
+    if billing.approval_status != "pending":
+        raise HTTPException(status_code=400, detail="대기 중인 청부만 승인 가능합니다")
+
+    # 승인 처리
+    billing.approval_status = "approved"
+    billing.approved_by = request.user_id
+    billing.approved_at = datetime.now()
+    db.commit()
+    db.refresh(billing)
+
+    return {
+        "status": "success",
+        "message": "청부가 승인되었습니다",
+        "data": {
+            "id": billing.id,
+            "approval_status": billing.approval_status,
+            "approved_at": billing.approved_at.isoformat() if billing.approved_at else None
+        }
+    }
+
+@router.post("/{billing_id}/reject")
+async def reject_billing(
+    billing_id: int,
+    request: RejectionRequest,
+    db: Session = Depends(get_db)
+):
+    """청부 반려 (센터장만 가능)"""
+    # 권한 확인
+    if request.user_role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 반려 가능합니다")
+
+    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    if not billing:
+        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+
+    if billing.approval_status != "pending":
+        raise HTTPException(status_code=400, detail="대기 중인 청부만 반려 가능합니다")
+
+    # 반려 처리
+    billing.approval_status = "rejected"
+    billing.rejection_reason = request.reason
+    billing.approved_by = request.user_id
+    billing.approved_at = datetime.now()
+    db.commit()
+    db.refresh(billing)
+
+    return {
+        "status": "success",
+        "message": "청부가 반려되었습니다",
+        "data": {
+            "id": billing.id,
+            "approval_status": billing.approval_status,
+            "rejection_reason": billing.rejection_reason
+        }
+    }
+
+@router.delete("/{billing_id}")
+async def delete_billing(
+    billing_id: int,
+    user_id: int,
+    user_role: str,
+    db: Session = Depends(get_db)
+):
+    """청부 삭제 (요양사: draft 상태만, 센터장: 자신 것만)"""
+    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    if not billing:
+        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+
+    # 권한 확인
+    is_owner = billing.caregiver_id == user_id
+    is_manager = user_role == "center_manager"
+
+    if user_role == "caregiver":
+        # 요양사: draft 상태의 자신 것만 삭제 가능
+        if not is_owner:
+            raise HTTPException(status_code=403, detail="자신의 청부만 삭제 가능합니다")
+        if billing.status != "draft":
+            raise HTTPException(status_code=400, detail="임시 저장된 청부만 삭제 가능합니다")
+    elif is_manager:
+        # 센터장: pending/rejected 상태만 삭제 가능
+        if billing.approval_status not in ["pending", "rejected"]:
+            raise HTTPException(status_code=400, detail="승인 중이거나 반려된 청부만 삭제 가능합니다")
+    else:
+        raise HTTPException(status_code=403, detail="삭제 권한이 없습니다")
+
+    db.delete(billing)
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "청부가 삭제되었습니다",
+        "data": {"id": billing_id}
+    }
