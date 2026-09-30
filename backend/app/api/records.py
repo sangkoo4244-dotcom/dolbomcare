@@ -57,6 +57,11 @@ class CreateRecordRequest(BaseModel):
     service_type: str
     notes: str = ""
 
+class BatchDeleteRequest(BaseModel):
+    record_ids: list
+    user_id: int
+    user_role: str
+
 @router.post("/test")
 def test_endpoint():
     """테스트 엔드포인트"""
@@ -151,6 +156,43 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
         with open("/tmp/debug.log", "a") as f:
             f.write(f"  ERROR: {type(e).__name__}: {e}\n")
             f.write(f"  {traceback.format_exc()}\n")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/batch-delete")
+def batch_delete_records(
+    request: BatchDeleteRequest,
+    db: Session = Depends(get_db)
+):
+    """여러 기록 일괄 삭제 (자신의 기록 또는 센터장만)"""
+    try:
+        is_manager = request.user_role == "center_manager"
+        deleted = 0
+
+        for record_id in request.record_ids:
+            record = db.query(DailyRecord).filter(DailyRecord.id == record_id).first()
+            if not record:
+                continue
+
+            is_own_record = record.caregiver_id == request.user_id
+            if not (is_manager or is_own_record):
+                continue
+
+            billings = db.query(BillingRecord).filter(
+                BillingRecord.recorded_date == record.recorded_date,
+                BillingRecord.caregiver_id == record.caregiver_id,
+                BillingRecord.resident_id == record.resident_id
+            ).all()
+
+            for billing in billings:
+                db.delete(billing)
+            db.delete(record)
+            deleted += 1
+
+        db.commit()
+
+        return {"status": "success", "deleted_count": deleted}
+    except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/upload-audio")
