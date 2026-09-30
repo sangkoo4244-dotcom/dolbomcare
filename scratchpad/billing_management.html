@@ -473,11 +473,15 @@
             if (!confirm('이 청부 기록을 승인하시겠습니까?')) return;
 
             try {
-                const response = await fetch(`${API_URL}/billing/${recordId}/approve?approved_by=${currentUser.id}`, {
-                    method: 'PUT',
+                const response = await fetch(`${API_URL}/billing/${recordId}/approve`, {
+                    method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                    }
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        user_role: currentUser.role
+                    })
                 });
 
                 if (!response.ok) throw new Error('승인 실패');
@@ -497,11 +501,16 @@
             if (!confirm('이 청부 기록을 거절하시겠습니까?')) return;
 
             try {
-                const response = await fetch(`${API_URL}/billing/${recordId}/reject?reason=${encodeURIComponent(reason)}`, {
-                    method: 'PUT',
+                const response = await fetch(`${API_URL}/billing/${recordId}/reject`, {
+                    method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                    }
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        user_role: currentUser.role,
+                        reason: reason
+                    })
                 });
 
                 if (!response.ok) throw new Error('거절 실패');
