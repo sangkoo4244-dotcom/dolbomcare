@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.models import BillingRecord, User, Resident, Center
 from app.schemas import BillingRecordCreate, BillingRecordResponse, BillingMonthlySummary
@@ -6,6 +7,16 @@ from app.database import get_db
 from datetime import datetime, timedelta, time
 
 router = APIRouter()
+
+# Request 모델
+class ApprovalRequest(BaseModel):
+    user_id: int
+    user_role: str
+
+class RejectionRequest(BaseModel):
+    user_id: int
+    user_role: str
+    reason: str = ""
 
 # 등급별 월 인정급여액
 CARE_GRADE_LIMITS = {
@@ -168,49 +179,56 @@ async def submit_billing_record(
         "message": "청구가 공단에 제출되었습니다"
     }
 
-@router.put("/{record_id}/approve")
+@router.post("/{record_id}/approve")
 async def approve_billing_record(
     record_id: int,
-    approved_by: int,
+    request: ApprovalRequest,
     db: Session = Depends(get_db)
 ):
-    """청구 기록을 승인"""
+    """청구 기록을 승인 (센터장만 가능)"""
+    if request.user_role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 승인 가능합니다")
+
     record = db.query(BillingRecord).filter(BillingRecord.id == record_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Billing record not found")
 
     record.approval_status = "approved"
-    record.approved_by = approved_by
+    record.approved_by = request.user_id
     record.approved_at = datetime.utcnow()
-    record.status = "draft"  # 승인 후 제출 대기
     db.commit()
     db.refresh(record)
 
     return {
         "status": "success",
         "record_id": record_id,
+        "approval_status": record.approval_status,
         "message": "청구 기록이 승인되었습니다"
     }
 
-@router.put("/{record_id}/reject")
+@router.post("/{record_id}/reject")
 async def reject_billing_record(
     record_id: int,
-    reason: str = "",
+    request: RejectionRequest,
     db: Session = Depends(get_db)
 ):
-    """청구 기록을 거절"""
+    """청구 기록을 거절 (센터장만 가능)"""
+    if request.user_role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 거절 가능합니다")
+
     record = db.query(BillingRecord).filter(BillingRecord.id == record_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Billing record not found")
 
     record.approval_status = "rejected"
-    record.rejection_reason = reason
+    record.rejection_reason = request.reason
     db.commit()
     db.refresh(record)
 
     return {
         "status": "success",
         "record_id": record_id,
+        "approval_status": record.approval_status,
         "message": "청구 기록이 거절되었습니다"
     }
 
@@ -262,6 +280,8 @@ async def list_billing_records(
                 "service_type": r.service_type,
                 "amount": r.amount,
                 "status": r.status,
+                "approval_status": r.approval_status,
+                "rejection_reason": r.rejection_reason,
                 "recorded_date": r.recorded_date.isoformat() if r.recorded_date else None,
                 "submitted_date": r.submitted_date.isoformat() if r.submitted_date else None,
                 "created_at": r.created_at.isoformat() if r.created_at else None

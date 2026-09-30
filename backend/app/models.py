@@ -101,6 +101,10 @@ class BillingRecord(Base):
     service_type = Column(String)  # 'basic_care', 'meal_service', 'medical_care', 'emergency'
     amount = Column(Integer)  # 청구액 (원)
     status = Column(String, default="draft")  # 'draft', 'submitted', 'paid'
+    approval_status = Column(String, default="pending")  # 'pending', 'approved', 'rejected'
+    approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # 승인자 ID
+    approved_at = Column(DateTime, nullable=True)  # 승인 시간
+    rejection_reason = Column(String, nullable=True)  # 거절 사유
     recorded_date = Column(DateTime, index=True)
     submitted_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
