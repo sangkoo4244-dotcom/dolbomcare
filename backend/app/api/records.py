@@ -130,7 +130,8 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
             service_type=request.service_type,
             amount=amount,
             recorded_date=now,
-            status="draft"
+            status="draft",
+            approval_status="pending"
         )
         db.add(billing_record)
         db.commit()
@@ -153,10 +154,9 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         import traceback
-        with open("/tmp/debug.log", "a") as f:
-            f.write(f"  ERROR: {type(e).__name__}: {e}\n")
-            f.write(f"  {traceback.format_exc()}\n")
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = f"{type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
+        print(f"[ERROR] create_record: {error_msg}")
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @router.post("/batch-delete")
 def batch_delete_records(
