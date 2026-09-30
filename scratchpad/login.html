@@ -263,6 +263,28 @@
                 <div class="subtitle">요양원 통합관리 플랫폼</div>
             </div>
 
+            <!-- 테스트 계정 빠른 선택 -->
+            <div style="background: #f0f4ff; border-radius: 8px; padding: 15px; margin-bottom: 20px; border: 2px solid #667eea;">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #667eea;">📋 테스트 계정</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <!-- 요양사 -->
+                    <button type="button" onclick="selectTestAccount('caregiver@test.com', 'test123', 'caregiver')"
+                            style="background: white; border: 2px solid #28a745; border-radius: 6px; padding: 10px; cursor: pointer; text-align: left; transition: all 0.2s;">
+                        <div style="font-weight: 600; color: #28a745; font-size: 12px;">👤 요양사</div>
+                        <div style="font-size: 11px; color: #666; margin-top: 4px;">caregiver@test.com</div>
+                        <div style="font-size: 11px; color: #999;">pw: test123</div>
+                    </button>
+
+                    <!-- 센터장 -->
+                    <button type="button" onclick="selectTestAccount('manager@test.com', 'test123', 'center_manager')"
+                            style="background: white; border: 2px solid #667eea; border-radius: 6px; padding: 10px; cursor: pointer; text-align: left; transition: all 0.2s;">
+                        <div style="font-weight: 600; color: #667eea; font-size: 12px;">👨‍💼 센터장</div>
+                        <div style="font-size: 11px; color: #666; margin-top: 4px;">manager@test.com</div>
+                        <div style="font-size: 11px; color: #999;">pw: test123</div>
+                    </button>
+                </div>
+            </div>
+
             <div class="role-selector">
                 <label class="role-label">역할 선택</label>
                 <div class="role-buttons">
@@ -328,6 +350,23 @@
     <script>
         const API_URL = 'http://localhost:8000/api/v1';
         let selectedRole = 'caregiver';
+
+        // 테스트 계정 자동 선택
+        function selectTestAccount(email, password, role) {
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = password;
+            selectedRole = role;
+
+            // 역할 버튼 업데이트
+            document.querySelectorAll('.role-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.role === role) {
+                    btn.classList.add('active');
+                }
+            });
+
+            console.log('✅ 테스트 계정 선택:', email, 'Role:', role);
+        }
 
         // 역할 선택 버튼
         document.querySelectorAll('.role-btn').forEach(btn => {
