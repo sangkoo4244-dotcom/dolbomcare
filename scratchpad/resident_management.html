@@ -848,7 +848,7 @@
                         </td>
                         <td>
                             <div class="action-buttons">
-                                <button class="action-btn edit" onclick="openEditModal(${resident.id})" ${!isManager ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>✏️ 편집</button>
+                                <button class="action-btn edit" onclick="openEditModal(${resident.id})">✏️ 편집</button>
                                 <button class="action-btn save" onclick="saveResident(${resident.id})">💾 저장</button>
                                 <button class="action-btn delete" onclick="deleteResident(${resident.id})" ${!isManager ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>🗑️ 삭제</button>
                             </div>
