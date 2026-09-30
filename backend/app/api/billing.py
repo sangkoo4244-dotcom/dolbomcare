@@ -162,3 +162,59 @@ async def submit_billing_record(
         "submitted_date": record.submitted_date,
         "message": "청구가 공단에 제출되었습니다"
     }
+
+@router.put("/{record_id}/pay")
+async def pay_billing_record(
+    record_id: int,
+    db: Session = Depends(get_db)
+):
+    """청구 기록을 지급 완료"""
+    record = db.query(BillingRecord).filter(BillingRecord.id == record_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Billing record not found")
+
+    record.status = "paid"
+    db.commit()
+    db.refresh(record)
+
+    return {
+        "status": "success",
+        "record_id": record_id,
+        "message": "청구가 지급 완료되었습니다"
+    }
+
+@router.get("/")
+async def list_billing_records(
+    center_id: int = None,
+    status: str = None,
+    db: Session = Depends(get_db)
+):
+    """청구 기록 목록 조회"""
+    query = db.query(BillingRecord)
+
+    if center_id:
+        query = query.filter(BillingRecord.center_id == center_id)
+
+    if status:
+        query = query.filter(BillingRecord.status == status)
+
+    records = query.all()
+
+    return {
+        "total_records": len(records),
+        "records": [
+            {
+                "id": r.id,
+                "resident_id": r.resident_id,
+                "caregiver_id": r.caregiver_id,
+                "center_id": r.center_id,
+                "service_type": r.service_type,
+                "amount": r.amount,
+                "status": r.status,
+                "recorded_date": r.recorded_date.isoformat() if r.recorded_date else None,
+                "submitted_date": r.submitted_date.isoformat() if r.submitted_date else None,
+                "created_at": r.created_at.isoformat() if r.created_at else None
+            }
+            for r in records
+        ]
+    }
