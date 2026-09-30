@@ -15,7 +15,7 @@ function renderNavbar() {
         caregiver: [
             { icon: '🏠', label: '대시보드', url: './dashboard.html' },
             { icon: '🎙️', label: '음성 기록', url: './voice_record.html' },
-            { icon: '💰', label: '급여 조회', url: './salary.html', comingSoon: true },
+            { icon: '💰', label: '급여 조회', url: './salary.html' },
             { icon: '📢', label: '공지사항', url: './announcements.html', comingSoon: true },
         ],
         center_manager: [
