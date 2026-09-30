@@ -296,6 +296,7 @@ async def get_today_records(
             billing_info = billing_map.get(r.id, {})
             response_records.append({
                 "id": r.id,
+                "caregiver_id": r.caregiver_id,
                 "resident_id": r.resident_id,
                 "service_type": billing_info.get("service_type", "basic_care"),
                 "morning_care": r.morning_care,
