@@ -147,4 +147,6 @@ class BillingMonthlySummary(BaseModel):
     submitted_count: int
     paid_count: int
     pending_count: int
-    estimated_savings: int  # 청구 시간 단축으로 인한 절감액
+    approved_count: int = 0
+    approved_amount: int = 0
+    estimated_savings: int

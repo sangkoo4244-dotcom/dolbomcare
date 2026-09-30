@@ -100,10 +100,13 @@ async def get_monthly_billing(
     ).all()
 
     total_amount = sum(r.amount for r in records)
-    # draft: 미제출, pending/submitted: 제출됨, paid: 완료
-    submitted_count = len([r for r in records if r.status in ["draft", "pending", "submitted"]])
+    # approval_status: pending(승인 대기), approved(승인됨), rejected(거절)
+    # status: draft(미제출), submitted(제출됨), paid(완료)
+    approved_amount = sum(r.amount for r in records if r.approval_status == "approved")
+    submitted_count = len([r for r in records if r.status == "submitted"])
     paid_count = len([r for r in records if r.status == "paid"])
-    pending_count = len([r for r in records if r.status == "draft"])
+    pending_count = len([r for r in records if r.approval_status == "pending"])
+    approved_count = len([r for r in records if r.approval_status == "approved"])
 
     # 청구 시간 절감: 기본 40시간에서 70% 절감 → 12시간
     # 시간당 평균 급여 15,000원 기준
@@ -116,7 +119,9 @@ async def get_monthly_billing(
         submitted_count=submitted_count,
         paid_count=paid_count,
         pending_count=pending_count,
-        estimated_savings=estimated_savings
+        estimated_savings=estimated_savings,
+        approved_count=approved_count,
+        approved_amount=approved_amount
     )
 
 @router.get("/today")
@@ -161,6 +166,52 @@ async def submit_billing_record(
         "record_id": record_id,
         "submitted_date": record.submitted_date,
         "message": "청구가 공단에 제출되었습니다"
+    }
+
+@router.put("/{record_id}/approve")
+async def approve_billing_record(
+    record_id: int,
+    approved_by: int,
+    db: Session = Depends(get_db)
+):
+    """청구 기록을 승인"""
+    record = db.query(BillingRecord).filter(BillingRecord.id == record_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Billing record not found")
+
+    record.approval_status = "approved"
+    record.approved_by = approved_by
+    record.approved_at = datetime.utcnow()
+    record.status = "draft"  # 승인 후 제출 대기
+    db.commit()
+    db.refresh(record)
+
+    return {
+        "status": "success",
+        "record_id": record_id,
+        "message": "청구 기록이 승인되었습니다"
+    }
+
+@router.put("/{record_id}/reject")
+async def reject_billing_record(
+    record_id: int,
+    reason: str = "",
+    db: Session = Depends(get_db)
+):
+    """청구 기록을 거절"""
+    record = db.query(BillingRecord).filter(BillingRecord.id == record_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Billing record not found")
+
+    record.approval_status = "rejected"
+    record.rejection_reason = reason
+    db.commit()
+    db.refresh(record)
+
+    return {
+        "status": "success",
+        "record_id": record_id,
+        "message": "청구 기록이 거절되었습니다"
     }
 
 @router.put("/{record_id}/pay")

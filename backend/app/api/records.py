@@ -112,7 +112,8 @@ async def create_record(
             service_type=request.service_type,
             amount=amount,
             recorded_date=datetime.utcnow(),
-            status="draft"
+            approval_status="pending",  # 센터장 승인 대기
+            status="draft"  # 아직 미제출 상태
         )
         db.add(billing_record)
         db.commit()
@@ -193,7 +194,8 @@ async def upload_audio(
             service_type="basic_care",
             amount=amount,
             recorded_date=datetime.utcnow(),
-            status="draft"
+            approval_status="pending",  # 센터장 승인 대기
+            status="draft"  # 아직 미제출 상태
         )
         db.add(billing_record)
         db.commit()
