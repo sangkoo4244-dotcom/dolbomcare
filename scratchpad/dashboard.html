@@ -788,26 +788,43 @@
             }
         }
 
-        // 오늘의 기록 데이터 로드
+        // 오늘의 기록 데이터 로드 (역할별로 다름)
         async function loadTodayRecordsData() {
             try {
-                const response = await fetch(`http://localhost:8000/api/v1/records/today?caregiver_id=${currentUser.id}`);
-                if (!response.ok) throw new Error('Failed to fetch today records');
+                let recordCount = 0;
+                let billingAmount = 0;
+                let assignedCount = parseInt(document.getElementById('assignedResidents').textContent) || 0;
 
-                const data = await response.json();
-                const recordCount = data.total_records || 0;
-                const billingAmount = data.total_billing_amount || 0;
+                if (currentUser.role === 'caregiver') {
+                    // 요양관리사: 자신의 오늘 기록만
+                    const response = await fetch(`http://localhost:8000/api/v1/records/today?caregiver_id=${currentUser.id}`);
+                    if (!response.ok) throw new Error('Failed to fetch today records');
+
+                    const data = await response.json();
+                    recordCount = data.total_records || 0;
+                    billingAmount = data.total_billing_amount || 0;
+
+                    console.log('✅ 요양관리사 오늘 기록:', { recordCount, billingAmount });
+                } else if (currentUser.role === 'center_manager') {
+                    // 센터장: 센터 전체의 오늘 기록
+                    const response = await fetch(`http://localhost:8000/api/v1/records/today/center`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        recordCount = data.total_records || 0;
+                        billingAmount = data.total_billing_amount || 0;
+                        console.log('✅ 센터장 오늘 기록:', { recordCount, billingAmount });
+                    } else {
+                        console.warn('⚠️ 센터 전체 기록 조회 실패, 대체 방법 사용');
+                    }
+                }
 
                 // UI 업데이트
                 document.getElementById('completedRecords').textContent = `${recordCount}건`;
                 document.getElementById('todayRecordsCount').textContent = `${recordCount}건`;
                 document.getElementById('todayEstimatedAmount').textContent = `${billingAmount.toLocaleString()}원`;
-                document.getElementById('pendingRecords').textContent = `0건`;
+                document.getElementById('pendingRecords').textContent = `${Math.max(0, assignedCount - recordCount)}건`;
 
                 // 완료 비율 계산
-                const assignedText = document.getElementById('assignedResidents').textContent;
-                const assignedCount = parseInt(assignedText) || 0;
-
                 if (assignedCount > 0) {
                     const completionPercentage = Math.round((recordCount / assignedCount) * 100);
                     document.getElementById('completionPercentage').textContent = `${completionPercentage}%`;
@@ -817,7 +834,7 @@
                     document.getElementById('completionProgressFill').style.width = `0%`;
                 }
 
-                console.log('✅ 오늘 기록 로드:', { recordCount, billingAmount, completionPercentage: Math.round((recordCount / (assignedCount || 1)) * 100) });
+                console.log('✅ 오늘 업무 데이터 로드 완료:', { role: currentUser.role, recordCount, assignedCount });
             } catch (error) {
                 console.error('❌ 오늘 기록 로드 실패:', error);
             }
