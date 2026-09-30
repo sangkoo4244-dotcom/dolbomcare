@@ -406,20 +406,27 @@ async def get_record(
 @router.delete("/{record_id}")
 async def delete_record(
     record_id: int,
+    user_id: int,
     user_role: str,
     db: Session = Depends(get_db)
 ):
     """
-    기록 삭제 (센터장/운영자만 가능)
+    기록 삭제
+    - 센터장: 모든 기록 삭제 가능
+    - 요양사: 자신의 기록만 삭제 가능
     """
-    # 권한 검증: center_manager만 삭제 가능
-    if user_role not in ["center_manager"]:
-        raise HTTPException(status_code=403, detail="기록 삭제 권한이 없습니다 (센터장만 삭제 가능)")
 
     # 기록 조회
     record = db.query(DailyRecord).filter(DailyRecord.id == record_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="기록을 찾을 수 없습니다")
+
+    # 권한 검증
+    is_manager = user_role == "center_manager"
+    is_own_record = record.caregiver_id == user_id
+
+    if not (is_manager or is_own_record):
+        raise HTTPException(status_code=403, detail="삭제 권한이 없습니다 (자신의 기록만 삭제 가능)")
 
     # 관련 청구 기록도 함께 삭제
     billings = db.query(BillingRecord).filter(
