@@ -693,9 +693,10 @@
                         const finalPatientRate = patientRate !== undefined ? patientRate : 0.15;
                         const insuranceRate = 1 - finalPatientRate;
 
-                        // 월 공단 청부액
-                        const monthlyAmount = Math.floor(monthlyLimit * insuranceRate);
-                        const patientPay = Math.floor(monthlyLimit * finalPatientRate);
+                        // 1회 방문당 청부액 (월 기준 20회 방문)
+                        const monthlyStandardVisits = 20;
+                        const visitAmount = Math.floor((monthlyLimit / monthlyStandardVisits) * insuranceRate);
+                        const patientPayPerVisit = Math.floor((monthlyLimit / monthlyStandardVisits) * finalPatientRate);
 
                         console.log('✅ 최종 계산 결과:', {
                             careGrade,
@@ -703,8 +704,8 @@
                             monthlyLimit,
                             finalPatientRate,
                             insuranceRate,
-                            monthlyAmount,
-                            patientPay
+                            visitAmount,
+                            patientPayPerVisit
                         });
 
                         // UI 업데이트 (직접)
@@ -713,9 +714,9 @@
                         document.getElementById('monthlyLimit').textContent =
                             `${monthlyLimit.toLocaleString()}원`;
                         document.getElementById('estimatedBilling').textContent =
-                            `${monthlyAmount.toLocaleString()}원 (월 청부액)`;
+                            `${visitAmount.toLocaleString()}원 (1회 기록당)`;
                         document.getElementById('patientPayInfo').textContent =
-                            `본인부담: ${patientPay.toLocaleString()}원 (${Math.round(finalPatientRate * 100)}%)`;
+                            `본인부담: ${patientPayPerVisit.toLocaleString()}원 (${Math.round(finalPatientRate * 100)}%)`;
 
                     } catch (error) {
                         console.error('이용자 정보 로드 실패:', error);
@@ -746,7 +747,7 @@
             }
         };
 
-        // 월 청부액 계산 및 업데이트 (공단 기준: 월 1회 청구)
+        // 월 청부액 계산 및 업데이트 (1회 방문당 기준)
         function updateBillingAmount() {
             const select = document.getElementById('residentSelect');
             const selectedOption = select.options[select.selectedIndex];
@@ -763,9 +764,11 @@
             const patientRate = PATIENT_PAY_RATE["재가급여"][clientType] || 0.15;
             const insuranceRate = 1 - patientRate;
 
-            // 월 공단 청부액
+            // 1회 방문당 청부액 (월 기준 20회 방문)
+            const monthlyStandardVisits = 20;
+            const visitAmount = Math.floor((monthlyLimit / monthlyStandardVisits) * insuranceRate);
             const monthlyAmount = Math.floor(monthlyLimit * insuranceRate);
-            const patientPay = Math.floor(monthlyLimit * patientRate);
+            const patientPayPerVisit = Math.floor((monthlyLimit / monthlyStandardVisits) * patientRate);
 
             // UI 업데이트
             document.getElementById('gradeInfo').textContent =
@@ -773,9 +776,9 @@
             document.getElementById('monthlyLimit').textContent =
                 `${monthlyLimit.toLocaleString()}원`;
             document.getElementById('estimatedBilling').textContent =
-                `${monthlyAmount.toLocaleString()}원 (월 청부액)`;
+                `${visitAmount.toLocaleString()}원 (1회 기록당)`;
             document.getElementById('patientPayInfo').textContent =
-                `본인부담: ${patientPay.toLocaleString()}원 (${Math.round(patientRate * 100)}%)`;
+                `본인부담: ${patientPayPerVisit.toLocaleString()}원 (${Math.round(patientRate * 100)}%)`;
         }
 
         // 서비스 유형 선택
