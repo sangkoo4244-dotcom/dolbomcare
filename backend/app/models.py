@@ -89,6 +89,18 @@ class Salary(Base):
     status = Column(String)  # 'pending', 'approved', 'paid'
     created_at = Column(DateTime, default=datetime.utcnow)
 
+class VoiceRecord(Base):
+    __tablename__ = "voice_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    caregiver_id = Column(Integer, ForeignKey("users.id"))
+    resident_id = Column(Integer, ForeignKey("residents.id"))
+    center_id = Column(Integer, ForeignKey("centers.id"))
+    recorded_date = Column(DateTime, index=True)
+    transcription = Column(Text, nullable=True)  # 음성 인식 텍스트
+    audio_file_url = Column(String, nullable=True)  # 음성 파일 URL
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class BillingRecord(Base):
     __tablename__ = "billing_records"
 
