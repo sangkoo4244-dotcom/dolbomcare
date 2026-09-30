@@ -210,6 +210,29 @@ async def upload_audio(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.get("/today/center")
+async def get_center_today_records(
+    center_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    센터의 오늘의 전체 기록 조회
+    """
+    today = datetime.utcnow().date()
+    today_start = datetime.combine(today, time.min)
+    today_end = datetime.combine(today, time.max)
+
+    records = db.query(DailyRecord).filter(
+        DailyRecord.recorded_date >= today_start,
+        DailyRecord.recorded_date <= today_end
+    ).join(Resident).filter(Resident.center_id == center_id).all()
+
+    return {
+        "date": today.isoformat(),
+        "total_records": len(records),
+        "center_id": center_id
+    }
+
 @router.get("/today")
 async def get_today_records(
     caregiver_id: int,

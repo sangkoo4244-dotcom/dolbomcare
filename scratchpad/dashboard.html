@@ -393,16 +393,21 @@
 
         async function loadManagerData() {
             try {
-                // 센터 전체 기록 (현재 센터만)
                 const centerId = currentUser.center_id || 1;
+                console.log(`📊 센터장 대시보드 로드: center_id = ${centerId}`);
+
+                // 센터 전체 기록 (현재 센터만)
                 const todayRes = await fetch(`${API_URL}/records/today/center?center_id=${centerId}`);
                 if (todayRes.ok) {
                     const data = await todayRes.json();
                     document.getElementById('managerCompleted').textContent = `${data.total_records || 0}건`;
+                    console.log('✅ 오늘 완료 업무:', data.total_records);
+                } else {
+                    console.warn('⚠️ 오늘 기록 조회 실패');
                 }
 
-                // 이용자 정보
-                const resRes = await fetch(`${API_URL}/residents/`);
+                // 이용자 정보 (센터별)
+                const resRes = await fetch(`${API_URL}/residents/?center_id=${centerId}`);
                 if (resRes.ok) {
                     const data = await resRes.json();
                     const residents = data.residents || [];
@@ -412,16 +417,22 @@
                     const critical = residents.filter(r => r.health_status === 'critical').length;
                     document.getElementById('managerWarning').textContent = `${warning}명`;
                     document.getElementById('managerCritical').textContent = `${critical}명`;
+                    console.log(`✅ 이용자 정보: 총 ${residents.length}명 (주의 ${warning}명, 위험 ${critical}명)`);
+                } else {
+                    console.warn('⚠️ 이용자 조회 실패');
                 }
 
-                // 직원 정보
-                const staffRes = await fetch(`${API_URL}/users/?role=caregiver`);
+                // 직원 정보 (현재 센터의 caregiver만)
+                const staffRes = await fetch(`${API_URL}/users/?role=caregiver&center_id=${centerId}`);
                 if (staffRes.ok) {
                     const data = await staffRes.json();
                     document.getElementById('managerStaffCount').textContent = `${data.total_users || 0}명`;
+                    console.log('✅ 직원 정보:', data.total_users);
+                } else {
+                    console.warn('⚠️ 직원 조회 실패');
                 }
 
-                // 청구 정보
+                // 청구 정보 (현재 센터)
                 const today = new Date();
                 const yearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
                 const billingRes = await fetch(`${API_URL}/billing/monthly/${yearMonth}`);
@@ -430,9 +441,12 @@
                     document.getElementById('managerBilling').textContent = `${(data.total_amount || 0).toLocaleString()}원`;
                     document.getElementById('managerBillingSubmit').textContent = `${data.submitted_count || 0}건`;
                     document.getElementById('managerBillingPaid').textContent = `${data.paid_count || 0}건`;
+                    console.log('✅ 청구 정보:', data.total_amount, `(${data.submitted_count}건 제출, ${data.paid_count}건 완료)`);
+                } else {
+                    console.warn('⚠️ 청구 정보 조회 실패');
                 }
             } catch (error) {
-                console.error('센터장 데이터 로드 실패:', error);
+                console.error('❌ 센터장 데이터 로드 실패:', error);
             }
         }
     </script>
