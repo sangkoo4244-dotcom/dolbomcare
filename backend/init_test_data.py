@@ -173,13 +173,13 @@ try:
             "days_ago": 0,
             "rejection_reason": "서류 누락"
         },
-        # 환급완료 (오늘 + 이용자2, 아카이브됨)
+        # 환급완료 (과거 + 아카이브됨 - voice_record 오늘에서 제외)
         {
             "resident_id": resident_ids[1],
             "approval_status": "reimbursed",
             "status": "draft",
             "amount": 1400000,
-            "days_ago": 0,
+            "days_ago": 10,
             "is_archived": True
         },
     ]
