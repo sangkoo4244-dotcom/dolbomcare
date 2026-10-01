@@ -293,9 +293,13 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
             z-index: 1000;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
         }
 
         .modal-content {
@@ -526,8 +530,8 @@
         </div>
     </div>
 
-    <!-- 이용자 수정 모달 -->
-    <div id="editModal" class="modal" style="display: none;">
+    <!-- 이용자 수정 모달 (현재 미사용 - 테이블에서 직접 편집) -->
+    <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>✏️ 이용자 정보 수정</h2>
