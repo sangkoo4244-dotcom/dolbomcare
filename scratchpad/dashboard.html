@@ -569,13 +569,12 @@
                 // Load billing: count = action needed (pending+rejected), amount = all billing (all statuses)
                 try {
                     console.log('Fetching billing...');
-                    const caregiverId = user?.id || '';
                     let actionCount = 0, totalAmount = 0;
                     const statuses = ['draft', 'pending', 'rejected', 'approved'];
 
-                    // Fetch all statuses and sum the amounts
+                    // Fetch all statuses and sum the amounts (no caregiver filter - show all)
                     for (const status of statuses) {
-                        const url = `${API_URL}/billing/?status=${status}${caregiverId ? '&caregiver_id=' + caregiverId : ''}`;
+                        const url = `${API_URL}/billing/?status=${status}`;
                         try {
                             const resp = await fetch(url, {
                                 headers: token ? {'Authorization': `Bearer ${token}`} : {}
