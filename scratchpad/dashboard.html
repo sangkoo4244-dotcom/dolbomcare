@@ -513,12 +513,18 @@
             }
 
             const user = JSON.parse(userStr);
+            currentUser = user;  // menu.js에서 사용할 currentUser 설정
             document.getElementById('userName').textContent = user.email.split('@')[0];
             document.getElementById('userRole').textContent =
                 user.role === 'caregiver' ? '요양사' : '센터장';
 
             const initial = user.email.charAt(0).toUpperCase();
             document.getElementById('userAvatar').textContent = initial;
+
+            // 메뉴 필터링
+            if (typeof filterMenuByRole === 'function') {
+                filterMenuByRole();
+            }
         }
 
         // Load dashboard data

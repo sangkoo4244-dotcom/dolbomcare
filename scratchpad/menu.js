@@ -1,16 +1,16 @@
 // 공통 메뉴 필터링 스크립트
-// 모든 페이지에서 이 파일을 로드해야 합니다
+// 각 페이지의 기존 checkAuth() 이후에만 실행됨
 
-let currentUser = null;
-
-// 권한별 메뉴 제어
+// 권한별 메뉴 제어 (각 페이지에서 checkAuth() 후 호출)
 function filterMenuByRole() {
-    console.log('🔐 filterMenuByRole 호출:', currentUser?.role);
-
-    if (!currentUser) {
-        console.warn('⚠️ currentUser가 없음');
+    // currentUser는 각 페이지의 checkAuth()에서 설정됨
+    if (typeof currentUser === 'undefined' || !currentUser) {
+        console.warn('⚠️ currentUser가 아직 설정되지 않음');
+        setTimeout(() => filterMenuByRole(), 100);  // 재시도
         return;
     }
+
+    console.log('🔐 filterMenuByRole 호출:', currentUser.role);
 
     const role = currentUser.role;
     const isCaregiver = role === 'caregiver';
@@ -37,59 +37,16 @@ function filterMenuByRole() {
     });
 }
 
-// 인증 확인
-function checkAuth() {
-    const token = localStorage.getItem('access_token');
-    const user = JSON.parse(localStorage.getItem('user'));
+// DOMContentLoaded에서 메뉴 필터링 준비
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('📄 DOMContentLoaded: 메뉴 필터링 준비');
+    // 각 페이지의 checkAuth()가 호출될 때까지 대기
+});
 
-    if (!token || !user) {
-        window.location.href = './login.html';
-        return false;
-    }
-
-    currentUser = user;
-
-    // UI 업데이트
-    const userName = document.getElementById('userName');
-    const userRole = document.getElementById('userRole');
-    const userAvatar = document.getElementById('userAvatar');
-
-    if (userName) userName.textContent = user.full_name || '사용자';
-    if (userRole) userRole.textContent = user.role === 'caregiver' ? '요양사' : user.role === 'center_manager' ? '센터장' : '사용자';
-    if (userAvatar) userAvatar.textContent = (user.full_name || '사용자').charAt(0).toUpperCase();
-
-    // 권한별 메뉴 필터링
-    filterMenuByRole();
-    return true;
-}
-
-// 로그아웃
-function logout() {
-    if (confirm('로그아웃 하시겠습니까?')) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('user_role');
-        window.location.href = './login.html';
-    }
-}
-
-// 페이지 이동
-function navigateTo(url) {
-    window.location.href = url;
-}
-
-// 페이지 로드 시 초기화
-function initializeMenu() {
-    console.log('📄 메뉴 초기화 시작');
-    checkAuth();
-}
-
-// DOMContentLoaded에서 즉시 인증 확인
-document.addEventListener('DOMContentLoaded', initializeMenu);
-
-// load 이벤트에서도 재확인
+// load 이벤트에서 최종 필터링
 window.addEventListener('load', () => {
-    if (!currentUser) {
-        initializeMenu();
+    console.log('🔍 load 이벤트: 메뉴 필터링 실행');
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        filterMenuByRole();
     }
 });
