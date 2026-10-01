@@ -400,22 +400,19 @@ async def get_all_records(
         ).all()
 
         billing_map = {}
-        billing_total = 0
         for b in billings:
             if b.daily_record_id:
                 billing_map[b.daily_record_id] = {
                     "amount": b.amount,
                     "service_type": b.service_type
                 }
-                # DailyRecord와 연결된 청부만 합산
-                billing_total += b.amount
-            elif not b.daily_record_id:
-                # 미연결 청부도 합산 (기록 없지만 청부 데이터만 있는 경우)
-                billing_total += b.amount
 
         response_records = []
+        billing_total = 0
         for r in records:
             billing_info = billing_map.get(r.id, {})
+            billing_amount = billing_info.get("amount", 0)
+            billing_total += billing_amount
             response_records.append({
                 "id": r.id,
                 "caregiver_id": r.caregiver_id,
@@ -426,7 +423,7 @@ async def get_all_records(
                 "medicine_given": r.medicine_given,
                 "notes": r.notes,
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
-                "billing_amount": billing_info.get("amount", 0)
+                "billing_amount": billing_amount
             })
 
         return {
