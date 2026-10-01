@@ -280,28 +280,39 @@ async def list_billing_records(
 
     records = query.all()
 
+    # caregiver 기준: submitted_to_nhis 제외 (voice_record와 일치)
+    caregiver = None
+    if caregiver_id:
+        caregiver = db.query(User).filter(User.id == caregiver_id).first()
+
+    response_records = []
+    for r in records:
+        # caregiver는 submitted_to_nhis 기록 제외
+        if caregiver and caregiver.role == 'caregiver':
+            if r.approval_status == 'submitted_to_nhis':
+                continue
+
+        response_records.append({
+            "id": r.id,
+            "resident_id": r.resident_id,
+            "caregiver_id": r.caregiver_id,
+            "center_id": r.center_id,
+            "service_type": r.service_type,
+            "amount": r.amount,
+            "total_amount": r.amount,
+            "status": r.status,
+            "approval_status": r.approval_status,
+            "rejection_reason": r.rejection_reason,
+            "is_archived": r.is_archived,
+            "recorded_date": r.recorded_date.isoformat() if r.recorded_date else None,
+            "submitted_date": r.submitted_date.isoformat() if r.submitted_date else None,
+            "archived_at": r.archived_at.isoformat() if r.archived_at else None,
+            "created_at": r.created_at.isoformat() if r.created_at else None
+        })
+
     return {
-        "total_records": len(records),
-        "records": [
-            {
-                "id": r.id,
-                "resident_id": r.resident_id,
-                "caregiver_id": r.caregiver_id,
-                "center_id": r.center_id,
-                "service_type": r.service_type,
-                "amount": r.amount,
-                "total_amount": r.amount,
-                "status": r.status,
-                "approval_status": r.approval_status,
-                "rejection_reason": r.rejection_reason,
-                "is_archived": r.is_archived,
-                "recorded_date": r.recorded_date.isoformat() if r.recorded_date else None,
-                "submitted_date": r.submitted_date.isoformat() if r.submitted_date else None,
-                "archived_at": r.archived_at.isoformat() if r.archived_at else None,
-                "created_at": r.created_at.isoformat() if r.created_at else None
-            }
-            for r in records
-        ]
+        "total_records": len(response_records),
+        "records": response_records
     }
 
 # ===== 상태별 처리 API =====
