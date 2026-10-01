@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, Body
+ï»¿from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, Body
 from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -731,22 +731,13 @@ async def delete_record(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"ì‚­ì œ ì¤‘ ì˜¤ë¥˜ ë°œìƒ: {str(e)}")
 
-# ============ VoiceRecord ÀÚµ¿ Ã»ºÎ »ı¼º ============
 
-# ¼­ºñ½º À¯Çüº° Ã»ºÎ¾× (µî±Şº°)
+# ===== VoiceRecord ìë™ ì²­ë¶€ ìƒì„± =====
 SERVICE_TYPE_AMOUNTS = {
-    "basic_care": {
-        1: 78875, 2: 69975, 3: 59650, 4: 54125, 5: 11750,
-    },
-    "meal_service": {
-        1: 39437, 2: 34987, 3: 29825, 4: 27062, 5: 5875,
-    },
-    "medical_care": {
-        1: 118312, 2: 104962, 3: 89475, 4: 81187, 5: 17625,
-    },
-    "emergency": {
-        1: 157750, 2: 139950, 3: 119300, 4: 108250, 5: 23500,
-    }
+    "basic_care": {1: 78875, 2: 69975, 3: 59650, 4: 54125, 5: 11750},
+    "meal_service": {1: 39437, 2: 34987, 3: 29825, 4: 27062, 5: 5875},
+    "medical_care": {1: 118312, 2: 104962, 3: 89475, 4: 81187, 5: 17625},
+    "emergency": {1: 157750, 2: 139950, 3: 119300, 4: 108250, 5: 23500}
 }
 
 @router.post("/voice/create")
@@ -757,16 +748,15 @@ async def create_voice_record(
     transcription: str = "",
     db: Session = Depends(get_db)
 ):
-    """À½¼º ±â·Ï »ı¼º + ÀÚµ¿ Ã»ºÎ »ı¼º"""
+    """ìŒì„± ê¸°ë¡ ìƒì„± + ìë™ ì²­ë¶€ ìƒì„±"""
     try:
         resident = db.query(Resident).filter(Resident.id == resident_id).first()
         if not resident:
             raise HTTPException(status_code=404, detail="Resident not found")
         
         if service_type not in SERVICE_TYPE_AMOUNTS:
-            raise HTTPException(status_code=400, detail=f"Invalid service_type: {service_type}")
+            raise HTTPException(status_code=400, detail="Invalid service_type")
         
-        # VoiceRecord »ı¼º
         voice_record = VoiceRecord(
             caregiver_id=caregiver_id,
             resident_id=resident_id,
@@ -779,16 +769,14 @@ async def create_voice_record(
         db.add(voice_record)
         db.flush()
         
-        # Ã»ºÎ¾× °è»ê
         care_grade = resident.care_grade or 1
         billing_amount = SERVICE_TYPE_AMOUNTS[service_type].get(care_grade, 40000)
         
-        # BillingRecord ÀÚµ¿ »ı¼º
         billing_record = BillingRecord(
             caregiver_id=caregiver_id,
             resident_id=resident_id,
             center_id=resident.center_id,
-            service_category="Àç°¡±Ş¿©",
+            service_category="ì¬ê°€ê¸‰ì—¬",
             service_type=service_type,
             amount=billing_amount,
             status="draft",
@@ -806,9 +794,8 @@ async def create_voice_record(
             "status": "success",
             "voice_record_id": voice_record.id,
             "billing_record_id": billing_record.id,
-            "amount": billing_amount,
-            "message": f"À½¼º±â·Ï »ı¼º + Ã»ºÎ ÀÚµ¿ »ı¼º (\{billing_amount:,})"
+            "amount": billing_amount
         }
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"¿À·ù: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
