@@ -17,12 +17,12 @@ function filterMenuByRole() {
     const isManager = role === 'center_manager';
 
     const menuItems = {
-        'menu-dashboard': !isCaregiver,
-        'menu-residents': !isCaregiver,
-        'menu-voice-records': isCaregiver,
-        'menu-caregiver-billing': isCaregiver,
-        'menu-billing-management': isManager,
-        'menu-logout': true
+        'menu-dashboard': true,                    // 모두 볼 수 있음 (역할별 다른 데이터 표시)
+        'menu-residents': isManager,               // 센터장만
+        'menu-voice-records': isCaregiver,         // 요양사만
+        'menu-caregiver-billing': isCaregiver,     // 요양사만
+        'menu-billing-management': isManager,      // 센터장만
+        'menu-logout': true                        // 항상
     };
 
     Object.entries(menuItems).forEach(([id, shouldShow]) => {
