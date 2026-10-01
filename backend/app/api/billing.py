@@ -580,9 +580,9 @@ async def delete_billing(
         if billing.status != "draft" and billing.approval_status != "rejected":
             raise HTTPException(status_code=400, detail="임시 저장되었거나 거절된 청부만 삭제 가능합니다")
     elif is_manager:
-        # 센터장: pending/rejected 상태만 삭제 가능
-        if billing.approval_status not in ["pending", "rejected"]:
-            raise HTTPException(status_code=400, detail="승인 중이거나 반려된 청부만 삭제 가능합니다")
+        # 센터장: pending/approved/rejected 상태 삭제 가능
+        if billing.approval_status not in ["pending", "approved", "rejected"]:
+            raise HTTPException(status_code=400, detail="대기 중, 승인됨, 또는 반려된 청부만 삭제 가능합니다")
     else:
         raise HTTPException(status_code=403, detail="삭제 권한이 없습니다")
 
