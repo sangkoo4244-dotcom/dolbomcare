@@ -440,6 +440,14 @@
                 window.location.href = './login.html';
                 return;
             }
+
+            // Only center_manager can access this page
+            if (user.role !== 'center_manager') {
+                alert('센터장만 접근 가능합니다');
+                window.location.href = './caregiver_billing.html';
+                return;
+            }
+
             currentUser = user;
             document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
             document.getElementById('userAvatar').textContent = (user.full_name || user.email).charAt(0).toUpperCase();
