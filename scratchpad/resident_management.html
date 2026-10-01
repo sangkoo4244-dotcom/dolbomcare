@@ -582,6 +582,33 @@
         </div>
     </div>
 
+    <!-- 요양 기록 모달 (요양사용) -->
+    <div id="careNotesModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📝 요양 기록 추가/편집</h2>
+                <button class="close-btn" onclick="closeCareNotesModal()">✕</button>
+            </div>
+
+            <form id="careNotesForm" onsubmit="handleSaveCareNotes(event)">
+                <div class="form-group">
+                    <label class="form-label">이용자명</label>
+                    <input type="text" id="careNotesResidentName" class="form-input" readonly style="background: #f0f0f0;">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">요양 기록 (증상, 상태, 조치 등)</label>
+                    <textarea id="careNotesText" class="form-input" style="height: 200px; resize: vertical; font-family: monospace;" placeholder="예: 오늘 아침 혈압 측정 140/90, 식사는 1/2만 함, 좌측 다리 부종 관찰됨 등"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="submit-btn">저장하기</button>
+                    <button type="button" class="cancel-btn" onclick="closeCareNotesModal()">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 이용자 추가 모달 -->
     <div id="addModal" class="modal" style="display: none;">
         <div class="modal-content">
@@ -758,7 +785,7 @@
                         </td>
                         <td>${resident.age}세</td>
                         <td>
-                            <select class="select care-grade-select" data-resident-id="${resident.id}" ${!isManager ? 'disabled' : ''}>
+                            <select class="select care-grade-select" data-resident-id="${resident.id}">
                                 <option value="1" ${resident.care_grade == 1 ? 'selected' : ''}>1등급</option>
                                 <option value="2" ${resident.care_grade == 2 ? 'selected' : ''}>2등급</option>
                                 <option value="3" ${resident.care_grade == 3 ? 'selected' : ''}>3등급</option>
@@ -767,7 +794,7 @@
                             </select>
                         </td>
                         <td>
-                            <select class="select client-type-select" data-resident-id="${resident.id}" ${!isManager ? 'disabled' : ''}>
+                            <select class="select client-type-select" data-resident-id="${resident.id}">
                                 <option value="일반" ${resident.client_type == '일반' ? 'selected' : ''}>일반</option>
                                 <option value="차상위계층" ${resident.client_type == '차상위계층' ? 'selected' : ''}>차상위계층</option>
                                 <option value="기초생활보장" ${resident.client_type == '기초생활보장' ? 'selected' : ''}>기초생활</option>
@@ -775,7 +802,7 @@
                             </select>
                         </td>
                         <td>
-                            <select class="select health-status-select" data-resident-id="${resident.id}" ${!isManager ? 'disabled' : ''}>
+                            <select class="select health-status-select" data-resident-id="${resident.id}">
                                 <option value="stable" ${resident.health_status == 'stable' ? 'selected' : ''}>정상</option>
                                 <option value="warning" ${resident.health_status == 'warning' ? 'selected' : ''}>주의</option>
                                 <option value="critical" ${resident.health_status == 'critical' ? 'selected' : ''}>위험</option>
@@ -784,7 +811,7 @@
                         <td>
                             <div class="action-buttons">
                                 <button class="action-btn edit" onclick="openEditModal(${resident.id})" ${!isManager ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>✏️ 편집</button>
-                                <button class="action-btn save" onclick="saveResident(${resident.id})" ${!isManager ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>💾 저장</button>
+                                <button class="action-btn save" onclick="saveResident(${resident.id})">💾 저장</button>
                                 <button class="action-btn delete" onclick="deleteResident(${resident.id})" ${!isManager ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>🗑️ 삭제</button>
                             </div>
                         </td>
@@ -911,7 +938,8 @@
                         body: JSON.stringify({
                             care_grade: careGrade,
                             client_type: clientType,
-                            health_status: healthStatus
+                            health_status: healthStatus,
+                            user_role: currentUser.role
                         })
                     }
                 );
@@ -979,6 +1007,76 @@
                 deleteBtn.textContent = '🗑️ 삭제';
             }
         }
+
+        // 요양 기록 모달 함수들
+        function openCareNotesModal(residentId) {
+            const resident = residents.find(r => r.id === residentId);
+            if (!resident) return;
+
+            document.getElementById('careNotesResidentName').value = resident.name;
+            document.getElementById('careNotesText').value = resident.care_notes || '';
+            document.getElementById('careNotesForm').dataset.residentId = residentId;
+
+            document.getElementById('careNotesModal').style.display = 'flex';
+        }
+
+        function closeCareNotesModal() {
+            document.getElementById('careNotesModal').style.display = 'none';
+        }
+
+        async function handleSaveCareNotes(event) {
+            event.preventDefault();
+
+            const residentId = parseInt(document.getElementById('careNotesForm').dataset.residentId);
+            const careNotes = document.getElementById('careNotesText').value.trim();
+
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '저장 중...';
+
+            try {
+                const response = await fetch(
+                    `${API_URL}/residents/${residentId}/care-notes`,
+                    {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            care_notes: careNotes,
+                            user_role: currentUser.role
+                        })
+                    }
+                );
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '저장 실패');
+                }
+
+                const data = await response.json();
+                showSuccess(`${data.data.name}님의 요양 기록이 저장되었습니다`);
+                closeCareNotesModal();
+
+                setTimeout(() => {
+                    loadResidents();
+                }, 500);
+
+                console.log('✅ 요양 기록 저장 완료:', data);
+            } catch (error) {
+                console.error('❌ 요양 기록 저장 오류:', error);
+                showError(`저장 실패: ${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '저장하기';
+            }
+        }
+
+        document.getElementById('careNotesModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'careNotesModal') {
+                closeCareNotesModal();
+            }
+        });
 
         function openAddModal() {
             document.getElementById('addModal').style.display = 'flex';

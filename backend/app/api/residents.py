@@ -1,11 +1,59 @@
 from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.models import Resident, Center
 from app.schemas import ResidentCreate
 from app.database import get_db
 from datetime import datetime, date
 
+class CareNotesUpdate(BaseModel):
+    care_notes: str
+    user_role: str = "caregiver"
+
+class ResidentUpdate(BaseModel):
+    name: str = None
+    birth_date: str = None
+    age: int = None
+    care_grade: int = None
+    client_type: str = None
+    health_status: str = None
+    user_role: str = "center_manager"
+
 router = APIRouter()
+
+# 더 구체적인 경로를 먼저 정의 (FastAPI 라우팅 우선순위)
+@router.patch("/{resident_id}/care-notes")
+async def update_care_notes(
+    resident_id: int,
+    update_data: CareNotesUpdate,
+    db: Session = Depends(get_db)
+):
+    """요양 기록 편집 (요양사, 센터장 가능)"""
+    # 권한 검증: caregiver, center_manager 가능
+    if update_data.user_role not in ["caregiver", "center_manager"]:
+        raise HTTPException(status_code=403, detail="요양 기록 편집 권한이 없습니다")
+
+    resident = db.query(Resident).filter(Resident.id == resident_id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="Resident not found")
+
+    try:
+        resident.care_notes = update_data.care_notes
+        db.commit()
+        db.refresh(resident)
+
+        return {
+            "status": "success",
+            "message": f"{resident.name}님의 요양 기록이 저장되었습니다",
+            "data": {
+                "id": resident.id,
+                "name": resident.name,
+                "care_notes": resident.care_notes
+            }
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"요양 기록 저장 중 오류: {str(e)}")
 
 @router.get("/")
 async def get_residents(
@@ -185,39 +233,41 @@ async def create_resident(
 @router.put("/{resident_id}")
 async def update_resident(
     resident_id: int,
-    name: str = None,
-    birth_date: str = None,
-    age: int = None,
-    care_grade: int = None,
-    client_type: str = None,
-    health_status: str = None,
+    update_data: ResidentUpdate,
     db: Session = Depends(get_db)
 ):
-    """이용자 정보 수정 (이름, 생년월일, 나이, 요양등급, 클라이언트 타입, 건강상태)"""
+    """이용자 정보 수정 (JSON Body)
+    - 센터장: 모든 필드 수정 가능 (이름, 생년월일 포함)
+    - 요양사: 나이, 요양등급, 클라이언트 타입, 건강상태만 수정 가능
+    """
     resident = db.query(Resident).filter(Resident.id == resident_id).first()
     if not resident:
         raise HTTPException(status_code=404, detail="Resident not found")
 
     try:
+        # 요양사는 이름/생년월일 수정 불가
+        if update_data.user_role == "caregiver" and (update_data.name is not None or update_data.birth_date is not None):
+            raise HTTPException(status_code=403, detail="요양사는 이용자의 기본정보(이름, 생년월일)를 수정할 수 없습니다")
+
         # 선택적 업데이트
-        if name is not None:
-            resident.name = name
-        if birth_date is not None:
-            resident.birth_date = date.fromisoformat(birth_date)
-        if age is not None:
-            resident.age = age
-        if care_grade is not None:
-            if care_grade not in [1, 2, 3, 4, 5]:
+        if update_data.name is not None:
+            resident.name = update_data.name
+        if update_data.birth_date is not None:
+            resident.birth_date = date.fromisoformat(update_data.birth_date)
+        if update_data.age is not None:
+            resident.age = update_data.age
+        if update_data.care_grade is not None:
+            if update_data.care_grade not in [1, 2, 3, 4, 5]:
                 raise HTTPException(status_code=400, detail="Invalid care grade")
-            resident.care_grade = care_grade
-        if client_type is not None:
-            if client_type not in ["일반", "차상위계층", "기초생활보장", "의료급여"]:
+            resident.care_grade = update_data.care_grade
+        if update_data.client_type is not None:
+            if update_data.client_type not in ["일반", "차상위계층", "기초생활보장", "의료급여"]:
                 raise HTTPException(status_code=400, detail="Invalid client type")
-            resident.client_type = client_type
-        if health_status is not None:
-            if health_status not in ["stable", "warning", "critical"]:
+            resident.client_type = update_data.client_type
+        if update_data.health_status is not None:
+            if update_data.health_status not in ["stable", "warning", "critical"]:
                 raise HTTPException(status_code=400, detail="Invalid health status")
-            resident.health_status = health_status
+            resident.health_status = update_data.health_status
 
         db.commit()
         db.refresh(resident)
@@ -269,25 +319,3 @@ async def delete_resident(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"이용자 삭제 중 오류: {str(e)}")
-
-@router.get("/")
-async def list_all_residents(db: Session = Depends(get_db)):
-    """전체 이용자 목록 조회"""
-    residents = db.query(Resident).all()
-
-    return {
-        "total_residents": len(residents),
-        "residents": [
-            {
-                "id": r.id,
-                "name": r.name,
-                "birth_date": r.birth_date.isoformat() if r.birth_date else None,
-                "age": r.age,
-                "care_grade": r.care_grade,
-                "client_type": r.client_type,
-                "health_status": r.health_status,
-                "center_id": r.center_id
-            }
-            for r in residents
-        ]
-    }

@@ -45,6 +45,7 @@ class Resident(Base):
     guardian_id = Column(Integer, ForeignKey("users.id"))
     care_grade = Column(Integer, default=1)  # 1~5등급, null=인지지원등급
     client_type = Column(String, default="일반")  # '일반', '차상위계층', '기초생활보장', '의료급여'
+    care_notes = Column(Text, nullable=True)  # 요양사가 편집 가능한 요양 기록
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class DailyRecord(Base):
