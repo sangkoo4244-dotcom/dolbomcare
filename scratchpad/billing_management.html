@@ -597,7 +597,7 @@
             tbody.innerHTML = html;
         }
 
-        function filterByStatus(status) {
+        async function filterByStatus(status) {
             currentFilter = status;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
@@ -606,9 +606,26 @@
                 ? allBillings
                 : allBillings.filter(b => b.approval_status === currentFilter);
 
-            const residentsRes = fetch(`${API_URL}/residents/`);
-            const residentMap = {};
-            renderBillingTable(filtered, residentMap);
+            console.log('🔍 필터:', {
+                status: currentFilter,
+                count: filtered.length,
+                records: filtered.map(r => r.approval_status)
+            });
+
+            // 주민 정보 로드
+            try {
+                const residentsRes = await fetch(`${API_URL}/residents/`);
+                const residentsData = residentsRes.ok ? await residentsRes.json() : { residents: [] };
+                const residents = residentsData.residents || [];
+                const residentMap = {};
+                residents.forEach(r => {
+                    residentMap[r.id] = r.name;
+                });
+                renderBillingTable(filtered, residentMap);
+            } catch (error) {
+                console.error('❌ 주민 정보 로드 실패:', error);
+                renderBillingTable(filtered, {});
+            }
         }
 
         async function approveBilling(recordId) {
