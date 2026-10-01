@@ -552,8 +552,9 @@
                     });
                     if (recResponse.ok) {
                         const recData = await recResponse.json();
-                        const count = recData.records?.length || 0;
-                        console.log('Records count:', count);
+                        // Handle both formats: {total_records: N} or {records: [...]}
+                        const count = recData.total_records || recData.records?.length || 0;
+                        console.log('Records count:', count, 'Data:', recData);
                         document.getElementById('recordCount').textContent = count;
                     } else {
                         console.error('Records failed:', recResponse.status);
