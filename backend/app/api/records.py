@@ -618,6 +618,16 @@ async def update_record(
         db.commit()
         db.refresh(record)
 
+        # 연관된 청부 기록도 업데이트
+        if request.service_type:
+            billing = db.query(BillingRecord).filter(
+                BillingRecord.daily_record_id == record_id
+            ).first()
+            if billing:
+                billing.service_type = request.service_type
+                db.commit()
+                db.refresh(billing)
+
         return {
             "status": "success",
             "record_id": record.id,
