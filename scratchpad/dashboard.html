@@ -571,9 +571,10 @@
                     console.log('Fetching billing...');
                     let actionCount = 0, totalAmount = 0;
                     const centerId = user?.center_id || 1;
+                    const caregiverId = user?.id;  // 요양사 본인의 청부만
 
-                    // Fetch all active billings (include_archived=false) for the center
-                    const billUrl = `${API_URL}/billing/?center_id=${centerId}&include_archived=false`;
+                    // Fetch all active billings (include_archived=false) for the current caregiver
+                    const billUrl = `${API_URL}/billing/?center_id=${centerId}&caregiver_id=${caregiverId}&include_archived=false`;
                     console.log('Billing URL:', billUrl);
 
                     const billResp = await fetch(billUrl, {
