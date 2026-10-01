@@ -919,14 +919,6 @@
                     const data = await billResp.json();
                     let totalAmount = data.total_billing_amount || 0;
 
-                    // 요양사의 경우 submitted_to_nhis 제외 계산
-                    if (currentUser.role === 'caregiver') {
-                        const records = data.records || [];
-                        totalAmount = records
-                            .filter(r => r.approval_status !== 'submitted_to_nhis')
-                            .reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
-                    }
-
                     document.getElementById('billingAmountDisplay').textContent = `₩${new Intl.NumberFormat('ko-KR').format(totalAmount)}`;
                     console.log('✅ 청부액 로드 (탭:', currentRecordTab, '):', totalAmount);
                 }
