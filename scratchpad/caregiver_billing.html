@@ -186,7 +186,7 @@
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             border: 1px solid #e0e0e0;
-            overflow: hidden;
+            overflow-x: auto;
         }
 
         .table {
@@ -240,6 +240,21 @@
         .status-pending {
             background: #fff3cd;
             color: #856404;
+        }
+
+        .status-draft {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .status-submitted {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-paid {
+            background: #d4edda;
+            color: #155724;
         }
 
         .rejection-reason {
@@ -571,7 +586,7 @@
                         }
                     } else {
                         // Caregiver actions based on status
-                        if (record.approval_status === 'draft') {
+                        if (record.approval_status === 'draft' || record.status === 'draft') {
                             actionHtml = `
                                 <button class="btn-submit" onclick="submitBilling(${record.id})">제출</button>
                                 <button class="btn-delete" onclick="deleteBilling(${record.id}, 'caregiver')">삭제</button>
@@ -580,12 +595,14 @@
                             actionHtml = `
                                 <button class="btn-cancel" onclick="cancelBilling(${record.id})">취소</button>
                             `;
-                        } else if (record.approval_status === 'rejected') {
+                        } else if (record.approval_status === 'rejected' || record.status === 'rejected') {
                             actionHtml = `
                                 <button class="btn-submit" onclick="submitBilling(${record.id})">제출</button>
                                 <button class="btn-edit" onclick="editVoiceRecord(${record.resident_id})">수정</button>
                                 <button class="btn-delete" onclick="deleteBilling(${record.id}, 'caregiver')">삭제</button>
                             `;
+                        } else if (record.approval_status === 'approved' || record.status === 'submitted' || record.status === 'paid') {
+                            actionHtml = `<span style="font-size: 12px; color: #999;">조회만 가능</span>`;
                         }
                     }
 
