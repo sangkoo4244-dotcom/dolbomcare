@@ -569,10 +569,13 @@
                             </div>
                         `;
                     } else if (record.approval_status === 'submitted_to_nhis') {
+                        // 건보 청구됨 - 자동 처리 중, 버튼 없음
+                        actionHtml = '';
+                    } else if (record.approval_status === 'rejected_by_nhis') {
+                        // 건보 반려됨 - 다시 청구 가능
                         actionHtml = `
                             <div class="action-buttons">
-                                <button class="action-btn success" onclick="confirmReimbursement(${record.id})">환급 확인</button>
-                                <button class="action-btn warning" onclick="cancelNHISSubmission(${record.id})">취소</button>
+                                <button class="action-btn primary" onclick="resubmitToNHIS(${record.id})">다시 청구</button>
                             </div>
                         `;
                     }
@@ -732,6 +735,31 @@
             } catch (error) {
                 console.error('❌ 건보 청구 취소 오류:', error);
                 alert('건보 청구 취소 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        async function resubmitToNHIS(recordId) {
+            if (!confirm('건보 반려된 청부를 다시 청구하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/billing/${recordId}/submit-to-nhis`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        user_role: currentUser.role
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('재청구 실패');
+                }
+
+                alert('청부가 다시 건강보험공단에 청구되었습니다');
+                loadBillingRecords();
+            } catch (error) {
+                console.error('❌ 재청구 오류:', error);
+                alert('재청구 중 오류가 발생했습니다: ' + error.message);
             }
         }
 
