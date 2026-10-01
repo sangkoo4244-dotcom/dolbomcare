@@ -155,6 +155,9 @@
         .content {
             flex: 1;
             padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
         }
 
         /* Stats Grid */
@@ -836,136 +839,129 @@
             });
         }
 
-        // Load dashboard data
+        // Load dashboard data by role
         async function loadDashboardData() {
             try {
                 const user = JSON.parse(localStorage.getItem('user'));
                 const token = localStorage.getItem('access_token');
+                const role = user?.role;
 
-                console.log('🔍 Dashboard Load Debug:');
-                console.log('  User:', user);
-                console.log('  User ID:', user?.id);
-                console.log('  User Role:', user?.role);
-                console.log('  Center ID:', user?.center_id);
-                console.log('  Token:', token);
-                // Always try to load real data from API, even with offline-test-token
+                console.log('📊 Dashboard Load:', role);
 
-                // Load residents count
-                try {
-                    console.log('Fetching residents...');
-                    const resResponse = await fetch(`${API_URL}/residents/`, {
-                        headers: token ? {'Authorization': `Bearer ${token}`} : {}
-                    });
-                    if (resResponse.ok) {
-                        const resData = await resResponse.json();
-                        const count = resData.residents?.length || resData.total_residents || 0;
-                        console.log('Residents count:', count);
-                        document.getElementById('residentCount').textContent = count;
-                    } else {
-                        console.error('Residents failed:', resResponse.status);
-                    }
-                } catch (e) { console.error('Residents error:', e); }
-
-                // Load today's records count
-                try {
-                    console.log('Fetching records...');
-                    const isCaregiver = user?.role === 'caregiver';
-                    const centerId = user?.center_id || 1;
-                    let recUrl;
-
-                    if (isCaregiver) {
-                        // 요양사: 자신의 기록만
-                        recUrl = `${API_URL}/records/today?caregiver_id=${user.id}`;
-                    } else {
-                        // 센터장: 센터의 모든 기록
-                        recUrl = `${API_URL}/records/today/center?center_id=${centerId}`;
-                    }
-                    console.log('Records URL:', recUrl);
-                    const recResponse = await fetch(recUrl, {
-                        headers: token ? {'Authorization': `Bearer ${token}`} : {}
-                    });
-                    if (recResponse.ok) {
-                        const recData = await recResponse.json();
-                        // Handle both formats: {total_records: N} or {records: [...]}
-                        const count = recData.total_records || recData.records?.length || 0;
-                        console.log('Records count:', count, 'Data:', recData);
-                        document.getElementById('recordCount').textContent = count;
-                    } else {
-                        console.error('Records failed:', recResponse.status);
-                        // Fallback to 0
-                        document.getElementById('recordCount').textContent = '0';
-                    }
-                } catch (e) {
-                    console.error('Records error:', e);
-                    document.getElementById('recordCount').textContent = '0';
+                if (role === 'center_manager') {
+                    await loadManagerDashboard(user, token);
+                } else if (role === 'caregiver') {
+                    await loadCaregiverDashboard(user, token);
+                } else if (role === 'guardian') {
+                    await loadGuardianDashboard(user, token);
                 }
-
-                // Load billing: count = action needed (pending+rejected), amount = varies by role
-                try {
-                    console.log('Fetching billing...');
-                    let actionCount = 0, totalAmount = 0;
-                    const centerId = user?.center_id || 1;
-                    const isCaregiver = user?.role === 'caregiver';
-
-                    // Build URL based on role
-                    let billUrl;
-                    if (isCaregiver) {
-                        // 요양사: 자신의 청부만
-                        billUrl = `${API_URL}/billing/?center_id=${centerId}&caregiver_id=${user.id}&include_archived=false`;
-                    } else {
-                        // 센터장: 모든 센터 청부
-                        billUrl = `${API_URL}/billing/?center_id=${centerId}&include_archived=false`;
-                    }
-                    console.log('💳 Billing API Call:');
-                    console.log('  URL:', billUrl);
-                    console.log('  Role:', isCaregiver ? 'caregiver' : 'center_manager');
-                    console.log('  Center ID:', centerId);
-                    console.log('  Caregiver ID:', user?.id);
-
-                    const billResp = await fetch(billUrl, {
-                        headers: token ? {'Authorization': `Bearer ${token}`} : {}
-                    });
-
-                    if (billResp.ok) {
-                        const billData = await billResp.json();
-                        const records = billData.records || [];
-                        console.log('Billing records:', records.length, records);
-
-                        // Action needed: pending + rejected
-                        actionCount = records.filter(r => r.approval_status === 'pending' || r.approval_status === 'rejected').length;
-
-                        // Total amount: role별로 다름
-                        if (isCaregiver) {
-                            // 요양사: submitted_to_nhis 제외 (센터장이 처리 중)
-                            totalAmount = records
-                                .filter(r => r.approval_status !== 'submitted_to_nhis')
-                                .reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
-                        } else {
-                            // 센터장: 모든 상태 포함
-                            totalAmount = records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
-                        }
-                    } else {
-                        console.error('Billing fetch failed:', billResp.status);
-                    }
-
-                    console.log('Billing - Action needed:', actionCount, 'Total amount:', totalAmount);
-                    document.getElementById('billingCount').textContent = actionCount;
-                    document.getElementById('billingAmount').textContent =
-                        new Intl.NumberFormat('ko-KR').format(totalAmount);
-                } catch (e) {
-                    console.error('Billing error:', e);
-                    document.getElementById('billingCount').textContent = '0';
-                    document.getElementById('billingAmount').textContent = '0';
-                }
-
             } catch (error) {
                 console.log('Dashboard data load error:', error);
-                // Fallback to demo data
-                document.getElementById('residentCount').textContent = '0';
-                document.getElementById('recordCount').textContent = '0';
-                document.getElementById('billingCount').textContent = '0';
-                document.getElementById('billingAmount').textContent = '0';
             }
+        }
+
+        // 센터장 대시보드
+        async function loadManagerDashboard(user, token) {
+            const centerId = user?.center_id || 1;
+
+            try {
+                // 이용자 수
+                const resResponse = await fetch(`${API_URL}/residents/`, {
+                    headers: token ? {'Authorization': `Bearer ${token}`} : {}
+                });
+                if (resResponse.ok) {
+                    const resData = await resResponse.json();
+                    const count = resData.residents?.length || resData.total_residents || 0;
+                    document.getElementById('residentCount').textContent = count;
+                }
+            } catch (e) { console.error('Residents error:', e); }
+
+            try {
+                // 음성 기록 (이번 달)
+                const recResponse = await fetch(`${API_URL}/records/today/center?center_id=${centerId}`, {
+                    headers: token ? {'Authorization': `Bearer ${token}`} : {}
+                });
+                if (recResponse.ok) {
+                    const recData = await recResponse.json();
+                    const count = recData.total_records || recData.records?.length || 0;
+                    document.getElementById('recordCount').textContent = count;
+                }
+            } catch (e) { console.error('Records error:', e); }
+
+            try {
+                // 청부 (승인 대기)
+                const billUrl = `${API_URL}/billing/?center_id=${centerId}&include_archived=false`;
+                const billResp = await fetch(billUrl, {
+                    headers: token ? {'Authorization': `Bearer ${token}`} : {}
+                });
+                if (billResp.ok) {
+                    const billData = await billResp.json();
+                    const records = billData.records || [];
+                    const actionCount = records.filter(r => r.approval_status === 'pending' || r.approval_status === 'rejected').length;
+                    const totalAmount = records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
+
+                    document.getElementById('billingCount').textContent = actionCount;
+                    document.getElementById('billingAmount').textContent = new Intl.NumberFormat('ko-KR').format(totalAmount);
+                }
+            } catch (e) { console.error('Billing error:', e); }
+        }
+
+        // 요양사 대시보드
+        async function loadCaregiverDashboard(user, token) {
+            const centerId = user?.center_id || 1;
+
+            try {
+                // 오늘 일정 (거주자 수)
+                const resResponse = await fetch(`${API_URL}/residents/`, {
+                    headers: token ? {'Authorization': `Bearer ${token}`} : {}
+                });
+                if (resResponse.ok) {
+                    const resData = await resResponse.json();
+                    const count = resData.residents?.length || 0;
+                    document.getElementById('todaySchedule').textContent = count;
+                }
+            } catch (e) { console.error('Schedule error:', e); }
+
+            try {
+                // 음성 기록 (내 기록)
+                const recResponse = await fetch(`${API_URL}/records/today?caregiver_id=${user.id}`, {
+                    headers: token ? {'Authorization': `Bearer ${token}`} : {}
+                });
+                if (recResponse.ok) {
+                    const recData = await recResponse.json();
+                    const count = recData.total_records || recData.records?.length || 0;
+                    document.getElementById('myRecordCount').textContent = count;
+                }
+            } catch (e) { console.error('My records error:', e); }
+
+            try {
+                // 나의 청부
+                const billUrl = `${API_URL}/billing/?center_id=${centerId}&caregiver_id=${user.id}&include_archived=false`;
+                const billResp = await fetch(billUrl, {
+                    headers: token ? {'Authorization': `Bearer ${token}`} : {}
+                });
+                if (billResp.ok) {
+                    const billData = await billResp.json();
+                    const records = billData.records || [];
+                    const actionCount = records.filter(r => r.approval_status === 'pending').length;
+                    const totalAmount = records
+                        .filter(r => r.status !== 'submitted_to_nhis')
+                        .reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
+
+                    document.getElementById('myBillingCount').textContent = actionCount;
+                    document.getElementById('myBillingAmount').textContent = new Intl.NumberFormat('ko-KR').format(totalAmount);
+                }
+            } catch (e) { console.error('My billing error:', e); }
+        }
+
+        // 보호자 대시보드
+        async function loadGuardianDashboard(user, token) {
+            // TODO: 보호자는 특정 이용자(본인의 어르신)만 조회 가능
+            // 현재는 placeholder 사용
+            document.getElementById('lastVisit').textContent = '진행 중';
+            document.getElementById('healthStatus').textContent = '정상';
+            document.getElementById('pendingItems').textContent = '0';
+            document.getElementById('recentBilling').textContent = '0';
         }
 
         // Initialize
