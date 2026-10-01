@@ -400,14 +400,18 @@ async def get_all_records(
         ).all()
 
         billing_map = {}
+        billing_total = 0
         for b in billings:
             if b.daily_record_id:
                 billing_map[b.daily_record_id] = {
                     "amount": b.amount,
                     "service_type": b.service_type
                 }
-
-        billing_total = sum(b.amount for b in billings if b.amount)
+                # DailyRecord와 연결된 청부만 합산
+                billing_total += b.amount
+            elif not b.daily_record_id:
+                # 미연결 청부도 합산 (기록 없지만 청부 데이터만 있는 경우)
+                billing_total += b.amount
 
         response_records = []
         for r in records:
