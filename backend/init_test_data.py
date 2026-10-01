@@ -132,29 +132,29 @@ try:
     print("✅ 청부 기록 생성 중...")
 
     billings = [
-        # 대기 중
+        # 대기 중 (오늘)
         {
             "resident_id": resident_ids[0],
             "approval_status": "pending",
             "status": "draft",
             "amount": 1400000,
-            "days_ago": 2
+            "days_ago": 0
         },
-        # 승인됨
+        # 승인됨 (오늘)
         {
             "resident_id": resident_ids[1],
             "approval_status": "approved",
             "status": "draft",
             "amount": 1260000,
-            "days_ago": 5
+            "days_ago": 0
         },
-        # 건보 청구됨
+        # 건보 청구됨 (과거)
         {
             "resident_id": resident_ids[2],
             "approval_status": "submitted_to_nhis",
             "status": "draft",
             "amount": 1070000,
-            "days_ago": 8
+            "days_ago": 2
         },
         # 환급완료 (아카이브됨) ← 새로운 상태
         {
