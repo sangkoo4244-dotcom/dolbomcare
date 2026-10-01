@@ -18,7 +18,7 @@ function filterMenuByRole() {
 
     const menuItems = {
         'menu-dashboard': true,                    // 모두 볼 수 있음 (역할별 다른 데이터 표시)
-        'menu-residents': isManager,               // 센터장만
+        'menu-residents': true,                    // 모두 볼 수 있음 (요양사는 조회만)
         'menu-voice-records': isCaregiver,         // 요양사만
         'menu-caregiver-billing': isCaregiver,     // 요양사만
         'menu-billing-management': isManager,      // 센터장만
