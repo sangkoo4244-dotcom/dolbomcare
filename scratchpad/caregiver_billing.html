@@ -444,14 +444,15 @@
             }
         }
 
-        window.addEventListener('load', () => {
+        // 인증 확인 및 초기화
+        function checkAuth() {
             const token = localStorage.getItem('access_token');
             const user = JSON.parse(localStorage.getItem('user') || '{}');
 
             if (!token || !user.id) {
                 alert('로그인이 필요합니다');
                 window.location.href = './login.html';
-                return;
+                return false;
             }
 
             currentUser = user;
@@ -461,6 +462,22 @@
 
             // 권한별 메뉴 필터링
             filterMenuByRole();
+            return true;
+        }
+
+        // DOMContentLoaded에서 즉시 인증 확인
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📄 DOMContentLoaded: 청부관리');
+            checkAuth();
+        });
+
+        window.addEventListener('load', () => {
+            console.log('🔍 Load 이벤트: 청부관리');
+
+            // checkAuth()가 아직 실행되지 않았으면 실행
+            if (!currentUser) {
+                checkAuth();
+            }
 
             loadBillingRecords();
         });

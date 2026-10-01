@@ -613,6 +613,26 @@
             }
         }
 
+        // 권한 확인 및 메뉴 필터링 초기화
+        function initializePage() {
+            console.log('🚀 페이지 초기화 시작');
+            checkAuth();
+            // 메뉴 필터링이 제때 실행되도록 setTimeout 추가
+            setTimeout(() => {
+                if (!document.querySelector('.nav-item.hidden')) {
+                    console.log('⚠️ 메뉴 필터링 재시도...');
+                    filterMenuByRole();
+                }
+            }, 100);
+        }
+
+        // DOMContentLoaded에서 즉시 인증 확인
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📄 DOMContentLoaded 이벤트');
+            initializePage();
+        });
+
+        // load 이벤트에서 나머지 초기화
         window.addEventListener('load', () => {
             const urlParams = new URLSearchParams(window.location.search);
             filterResidentId = urlParams.get('resident_id');
@@ -620,7 +640,11 @@
 
             console.log('🔍 음성기록 페이지 로드:', { filterResidentId, source, hasParameter: !!filterResidentId });
 
-            checkAuth();
+            // 만약 checkAuth()가 아직 실행되지 않았으면 실행
+            if (!currentUser) {
+                initializePage();
+            }
+
             loadResidents();
 
             if (filterResidentId) {
