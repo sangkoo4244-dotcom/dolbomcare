@@ -566,16 +566,23 @@
                     document.getElementById('recordCount').textContent = '0';
                 }
 
-                // Load billing: count = action needed (pending+rejected), amount = all active billing (excluding archived)
+                // Load billing: count = action needed (pending+rejected), amount = varies by role
                 try {
                     console.log('Fetching billing...');
                     let actionCount = 0, totalAmount = 0;
                     const centerId = user?.center_id || 1;
-                    const caregiverId = user?.id;  // 요양사 본인의 청부만
+                    const isCaregiver = user?.role === 'caregiver';
 
-                    // Fetch all active billings (include_archived=false) for the current caregiver
-                    const billUrl = `${API_URL}/billing/?center_id=${centerId}&caregiver_id=${caregiverId}&include_archived=false`;
-                    console.log('Billing URL:', billUrl);
+                    // Build URL based on role
+                    let billUrl;
+                    if (isCaregiver) {
+                        // 요양사: 자신의 청부만
+                        billUrl = `${API_URL}/billing/?center_id=${centerId}&caregiver_id=${user.id}&include_archived=false`;
+                    } else {
+                        // 센터장: 모든 센터 청부
+                        billUrl = `${API_URL}/billing/?center_id=${centerId}&include_archived=false`;
+                    }
+                    console.log('Billing URL:', billUrl, '(Role:', isCaregiver ? 'caregiver' : 'center_manager', ')');
 
                     const billResp = await fetch(billUrl, {
                         headers: token ? {'Authorization': `Bearer ${token}`} : {}
@@ -586,14 +593,19 @@
                         const records = billData.records || [];
                         console.log('Billing records:', records.length, records);
 
-                        // Action needed: pending + rejected (요양사가 처리할 수 있는 상태)
+                        // Action needed: pending + rejected
                         actionCount = records.filter(r => r.approval_status === 'pending' || r.approval_status === 'rejected').length;
 
-                        // Total amount: 요양사가 직접 처리하는 상태만 (submitted_to_nhis는 센터장이 처리 중)
-                        // pending, approved, rejected만 계산 (submitted_to_nhis 제외)
-                        totalAmount = records
-                            .filter(r => r.approval_status !== 'submitted_to_nhis')
-                            .reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
+                        // Total amount: role별로 다름
+                        if (isCaregiver) {
+                            // 요양사: submitted_to_nhis 제외 (센터장이 처리 중)
+                            totalAmount = records
+                                .filter(r => r.approval_status !== 'submitted_to_nhis')
+                                .reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
+                        } else {
+                            // 센터장: 모든 상태 포함
+                            totalAmount = records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
+                        }
                     } else {
                         console.error('Billing fetch failed:', billResp.status);
                     }
