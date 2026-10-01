@@ -92,6 +92,7 @@ try:
     print("✅ 음성 기록 생성 중...")
     now = datetime.now()
     daily_records = []
+    today_daily_record_ids = []
 
     # 오늘 기록: 2건 (최근 기록 테스트용)
     for i, resident_id in enumerate(resident_ids[:2]):
@@ -108,6 +109,7 @@ try:
         db.add(daily_record)
         db.flush()
         daily_records.append(daily_record)
+        today_daily_record_ids.append(daily_record.id)
 
     # 과거 기록: 7건 (전체 기록 테스트용)
     for i, resident_id in enumerate(resident_ids):
@@ -190,6 +192,8 @@ try:
             approval_status=billing_data["approval_status"],
             recorded_date=recorded_date,
             is_archived=billing_data.get("is_archived", False),
+            # 오늘 청부는 DailyRecord와 연결
+            daily_record_id=today_daily_record_ids[i] if i < len(today_daily_record_ids) else None,
         )
 
         if billing_data["approval_status"] == "approved":
