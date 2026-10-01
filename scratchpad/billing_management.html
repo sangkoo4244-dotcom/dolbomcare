@@ -387,6 +387,7 @@
                 <button class="filter-btn active" onclick="filterByStatus('all')">전체</button>
                 <button class="filter-btn" onclick="filterByStatus('pending')">대기 중</button>
                 <button class="filter-btn" onclick="filterByStatus('approved')">승인</button>
+                <button class="filter-btn" onclick="filterByStatus('submitted_to_nhis')">건보 청구</button>
                 <button class="filter-btn" onclick="filterByStatus('rejected')">거절</button>
             </div>
 
@@ -519,6 +520,7 @@
                     const statusLabel = {
                         'pending': '⏳ 승인 대기',
                         'approved': '✅ 승인됨',
+                        'submitted_to_nhis': '📤 건보 청구됨',
                         'rejected': '❌ 거절됨'
                     }[record.approval_status] || record.approval_status;
 
@@ -538,6 +540,12 @@
                             <div class="action-buttons">
                                 <button class="action-btn success" onclick="approveBilling(${record.id})">승인</button>
                                 <button class="action-btn danger" onclick="rejectBilling(${record.id})">거절</button>
+                            </div>
+                        `;
+                    } else if (record.approval_status === 'approved') {
+                        actionHtml = `
+                            <div class="action-buttons">
+                                <button class="action-btn primary" onclick="submitToNHIS(${record.id})">건보 청구</button>
                             </div>
                         `;
                     }
@@ -622,6 +630,31 @@
             } catch (error) {
                 console.error('❌ 거절 오류:', error);
                 alert('거절 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        async function submitToNHIS(recordId) {
+            if (!confirm('이 청부를 건강보험공단에 청구하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/billing/${recordId}/submit-to-nhis`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        user_role: currentUser.role
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('건보 청구 실패');
+                }
+
+                alert('청부가 건강보험공단에 청구되었습니다');
+                loadBillingRecords();
+            } catch (error) {
+                console.error('❌ 건보 청구 오류:', error);
+                alert('건보 청구 중 오류가 발생했습니다: ' + error.message);
             }
         }
 

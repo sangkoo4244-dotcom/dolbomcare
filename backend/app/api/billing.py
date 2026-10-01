@@ -368,6 +368,39 @@ async def reject_billing(
         }
     }
 
+@router.post("/{billing_id}/submit-to-nhis")
+async def submit_billing_to_nhis(
+    billing_id: int,
+    request: ApprovalRequest,
+    db: Session = Depends(get_db)
+):
+    """청부를 건강보험공단에 청구 제출 (센터장만 가능)"""
+    if request.user_role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 건보 청구 가능합니다")
+
+    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    if not billing:
+        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+
+    if billing.approval_status != "approved":
+        raise HTTPException(status_code=400, detail="승인된 청부만 건보 청구 가능합니다")
+
+    # 건보 청구 처리
+    billing.approval_status = "submitted_to_nhis"
+    billing.approved_at = datetime.now()
+    db.commit()
+    db.refresh(billing)
+
+    return {
+        "status": "success",
+        "message": "청부가 건강보험공단에 청구되었습니다",
+        "data": {
+            "id": billing.id,
+            "approval_status": billing.approval_status,
+            "submitted_at": billing.approved_at.isoformat() if billing.approved_at else None
+        }
+    }
+
 @router.post("/{billing_id}/submit")
 async def submit_billing_for_approval(
     billing_id: int,
