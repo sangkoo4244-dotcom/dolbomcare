@@ -60,6 +60,10 @@
             background: rgba(59, 130, 246, 0.1);
         }
 
+        .nav-item.hidden {
+            display: none !important;
+        }
+
         .main-layout {
             margin-left: 250px;
             display: flex;
@@ -313,6 +317,7 @@
             }
         }
     </style>
+    <script src="menu.js"></script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -322,22 +327,22 @@
             <div class="sidebar-title">돌봄케어</div>
         </div>
         <nav class="sidebar-nav">
-            <a class="nav-item" onclick="navigateTo('./dashboard.html')">
+            <a class="nav-item" id="menu-dashboard" onclick="navigateTo('./dashboard.html')">
                 <span>📊</span> 대시보드
             </a>
-            <a class="nav-item" onclick="navigateTo('./resident_management.html')">
+            <a class="nav-item" id="menu-residents" onclick="navigateTo('./resident_management.html')">
                 <span>👥</span> 이용자 관리
             </a>
-            <a class="nav-item" onclick="navigateTo('./voice_record.html')">
+            <a class="nav-item" id="menu-voice-records" onclick="navigateTo('./voice_record.html')">
                 <span>🎤</span> 음성 기록
             </a>
-            <a class="nav-item" onclick="navigateTo('./caregiver_billing.html')">
+            <a class="nav-item" id="menu-caregiver-billing" onclick="navigateTo('./caregiver_billing.html')">
                 <span>💳</span> 나의 청부
             </a>
-            <a class="nav-item active" onclick="navigateTo('./billing_management.html')">
+            <a class="nav-item active" id="menu-billing-management" onclick="navigateTo('./billing_management.html')">
                 <span>📋</span> 청부 관리
             </a>
-            <a class="nav-item" style="margin-top: 30px;" onclick="logout()">
+            <a class="nav-item" id="menu-logout" style="margin-top: 30px;" onclick="logout()">
                 <span>🚪</span> 로그아웃
             </a>
         </nav>
