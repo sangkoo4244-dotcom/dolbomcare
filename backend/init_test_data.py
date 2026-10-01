@@ -93,8 +93,25 @@ try:
     now = datetime.now()
     daily_records = []
 
+    # 오늘 기록: 2건 (최근 기록 테스트용)
+    for i, resident_id in enumerate(resident_ids[:2]):
+        daily_record = DailyRecord(
+            caregiver_id=caregiver_id,
+            resident_id=resident_id,
+            recorded_date=now,  # 오늘
+            service_type="basic_care",
+            morning_care=True,
+            meal_intake="full",
+            medicine_given=True,
+            notes=f"이용자 {i+1}의 오늘 기록"
+        )
+        db.add(daily_record)
+        db.flush()
+        daily_records.append(daily_record)
+
+    # 과거 기록: 7건 (전체 기록 테스트용)
     for i, resident_id in enumerate(resident_ids):
-        for day_offset in range(1, 4):  # 3일간 기록
+        for day_offset in range(1, 3):  # 1~2일 전
             daily_record = DailyRecord(
                 caregiver_id=caregiver_id,
                 resident_id=resident_id,
@@ -103,13 +120,13 @@ try:
                 morning_care=True,
                 meal_intake="full",
                 medicine_given=True,
-                notes=f"이용자 {resident_ids.index(resident_id)+1}의 {day_offset}일전 기록"
+                notes=f"이용자 {i+1}의 {day_offset}일전 기록"
             )
             db.add(daily_record)
             db.flush()
             daily_records.append(daily_record)
 
-    print(f"  - 음성 기록: {len(daily_records)}건 생성")
+    print(f"  - 음성 기록: {len(daily_records)}건 (오늘: 2건, 과거: 7건)")
 
     # 6. 청부 기록 생성 (다양한 상태)
     print("✅ 청부 기록 생성 중...")
