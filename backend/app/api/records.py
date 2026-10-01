@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, Body
 from pydantic import BaseModel
+from typing import Optional
 from sqlalchemy.orm import Session
 from app.models import DailyRecord, BillingRecord, User, Resident
 from app.schemas import DailyRecordResponse
@@ -57,6 +58,10 @@ class CreateRecordRequest(BaseModel):
     service_type: str
     notes: str = ""
 
+class UpdateRecordRequest(BaseModel):
+    service_type: Optional[str] = None
+    notes: Optional[str] = None
+
 class BatchDeleteRequest(BaseModel):
     record_ids: list
     user_id: int
@@ -112,6 +117,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
             meal_intake="full" if request.service_type == "meal_service" else "partial",
             medicine_given=request.service_type == "medical_care",
             notes=request.notes,
+            service_type=request.service_type,
             audio_file_url=None
         )
         db.add(daily_record)
@@ -225,6 +231,7 @@ async def upload_audio(
             meal_intake="full",
             medicine_given=False,
             notes="음성 기록으로 자동 생성",
+            service_type="basic_care",
             audio_file_url=filepath
         )
         db.add(daily_record)
@@ -298,10 +305,12 @@ async def get_center_today_records(
 async def get_recent_records(
     caregiver_id: int,
     days: int = 7,
+    resident_id: int = None,
     db: Session = Depends(get_db)
 ):
     """
     지난 N일간의 기록 조회 (기본: 7일)
+    resident_id가 주어지면 해당 이용자의 기록만 조회
     """
     try:
         from datetime import date, datetime as dt, time as time_cls, timedelta
@@ -311,11 +320,16 @@ async def get_recent_records(
         start_datetime = dt.combine(start_date, time_cls.min)
         end_datetime = dt.combine(today, time_cls.max)
 
-        records = db.query(DailyRecord).filter(
+        query = db.query(DailyRecord).filter(
             DailyRecord.caregiver_id == caregiver_id,
             DailyRecord.recorded_date >= start_datetime,
             DailyRecord.recorded_date <= end_datetime
-        ).order_by(DailyRecord.recorded_date.desc()).all()
+        )
+
+        if resident_id:
+            query = query.filter(DailyRecord.resident_id == resident_id)
+
+        records = query.order_by(DailyRecord.recorded_date.desc()).all()
 
         billings = db.query(BillingRecord).filter(
             BillingRecord.recorded_date >= start_datetime,
@@ -340,7 +354,7 @@ async def get_recent_records(
                 "id": r.id,
                 "caregiver_id": r.caregiver_id,
                 "resident_id": r.resident_id,
-                "service_type": billing_info.get("service_type", "basic_care"),
+                "service_type": r.service_type or "basic_care",
                 "morning_care": r.morning_care,
                 "meal_intake": r.meal_intake,
                 "medicine_given": r.medicine_given,
@@ -364,15 +378,22 @@ async def get_recent_records(
 @router.get("/all")
 async def get_all_records(
     caregiver_id: int,
+    resident_id: int = None,
     db: Session = Depends(get_db)
 ):
     """
     모든 기록 조회
+    resident_id가 주어지면 해당 이용자의 기록만 조회
     """
     try:
-        records = db.query(DailyRecord).filter(
+        query = db.query(DailyRecord).filter(
             DailyRecord.caregiver_id == caregiver_id
-        ).order_by(DailyRecord.recorded_date.desc()).all()
+        )
+
+        if resident_id:
+            query = query.filter(DailyRecord.resident_id == resident_id)
+
+        records = query.order_by(DailyRecord.recorded_date.desc()).all()
 
         billings = db.query(BillingRecord).filter(
             BillingRecord.caregiver_id == caregiver_id
@@ -395,7 +416,7 @@ async def get_all_records(
                 "id": r.id,
                 "caregiver_id": r.caregiver_id,
                 "resident_id": r.resident_id,
-                "service_type": billing_info.get("service_type", "basic_care"),
+                "service_type": r.service_type or "basic_care",
                 "morning_care": r.morning_care,
                 "meal_intake": r.meal_intake,
                 "medicine_given": r.medicine_given,
@@ -418,10 +439,12 @@ async def get_all_records(
 @router.get("/today")
 async def get_today_records(
     caregiver_id: int,
+    resident_id: int = None,
     db: Session = Depends(get_db)
 ):
     """
     오늘의 기록 조회 + 청부액
+    resident_id가 주어지면 해당 이용자의 기록만 조회
     """
     try:
         from datetime import date, datetime as dt, time as time_cls
@@ -430,11 +453,16 @@ async def get_today_records(
         today_start = dt.combine(today, time_cls.min)
         today_end = dt.combine(today, time_cls.max)
 
-        records = db.query(DailyRecord).filter(
+        query = db.query(DailyRecord).filter(
             DailyRecord.caregiver_id == caregiver_id,
             DailyRecord.recorded_date >= today_start,
             DailyRecord.recorded_date <= today_end
-        ).all()
+        )
+
+        if resident_id:
+            query = query.filter(DailyRecord.resident_id == resident_id)
+
+        records = query.all()
 
         # 관련 청구 기록 조회
         billings = db.query(BillingRecord).filter(
@@ -461,7 +489,7 @@ async def get_today_records(
                 "id": r.id,
                 "caregiver_id": r.caregiver_id,
                 "resident_id": r.resident_id,
-                "service_type": billing_info.get("service_type", "basic_care"),
+                "service_type": r.service_type or "basic_care",
                 "morning_care": r.morning_care,
                 "meal_intake": r.meal_intake,
                 "medicine_given": r.medicine_given,
@@ -566,6 +594,48 @@ async def get_record(
             for b in billings
         ]
     }
+
+@router.patch("/{record_id}")
+async def update_record(
+    record_id: int,
+    request: UpdateRecordRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    음성기록 수정 (메모/서비스 유형 변경)
+    """
+    try:
+        record = db.query(DailyRecord).filter(DailyRecord.id == record_id).first()
+        if not record:
+            raise HTTPException(status_code=404, detail="기록을 찾을 수 없습니다")
+
+        # 필드 업데이트
+        if request.service_type:
+            record.service_type = request.service_type
+        if request.notes is not None:
+            record.notes = request.notes
+
+        db.commit()
+        db.refresh(record)
+
+        return {
+            "status": "success",
+            "record_id": record.id,
+            "message": "기록이 수정되었습니다",
+            "data": {
+                "id": record.id,
+                "resident_id": record.resident_id,
+                "caregiver_id": record.caregiver_id,
+                "service_type": record.service_type,
+                "notes": record.notes,
+                "recorded_date": record.recorded_date.isoformat() if record.recorded_date else None
+            }
+        }
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"[ERROR] update_record: {type(e).__name__}: {e}\n{error_trace}")
+        raise HTTPException(status_code=500, detail=f"수정 중 오류 발생: {str(e)}")
 
 @router.delete("/{record_id}")
 async def delete_record(
