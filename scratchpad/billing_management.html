@@ -388,7 +388,8 @@
                 <button class="filter-btn" onclick="filterByStatus('pending')">대기 중</button>
                 <button class="filter-btn" onclick="filterByStatus('approved')">승인</button>
                 <button class="filter-btn" onclick="filterByStatus('submitted_to_nhis')">건보 청구</button>
-                <button class="filter-btn" onclick="filterByStatus('reimbursed')">환급완료</button>
+                <button class="filter-btn" onclick="filterByStatus('confirmed')">환급 확정</button>
+                <button class="filter-btn" onclick="filterByStatus('rejected_by_nhis')">건보 반려</button>
                 <button class="filter-btn" onclick="filterByStatus('rejected')">거절</button>
             </div>
 
@@ -522,7 +523,10 @@
                         'pending': '⏳ 승인 대기',
                         'approved': '✅ 승인됨',
                         'submitted_to_nhis': '📤 건보 청구됨',
+                        'pending_reimbursement': '⏳ 건보 심사 중',
+                        'confirmed': '💰 환급 확정',
                         'reimbursed': '💰 환급완료',
+                        'rejected_by_nhis': '❌ 건보 반려',
                         'rejected': '❌ 거절됨'
                     }[record.approval_status] || record.approval_status;
 
@@ -717,9 +721,30 @@
             }
         }
 
+        let autoRefreshInterval = null;
+
+        function startAutoRefresh() {
+            if (autoRefreshInterval) return;
+            autoRefreshInterval = setInterval(() => {
+                loadBillingRecords();
+            }, 2000); // 2초마다 새로고침
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+
         window.addEventListener('load', () => {
             loadUserInfo();
             loadBillingRecords();
+            startAutoRefresh();
+        });
+
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
         });
     </script>
 </body>

@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.models import BillingRecord, User, Resident, Center
 from app.schemas import BillingRecordCreate, BillingRecordResponse, BillingMonthlySummary
 from app.database import get_db
 from datetime import datetime, timedelta, time
+import asyncio
+import random
 
 router = APIRouter()
 
@@ -368,10 +370,37 @@ async def reject_billing(
         }
     }
 
+def simulate_nhis_processing(billing_id: int):
+    """건보 처리 시뮬레이션 (백그라운드 작업)"""
+    from app.database import SessionLocal
+    import time
+
+    db = SessionLocal()
+    try:
+        # 3초 후: 건보 심사 중으로 상태 변경
+        time.sleep(3)
+        billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+        if billing and billing.approval_status == "submitted_to_nhis":
+            billing.approval_status = "pending_reimbursement"
+            db.commit()
+
+        # 5초 후: 최종 결과 (90% 승인, 10% 반려)
+        time.sleep(5)
+        billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+        if billing and billing.approval_status == "pending_reimbursement":
+            if random.random() < 0.9:
+                billing.approval_status = "confirmed"
+            else:
+                billing.approval_status = "rejected_by_nhis"
+            db.commit()
+    finally:
+        db.close()
+
 @router.post("/{billing_id}/submit-to-nhis")
 async def submit_billing_to_nhis(
     billing_id: int,
     request: ApprovalRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     """청부를 건강보험공단에 청구 제출 (센터장만 가능)"""
@@ -391,9 +420,12 @@ async def submit_billing_to_nhis(
     db.commit()
     db.refresh(billing)
 
+    # 백그라운드에서 건보 처리 시뮬레이션 시작
+    background_tasks.add_task(simulate_nhis_processing, billing_id)
+
     return {
         "status": "success",
-        "message": "청부가 건강보험공단에 청구되었습니다",
+        "message": "청부가 건강보험공단에 청구되었습니다 (건보 심사 중...)",
         "data": {
             "id": billing.id,
             "approval_status": billing.approval_status,
