@@ -124,7 +124,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
         db.flush()
         daily_id = daily_record.id
 
-        # BillingRecord 생성
+        # BillingRecord 생성 (draft 상태로 시작 - 요양사가 제출하기 전)
         with open("/tmp/debug.log", "a") as f:
             f.write(f"  Creating BillingRecord...\n")
         billing_record = BillingRecord(
@@ -137,7 +137,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
             amount=amount,
             recorded_date=now,
             status="draft",
-            approval_status="pending"
+            approval_status="draft"
         )
         db.add(billing_record)
         db.commit()
