@@ -401,6 +401,68 @@ async def submit_billing_to_nhis(
         }
     }
 
+@router.post("/{billing_id}/confirm-reimbursement")
+async def confirm_reimbursement(
+    billing_id: int,
+    request: ApprovalRequest,
+    db: Session = Depends(get_db)
+):
+    """건보 환급 확인 (센터장만 가능)"""
+    if request.user_role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 환급 확인 가능합니다")
+
+    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    if not billing:
+        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+
+    if billing.approval_status != "submitted_to_nhis":
+        raise HTTPException(status_code=400, detail="건보 청구된 청부만 환급 확인 가능합니다")
+
+    # 환급 확인 처리
+    billing.approval_status = "reimbursed"
+    db.commit()
+    db.refresh(billing)
+
+    return {
+        "status": "success",
+        "message": "환급이 확인되었습니다",
+        "data": {
+            "id": billing.id,
+            "approval_status": billing.approval_status
+        }
+    }
+
+@router.patch("/{billing_id}/cancel-nhis-submission")
+async def cancel_nhis_submission(
+    billing_id: int,
+    request: ApprovalRequest,
+    db: Session = Depends(get_db)
+):
+    """건보 청구 취소 (센터장만 가능, submitted_to_nhis → approved)"""
+    if request.user_role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 건보 청구 취소 가능합니다")
+
+    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    if not billing:
+        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+
+    if billing.approval_status != "submitted_to_nhis":
+        raise HTTPException(status_code=400, detail="건보 청구된 청부만 취소 가능합니다")
+
+    # 건보 청구 취소 처리
+    billing.approval_status = "approved"
+    db.commit()
+    db.refresh(billing)
+
+    return {
+        "status": "success",
+        "message": "건보 청구가 취소되었습니다",
+        "data": {
+            "id": billing.id,
+            "approval_status": billing.approval_status
+        }
+    }
+
 @router.post("/{billing_id}/submit")
 async def submit_billing_for_approval(
     billing_id: int,

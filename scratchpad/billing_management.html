@@ -388,6 +388,7 @@
                 <button class="filter-btn" onclick="filterByStatus('pending')">대기 중</button>
                 <button class="filter-btn" onclick="filterByStatus('approved')">승인</button>
                 <button class="filter-btn" onclick="filterByStatus('submitted_to_nhis')">건보 청구</button>
+                <button class="filter-btn" onclick="filterByStatus('reimbursed')">환급완료</button>
                 <button class="filter-btn" onclick="filterByStatus('rejected')">거절</button>
             </div>
 
@@ -521,6 +522,7 @@
                         'pending': '⏳ 승인 대기',
                         'approved': '✅ 승인됨',
                         'submitted_to_nhis': '📤 건보 청구됨',
+                        'reimbursed': '💰 환급완료',
                         'rejected': '❌ 거절됨'
                     }[record.approval_status] || record.approval_status;
 
@@ -546,6 +548,13 @@
                         actionHtml = `
                             <div class="action-buttons">
                                 <button class="action-btn primary" onclick="submitToNHIS(${record.id})">건보 청구</button>
+                            </div>
+                        `;
+                    } else if (record.approval_status === 'submitted_to_nhis') {
+                        actionHtml = `
+                            <div class="action-buttons">
+                                <button class="action-btn success" onclick="confirmReimbursement(${record.id})">환급 확인</button>
+                                <button class="action-btn warning" onclick="cancelNHISSubmission(${record.id})">취소</button>
                             </div>
                         `;
                     }
@@ -655,6 +664,56 @@
             } catch (error) {
                 console.error('❌ 건보 청구 오류:', error);
                 alert('건보 청구 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        async function confirmReimbursement(recordId) {
+            if (!confirm('건보 환급을 확인하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/billing/${recordId}/confirm-reimbursement`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        user_role: currentUser.role
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('환급 확인 실패');
+                }
+
+                alert('환급이 확인되었습니다');
+                loadBillingRecords();
+            } catch (error) {
+                console.error('❌ 환급 확인 오류:', error);
+                alert('환급 확인 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        async function cancelNHISSubmission(recordId) {
+            if (!confirm('건보 청구를 취소하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/billing/${recordId}/cancel-nhis-submission`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        user_role: currentUser.role
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('건보 청구 취소 실패');
+                }
+
+                alert('건보 청구가 취소되었습니다');
+                loadBillingRecords();
+            } catch (error) {
+                console.error('❌ 건보 청구 취소 오류:', error);
+                alert('건보 청구 취소 중 오류가 발생했습니다: ' + error.message);
             }
         }
 
