@@ -120,4 +120,6 @@ class BillingRecord(Base):
     rejection_reason = Column(String, nullable=True)  # 거절 사유
     recorded_date = Column(DateTime, index=True)
     submitted_date = Column(DateTime, nullable=True)
+    is_archived = Column(Boolean, default=False, index=True)  # 아카이브 여부
+    archived_at = Column(DateTime, nullable=True)  # 아카이브 시간
     created_at = Column(DateTime, default=datetime.utcnow)

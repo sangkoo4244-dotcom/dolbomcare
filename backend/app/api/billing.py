@@ -259,9 +259,10 @@ async def list_billing_records(
     center_id: int = None,
     caregiver_id: int = None,
     status: str = None,
+    include_archived: bool = False,
     db: Session = Depends(get_db)
 ):
-    """청구 기록 목록 조회"""
+    """청구 기록 목록 조회 (기본: 활성 청부만, include_archived=true면 아카이브도 포함)"""
     query = db.query(BillingRecord)
 
     if center_id:
@@ -272,6 +273,10 @@ async def list_billing_records(
 
     if status:
         query = query.filter(BillingRecord.approval_status == status)
+
+    # 기본적으로 활성 청부만 표시 (is_archived=False)
+    if not include_archived:
+        query = query.filter(BillingRecord.is_archived == False)
 
     records = query.all()
 
@@ -289,8 +294,10 @@ async def list_billing_records(
                 "status": r.status,
                 "approval_status": r.approval_status,
                 "rejection_reason": r.rejection_reason,
+                "is_archived": r.is_archived,
                 "recorded_date": r.recorded_date.isoformat() if r.recorded_date else None,
                 "submitted_date": r.submitted_date.isoformat() if r.submitted_date else None,
+                "archived_at": r.archived_at.isoformat() if r.archived_at else None,
                 "created_at": r.created_at.isoformat() if r.created_at else None
             }
             for r in records
@@ -409,7 +416,7 @@ async def confirm_reimbursement(
     request: ApprovalRequest,
     db: Session = Depends(get_db)
 ):
-    """건보 환급 확인 (센터장만 가능)"""
+    """건보 환급 확인 (센터장만 가능, 완료된 청부는 자동 아카이브)"""
     if request.user_role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 환급 확인 가능합니다")
 
@@ -422,6 +429,8 @@ async def confirm_reimbursement(
 
     # 환급 확인 처리
     billing.approval_status = "reimbursed"
+    billing.is_archived = True  # 자동 아카이브
+    billing.archived_at = datetime.now()
     db.commit()
     db.refresh(billing)
 

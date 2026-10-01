@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>돌봄케어 - 이용자 관리</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .navbar {
+            display: none;  /* navbar.js의 사이드바를 사용하므로 숨김 */
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: 700;
+            color: #007AFF;
+            cursor: pointer;
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-info {
+            text-align: right;
+            font-size: 14px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #FF3B30;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #D32F2F;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .header-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .header-subtitle {
+            font-size: 16px;
+            color: #999;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 24px;
+            padding: 8px 0;
+            color: #007AFF;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .add-resident-btn {
+            padding: 8px 16px;
+            background: #34C759;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-resident-btn:hover {
+            background: #2EBE50;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f9f9f9;
+            border-bottom: 2px solid #007AFF;
+        }
+
+        th {
+            padding: 13px 14px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            font-size: 12px;
+        }
+
+        td {
+            padding: 11px 14px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .resident-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .resident-info {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .select:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .action-btn {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 70px;
+        }
+
+        .action-btn.save {
+            background: #007AFF;
+            color: white;
+        }
+
+        .action-btn.save:hover {
+            background: #0051D5;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.edit {
+            background: #34C759;
+            color: white;
+        }
+
+        .action-btn.edit:hover {
+            background: #30B846;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.delete {
+            background: #FF3B30;
+            color: white;
+        }
+
+        .action-btn.delete:hover {
+            background: #E81828;
+            transform: translateY(-2px);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .grade-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 50px;
+        }
+
+        .grade-1 {
+            background: #FFE5E5;
+            color: #C92A2A;
+        }
+
+        .grade-2 {
+            background: #FFF3BF;
+            color: #F08C00;
+        }
+
+        .grade-3 {
+            background: #E7F5FF;
+            color: #1971C2;
+        }
+
+        .grade-4 {
+            background: #E6FFED;
+            color: #2B8A3E;
+        }
+
+        .grade-5 {
+            background: #F3E9FF;
+            color: #7950F2;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .type-general {
+            background: #E7F5FF;
+            color: #1971C2;
+        }
+
+        .type-low {
+            background: #FFF3BF;
+            color: #F08C00;
+        }
+
+        .type-welfare {
+            background: #E6FFED;
+            color: #2B8A3E;
+        }
+
+        .type-medical {
+            background: #FFE6F0;
+            color: #C2255C;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 122, 255, 0.3);
+            border-top-color: #007AFF;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            background: #E5FFE5;
+            border: 1px solid #4CAF50;
+            color: #2E7D32;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-message {
+            background: #FFE5E5;
+            border: 1px solid #FF6B6B;
+            color: #C92A2A;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .form-group {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .form-actions {
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .submit-btn, .cancel-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn {
+            background: #007AFF;
+            color: white;
+        }
+
+        .submit-btn:hover {
+            background: #0051D5;
+            transform: translateY(-2px);
+        }
+
+        .cancel-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .cancel-btn:hover {
+            background: #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            th, td {
+                padding: 12px;
+                font-size: 13px;
+            }
+
+            .select, .save-btn {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+        }
+    </style>
+    <script src="./navbar.js"></script>
+</head>
+<body>
+    <!-- 네비게이션 -->
+    <div class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand" onclick="window.location.href='./dashboard.html'">🏥 돌봄케어</div>
+            <div class="navbar-user">
+                <div class="user-info">
+                    <div class="user-name" id="userName">-</div>
+                    <div class="user-role" id="userRole">-</div>
+                </div>
+                <button class="logout-btn" id="logoutBtn">로그아웃</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="container">
+        <a class="back-link" onclick="window.location.href='./dashboard.html'">← 대시보드로 돌아가기</a>
+
+        <div class="header">
+            <div class="header-content">
+                <h1 class="header-title">👥 이용자 관리</h1>
+                <p class="header-subtitle">센터 이용자의 요양등급과 클라이언트 타입을 관리합니다</p>
+            </div>
+            <button id="addResidentBtn" class="btn-primary" style="white-space: nowrap; align-self: flex-start; margin-top: 4px;">+ 이용자 추가</button>
+        </div>
+
+        <div id="successMessage" class="success-message"></div>
+        <div id="errorMessage" class="error-message"></div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <div class="table-title">📋 이용자 현황</div>
+                <button id="addBtn" class="add-resident-btn" onclick="openAddModal()" style="display: none;">➕ 이용자 추가</button>
+            </div>
+
+            <div id="tableContent">
+                <div class="loading">
+                    <span class="spinner"></span>
+                    이용자 정보를 불러오는 중...
+                </div>
+            </div>
+        </div>
+
+        <!-- 이용자 수정 모달 -->
+        <div id="editModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>✏️ 이용자 정보 수정</h2>
+                    <button class="close-btn" onclick="closeEditModal()">✕</button>
+                </div>
+
+                <form id="editForm" onsubmit="handleEditResident(event)">
+                    <div class="form-group">
+                        <label class="form-label">이용자명</label>
+                        <input type="text" id="editName" class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">생년월일</label>
+                        <input type="date" id="editBirthDate" class="form-input" onchange="calculateAge('editBirthDate', 'editAge')">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">나이</label>
+                        <input type="number" id="editAge" class="form-input" min="1" max="150">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">건강상태</label>
+                        <select id="editHealth" class="form-input">
+                            <option value="stable">정상</option>
+                            <option value="warning">주의</option>
+                            <option value="critical">위험</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">요양등급</label>
+                        <select id="editGrade" class="form-input">
+                            <option value="1">1등급 (최중증)</option>
+                            <option value="2">2등급 (중증)</option>
+                            <option value="3">3등급 (중중증)</option>
+                            <option value="4">4등급 (중등증)</option>
+                            <option value="5">5등급 (경증)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">클라이언트 유형</label>
+                        <select id="editClientType" class="form-input">
+                            <option value="일반">일반</option>
+                            <option value="차상위계층">차상위계층</option>
+                            <option value="기초생활보장">기초생활보장</option>
+                            <option value="의료급여">의료급여</option>
+                        </select>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">저장하기</button>
+                        <button type="button" class="cancel-btn" onclick="closeEditModal()">취소</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 이용자 추가 모달 -->
+        <div id="addModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>➕ 새 이용자 추가</h2>
+                    <button class="close-btn" onclick="closeAddModal()">✕</button>
+                </div>
+
+                <form id="addForm" onsubmit="handleAddResident(event)">
+                    <div class="form-group">
+                        <label class="form-label">이용자명 *</label>
+                        <input type="text" id="addName" class="form-input" required placeholder="홍길동">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">생년월일 *</label>
+                        <input type="date" id="addBirthDate" class="form-input" required onchange="calculateAge('addBirthDate', 'addAge')">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">나이 *</label>
+                        <input type="number" id="addAge" class="form-input" required min="1" max="150" placeholder="75">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">요양등급 *</label>
+                        <select id="addGrade" class="form-input" required>
+                            <option value="1">1등급 (최중증)</option>
+                            <option value="2">2등급 (중증)</option>
+                            <option value="3">3등급 (중중증)</option>
+                            <option value="4">4등급 (중등증)</option>
+                            <option value="5">5등급 (경증)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">클라이언트 타입 * (재가급여 기준)</label>
+                        <select id="addType" class="form-input" required>
+                            <option value="일반">일반 (15%)</option>
+                            <option value="차상위계층">차상위계층 (10%)</option>
+                            <option value="기초생활보장">기초생활보장 (0%)</option>
+                            <option value="의료급여">의료급여 (0%)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">건강상태 * (기본값: 정상)</label>
+                        <select id="addHealth" class="form-input" required>
+                            <option value="stable" selected>정상</option>
+                            <option value="warning">주의</option>
+                            <option value="critical">위험</option>
+                        </select>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">등록하기</button>
+                        <button type="button" class="cancel-btn" onclick="closeAddModal()">취소</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api/v1';
+        let currentUser = null;
+        let residents = [];
+
+        // 페이지 로드
+        window.addEventListener('load', () => {
+            checkAuth();
+            loadResidents();
+
+            // 생년월일 입력 이벤트 등록
+            const addBirthDate = document.getElementById('addBirthDate');
+            const editBirthDate = document.getElementById('editBirthDate');
+
+            if (addBirthDate) {
+                addBirthDate.addEventListener('change', () => {
+                    calculateAge('addBirthDate', 'addAge');
+                });
+            }
+
+            if (editBirthDate) {
+                editBirthDate.addEventListener('change', () => {
+                    calculateAge('editBirthDate', 'editAge');
+                });
+            }
+
+            // 이용자 추가 버튼 이벤트
+            const addBtn = document.getElementById('addResidentBtn');
+            if (addBtn) {
+                addBtn.addEventListener('click', openAddModal);
+            }
+        });
+
+        function openAddModal() {
+            document.getElementById('residentName').value = '';
+            document.getElementById('residentAge').value = '';
+            document.getElementById('residentBirthDate').value = '';
+            document.getElementById('residentGrade').value = '1';
+            document.getElementById('residentType').value = '일반';
+            document.getElementById('residentHealth').value = 'stable';
+            document.getElementById('residentModal').style.display = 'flex';
+            document.getElementById('editForm').dataset.residentId = '';
+        }
+
+        // 인증 확인
+        function checkAuth() {
+            const token = localStorage.getItem('access_token');
+            const user = JSON.parse(localStorage.getItem('user'));
+
+            console.log('🔐 로그인 정보 확인:', user);
+            console.log('📌 center_id 값:', user?.center_id);
+            console.log('📋 user 전체 키:', user ? Object.keys(user) : '없음');
+
+            if (!token || !user) {
+                window.location.href = './login.html';
+                return;
+            }
+
+            currentUser = user;
+            document.getElementById('userName').textContent = user.full_name || '사용자';
+            document.getElementById('userRole').textContent =
+                user.role === 'caregiver' ? '요양사' :
+                user.role === 'center_manager' ? '센터장' : '사용자';
+
+            // 센터장, 요양사 "이용자 추가" 버튼 표시
+            if (user.role === 'center_manager' || user.role === 'caregiver') {
+                const addBtn = document.getElementById('addBtn');
+                if (addBtn) addBtn.style.display = 'inline-block';
+            }
+        }
+
+        // 이용자 목록 로드 (현재 센터만)
+        async function loadResidents() {
+            try {
+                // center_id가 없으면 모든 이용자 조회 (테스트용)
+                const centerId = currentUser.center_id || 1;
+                console.log(`📍 센터 ID로 조회: ${centerId}, 사용자:`, currentUser);
+
+                const response = await fetch(`${API_URL}/residents/?center_id=${centerId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || '이용자 조회 실패');
+                }
+
+                const data = await response.json();
+                residents = data.residents || [];
+
+                console.log(`✅ 이용자 ${residents.length}명 로드 완료:`, residents);
+                renderTable();
+            } catch (error) {
+                console.error('❌ 이용자 조회 오류:', error);
+                showError(`이용자 정보를 불러올 수 없습니다: ${error.message}`);
+            }
+        }
+
+        // 테이블 렌더링
+        function renderTable() {
+            const tableContent = document.getElementById('tableContent');
+            const isManager = currentUser.role === 'center_manager';
+
+            if (residents.length === 0) {
+                tableContent.innerHTML = `
+                    <div class="loading">
+                        <div style="font-size: 48px; margin-bottom: 12px;">📭</div>
+                        <div>이용자가 없습니다</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 200px;">이용자명</th>
+                            <th style="width: 90px;">나이</th>
+                            <th style="width: 130px;">요양등급</th>
+                            <th style="width: 130px;">클라이언트 타입</th>
+                            <th style="width: 90px;">건강상태</th>
+                            <th style="width: 220px;">작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            residents.forEach(resident => {
+                const gradeClass = `grade-${resident.care_grade}`;
+                const typeBadgeClass = {
+                    '일반': 'type-general',
+                    '차상위계층': 'type-low',
+                    '기초생활보장': 'type-welfare',
+                    '의료급여': 'type-medical'
+                }[resident.client_type] || 'type-general';
+
+                const healthStatusLabel = {
+                    'stable': '정상',
+                    'warning': '주의',
+                    'critical': '위험'
+                }[resident.health_status] || '정상';
+
+                const birthStr = resident.birth_date
+                    ? new Date(resident.birth_date).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+                    : '미등록';
+
+                html += `
+                    <tr id="resident-${resident.id}">
+                        <td>
+                            <div class="resident-name" onclick="openEditModal(${resident.id})" style="cursor: pointer; color: #007AFF; text-decoration: underline;">${resident.name}</div>
+                            <div class="resident-info">ID: ${resident.id} · 생년월일: ${birthStr}</div>
+                        </td>
+                        <td>${resident.age}세</td>
+                        <td>
+                            <select class="select care-grade-select" data-resident-id="${resident.id}" ${!isManager ? 'disabled' : ''}>
+                                <option value="1" ${resident.care_grade == 1 ? 'selected' : ''}>1등급</option>
+                                <option value="2" ${resident.care_grade == 2 ? 'selected' : ''}>2등급</option>
+                                <option value="3" ${resident.care_grade == 3 ? 'selected' : ''}>3등급</option>
+                                <option value="4" ${resident.care_grade == 4 ? 'selected' : ''}>4등급</option>
+                                <option value="5" ${resident.care_grade == 5 ? 'selected' : ''}>5등급</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="select client-type-select" data-resident-id="${resident.id}" ${!isManager ? 'disabled' : ''}>
+                                <option value="일반" ${resident.client_type == '일반' ? 'selected' : ''}>일반</option>
+                                <option value="차상위계층" ${resident.client_type == '차상위계층' ? 'selected' : ''}>차상위계층</option>
+                                <option value="기초생활보장" ${resident.client_type == '기초생활보장' ? 'selected' : ''}>기초생활</option>
+                                <option value="의료급여" ${resident.client_type == '의료급여' ? 'selected' : ''}>의료급여</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="select health-status-select" data-resident-id="${resident.id}" ${!isManager ? 'disabled' : ''}>
+                                <option value="stable" ${resident.health_status == 'stable' ? 'selected' : ''}>정상</option>
+                                <option value="warning" ${resident.health_status == 'warning' ? 'selected' : ''}>주의</option>
+                                <option value="critical" ${resident.health_status == 'critical' ? 'selected' : ''}>위험</option>
+                            </select>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn edit" onclick="openEditModal(${resident.id})">✏️ 편집</button>
+                                <button class="action-btn save" onclick="saveResident(${resident.id})">💾 저장</button>
+                                <button class="action-btn delete" onclick="deleteResident(${resident.id})" ${!isManager ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>🗑️ 삭제</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            tableContent.innerHTML = html;
+        }
+
+        // 등급 변경
+        function handleGradeChange(residentId) {
+            console.log(`이용자 ${residentId}의 등급이 변경됨`);
+        }
+
+        // 클라이언트 타입 변경
+        function handleTypeChange(residentId) {
+            console.log(`이용자 ${residentId}의 클라이언트 타입이 변경됨`);
+        }
+
+        // 건강상태 변경
+        function handleHealthChange(residentId) {
+            console.log(`이용자 ${residentId}의 건강상태가 변경됨`);
+        }
+
+        // 수정 모달 열기
+        async function openEditModal(residentId) {
+            // 현재 이용자 데이터 조회
+            const resident = residents.find(r => r.id === residentId);
+            if (!resident) return;
+
+            // 모달 필드에 데이터 입력
+            document.getElementById('editName').value = resident.name;
+            document.getElementById('editBirthDate').value = resident.birth_date || '';
+            document.getElementById('editAge').value = resident.age;
+            document.getElementById('editHealth').value = resident.health_status;
+            document.getElementById('editGrade').value = resident.care_grade || 3;
+            document.getElementById('editClientType').value = resident.client_type || '일반';
+
+            // 이용자 ID를 모달에 저장 (submit 시 사용)
+            document.getElementById('editForm').dataset.residentId = residentId;
+
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        // 수정 모달 닫기
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        // 수정 폼 제출
+        async function handleEditResident(event) {
+            event.preventDefault();
+
+            const residentId = parseInt(document.getElementById('editForm').dataset.residentId);
+            const name = document.getElementById('editName').value.trim();
+            const birthDate = document.getElementById('editBirthDate').value;
+            const age = parseInt(document.getElementById('editAge').value);
+            const health = document.getElementById('editHealth').value;
+            const grade = parseInt(document.getElementById('editGrade').value);
+            const clientType = document.getElementById('editClientType').value;
+
+            if (!name || !birthDate || !age || !health) {
+                showError('모든 항목을 입력하세요');
+                return;
+            }
+
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '저장 중...';
+
+            try {
+                const response = await fetch(
+                    `${API_URL}/residents/${residentId}?name=${encodeURIComponent(name)}&birth_date=${birthDate}&age=${age}&health_status=${health}&care_grade=${grade}&client_type=${encodeURIComponent(clientType)}`,
+                    {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '수정 실패');
+                }
+
+                const data = await response.json();
+                showSuccess(`${name}님의 정보가 수정되었습니다`);
+                closeEditModal();
+
+                // 목록 새로고침
+                setTimeout(() => {
+                    loadResidents();
+                }, 500);
+
+                console.log('✅ 수정 완료:', data);
+            } catch (error) {
+                console.error('❌ 수정 오류:', error);
+                showError(`수정 실패: ${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '저장하기';
+            }
+        }
+
+        // 이용자 정보 저장 (요양등급, 클라이언트 타입, 건강상태)
+        async function saveResident(residentId) {
+            const gradeSelect = document.querySelector(`.care-grade-select[data-resident-id="${residentId}"]`);
+            const typeSelect = document.querySelector(`.client-type-select[data-resident-id="${residentId}"]`);
+            const healthSelect = document.querySelector(`.health-status-select[data-resident-id="${residentId}"]`);
+
+            const careGrade = parseInt(gradeSelect.value);
+            const clientType = typeSelect.value;
+            const healthStatus = healthSelect.value;
+
+            const saveBtn = document.querySelector(`#resident-${residentId} .action-btn.save`);
+            saveBtn.disabled = true;
+            saveBtn.textContent = '저장 중...';
+
+            try {
+                const response = await fetch(
+                    `${API_URL}/residents/${residentId}?care_grade=${careGrade}&client_type=${encodeURIComponent(clientType)}&health_status=${healthStatus}`,
+                    {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (!response.ok) throw new Error('저장 실패');
+
+                const data = await response.json();
+
+                // 성공 메시지
+                showSuccess(`${data.data.name}의 정보가 업데이트되었습니다`);
+
+                // 테이블 새로고침
+                setTimeout(() => {
+                    loadResidents();
+                }, 500);
+
+                console.log('✅ 저장 완료:', data);
+            } catch (error) {
+                console.error('❌ 저장 오류:', error);
+                showError('저장 중 오류가 발생했습니다');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '저장';
+            }
+        }
+
+        // 이용자 삭제
+        async function deleteResident(residentId) {
+            const resident = residents.find(r => r.id === residentId);
+            if (!resident) return;
+
+            if (!confirm(`${resident.name}님을 정말 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+                return;
+            }
+
+            const deleteBtn = document.querySelector(`#resident-${residentId} .action-btn.delete`);
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = '삭제 중...';
+
+            try {
+                const response = await fetch(
+                    `${API_URL}/residents/${residentId}?user_role=${currentUser.role}`,
+                    {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '삭제 실패');
+                }
+
+                const data = await response.json();
+                showSuccess(`${resident.name}님이 삭제되었습니다`);
+
+                // 테이블 새로고침
+                setTimeout(() => {
+                    loadResidents();
+                }, 500);
+
+                console.log('✅ 삭제 완료:', data);
+            } catch (error) {
+                console.error('❌ 삭제 오류:', error);
+                showError(`삭제 실패: ${error.message}`);
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = '삭제';
+            }
+        }
+
+        // 성공 메시지 표시
+        function showSuccess(message) {
+            const msgEl = document.getElementById('successMessage');
+            msgEl.textContent = `✅ ${message}`;
+            msgEl.classList.add('show');
+
+            setTimeout(() => {
+                msgEl.classList.remove('show');
+            }, 3000);
+        }
+
+        // 에러 메시지 표시
+        function showError(message) {
+            const msgEl = document.getElementById('errorMessage');
+            msgEl.textContent = `❌ ${message}`;
+            msgEl.classList.add('show');
+
+            setTimeout(() => {
+                msgEl.classList.remove('show');
+            }, 3000);
+        }
+
+        // 이용자 추가 모달 열기
+        function openAddModal() {
+            document.getElementById('addModal').style.display = 'flex';
+            document.getElementById('addForm').reset();
+        }
+
+        // 이용자 추가 모달 닫기
+        function closeAddModal() {
+            document.getElementById('addModal').style.display = 'none';
+        }
+
+        // 모달 바깥 클릭 시 닫기
+        document.getElementById('editModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'editModal') {
+                closeEditModal();
+            }
+        });
+
+        document.getElementById('addModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'addModal') {
+                closeAddModal();
+            }
+        });
+
+        // 이용자 추가 처리
+        async function handleAddResident(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('addName').value.trim();
+            const birthDate = document.getElementById('addBirthDate').value;
+            const age = parseInt(document.getElementById('addAge').value);
+            const grade = parseInt(document.getElementById('addGrade').value);
+            const type = document.getElementById('addType').value;
+            const health = document.getElementById('addHealth').value;
+
+            // 필수 입력 확인
+            if (!name || !birthDate || !age || !grade || !type || !health) {
+                showError('모든 항목을 입력하세요');
+                return;
+            }
+
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '등록 중...';
+
+            try {
+                console.log('👤 현재 사용자:', currentUser);
+                console.log('🔍 center_id:', currentUser.center_id);
+
+                const residentData = {
+                    name,
+                    birth_date: birthDate,
+                    age,
+                    health_status: health,
+                    care_grade: grade,
+                    client_type: type,
+                    center_id: currentUser.center_id  // 현재 센터
+                };
+
+                console.log('📝 등록 데이터:', residentData);
+
+                const response = await fetch(`${API_URL}/residents/?user_role=${currentUser.role}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(residentData)
+                });
+
+                console.log('📡 응답 상태:', response.status, response.statusText);
+
+                if (!response.ok) {
+                    let error;
+                    try {
+                        error = await response.json();
+                        console.log('📦 오류 응답:', error);
+                    } catch (e) {
+                        console.log('⚠️ JSON 파싱 실패:', await response.text());
+                        throw new Error('서버 오류 (응답 파싱 실패)');
+                    }
+                    throw new Error(error.detail || error.message || '등록 실패');
+                }
+
+                const data = await response.json();
+                console.log('✅ 이용자 등록 완료:', data);
+
+                showSuccess(`${name}님이 등록되었습니다`);
+                closeAddModal();
+
+                // 테이블 새로고침
+                setTimeout(() => {
+                    loadResidents();
+                }, 500);
+
+            } catch (error) {
+                console.error('❌ 등록 오류:', error);
+                showError(`등록 실패: ${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '등록하기';
+            }
+        }
+
+        // 생년월일에서 나이 자동 계산
+        function calculateAge(birthDateFieldId, ageFieldId) {
+            console.log(`📅 calculateAge 호출: ${birthDateFieldId} → ${ageFieldId}`);
+
+            const birthDateInput = document.getElementById(birthDateFieldId);
+            const ageInput = document.getElementById(ageFieldId);
+
+            console.log('🔍 요소 확인:', { birthDateInput, ageInput });
+
+            if (!birthDateInput || !ageInput) {
+                console.error(`❌ 요소를 찾을 수 없습니다: ${birthDateFieldId}, ${ageFieldId}`);
+                return;
+            }
+
+            if (!birthDateInput.value) {
+                console.log('⚠️ 생년월일이 입력되지 않았습니다');
+                return;
+            }
+
+            try {
+                const birthDate = new Date(birthDateInput.value + 'T00:00:00');
+                const today = new Date();
+
+                console.log('📊 날짜:', { birthDate, today, birthDateValue: birthDateInput.value });
+
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+
+                console.log(`✅ 계산된 나이: ${age}`);
+                ageInput.value = age;
+                console.log('📝 나이 입력값:', ageInput.value);
+            } catch (error) {
+                console.error('❌ 나이 계산 오류:', error);
+            }
+        }
+
+        // 로그아웃
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('정말 로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('user_role');
+                window.location.href = './login.html';
+            }
+        });
+    </script>
+</body>
+</html>
