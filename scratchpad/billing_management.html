@@ -477,6 +477,11 @@
             currentUser = user;
             document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
             document.getElementById('userAvatar').textContent = (user.full_name || user.email).charAt(0).toUpperCase();
+
+            // 메뉴 필터링
+            if (typeof filterMenuByRole === 'function') {
+                filterMenuByRole();
+            }
         }
 
         async function loadBillingRecords() {
