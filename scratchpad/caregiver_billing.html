@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>나의 청부현황 - 돌봄케어</title>
+    <title>💳 나의 청부 - 돌봄케어</title>
     <link rel="stylesheet" href="design-system.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -448,6 +448,7 @@
 
                 const data = await response.json();
                 const records = data.records || [];
+                allBillings = records; // 전체 청부 저장
 
                 // 통계 업데이트
                 const pendingCount = records.filter(r => r.approval_status === 'pending').length;
@@ -527,7 +528,7 @@
                             `;
                         }
                     } else {
-                        if (record.status === 'draft' || record.approval_status === 'rejected') {
+                        if (record.approval_status === 'draft' || record.approval_status === 'rejected') {
                             let buttons = `
                                 <div class="action-buttons">
                                     <button class="btn-submit" onclick="submitBilling(${record.id})">제출</button>`;
@@ -760,7 +761,7 @@
             window.location.href = `./voice_record.html?resident_id=${residentId}&source=billing`;
         }
 
-        function filterByStatus(status) {
+        async function filterByStatus(status) {
             currentFilter = status;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
@@ -769,9 +770,20 @@
                 ? allBillings
                 : allBillings.filter(b => b.approval_status === currentFilter);
 
-            const residentMap = {};
-            // Build resident map from current data
-            renderBillingTable(filtered, residentMap);
+            // Rebuild resident map for filtered data
+            try {
+                const residentsRes = await fetch(`${API_URL}/residents/`);
+                const residentsData = residentsRes.ok ? await residentsRes.json() : { residents: [] };
+                const residents = residentsData.residents || [];
+                const residentMap = {};
+                residents.forEach(r => {
+                    residentMap[r.id] = r.name;
+                });
+                renderBillingTable(filtered, residentMap);
+            } catch (error) {
+                console.error('주민 정보 로드 실패:', error);
+                renderBillingTable(filtered, {});
+            }
         }
     </script>
 </body>

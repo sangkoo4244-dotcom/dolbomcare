@@ -806,6 +806,11 @@
 
             document.getElementById('editForm').dataset.residentId = residentId;
 
+            // Auto-calculate age if birth date exists
+            if (resident.birth_date) {
+                calculateAge('editBirthDate', 'editAge');
+            }
+
             document.getElementById('editModal').style.display = 'flex';
         }
 
@@ -835,12 +840,20 @@
 
             try {
                 const response = await fetch(
-                    `${API_URL}/residents/${residentId}?name=${encodeURIComponent(name)}&birth_date=${birthDate}&age=${age}&health_status=${health}&care_grade=${grade}&client_type=${encodeURIComponent(clientType)}`,
+                    `${API_URL}/residents/${residentId}`,
                     {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json'
-                        }
+                        },
+                        body: JSON.stringify({
+                            name: name,
+                            birth_date: birthDate,
+                            age: age,
+                            health_status: health,
+                            care_grade: grade,
+                            client_type: clientType
+                        })
                     }
                 );
 
@@ -882,12 +895,17 @@
 
             try {
                 const response = await fetch(
-                    `${API_URL}/residents/${residentId}?care_grade=${careGrade}&client_type=${encodeURIComponent(clientType)}&health_status=${healthStatus}`,
+                    `${API_URL}/residents/${residentId}`,
                     {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json'
-                        }
+                        },
+                        body: JSON.stringify({
+                            care_grade: careGrade,
+                            client_type: clientType,
+                            health_status: healthStatus
+                        })
                     }
                 );
 
