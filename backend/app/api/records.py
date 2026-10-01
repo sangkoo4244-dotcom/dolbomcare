@@ -449,13 +449,9 @@ async def get_all_records(
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
                 "billing_amount": billing_amount
             })
-        if caregiver and caregiver.role == 'caregiver':
-            # submitted_to_nhis 청부들의 합계를 제외
-            submitted_total = sum(b.amount for b in billings if b.approval_status == 'submitted_to_nhis' and b.daily_record_id)
-            billing_total -= submitted_total
 
         return {
-            "total_records": len(records),
+            "total_records": len(response_records),  # 제외 후 크기 사용
             "total_billing_amount": billing_total,
             "records": response_records
         }
