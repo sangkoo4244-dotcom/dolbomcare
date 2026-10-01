@@ -531,18 +531,55 @@
                     return;
                 }
 
-                // Try fetching from API (if backend is available)
-                const response = await fetch(`${API_URL}/residents/`, {
-                    headers: {'Authorization': `Bearer ${token}`}
-                });
+                // Load residents count
+                try {
+                    const resResponse = await fetch(`${API_URL}/residents/`, {
+                        headers: {'Authorization': `Bearer ${token}`}
+                    });
+                    if (resResponse.ok) {
+                        const resData = await resResponse.json();
+                        document.getElementById('residentCount').textContent =
+                            resData.residents?.length || 0;
+                    }
+                } catch (e) { console.log('Residents load failed'); }
 
-                if (response.ok) {
-                    const data = await response.json();
-                    document.getElementById('residentCount').textContent =
-                        data.residents?.length || 0;
-                }
+                // Load today's records count
+                try {
+                    const recResponse = await fetch(`${API_URL}/records/today`, {
+                        headers: {'Authorization': `Bearer ${token}`}
+                    });
+                    if (recResponse.ok) {
+                        const recData = await recResponse.json();
+                        document.getElementById('recordCount').textContent =
+                            recData.records?.length || 0;
+                    }
+                } catch (e) { console.log('Records load failed'); }
+
+                // Load pending billing count and amount
+                try {
+                    const billResponse = await fetch(`${API_URL}/billing/?status=pending`, {
+                        headers: {'Authorization': `Bearer ${token}`}
+                    });
+                    if (billResponse.ok) {
+                        const billData = await billResponse.json();
+                        const records = billData.records || [];
+                        document.getElementById('billingCount').textContent = records.length;
+
+                        const total = records.reduce((sum, r) => {
+                            return sum + (r.total_amount || r.amount || 0);
+                        }, 0);
+                        document.getElementById('billingAmount').textContent =
+                            new Intl.NumberFormat('ko-KR').format(total);
+                    }
+                } catch (e) { console.log('Billing load failed'); }
+
             } catch (error) {
-                console.log('Using demo data');
+                console.log('Dashboard data load error:', error);
+                // Fallback to demo data
+                document.getElementById('residentCount').textContent = '0';
+                document.getElementById('recordCount').textContent = '0';
+                document.getElementById('billingCount').textContent = '0';
+                document.getElementById('billingAmount').textContent = '0';
             }
         }
 
