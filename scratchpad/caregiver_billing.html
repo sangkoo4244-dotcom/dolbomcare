@@ -208,8 +208,9 @@
         }
 
         .table td {
-            padding: 14px 16px;
+            padding: 12px 10px;
             border-bottom: 1px solid #e0e0e0;
+            vertical-align: middle;
         }
 
         .table tbody tr:hover {
@@ -249,17 +250,21 @@
 
         .action-buttons {
             display: flex;
-            gap: 8px;
+            gap: 4px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
         }
 
         .btn-approve, .btn-reject, .btn-delete, .btn-submit, .btn-edit, .btn-cancel {
-            padding: 6px 12px;
+            padding: 5px 10px;
             color: white;
             border: none;
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 11px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+            white-space: nowrap;
         }
 
         .btn-approve {
@@ -508,20 +513,19 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>기록일</th>
+                            <th style="text-align: center;">기록일</th>
                             <th>이용자</th>
-                            <th>서비스 유형</th>
+                            <th style="text-align: center;">서비스</th>
                             <th style="text-align: right;">청부액</th>
-                            <th>승인 상태</th>
-                            <th>비고</th>
-                            <th>관리</th>
+                            <th style="text-align: center;">상태</th>
+                            <th style="text-align: right;">관리</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
             if (records.length === 0) {
-                html += `<tr><td colspan="7" style="text-align: center; padding: 40px;">기록이 없습니다</td></tr>`;
+                html += `<tr><td colspan="6" style="text-align: center; padding: 40px;">기록이 없습니다</td></tr>`;
             } else {
                 records.forEach(record => {
                     const approvalStatus = record.approval_status || record.status;
@@ -545,9 +549,15 @@
                     const recordedDate = new Date(record.recorded_date).toLocaleDateString('ko-KR');
                     const residentName = residentMap[record.resident_id] || `ID: ${record.resident_id}`;
 
-                    let noteHtml = '';
+                    let rejectionNote = '';
                     if (record.approval_status === 'rejected' && record.rejection_reason) {
-                        noteHtml = `<div class="rejection-reason">사유: ${record.rejection_reason}</div>`;
+                        rejectionNote = `
+                            <tr style="background: #fff5f5;">
+                                <td colspan="6" style="padding: 8px 16px; font-size: 12px; color: #c82333;">
+                                    거절 사유: ${record.rejection_reason}
+                                </td>
+                            </tr>
+                        `;
                     }
 
                     let actionHtml = '';
@@ -555,48 +565,42 @@
                     if (isManager) {
                         if (record.approval_status === 'pending') {
                             actionHtml = `
-                                <div class="action-buttons">
-                                    <button class="btn-approve" onclick="approveBilling(${record.id})">승인</button>
-                                    <button class="btn-reject" onclick="showRejectModal(${record.id})">거절</button>
-                                </div>
+                                <button class="btn-approve" onclick="approveBilling(${record.id})">승인</button>
+                                <button class="btn-reject" onclick="showRejectModal(${record.id})">거절</button>
                             `;
                         }
                     } else {
                         // Caregiver actions based on status
                         if (record.approval_status === 'draft') {
                             actionHtml = `
-                                <div class="action-buttons">
-                                    <button class="btn-submit" onclick="submitBilling(${record.id})">제출</button>
-                                    <button class="btn-delete" onclick="deleteBilling(${record.id}, 'caregiver')">삭제</button>
-                                </div>
+                                <button class="btn-submit" onclick="submitBilling(${record.id})">제출</button>
+                                <button class="btn-delete" onclick="deleteBilling(${record.id}, 'caregiver')">삭제</button>
                             `;
                         } else if (record.approval_status === 'pending') {
                             actionHtml = `
-                                <div class="action-buttons">
-                                    <button class="btn-cancel" onclick="cancelBilling(${record.id})">취소</button>
-                                </div>
+                                <button class="btn-cancel" onclick="cancelBilling(${record.id})">취소</button>
                             `;
                         } else if (record.approval_status === 'rejected') {
                             actionHtml = `
-                                <div class="action-buttons">
-                                    <button class="btn-submit" onclick="submitBilling(${record.id})">제출</button>
-                                    <button class="btn-edit" onclick="editVoiceRecord(${record.resident_id})">음성기록 수정</button>
-                                    <button class="btn-delete" onclick="deleteBilling(${record.id}, 'caregiver')">삭제</button>
-                                </div>
+                                <button class="btn-submit" onclick="submitBilling(${record.id})">제출</button>
+                                <button class="btn-edit" onclick="editVoiceRecord(${record.resident_id})">수정</button>
+                                <button class="btn-delete" onclick="deleteBilling(${record.id}, 'caregiver')">삭제</button>
                             `;
                         }
                     }
 
                     html += `
                         <tr>
-                            <td>${recordedDate}</td>
-                            <td>${residentName}</td>
-                            <td>${serviceLabel}</td>
-                            <td style="text-align: right;">${record.amount.toLocaleString()}원</td>
-                            <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
-                            <td>${noteHtml}</td>
-                            <td>${actionHtml || '-'}</td>
+                            <td style="text-align: center; font-size: 13px;">${recordedDate}</td>
+                            <td style="font-weight: 500;">${residentName}</td>
+                            <td style="text-align: center; font-size: 13px;">${serviceLabel}</td>
+                            <td style="text-align: right; font-weight: 600;">${record.amount.toLocaleString()}원</td>
+                            <td style="text-align: center;"><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                            <td style="text-align: right;">
+                                <div class="action-buttons">${actionHtml || '-'}</div>
+                            </td>
                         </tr>
+                        ${rejectionNote}
                     `;
                 });
             }
