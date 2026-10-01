@@ -586,11 +586,14 @@
                         const records = billData.records || [];
                         console.log('Billing records:', records.length, records);
 
-                        // Action needed: pending + rejected
+                        // Action needed: pending + rejected (요양사가 처리할 수 있는 상태)
                         actionCount = records.filter(r => r.approval_status === 'pending' || r.approval_status === 'rejected').length;
 
-                        // Total amount: all active statuses (pending, approved, submitted_to_nhis, rejected)
-                        totalAmount = records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
+                        // Total amount: 요양사가 직접 처리하는 상태만 (submitted_to_nhis는 센터장이 처리 중)
+                        // pending, approved, rejected만 계산 (submitted_to_nhis 제외)
+                        totalAmount = records
+                            .filter(r => r.approval_status !== 'submitted_to_nhis')
+                            .reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
                     } else {
                         console.error('Billing fetch failed:', billResp.status);
                     }
