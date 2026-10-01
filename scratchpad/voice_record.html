@@ -903,27 +903,32 @@
 
         async function loadBillingAmount() {
             try {
-                const centerId = currentUser?.center_id || 1;
-                const billUrl = `${API_URL}/billing/?center_id=${centerId}&caregiver_id=${currentUser.id}&include_archived=false`;
+                // 현재 탭에 따라 다른 API 호출
+                let billUrl;
+                if (currentRecordTab === 'today') {
+                    billUrl = `${API_URL}/records/today?caregiver_id=${currentUser.id}`;
+                } else if (currentRecordTab === '7days') {
+                    billUrl = `${API_URL}/records/recent?caregiver_id=${currentUser.id}&days=7`;
+                } else {
+                    billUrl = `${API_URL}/records/all?caregiver_id=${currentUser.id}`;
+                }
+
                 const billResp = await fetch(billUrl);
 
                 if (billResp.ok) {
-                    const response = await billResp.json();
-                    const records = response.records || [];
-                    let totalAmount = 0;
+                    const data = await billResp.json();
+                    let totalAmount = data.total_billing_amount || 0;
 
+                    // 요양사의 경우 submitted_to_nhis 제외 계산
                     if (currentUser.role === 'caregiver') {
-                        // 요양사: submitted_to_nhis 제외
+                        const records = data.records || [];
                         totalAmount = records
                             .filter(r => r.approval_status !== 'submitted_to_nhis')
                             .reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
-                    } else {
-                        // 센터장: 모든 상태 포함
-                        totalAmount = records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
                     }
 
                     document.getElementById('billingAmountDisplay').textContent = `₩${new Intl.NumberFormat('ko-KR').format(totalAmount)}`;
-                    console.log('✅ 청부액 로드:', totalAmount);
+                    console.log('✅ 청부액 로드 (탭:', currentRecordTab, '):', totalAmount);
                 }
             } catch (e) {
                 console.error('청부액 로드 실패:', e);
