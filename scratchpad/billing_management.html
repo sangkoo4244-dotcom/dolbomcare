@@ -723,10 +723,35 @@
 
         let autoRefreshInterval = null;
 
+        async function refreshBillingData() {
+            try {
+                const response = await fetch(`${API_URL}/billing/`);
+                const data = response.ok ? await response.json() : { billings: [] };
+                allBillings = data.billings || [];
+
+                // 현재 필터 유지하면서 재렌더링
+                const filtered = currentFilter === 'all'
+                    ? allBillings
+                    : allBillings.filter(b => b.approval_status === currentFilter);
+
+                const residentsRes = await fetch(`${API_URL}/residents/`);
+                const residentsData = residentsRes.ok ? await residentsRes.json() : { residents: [] };
+                const residents = residentsData.residents || [];
+                const residentMap = {};
+                residents.forEach(r => {
+                    residentMap[r.id] = r.name;
+                });
+
+                renderBillingTable(filtered, residentMap);
+            } catch (error) {
+                console.error('새로고침 오류:', error);
+            }
+        }
+
         function startAutoRefresh() {
             if (autoRefreshInterval) return;
             autoRefreshInterval = setInterval(() => {
-                loadBillingRecords();
+                refreshBillingData();  // ← 필터 유지하면서 갱신
             }, 2000); // 2초마다 새로고침
         }
 
