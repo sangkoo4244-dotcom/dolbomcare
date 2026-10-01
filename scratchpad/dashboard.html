@@ -565,31 +565,40 @@
                     document.getElementById('recordCount').textContent = '0';
                 }
 
-                // Load pending billing count and amount
+                // Load billing count (pending + rejected = action needed)
                 try {
                     console.log('Fetching billing...');
                     const caregiverId = user?.id || '';
-                    const billUrl = `${API_URL}/billing/?status=pending${caregiverId ? '&caregiver_id=' + caregiverId : ''}`;
-                    console.log('Billing URL:', billUrl);
-                    const billResponse = await fetch(billUrl, {
+                    let totalCount = 0, totalAmount = 0;
+
+                    // Fetch pending
+                    const pendingUrl = `${API_URL}/billing/?status=pending${caregiverId ? '&caregiver_id=' + caregiverId : ''}`;
+                    const pendingResp = await fetch(pendingUrl, {
                         headers: token ? {'Authorization': `Bearer ${token}`} : {}
                     });
-                    if (billResponse.ok) {
-                        const billData = await billResponse.json();
-                        const records = billData.records || [];
-                        console.log('Billing records:', records.length, records);
-                        document.getElementById('billingCount').textContent = records.length;
-
-                        const total = records.reduce((sum, r) => {
-                            return sum + (r.total_amount || r.amount || 0);
-                        }, 0);
-                        document.getElementById('billingAmount').textContent =
-                            new Intl.NumberFormat('ko-KR').format(total);
-                    } else {
-                        console.error('Billing failed:', billResponse.status);
-                        document.getElementById('billingCount').textContent = '0';
-                        document.getElementById('billingAmount').textContent = '0';
+                    if (pendingResp.ok) {
+                        const data = await pendingResp.json();
+                        const records = data.records || [];
+                        totalCount += records.length;
+                        totalAmount += records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
                     }
+
+                    // Fetch rejected
+                    const rejectedUrl = `${API_URL}/billing/?status=rejected${caregiverId ? '&caregiver_id=' + caregiverId : ''}`;
+                    const rejectedResp = await fetch(rejectedUrl, {
+                        headers: token ? {'Authorization': `Bearer ${token}`} : {}
+                    });
+                    if (rejectedResp.ok) {
+                        const data = await rejectedResp.json();
+                        const records = data.records || [];
+                        totalCount += records.length;
+                        totalAmount += records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
+                    }
+
+                    console.log('Billing total:', totalCount, 'Amount:', totalAmount);
+                    document.getElementById('billingCount').textContent = totalCount;
+                    document.getElementById('billingAmount').textContent =
+                        new Intl.NumberFormat('ko-KR').format(totalAmount);
                 } catch (e) {
                     console.error('Billing error:', e);
                     document.getElementById('billingCount').textContent = '0';
