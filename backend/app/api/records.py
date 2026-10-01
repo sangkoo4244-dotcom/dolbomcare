@@ -686,15 +686,13 @@ async def delete_record(
     if not (is_manager or is_own_record):
         raise HTTPException(status_code=403, detail="삭제 권한이 없습니다 (자신의 기록만 삭제 가능)")
 
-    # 관련 청구 기록도 함께 삭제
+    # 관련 청구 기록도 함께 삭제 (이 DailyRecord와 연결된 청부만)
     billings = db.query(BillingRecord).filter(
-        BillingRecord.recorded_date == record.recorded_date,
-        BillingRecord.caregiver_id == record.caregiver_id,
-        BillingRecord.resident_id == record.resident_id
+        BillingRecord.daily_record_id == record.id
     ).all()
 
     try:
-        # 청구 기록 삭제
+        # 청구 기록 삭제 (이 DailyRecord와 연결된 청부만)
         for billing in billings:
             db.delete(billing)
 
