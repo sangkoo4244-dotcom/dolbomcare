@@ -514,7 +514,10 @@
                     <button class="tab-btn" id="tab7days" onclick="switchRecordTab('7days')">📅 지난 7일</button>
                     <button class="tab-btn" id="tabAll" onclick="switchRecordTab('all')">📅 전체</button>
                 </div>
-                <div style="font-size: 14px; color: #666; margin-bottom: 12px;"><span id="recordCount">0건</span></div>
+                <div style="font-size: 14px; color: #666; margin-bottom: 12px;">
+                    <span id="recordCount">0건</span>
+                    <span style="margin-left: 16px; font-weight: 600; color: #FF9500;">💰 청구액: <span id="billingAmountDisplay">₩0</span></span>
+                </div>
                 <ul class="records-list" id="recordsList">
                     <div class="empty-state"><div class="empty-icon">📭</div><div>기록이 없습니다</div></div>
                 </ul>
@@ -811,6 +814,7 @@
 
                 const data = await response.json();
                 renderRecords(data);
+                loadBillingAmount();
                 console.log('✅ 지난 7일 기록 로드:', data);
             } catch (error) {
                 console.error('❌ 기록 조회 오류:', error);
@@ -826,6 +830,7 @@
 
                 const data = await response.json();
                 renderRecords(data);
+                loadBillingAmount();
                 console.log('✅ 전체 기록 로드:', data);
             } catch (error) {
                 console.error('❌ 기록 조회 오류:', error);
@@ -887,9 +892,40 @@
 
                 const data = await response.json();
                 await renderRecords(data);
+
+                // 청부액: 대시보드와 같은 기준 (모든 활성 청부)
+                loadBillingAmount();
                 console.log('✅ 오늘 기록 로드:', data);
             } catch (error) {
                 console.error('❌ 기록 조회 오류:', error);
+            }
+        }
+
+        async function loadBillingAmount() {
+            try {
+                const centerId = currentUser?.center_id || 1;
+                const billUrl = `${API_URL}/billing/?center_id=${centerId}&caregiver_id=${currentUser.id}&include_archived=false`;
+                const billResp = await fetch(billUrl);
+
+                if (billResp.ok) {
+                    const records = await billResp.json();
+                    let totalAmount = 0;
+
+                    if (currentUser.role === 'caregiver') {
+                        // 요양사: submitted_to_nhis 제외
+                        totalAmount = records
+                            .filter(r => r.approval_status !== 'submitted_to_nhis')
+                            .reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
+                    } else {
+                        // 센터장: 모든 상태 포함
+                        totalAmount = records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
+                    }
+
+                    document.getElementById('billingAmountDisplay').textContent = `₩${new Intl.NumberFormat('ko-KR').format(totalAmount)}`;
+                    console.log('✅ 청부액 로드:', totalAmount);
+                }
+            } catch (e) {
+                console.error('청부액 로드 실패:', e);
             }
         }
 
