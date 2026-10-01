@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, 
 from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.orm import Session
-from app.models import DailyRecord, BillingRecord, User, Resident
+from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord
 from app.schemas import DailyRecordResponse
 from app.database import get_db
 from datetime import datetime, time
@@ -730,3 +730,85 @@ async def delete_record(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"ÏÇ≠Ï†ú Ï§ë Ïò§Î•ò Î∞úÏÉù: {str(e)}")
+
+# ============ VoiceRecord ¿⁄µø √ª∫Œ ª˝º∫ ============
+
+# º≠∫ÒΩ∫ ¿Ø«¸∫∞ √ª∫Œæ◊ (µÓ±ﬁ∫∞)
+SERVICE_TYPE_AMOUNTS = {
+    "basic_care": {
+        1: 78875, 2: 69975, 3: 59650, 4: 54125, 5: 11750,
+    },
+    "meal_service": {
+        1: 39437, 2: 34987, 3: 29825, 4: 27062, 5: 5875,
+    },
+    "medical_care": {
+        1: 118312, 2: 104962, 3: 89475, 4: 81187, 5: 17625,
+    },
+    "emergency": {
+        1: 157750, 2: 139950, 3: 119300, 4: 108250, 5: 23500,
+    }
+}
+
+@router.post("/voice/create")
+async def create_voice_record(
+    caregiver_id: int,
+    resident_id: int,
+    service_type: str = "basic_care",
+    transcription: str = "",
+    db: Session = Depends(get_db)
+):
+    """¿Ωº∫ ±‚∑œ ª˝º∫ + ¿⁄µø √ª∫Œ ª˝º∫"""
+    try:
+        resident = db.query(Resident).filter(Resident.id == resident_id).first()
+        if not resident:
+            raise HTTPException(status_code=404, detail="Resident not found")
+        
+        if service_type not in SERVICE_TYPE_AMOUNTS:
+            raise HTTPException(status_code=400, detail=f"Invalid service_type: {service_type}")
+        
+        # VoiceRecord ª˝º∫
+        voice_record = VoiceRecord(
+            caregiver_id=caregiver_id,
+            resident_id=resident_id,
+            center_id=resident.center_id,
+            recorded_date=datetime.utcnow(),
+            service_type=service_type,
+            transcription=transcription,
+            created_at=datetime.utcnow()
+        )
+        db.add(voice_record)
+        db.flush()
+        
+        # √ª∫Œæ◊ ∞ËªÍ
+        care_grade = resident.care_grade or 1
+        billing_amount = SERVICE_TYPE_AMOUNTS[service_type].get(care_grade, 40000)
+        
+        # BillingRecord ¿⁄µø ª˝º∫
+        billing_record = BillingRecord(
+            caregiver_id=caregiver_id,
+            resident_id=resident_id,
+            center_id=resident.center_id,
+            service_category="¿Á∞°±ﬁø©",
+            service_type=service_type,
+            amount=billing_amount,
+            status="draft",
+            approval_status="pending",
+            recorded_date=datetime.utcnow(),
+            created_at=datetime.utcnow()
+        )
+        db.add(billing_record)
+        db.flush()
+        
+        voice_record.billing_record_id = billing_record.id
+        db.commit()
+        
+        return {
+            "status": "success",
+            "voice_record_id": voice_record.id,
+            "billing_record_id": billing_record.id,
+            "amount": billing_amount,
+            "message": f"¿Ωº∫±‚∑œ ª˝º∫ + √ª∫Œ ¿⁄µø ª˝º∫ (\{billing_amount:,})"
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"ø¿∑˘: {str(e)}")

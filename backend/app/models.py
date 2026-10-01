@@ -99,8 +99,10 @@ class VoiceRecord(Base):
     resident_id = Column(Integer, ForeignKey("residents.id"))
     center_id = Column(Integer, ForeignKey("centers.id"))
     recorded_date = Column(DateTime, index=True)
+    service_type = Column(String, default="basic_care")  # 'basic_care', 'meal_service', 'medical_care', 'emergency'
     transcription = Column(Text, nullable=True)  # 음성 인식 텍스트
     audio_file_url = Column(String, nullable=True)  # 음성 파일 URL
+    billing_record_id = Column(Integer, ForeignKey("billing_records.id"), nullable=True)  # 자동 생성된 청부 기록
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class BillingRecord(Base):
