@@ -3,48 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>돌봄케어 - 음성 기록</title>
+    <title>음성 기록 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-        }
-
-        .navbar {
-            display: none;  /* navbar.js의 사이드바를 사용하므로 숨김 */
-            background: white;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 0;
-            position: sticky;
+        /* Shared styles */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            color: white;
+            position: fixed;
+            left: 0;
             top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
         }
 
-        .navbar-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 16px 20px;
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-logo { font-size: 24px; }
+        .sidebar-title { font-size: 16px; font-weight: 700; }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border-left: 3px solid transparent;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active {
+            color: #3b82f6;
+            border-left-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .main-layout {
+            margin-left: 250px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: var(--shadow-sm);
         }
 
-        .navbar-brand {
-            font-size: 20px;
-            font-weight: 700;
-            color: #007AFF;
-            cursor: pointer;
+        .topbar-title h1 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--text-primary);
         }
 
-        .navbar-user {
+        .user-menu {
             display: flex;
             align-items: center;
             gap: 16px;
@@ -52,306 +90,175 @@
 
         .user-info {
             text-align: right;
-            font-size: 14px;
         }
 
         .user-name {
             font-weight: 600;
-            color: #333;
+            color: var(--text-primary);
+            font-size: 13px;
         }
 
         .user-role {
             font-size: 12px;
-            color: #999;
+            color: var(--text-secondary);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
         }
 
         .logout-btn {
             padding: 8px 16px;
-            background: #FF3B30;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.3s ease;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: all var(--transition-fast);
         }
 
         .logout-btn:hover {
-            background: #D32F2F;
+            background: var(--danger-light);
+            color: var(--danger);
+            border-color: var(--danger);
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
+        .content {
+            flex: 1;
+            padding: 30px;
         }
 
-        .header {
-            margin-bottom: 32px;
+        /* Page specific styles */
+        .page-header {
+            margin-bottom: 30px;
         }
 
-        .header-title {
-            font-size: 32px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 8px;
+        .page-header h1 {
+            margin: 0 0 8px 0;
         }
 
-        .header-subtitle {
-            font-size: 16px;
-            color: #999;
+        .page-header p {
+            color: var(--text-secondary);
+            margin: 0;
         }
 
-        .grid {
+        .form-section {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .form-section h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 32px;
+            gap: 20px;
         }
 
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border-left: 4px solid #007AFF;
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .card-emoji {
-            font-size: 24px;
+        .form-row.full {
+            grid-template-columns: 1fr;
         }
 
         .form-group {
             margin-bottom: 16px;
         }
 
-        .form-label {
+        .form-group label {
             display: block;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
-            color: #333;
+            color: var(--text-primary);
             margin-bottom: 8px;
         }
 
-        .form-select,
-        .form-input,
-        .form-textarea {
+        .form-group select,
+        .form-group input,
+        .form-group textarea {
             width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
             font-size: 14px;
             font-family: inherit;
-            transition: border-color 0.3s ease;
+            transition: all var(--transition-fast);
         }
 
-        .form-select:focus,
-        .form-input:focus,
-        .form-textarea:focus {
+        .form-group select:focus,
+        .form-group input:focus,
+        .form-group textarea:focus {
             outline: none;
-            border-color: #007AFF;
-            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-        .form-textarea {
+        .form-group textarea {
             resize: vertical;
             min-height: 100px;
         }
 
-        .service-type-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 12px;
+        /* Records Section */
+        .records-section {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            padding: 24px;
         }
 
-        .service-type-btn {
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+        .records-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 10px 16px;
+            border: 1px solid var(--border);
             background: white;
+            border-radius: var(--radius-md);
             cursor: pointer;
             font-size: 13px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            text-align: center;
+            font-weight: 600;
+            transition: all var(--transition-fast);
         }
 
-        .service-type-btn:hover {
-            border-color: #007AFF;
-            color: #007AFF;
+        .tab-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
         }
 
-        .service-type-btn.active {
-            background: #007AFF;
+        .tab-btn.active {
+            background: var(--primary);
             color: white;
-            border-color: #007AFF;
-        }
-
-        .recording-section {
-            background: #F0F8FF;
-            border: 2px dashed #007AFF;
-            border-radius: 8px;
-            padding: 24px;
-            text-align: center;
-            margin-bottom: 16px;
-        }
-
-        .recording-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateX(-50%) translateY(100px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(-50%) translateY(100px);
-                opacity: 0;
-            }
-        }
-
-        .recording-status {
-            font-size: 16px;
-            font-weight: 600;
-            color: #007AFF;
-            margin-bottom: 12px;
-        }
-
-        .recording-time {
-            font-size: 32px;
-            font-weight: 700;
-            color: #333;
-            font-family: 'Monaco', 'Courier New', monospace;
-            margin-bottom: 16px;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background: #007AFF;
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background: #0051D5;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 122, 255, 0.3);
-        }
-
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .summary-card {
-            background: #E5FFE5;
-            border: 1px solid #4CAF50;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 16px;
-            display: none;
-        }
-
-        .summary-card.show {
-            display: block;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .summary-title {
-            font-weight: 600;
-            color: #2E7D32;
-            margin-bottom: 8px;
-        }
-
-        .summary-item {
-            font-size: 14px;
-            color: #2E7D32;
-            margin-bottom: 4px;
-        }
-
-        .billing-amount {
-            font-size: 28px;
-            font-weight: 700;
-            color: #FF9500;
-            margin: 12px 0;
-        }
-
-        .records-section {
-            margin-top: 32px;
-        }
-
-        .records-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            border-color: var(--primary);
         }
 
         .records-list {
@@ -359,922 +266,340 @@
         }
 
         .record-item {
-            background: white;
-            border-radius: 8px;
             padding: 16px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
             margin-bottom: 12px;
-            border-left: 4px solid #007AFF;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: all var(--transition-fast);
+        }
+
+        .record-item:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary);
         }
 
         .record-info {
             flex: 1;
         }
 
-        .record-resident {
+        .record-title {
             font-weight: 600;
-            color: #333;
+            color: var(--text-primary);
             margin-bottom: 4px;
         }
 
-        .record-service {
-            font-size: 13px;
-            color: #999;
-            margin-bottom: 4px;
-        }
-
-        .record-time {
+        .record-meta {
             font-size: 12px;
-            color: #999;
-        }
-
-        .record-amount {
-            font-size: 18px;
-            font-weight: 700;
-            color: #FF9500;
-            min-width: 100px;
-            text-align: right;
+            color: var(--text-secondary);
         }
 
         .record-actions {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            min-width: 150px;
-            justify-content: flex-end;
-        }
-
-        .date-header {
-            font-size: 14px;
-            font-weight: 600;
-            color: #667eea;
-            padding: 12px 0 8px 0;
-            margin-top: 24px;
-            margin-bottom: 12px;
-            border-bottom: 2px solid #e8e8ff;
-            display: flex;
-            align-items: center;
             gap: 8px;
         }
 
-        .date-header::before {
-            content: '';
-            width: 4px;
-            height: 16px;
-            background: #667eea;
-            border-radius: 2px;
-        }
-
-        .record-tab {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            background: #f0f0f0;
-            color: #666;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .record-tab:hover {
-            background: #e0e0e0;
-        }
-
-        .record-tab.active {
-            background: #667eea;
-            color: white;
-        }
-
-        .delete-btn {
+        .record-btn {
             padding: 6px 12px;
-            background: #FF3B30;
-            color: white;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+        }
+
+        .record-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-2xl);
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .modal-close {
+            background: none;
             border: none;
-            border-radius: 6px;
-            font-size: 13px;
+            font-size: 24px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            white-space: nowrap;
+            color: var(--text-tertiary);
         }
 
-        .delete-btn:hover {
-            background: #D32F2F;
-            transform: scale(1.05);
+        .modal-body {
+            padding: 24px;
         }
 
-        .delete-btn:active {
-            transform: scale(0.95);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-        .empty-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-            opacity: 0.5;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .back-link {
-            display: inline-block;
-            margin-bottom: 24px;
-            padding: 8px 0;
-            color: #007AFF;
-            text-decoration: none;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .back-link:hover {
-            color: #0051D5;
-            text-decoration: underline;
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
         }
 
         @media (max-width: 768px) {
-            .grid {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-layout {
+                margin-left: 0;
+            }
+
+            .form-row {
                 grid-template-columns: 1fr;
             }
 
-            .service-type-group {
-                grid-template-columns: 1fr;
+            .content {
+                padding: 20px;
             }
         }
     </style>
-    <script src="./navbar.js"></script>
 </head>
 <body>
-    <!-- 네비게이션 -->
-    <div class="navbar">
-        <div class="navbar-content">
-            <div class="navbar-brand" onclick="window.location.href='./dashboard.html'">🏥 돌봄케어</div>
-            <div class="navbar-user">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">❤️</div>
+            <div class="sidebar-title">돌봄케어</div>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-item" onclick="navigateTo('./dashboard.html')">
+                <span>📊</span> 대시보드
+            </a>
+            <a class="nav-item" onclick="navigateTo('./resident_management.html')">
+                <span>👥</span> 이용자 관리
+            </a>
+            <a class="nav-item active" onclick="navigateTo('./voice_record.html')">
+                <span>🎤</span> 음성 기록
+            </a>
+            <a class="nav-item" onclick="navigateTo('./caregiver_billing.html')">
+                <span>💳</span> 나의 청부
+            </a>
+            <a class="nav-item" onclick="navigateTo('./billing_management.html')">
+                <span>📋</span> 청부 관리
+            </a>
+            <a class="nav-item" style="margin-top: 30px;" onclick="logout()">
+                <span>🚪</span> 로그아웃
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>음성 기록</h1>
+            </div>
+            <div class="user-menu">
                 <div class="user-info">
-                    <div class="user-name" id="userName">-</div>
-                    <div class="user-role" id="userRole">-</div>
+                    <div class="user-name" id="userName">사용자</div>
+                    <div class="user-role">요양사</div>
                 </div>
-                <button class="logout-btn" id="logoutBtn">로그아웃</button>
+                <div class="avatar" id="userAvatar">U</div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <div class="page-header">
+                <h1>새 기록 추가</h1>
+                <p>요양 활동을 기록하세요</p>
+            </div>
+
+            <!-- Add Record Form -->
+            <div class="form-section">
+                <h3>기본 정보</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="resident">이용자</label>
+                        <select id="residentSelect" onchange="onResidentChange()">
+                            <option value="">선택하세요</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceType">서비스 유형</label>
+                        <select id="serviceType">
+                            <option value="basic_care">🛏️ 기본 요양</option>
+                            <option value="meal_service">🍽️ 식사 서비스</option>
+                            <option value="medical_care">💊 의료 처치</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Care Details -->
+            <div class="form-section">
+                <h3>요양 내용</h3>
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label><input type="checkbox"> 아침 요양</label>
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox"> 끼니 제공</label>
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox"> 약물 투여</label>
+                    </div>
+                </div>
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label for="notes">메모</label>
+                        <textarea id="notes" placeholder="특이사항이 있으면 작성하세요"></textarea>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="saveRecord()" style="width: 100%;">
+                    💾 기록 저장
+                </button>
+            </div>
+
+            <!-- Records List -->
+            <div class="records-section">
+                <div class="records-header">
+                    <h3 style="margin: 0;">최근 기록</h3>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('today')">오늘</button>
+                    <button class="tab-btn" onclick="switchTab('7days')">지난 7일</button>
+                    <button class="tab-btn" onclick="switchTab('all')">전체</button>
+                </div>
+
+                <ul class="records-list" id="recordsList">
+                    <li style="text-align: center; padding: 40px; color: var(--text-tertiary);">
+                        기록이 없습니다
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
 
-    <!-- 메인 컨텐츠 -->
-    <main class="container">
-        <a class="back-link" onclick="window.location.href='./dashboard.html'">← 대시보드로 돌아가기</a>
-
-        <div class="header">
-            <h1 class="header-title">🎙️ 음성 기록</h1>
-            <p class="header-subtitle">요양 활동을 음성으로 기록하면 AI가 자동으로 청구합니다</p>
-        </div>
-
-        <div class="grid">
-            <!-- 기록 폼 -->
-            <div class="card">
-                <div class="card-title">
-                    <span class="card-emoji">📝</span>
-                    새 기록 추가
-                </div>
-
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>기록 편집</h2>
+                <button class="modal-close" onclick="closeEditModal()">✕</button>
+            </div>
+            <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">이용자 선택 *</label>
-                    <select id="residentSelect" class="form-select" required>
-                        <option value="">이용자를 선택하세요</option>
+                    <label for="editServiceType">서비스 유형</label>
+                    <select id="editServiceType">
+                        <option value="basic_care">🛏️ 기본 요양</option>
+                        <option value="meal_service">🍽️ 식사 서비스</option>
+                        <option value="medical_care">💊 의료 처치</option>
                     </select>
                 </div>
-
                 <div class="form-group">
-                    <label class="form-label">서비스 유형 *</label>
-                    <div class="service-type-group">
-                        <button class="service-type-btn" data-type="basic_care">
-                            🛏️ 기본 요양
-                        </button>
-                        <button class="service-type-btn" data-type="meal_service">
-                            🍽️ 식사 서비스
-                        </button>
-                        <button class="service-type-btn" data-type="medical_care">
-                            💊 의료 처치
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">메모</label>
-                    <textarea id="notesInput" class="form-textarea" placeholder="추가 정보를 입력하세요..."></textarea>
-                </div>
-
-                <div class="button-group">
-                    <button class="btn btn-primary" id="saveBtn" onclick="saveRecord()">
-                        ✅ 저장하기
-                    </button>
+                    <label for="editNotes">메모</label>
+                    <textarea id="editNotes"></textarea>
                 </div>
             </div>
-
-            <!-- 예상 청구액 -->
-            <div class="card">
-                <div class="card-title">
-                    <span class="card-emoji">💳</span>
-                    자동 청구액 계산
-                </div>
-
-                <div class="summary-card" id="summaryCard">
-                    <div class="summary-title">✅ 기록이 저장되었습니다</div>
-                    <div class="summary-item" id="summaryResident">-</div>
-                    <div class="summary-item" id="summaryService">-</div>
-                    <div class="billing-amount" id="billingAmount">0원</div>
-                    <div class="summary-item" style="font-size: 12px; color: #999;">공단에 자동 제출 예정</div>
-                </div>
-
-                <div style="background: #F5F5F5; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                    <div style="font-size: 13px; color: #666; margin-bottom: 12px;">
-                        📊 선택된 이용자 정보
-                    </div>
-                    <div style="display: grid; gap: 8px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span>등급</span>
-                            <span style="font-weight: 600; color: #333;" id="gradeInfo">-</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span>월 인정급여액</span>
-                            <span style="font-weight: 600; color: #333;" id="monthlyLimit">-</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span>1회 청구액</span>
-                            <span style="font-weight: 600; color: #FF9500;" id="estimatedBilling">-</span>
-                        </div>
-                        <div style="font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;" id="patientPayInfo">-</div>
-                    </div>
-                </div>
-
-                <div style="background: #E5F3FF; border-radius: 8px; padding: 12px; font-size: 12px; color: #0066CC;">
-                    <strong>💡 팁:</strong> 음성 기록을 하면 자동으로 청구됩니다
-                </div>
+            <div class="modal-footer">
+                <button class="record-btn" onclick="closeEditModal()">취소</button>
+                <button class="btn btn-primary" onclick="saveRecordEdit()">저장</button>
             </div>
         </div>
-
-        <!-- 기록 조회 -->
-        <div class="records-section">
-            <div class="records-title">
-                <span>📋 기록 조회</span>
-                <div style="display: flex; gap: 8px; margin-left: auto;">
-                    <button id="tabToday" class="record-tab active" onclick="switchRecordTab('today')">📅 오늘</button>
-                    <button id="tab7days" class="record-tab" onclick="switchRecordTab('7days')">📅 지난 7일</button>
-                    <button id="tabAll" class="record-tab" onclick="switchRecordTab('all')">📅 전체</button>
-                </div>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span id="recordCount" style="font-size: 14px; color: #666;">0건</span>
-            </div>
-
-            <ul class="records-list" id="recordsList">
-                <div class="empty-state">
-                    <div class="empty-icon">📭</div>
-                    <div>아직 기록이 없습니다</div>
-                </div>
-            </ul>
-        </div>
-    </main>
+    </div>
 
     <script>
         const API_URL = 'http://localhost:8000/api/v1';
-        let selectedServiceType = null;
-        let currentUser = null;
-        let residents = [];
 
-        // 페이지 로드
-        let currentRecordTab = 'today';
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.clear();
+                window.location.href = './login.html';
+            }
+        }
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = './login.html';
+                return;
+            }
+            document.getElementById('userName').textContent = user.email.split('@')[0];
+            document.getElementById('userAvatar').textContent = user.email.charAt(0).toUpperCase();
+        }
+
+        function onResidentChange() {
+            // Load resident records
+        }
+
+        function switchTab(tab) {
+            // Switch tab
+        }
+
+        function saveRecord() {
+            alert('기록이 저장되었습니다!');
+        }
+
+        function openEditModal(recordId, serviceType, notes) {
+            document.getElementById('editServiceType').value = serviceType;
+            document.getElementById('editNotes').value = notes;
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        function saveRecordEdit() {
+            alert('기록이 수정되었습니다!');
+            closeEditModal();
+        }
 
         window.addEventListener('load', () => {
-            checkAuth();
-            loadResidents();
-            loadTodayRecords();
-        });
-
-        // 탭 전환
-        function switchRecordTab(tab) {
-            currentRecordTab = tab;
-
-            // 탭 스타일 업데이트
-            document.getElementById('tabToday').classList.toggle('active', tab === 'today');
-            document.getElementById('tab7days').classList.toggle('active', tab === '7days');
-            document.getElementById('tabAll').classList.toggle('active', tab === 'all');
-
-            // 데이터 로드
-            if (tab === 'today') {
-                loadTodayRecords();
-            } else if (tab === '7days') {
-                loadRecentRecords();
-            } else if (tab === 'all') {
-                loadAllRecords();
-            }
-        }
-
-        // 인증 확인
-        function checkAuth() {
-            const token = localStorage.getItem('access_token');
-            const user = JSON.parse(localStorage.getItem('user'));
-
-            if (!token || !user) {
-                window.location.href = './login.html';
-                return;
-            }
-
-            currentUser = user;
-            document.getElementById('userName').textContent = user.full_name || '사용자';
-            document.getElementById('userRole').textContent =
-                user.role === 'caregiver' ? '요양사' :
-                user.role === 'center_manager' ? '센터장' : '사용자';
-        }
-
-        // 이용자 목록 로드 (API에서 최신 정보 조회)
-        async function loadResidents() {
-            try {
-                // API에서 현재 센터의 이용자 목록만 조회
-                const centerId = currentUser.center_id || 1;
-                console.log(`📍 음성기록: 센터 ID ${centerId}로 이용자 조회`);
-                const response = await fetch(`${API_URL}/residents/?center_id=${centerId}`);
-                const data = await response.json();
-                residents = data.residents || [];
-
-                const select = document.getElementById('residentSelect');
-                residents.forEach(resident => {
-                    const option = document.createElement('option');
-                    option.value = resident.id;
-                    // 생년월일 표시 (YYYY-MM-DD → YYYY년 M월 D일 형식)
-                    const birthStr = resident.birth_date
-                        ? new Date(resident.birth_date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' })
-                        : '미등록';
-                    const gradeLabel = `${resident.name} (${birthStr}) - ${resident.care_grade}등급`;
-                    option.textContent = gradeLabel;
-                    option.dataset.grade = resident.care_grade;
-                    option.dataset.clientType = resident.client_type;
-                    select.appendChild(option);
-                });
-
-                // 이용자 선택 시 최신 정보 API에서 가져오기 및 청부액 직접 계산
-                select.addEventListener('change', async () => {
-                    const residentId = select.value;
-                    if (!residentId) return;
-
-                    try {
-                        // 최신 이용자 정보 조회 (이용자 관리에서 변경된 데이터 반영)
-                        const residentResponse = await fetch(`${API_URL}/residents/${residentId}`);
-                        const residentData = await residentResponse.json();
-
-                        console.log('최신 이용자 데이터:', residentData);
-                        console.log('API에서 받은 clientType:', residentData.client_type, 'type:', typeof residentData.client_type);
-
-                        // API에서 받은 데이터로 직접 계산 (dataset 우회)
-                        const careGrade = residentData.care_grade;
-                        const clientType = residentData.client_type;
-
-                        // 월 한도액 (공단 기준)
-                        const monthlyLimit = CARE_GRADE_LIMITS[careGrade] || 1577500;
-
-                        // 보험료 부담율 (재가급여 기준)
-                        console.log('PATIENT_PAY_RATE 확인:', PATIENT_PAY_RATE);
-                        console.log('clientType으로 조회:', PATIENT_PAY_RATE["재가급여"][clientType]);
-                        const patientRate = PATIENT_PAY_RATE["재가급여"][clientType];
-                        if (patientRate === undefined) {
-                            console.error('⚠️ clientType이 PATIENT_PAY_RATE에 없음:', clientType);
-                        }
-                        const finalPatientRate = patientRate !== undefined ? patientRate : 0.15;
-                        const insuranceRate = 1 - finalPatientRate;
-
-                        // 1회 방문당 청부액 (월 기준 20회 방문)
-                        const monthlyStandardVisits = 20;
-                        const visitAmount = Math.floor((monthlyLimit / monthlyStandardVisits) * insuranceRate);
-                        const patientPayPerVisit = Math.floor((monthlyLimit / monthlyStandardVisits) * finalPatientRate);
-
-                        console.log('✅ 최종 계산 결과:', {
-                            careGrade,
-                            clientType,
-                            monthlyLimit,
-                            finalPatientRate,
-                            insuranceRate,
-                            visitAmount,
-                            patientPayPerVisit
-                        });
-
-                        // UI 업데이트 (직접)
-                        document.getElementById('gradeInfo').textContent =
-                            `${careGrade}등급 (${clientType})`;
-                        document.getElementById('monthlyLimit').textContent =
-                            `${monthlyLimit.toLocaleString()}원`;
-                        document.getElementById('estimatedBilling').textContent =
-                            `${visitAmount.toLocaleString()}원 (1회 청구액)`;
-                        document.getElementById('patientPayInfo').textContent =
-                            `본인부담금: ${patientPayPerVisit.toLocaleString()}원 (${Math.round(finalPatientRate * 100)}%)`;
-
-                    } catch (error) {
-                        console.error('이용자 정보 로드 실패:', error);
-                    }
-                });
-            } catch (error) {
-                console.error('이용자 목록 로드 실패:', error);
-            }
-        }
-
-        // 등급별 월 인정급여액
-        const CARE_GRADE_LIMITS = {
-            1: 1577500,
-            2: 1399500,
-            3: 1193000,
-            4: 1082500,
-            5: 235000
-        };
-
-        // 서비스 카테고리별 본인부담율 (건강보험공단 기준, 백엔드와 동일한 구조)
-        // 음성 기록은 재가급여(방문요양) 기준 적용
-        const PATIENT_PAY_RATE = {
-            "재가급여": {
-                "일반": 0.15,
-                "차상위계층": 0.10,
-                "기초생활보장": 0.00,
-                "의료급여": 0.00
-            }
-        };
-
-        // 월 청부액 계산 및 업데이트 (1회 방문당 기준)
-        function updateBillingAmount() {
-            const select = document.getElementById('residentSelect');
-            const selectedOption = select.options[select.selectedIndex];
-
-            if (!selectedOption.dataset.grade) return;
-
-            const careGrade = parseInt(selectedOption.dataset.grade);
-            const clientType = selectedOption.dataset.clientType || '일반';
-
-            // 월 한도액 (공단 기준)
-            const monthlyLimit = CARE_GRADE_LIMITS[careGrade] || 1577500;
-
-            // 보험료 부담율 (재가급여 기준)
-            const patientRate = PATIENT_PAY_RATE["재가급여"][clientType] || 0.15;
-            const insuranceRate = 1 - patientRate;
-
-            // 1회 방문당 청부액 (월 기준 20회 방문)
-            const monthlyStandardVisits = 20;
-            const visitAmount = Math.floor((monthlyLimit / monthlyStandardVisits) * insuranceRate);
-            const monthlyAmount = Math.floor(monthlyLimit * insuranceRate);
-            const patientPayPerVisit = Math.floor((monthlyLimit / monthlyStandardVisits) * patientRate);
-
-            // UI 업데이트
-            document.getElementById('gradeInfo').textContent =
-                `${careGrade}등급 (${clientType})`;
-            document.getElementById('monthlyLimit').textContent =
-                `${monthlyLimit.toLocaleString()}원`;
-            document.getElementById('estimatedBilling').textContent =
-                `${visitAmount.toLocaleString()}원 (1회 청구액)`;
-            document.getElementById('patientPayInfo').textContent =
-                `본인부담금: ${patientPayPerVisit.toLocaleString()}원 (${Math.round(patientRate * 100)}%)`;
-        }
-
-        // 서비스 유형 선택
-        document.querySelectorAll('.service-type-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.service-type-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                selectedServiceType = btn.dataset.type;
-            });
-        });
-
-        // 기록 저장
-        async function saveRecord() {
-            const residentId = document.getElementById('residentSelect').value;
-            const notes = document.getElementById('notesInput').value;
-            const saveBtn = document.getElementById('saveBtn');
-
-            if (!residentId) {
-                alert('이용자를 선택하세요');
-                return;
-            }
-
-            if (!selectedServiceType) {
-                alert('서비스 유형을 선택하세요');
-                return;
-            }
-
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '<span class="spinner"></span>저장 중...';
-
-            try {
-                const response = await fetch(`${API_URL}/records/create`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        caregiver_id: currentUser.id,
-                        resident_id: parseInt(residentId),
-                        service_type: selectedServiceType,
-                        notes: notes
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    const errorMsg = errorData.detail || `HTTP ${response.status}`;
-                    console.error('❌ API 오류:', errorMsg);
-                    throw new Error(`기록 저장 실패: ${errorMsg}`);
-                }
-
-                const data = await response.json();
-
-                if (!data.data || !data.data.billing_amount) {
-                    console.error('❌ 응답 형식 오류:', data);
-                    throw new Error('응답 데이터가 올바르지 않습니다');
-                }
-
-                const resident = residents.find(r => r.id == residentId);
-                if (!resident) {
-                    throw new Error('이용자 정보를 찾을 수 없습니다');
-                }
-
-                const residentName = resident.name;
-                const billingAmount = data.data.billing_amount;
-
-                // 성공 표시
-                showSummary(residentName, selectedServiceType, billingAmount);
-
-                // 저장 성공 토스트 메시지
-                showToast(`✅ ${residentName}님 기록이 저장되었습니다!`);
-
-                // 대시보드에 데이터 갱신 신호 전송
-                window.localStorage.setItem('dashboardRefresh', Date.now().toString());
-
-                // 폼 초기화
-                document.getElementById('residentSelect').value = '';
-                document.getElementById('notesInput').value = '';
-                document.querySelectorAll('.service-type-btn').forEach(b => b.classList.remove('active'));
-                selectedServiceType = null;
-
-                // 기록 목록 새로고침
-                loadTodayRecords();
-
-                console.log('✅ 기록 저장 완료:', data);
-            } catch (error) {
-                console.error('❌ 오류:', error);
-                alert('기록 저장 중 오류가 발생했습니다');
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = '✅ 저장하기';
-            }
-        }
-
-        // 토스트 메시지 표시
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #34C759;
-                color: white;
-                padding: 12px 20px;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 600;
-                z-index: 9999;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                animation: slideUp 0.3s ease;
-            `;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.animation = 'slideDown 0.3s ease';
-                setTimeout(() => toast.remove(), 300);
-            }, 2000);
-        }
-
-        // 성공 요약 표시
-        function showSummary(residentName, serviceType, amount) {
-            const summaryCard = document.getElementById('summaryCard');
-            const serviceTypeLabel = {
-                'basic_care': '🛏️ 기본 요양',
-                'meal_service': '🍽️ 식사 서비스',
-                'medical_care': '💊 의료 처치'
-            }[serviceType];
-
-            document.getElementById('summaryResident').textContent = `👤 ${residentName}님`;
-            document.getElementById('summaryService').textContent = `📝 ${serviceTypeLabel}`;
-            document.getElementById('billingAmount').textContent = `${amount.toLocaleString()}원`;
-
-            summaryCard.classList.add('show');
-
-            // 3초 후 숨김
-            setTimeout(() => {
-                summaryCard.classList.remove('show');
-            }, 3000);
-        }
-
-        // 날짜를 "YYYY-MM-DD" 형식으로 포맷
-        function formatDate(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        // 오늘, 어제 등 상대적 날짜 라벨
-        function getDateLabel(recordDate) {
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-
-            const recordDateStr = formatDate(recordDate);
-            const todayStr = formatDate(today);
-            const yesterdayStr = formatDate(yesterday);
-
-            if (recordDateStr === todayStr) return '📅 오늘';
-            if (recordDateStr === yesterdayStr) return '📅 어제';
-
-            const days = Math.floor((today - recordDate) / (1000 * 60 * 60 * 24));
-            if (days < 7) return `📅 ${days}일 전`;
-
-            return `📅 ${recordDate.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}`;
-        }
-
-        // 기록을 날짜별로 그룹화
-        function groupRecordsByDate(records) {
-            const grouped = {};
-
-            records.forEach(record => {
-                const date = new Date(record.recorded_at);
-                const dateKey = formatDate(date);
-
-                if (!grouped[dateKey]) {
-                    grouped[dateKey] = [];
-                }
-                grouped[dateKey].push(record);
-            });
-
-            // 각 그룹을 시간순으로 정렬 (최신순)
-            Object.keys(grouped).forEach(dateKey => {
-                grouped[dateKey].sort((a, b) =>
-                    new Date(b.recorded_at) - new Date(a.recorded_at)
-                );
-            });
-
-            // 날짜 역순 정렬 (최신순)
-            return Object.keys(grouped)
-                .sort((a, b) => new Date(b) - new Date(a))
-                .reduce((result, dateKey) => {
-                    result[dateKey] = grouped[dateKey];
-                    return result;
-                }, {});
-        }
-
-        // 지난 N일 기록 로드
-        async function loadRecentRecords() {
-            try {
-                const response = await fetch(`${API_URL}/records/recent?caregiver_id=${currentUser.id}&days=7`);
-                if (!response.ok) throw new Error('기록 조회 실패');
-
-                const data = await response.json();
-                renderRecords(data);
-                console.log('✅ 지난 7일 기록 로드:', data);
-            } catch (error) {
-                console.error('❌ 기록 조회 오류:', error);
-            }
-        }
-
-        // 전체 기록 로드
-        async function loadAllRecords() {
-            try {
-                const response = await fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`);
-                if (!response.ok) throw new Error('기록 조회 실패');
-
-                const data = await response.json();
-                renderRecords(data);
-                console.log('✅ 전체 기록 로드:', data);
-            } catch (error) {
-                console.error('❌ 기록 조회 오류:', error);
-            }
-        }
-
-        // 기록 렌더링 (공통 함수)
-        async function renderRecords(data) {
-            const recordsList = document.getElementById('recordsList');
-            const recordCount = document.getElementById('recordCount');
-
-            recordCount.textContent = `${data.total_records}건`;
-
-            if (data.records.length === 0) {
-                recordsList.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">📭</div>
-                        <div>기록이 없습니다</div>
-                    </div>
-                `;
-                return;
-            }
-
-            const isManager = currentUser.role === 'center_manager';
-            const hasDeletePermission = data.records.some(r =>
-                isManager || r.caregiver_id === currentUser.id
-            );
-
-            let html = '';
-            if (hasDeletePermission && data.records.length > 0) {
-                html += `
-                    <div style="margin-bottom: 16px; display: flex; gap: 8px; align-items: center;">
-                        <button onclick="toggleSelectAll()" style="padding: 8px 12px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">✓ 모두 선택</button>
-                        <button onclick="deleteSelectedRecords()" style="padding: 8px 12px; background: #FF3B30; color: white; border: none; border-radius: 6px; cursor: pointer;">🗑️ 선택 삭제</button>
-                        <span id="selectedCount" style="color: #666; font-size: 14px;"></span>
-                    </div>
-                `;
-            }
-
-            // 날짜별 그룹화
-            const groupedRecords = groupRecordsByDate(data.records);
-
-            // 각 날짜 그룹별로 HTML 생성
-            Object.entries(groupedRecords).forEach(([dateKey, records]) => {
-                const [year, month, day] = dateKey.split('-');
-                const recordDate = new Date(year, month - 1, day);  // 로컬 시간대로 파싱
-                const dateLabel = getDateLabel(recordDate);
-
-                html += `<div class="date-header">${dateLabel}</div>`;
-
-                html += records.map((record, idx) => {
-                    const serviceType = {
-                        'basic_care': '🛏️ 기본 요양',
-                        'meal_service': '🍽️ 식사 서비스',
-                        'medical_care': '💊 의료 처치'
-                    }[record.service_type] || record.service_type;
-
-                    const amount = record.billing_amount || 0;
-                    const timeStr = new Date(record.recorded_at).toLocaleTimeString('ko-KR', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-
-                    const isOwnRecord = record.caregiver_id === currentUser.id;
-                    const canDelete = isManager || isOwnRecord;
-
-                    const checkbox = canDelete
-                        ? `<input type="checkbox" class="record-checkbox" data-record-id="${record.id}" onchange="updateSelectedCount()">`
-                        : '';
-
-                    const deleteBtn = canDelete
-                        ? `<button class="delete-btn" onclick="deleteRecord(${record.id})">삭제</button>`
-                        : '';
-
-                    return `
-                        <li class="record-item" id="record-${record.id}">
-                            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
-                                ${checkbox}
-                                <div class="record-info">
-                                    <div class="record-resident">${residents.find(r => r.id == record.resident_id)?.name || '이용자'}</div>
-                                    <div class="record-service">${serviceType}</div>
-                                    <div class="record-time">${timeStr}</div>
-                                </div>
-                            </div>
-                            <div class="record-actions">
-                                <div class="record-amount">₩ ${amount.toLocaleString()}원</div>
-                                ${deleteBtn}
-                            </div>
-                        </li>
-                    `;
-                }).join('');
-            });
-
-            recordsList.innerHTML = html;
-        }
-
-        // 오늘의 기록 로드
-        async function loadTodayRecords() {
-            try {
-                const response = await fetch(`${API_URL}/records/today?caregiver_id=${currentUser.id}`);
-                if (!response.ok) throw new Error('기록 조회 실패');
-
-                const data = await response.json();
-                await renderRecords(data);
-                console.log('✅ 오늘 기록 로드:', data);
-            } catch (error) {
-                console.error('❌ 기록 조회 오류:', error);
-            }
-        }
-
-        // 선택된 개수 업데이트
-        function updateSelectedCount() {
-            const selected = document.querySelectorAll('.record-checkbox:checked').length;
-            const totalRecords = document.querySelectorAll('.record-checkbox').length;
-            const countEl = document.getElementById('selectedCount');
-            if (countEl) {
-                countEl.textContent = selected > 0 ? `${selected}/${totalRecords}개 선택됨` : '';
-            }
-        }
-
-        // 모두 선택/해제
-        function toggleSelectAll() {
-            const checkboxes = document.querySelectorAll('.record-checkbox');
-            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-            checkboxes.forEach(cb => cb.checked = !allChecked);
-            updateSelectedCount();
-        }
-
-        // 선택된 기록 일괄 삭제
-        async function deleteSelectedRecords() {
-            const selected = Array.from(document.querySelectorAll('.record-checkbox:checked'))
-                .map(cb => parseInt(cb.dataset.recordId));
-
-            if (selected.length === 0) {
-                alert('삭제할 기록을 선택하세요');
-                return;
-            }
-
-            if (!confirm(`${selected.length}개 기록을 삭제하시겠습니까?`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/records/batch-delete`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        record_ids: selected,
-                        user_id: currentUser.id,
-                        user_role: currentUser.role
-                    })
-                });
-
-                if (!response.ok) throw new Error('삭제 실패');
-
-                showToast(`✅ ${selected.length}개 기록이 삭제되었습니다`);
-                loadTodayRecords();
-            } catch (error) {
-                console.error('❌ 일괄 삭제 오류:', error);
-                alert('삭제 중 오류가 발생했습니다');
-            }
-        }
-
-        // 기록 삭제 (자신의 기록 또는 센터장이 삭제 가능)
-        async function deleteRecord(recordId) {
-            if (!confirm('이 기록을 삭제하시겠습니까?')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/records/${recordId}?user_id=${currentUser.id}&user_role=${currentUser.role}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || '삭제 실패');
-                }
-
-                showToast('✅ 기록이 삭제되었습니다');
-                loadTodayRecords(); // 목록 새로고침
-
-                // 대시보드에 데이터 갱신 신호 전송
-                window.localStorage.setItem('dashboardRefresh', Date.now().toString());
-
-                console.log('✅ 기록 삭제 완료:', recordId);
-            } catch (error) {
-                console.error('❌ 삭제 오류:', error);
-                alert(`삭제 실패: ${error.message}`);
-            }
-        }
-
-        // 로그아웃
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            if (confirm('정말 로그아웃 하시겠습니까?')) {
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('user');
-                localStorage.removeItem('user_role');
-                window.location.href = './login.html';
-            }
+            loadUserInfo();
         });
     </script>
 </body>
