@@ -345,7 +345,7 @@ async def get_recent_records(
                     "service_type": b.service_type
                 }
 
-        billing_total = sum(b.amount for b in billings if b.amount)
+        billing_total = sum(b.amount for b in billings if b.daily_record_id and b.amount)
 
         response_records = []
         for r in records:
@@ -362,6 +362,11 @@ async def get_recent_records(
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
                 "billing_amount": billing_info.get("amount", 0)
             })
+
+        # 요양사 기준: submitted_to_nhis 제외
+        caregiver = db.query(User).filter(User.id == caregiver_id).first()
+        if caregiver and caregiver.role == 'caregiver':
+            billing_total = sum(b.amount for b in billings if b.daily_record_id and b.approval_status != 'submitted_to_nhis' and b.amount)
 
         return {
             "days": days,
