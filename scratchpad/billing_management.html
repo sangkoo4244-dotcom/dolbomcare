@@ -786,13 +786,24 @@
             try {
                 // center_id 포함해서 API 호출
                 const centerId = currentUser?.center_id || 1;
-                const response = await fetch(`${API_URL}/billing/?center_id=${centerId}`);
+                const apiUrl = `${API_URL}/billing/?center_id=${centerId}`;
+
+                console.log('🔄 API 호출 정보:', {
+                    url: apiUrl,
+                    centerId: centerId,
+                    currentUser: currentUser,
+                    currentUserCenterId: currentUser?.center_id
+                });
+
+                const response = await fetch(apiUrl);
                 if (!response.ok) {
-                    console.error('API 응답 오류:', response.status, response.statusText);
+                    console.error('❌ API 응답 오류:', response.status, response.statusText);
                     return;  // 실패 시 기존 데이터 유지
                 }
 
                 const data = await response.json();
+                console.log('📋 원본 API 응답:', data);
+
                 // API 응답: { total_records: 4, records: [...] }
                 const newBillings = Array.isArray(data.records) ? data.records : (Array.isArray(data.billings) ? data.billings : []);
 
