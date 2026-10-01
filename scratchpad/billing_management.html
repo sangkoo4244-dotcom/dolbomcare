@@ -569,15 +569,16 @@
                             </div>
                         `;
                     } else if (record.approval_status === 'submitted_to_nhis') {
-                        // 건보 청구됨 - 자동 처리 중, 버튼 없음
-                        actionHtml = '';
-                    } else if (record.approval_status === 'rejected_by_nhis') {
-                        // 건보 반려됨 - 다시 청구 가능
+                        // 건보 청구됨 - 센터장이 수동으로 확인 후 처리
                         actionHtml = `
                             <div class="action-buttons">
-                                <button class="action-btn primary" onclick="resubmitToNHIS(${record.id})">다시 청구</button>
+                                <button class="action-btn success" onclick="confirmReimbursement(${record.id})">환급 확인</button>
+                                <button class="action-btn warning" onclick="cancelNHISSubmission(${record.id})">취소</button>
                             </div>
                         `;
+                    } else if (record.approval_status === 'rejected_by_nhis') {
+                        // 건보 반려됨
+                        actionHtml = '';
                     }
 
                     html += `
