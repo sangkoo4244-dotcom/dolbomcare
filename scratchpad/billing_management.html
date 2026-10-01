@@ -471,15 +471,28 @@
                 const data = await response.json();
                 allBillings = data.records || [];
 
-                // 통계 업데이트
+                // 통계 업데이트 - 모든 상태 포함
                 const totalCount = allBillings.length;
                 const pendingCount = allBillings.filter(r => r.approval_status === 'pending').length;
                 const approvedCount = allBillings.filter(r => r.approval_status === 'approved').length;
+                const submittedToNhisCount = allBillings.filter(r => r.approval_status === 'submitted_to_nhis').length;
+                const confirmedCount = allBillings.filter(r => r.approval_status === 'confirmed').length;
+                const rejectedByNhisCount = allBillings.filter(r => r.approval_status === 'rejected_by_nhis').length;
                 const rejectedCount = allBillings.filter(r => r.approval_status === 'rejected').length;
 
                 document.getElementById('totalCount').textContent = totalCount;
                 document.getElementById('pendingCount').textContent = pendingCount;
                 document.getElementById('approvedCount').textContent = approvedCount;
+
+                // 새로운 상태 통계 업데이트 (존재하면)
+                const submittedEl = document.getElementById('submittedToNhisCount');
+                const confirmedEl = document.getElementById('confirmedCount');
+                const rejectedNhisEl = document.getElementById('rejectedByNhisCount');
+
+                if (submittedEl) submittedEl.textContent = submittedToNhisCount;
+                if (confirmedEl) confirmedEl.textContent = confirmedCount;
+                if (rejectedNhisEl) rejectedNhisEl.textContent = rejectedByNhisCount;
+
                 document.getElementById('rejectedCount').textContent = rejectedCount;
 
                 // 주민 정보 로드
