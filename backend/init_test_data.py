@@ -94,22 +94,28 @@ try:
     daily_records = []
     today_daily_record_ids = []
 
-    # 오늘 기록: 2건 (최근 기록 테스트용)
-    for i, resident_id in enumerate(resident_ids[:2]):
-        daily_record = DailyRecord(
-            caregiver_id=caregiver_id,
-            resident_id=resident_id,
-            recorded_date=now,  # 오늘
-            service_type="basic_care",
-            morning_care=True,
-            meal_intake="full",
-            medicine_given=True,
-            notes=f"이용자 {i+1}의 오늘 기록"
-        )
-        db.add(daily_record)
-        db.flush()
-        daily_records.append(daily_record)
-        today_daily_record_ids.append(daily_record.id)
+    # 오늘 기록: 5건 (청부 5개와 연결)
+    for i, resident_id in enumerate(resident_ids):
+        # 이용자1: 2개 (pending, rejected)
+        # 이용자2: 2개 (approved, reimbursed)
+        # 이용자3: 1개 (submitted_to_nhis)
+        count = 2 if i < 2 else 1
+
+        for j in range(count):
+            daily_record = DailyRecord(
+                caregiver_id=caregiver_id,
+                resident_id=resident_id,
+                recorded_date=now,  # 오늘
+                service_type="basic_care",
+                morning_care=True,
+                meal_intake="full",
+                medicine_given=True,
+                notes=f"이용자 {i+1}의 오늘 기록 #{j+1}"
+            )
+            db.add(daily_record)
+            db.flush()
+            daily_records.append(daily_record)
+            today_daily_record_ids.append(daily_record.id)
 
     # 과거 기록: 7건 (전체 기록 테스트용)
     for i, resident_id in enumerate(resident_ids):
@@ -134,7 +140,7 @@ try:
     print("✅ 청부 기록 생성 중...")
 
     billings = [
-        # 대기 중 (오늘)
+        # 대기 중 (오늘 + 이용자1)
         {
             "resident_id": resident_ids[0],
             "approval_status": "pending",
@@ -142,7 +148,7 @@ try:
             "amount": 1400000,
             "days_ago": 0
         },
-        # 승인됨 (오늘)
+        # 승인됨 (오늘 + 이용자2)
         {
             "resident_id": resident_ids[1],
             "approval_status": "approved",
@@ -150,31 +156,31 @@ try:
             "amount": 1260000,
             "days_ago": 0
         },
-        # 건보 청구됨 (과거)
+        # 건보 청구됨 (오늘 + 이용자3)
         {
             "resident_id": resident_ids[2],
             "approval_status": "submitted_to_nhis",
             "status": "draft",
             "amount": 1070000,
-            "days_ago": 2
+            "days_ago": 0
         },
-        # 환급완료 (아카이브됨) ← 새로운 상태
+        # 거절됨 (오늘 + 이용자1)
         {
             "resident_id": resident_ids[0],
-            "approval_status": "reimbursed",
-            "status": "draft",
-            "amount": 1400000,
-            "days_ago": 15,
-            "is_archived": True
-        },
-        # 거절됨
-        {
-            "resident_id": resident_ids[1],
             "approval_status": "rejected",
             "status": "draft",
             "amount": 1260000,
-            "days_ago": 10,
+            "days_ago": 0,
             "rejection_reason": "서류 누락"
+        },
+        # 환급완료 (오늘 + 이용자2, 아카이브됨)
+        {
+            "resident_id": resident_ids[1],
+            "approval_status": "reimbursed",
+            "status": "draft",
+            "amount": 1400000,
+            "days_ago": 0,
+            "is_archived": True
         },
     ]
 

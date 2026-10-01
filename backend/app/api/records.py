@@ -396,7 +396,8 @@ async def get_all_records(
         records = query.order_by(DailyRecord.recorded_date.desc()).all()
 
         billings = db.query(BillingRecord).filter(
-            BillingRecord.caregiver_id == caregiver_id
+            BillingRecord.caregiver_id == caregiver_id,
+            BillingRecord.is_archived == False  # 활성 청부만
         ).all()
 
         billing_map = {}
