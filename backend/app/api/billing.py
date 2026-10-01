@@ -384,8 +384,9 @@ async def submit_billing_for_approval(
     if billing.caregiver_id != request.user_id:
         raise HTTPException(status_code=403, detail="자신의 청부만 제출 가능합니다")
 
-    if billing.status != "draft":
-        raise HTTPException(status_code=400, detail="임시 저장 상태의 청부만 제출 가능합니다")
+    # draft 또는 거절된 상태의 청부만 제출 가능
+    if billing.status not in ["draft", "submitted"] or (billing.status == "submitted" and billing.approval_status != "rejected"):
+        raise HTTPException(status_code=400, detail="임시 저장 또는 거절된 청부만 다시 제출 가능합니다")
 
     # 제출 처리
     billing.approval_status = "pending"
