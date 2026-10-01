@@ -748,7 +748,7 @@ async def create_voice_record(
     transcription: str = "",
     db: Session = Depends(get_db)
 ):
-    """음성 기록 생성 + 자동 청부 생성"""
+    """Create voice record + auto-generate billing"""
     try:
         resident = db.query(Resident).filter(Resident.id == resident_id).first()
         if not resident:
