@@ -4,299 +4,275 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>돌봄케어 - 로그인</title>
+    <link rel="stylesheet" href="design-system.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
         }
 
-        .container {
+        .login-container {
             width: 100%;
-            max-width: 520px;
+            max-width: 480px;
         }
 
-        .card {
+        .login-card {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.18);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-2xl);
             overflow: hidden;
         }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 60px 20px;
+        /* Header with gradient background */
+        .login-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            padding: 40px 30px;
             text-align: center;
             color: white;
         }
 
-        .logo {
+        .logo-icon {
             font-size: 48px;
-            font-weight: 900;
-            margin-bottom: 10px;
-            letter-spacing: -2px;
+            margin-bottom: 12px;
         }
 
-        .subtitle {
-            font-size: 15px;
-            opacity: 0.95;
-            font-weight: 500;
+        .login-header h1 {
+            font-size: 28px;
+            color: white;
+            margin: 0 0 4px 0;
         }
 
-        .content {
+        .login-header p {
+            font-size: 13px;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        /* Main content */
+        .login-content {
             padding: 40px;
         }
 
-        /* 테스트 계정 카드 */
-        .test-accounts-section {
-            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%);
-            border-radius: 14px;
-            padding: 20px;
+        /* Tab selector */
+        .tab-selector {
+            display: flex;
+            gap: 0;
             margin-bottom: 30px;
-            border: 2px solid #e8ecff;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+            padding: 4px;
         }
 
-        .test-accounts-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #667eea;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .account-cards {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .account-card {
-            background: white;
-            border: 2px solid #e0e5ff;
-            border-radius: 10px;
-            padding: 12px;
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
+            transition: all var(--transition-fast);
+            font-size: 13px;
         }
 
-        .account-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
-            border-color: #667eea;
+        .tab-btn.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
         }
 
-        .account-card.caregiver {
-            border-color: #28a745;
+        /* Test accounts section */
+        .test-accounts {
+            margin-bottom: 30px;
         }
 
-        .account-card.caregiver:hover {
-            background: #f0fdf4;
-            border-color: #28a745;
-            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.15);
-        }
-
-        .account-card.manager {
-            border-color: #667eea;
-        }
-
-        .account-card.manager:hover {
-            background: #f5f7ff;
-            border-color: #667eea;
-        }
-
-        .account-role {
+        .section-title {
             font-size: 12px;
             font-weight: 700;
-            margin-bottom: 6px;
+            color: var(--text-tertiary);
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
         }
 
-        .account-card.caregiver .account-role {
-            color: #28a745;
-        }
-
-        .account-card.manager .account-role {
-            color: #667eea;
-        }
-
-        .account-email {
-            font-size: 11px;
-            color: #666;
-            font-weight: 500;
-            margin-bottom: 4px;
-            word-break: break-all;
-        }
-
-        .account-password {
-            font-size: 10px;
-            color: #999;
-            font-family: 'Courier New', monospace;
-        }
-
-        /* 폼 섹션 */
-        .form-section-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 6px;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 12px 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #667eea;
-            background: #f8faff;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .role-selector {
-            margin-bottom: 24px;
-        }
-
-        .role-label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .role-buttons {
+        .account-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
 
-        .role-btn {
-            padding: 12px 16px;
-            border: 2px solid #ddd;
+        .account-btn {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
             background: white;
-            border-radius: 8px;
             cursor: pointer;
+            transition: all var(--transition-base);
+            text-align: center;
+        }
+
+        .account-btn:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .account-btn.caregiver:hover {
+            border-color: var(--secondary);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .account-role {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .account-btn.caregiver .account-role {
+            color: var(--secondary);
+        }
+
+        .account-btn.manager .account-role {
+            color: var(--primary);
+        }
+
+        .account-email {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .account-password {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            font-family: var(--font-mono);
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Form styles */
+        .form-group label {
+            display: block;
             font-size: 13px;
             font-weight: 600;
-            color: #666;
-            transition: all 0.3s;
+            color: var(--text-primary);
+            margin-bottom: 8px;
         }
 
-        .role-btn:hover {
-            border-color: #667eea;
-            color: #667eea;
-        }
-
-        .role-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .login-button {
+        .form-group input {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            transition: all var(--transition-fast);
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: white;
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        /* Submit button */
+        .submit-btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--primary);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 700;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 14px;
             cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 8px;
+            transition: all var(--transition-base);
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        .login-button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.35);
+        .submit-btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
         }
 
-        .login-button:active:not(:disabled) {
-            transform: translateY(0);
-        }
-
-        .login-button:disabled {
-            opacity: 0.6;
+        .submit-btn:disabled {
+            opacity: 0.7;
             cursor: not-allowed;
         }
 
-        .error-message, .success-message {
-            display: none;
-            padding: 12px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            margin-bottom: 16px;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        .error-message {
-            background: #fee;
-            color: #c33;
-            border-left: 4px solid #c33;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .success-message {
-            background: #efe;
-            color: #3c3;
-            border-left: 4px solid #3c3;
-        }
-
-        .success-message.show {
-            display: block;
-        }
-
         .spinner {
-            display: inline-block;
             width: 14px;
             height: 14px;
             border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid white;
+            border-top-color: white;
             border-radius: 50%;
             animation: spin 0.6s linear infinite;
-            margin-right: 6px;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        /* Messages */
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+            animation: slideDown 300ms ease-out;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert.error {
+            background: var(--danger-light);
+            color: #991b1b;
+            border-left: 3px solid var(--danger);
+        }
+
+        .alert.success {
+            background: var(--secondary-light);
+            color: #065f46;
+            border-left: 3px solid var(--secondary);
         }
 
         @keyframes slideDown {
@@ -310,111 +286,95 @@
             }
         }
 
-        .divider {
-            height: 1px;
-            background: #f0f0f0;
-            margin: 24px 0;
+        /* Tab content */
+        .tab-content {
+            display: none;
         }
 
-        .footer-info {
-            text-align: center;
-            font-size: 12px;
-            color: #999;
-            padding-top: 16px;
-            border-top: 1px solid #f0f0f0;
+        .tab-content.active {
+            display: block;
         }
 
-        @media (max-width: 500px) {
-            .header {
-                padding: 40px 20px;
-            }
-
-            .logo {
-                font-size: 36px;
-            }
-
-            .content {
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-header {
                 padding: 30px 20px;
             }
 
-            .account-cards {
+            .login-content {
+                padding: 30px 20px;
+            }
+
+            .login-header h1 {
+                font-size: 24px;
+            }
+
+            .account-grid {
                 grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <!-- 헤더 -->
-            <div class="header">
-                <div class="logo">돌봄케어</div>
-                <div class="subtitle">요양원 통합관리 플랫폼</div>
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="login-header">
+                <div class="logo-icon">❤️</div>
+                <h1>돌봄케어</h1>
+                <p>요양관리 플랫폼</p>
             </div>
 
-            <!-- 콘텐츠 -->
-            <div class="content">
-                <!-- 테스트 계정 -->
-                <div class="test-accounts-section">
-                    <div class="test-accounts-title">📋 빠른 로그인 (클릭하면 바로 진입)</div>
-                    <div class="account-cards">
-                        <button type="button" class="account-card caregiver"
-                                onclick="quickLogin('caregiver@test.com', 'caregiver', 4, 1)">
-                            <div class="account-role">👤 요양사</div>
-                            <div class="account-email">caregiver@test.com</div>
-                            <div class="account-password">pw: test123</div>
-                        </button>
-                        <button type="button" class="account-card manager"
-                                onclick="quickLogin('manager@test.com', 'center_manager', 2, 1)">
-                            <div class="account-role">👨‍💼 센터장</div>
-                            <div class="account-email">manager@test.com</div>
-                            <div class="account-password">pw: test123</div>
-                        </button>
+            <!-- Content -->
+            <div class="login-content">
+                <div id="errorMessage" class="alert error"></div>
+                <div id="successMessage" class="alert success"></div>
+
+                <!-- Tab Selector -->
+                <div class="tab-selector">
+                    <button class="tab-btn active" onclick="switchTab('quick')">빠른 시작</button>
+                    <button class="tab-btn" onclick="switchTab('manual')">직접 입력</button>
+                </div>
+
+                <!-- Quick Login Tab -->
+                <div id="quick-tab" class="tab-content active">
+                    <div class="test-accounts">
+                        <p class="section-title">테스트 계정 선택</p>
+                        <div class="account-grid">
+                            <!-- Caregiver Account -->
+                            <button class="account-btn caregiver" onclick="quickLogin('caregiver@test.com', 'caregiver', 4, 1)">
+                                <div class="account-role">👤 요양사</div>
+                                <div class="account-email">caregiver@test.com</div>
+                                <div class="account-password">test123</div>
+                            </button>
+
+                            <!-- Manager Account -->
+                            <button class="account-btn manager" onclick="quickLogin('manager@test.com', 'center_manager', 3, 1)">
+                                <div class="account-role">🏢 센터장</div>
+                                <div class="account-email">manager@test.com</div>
+                                <div class="account-password">test123</div>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div id="errorMessage" class="error-message"></div>
-                <div id="successMessage" class="success-message"></div>
-
-                <!-- 로그인 폼 -->
-                <form id="loginForm">
-                    <div class="role-selector">
-                        <label class="role-label">역할 선택</label>
-                        <div class="role-buttons">
-                            <button type="button" class="role-btn active" data-role="caregiver">요양사</button>
-                            <button type="button" class="role-btn" data-role="center_manager">센터장</button>
+                <!-- Manual Login Tab -->
+                <div id="manual-tab" class="tab-content">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="email">이메일</label>
+                            <input type="email" id="email" placeholder="your@email.com" required>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label class="form-label">📧 이메일</label>
-                        <input
-                            type="email"
-                            id="email"
-                            class="form-input"
-                            placeholder="이메일을 입력하세요"
-                            required
-                        >
-                    </div>
+                        <div class="form-group">
+                            <label for="password">비밀번호</label>
+                            <input type="password" id="password" placeholder="••••••••" required>
+                        </div>
 
-                    <div class="form-group">
-                        <label class="form-label">🔑 비밀번호</label>
-                        <input
-                            type="password"
-                            id="password"
-                            class="form-input"
-                            placeholder="비밀번호를 입력하세요"
-                            required
-                        >
-                    </div>
-
-                    <button type="submit" class="login-button" id="loginBtn">로그인</button>
-                </form>
-
-                <div class="divider"></div>
-
-                <div class="footer-info">
-                    💡 테스트 계정의 비밀번호는 test123입니다
+                        <button type="submit" class="submit-btn" id="loginBtn">
+                            <span>로그인</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -422,112 +382,80 @@
 
     <script>
         const API_URL = 'http://localhost:8000/api/v1';
-        let selectedRole = 'caregiver';
 
-        // 빠른 로그인 (Backend 없이도 작동)
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tab + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Quick login
         function quickLogin(email, role, userId, centerId) {
             const user = {
-                id: userId,
                 email: email,
-                full_name: role === 'center_manager' ? 'Center Manager' : 'Caregiver',
                 role: role,
-                center_id: centerId,
-                is_active: true,
-                created_at: new Date().toISOString()
+                id: userId,
+                center_id: centerId
             };
 
-            localStorage.setItem('access_token', 'test-token-' + Math.random().toString(36).substr(2, 9));
+            localStorage.setItem('access_token', 'offline-test-token');
             localStorage.setItem('user', JSON.stringify(user));
-            localStorage.setItem('user_role', role);
 
-            console.log('✅ 로그인 성공 (테스트 모드):', email);
-
-            const successMsg = document.getElementById('successMessage');
-            successMsg.textContent = '✅ 로그인 성공! 대시보드로 이동 중...';
-            successMsg.classList.add('show');
-
-            setTimeout(() => {
-                window.location.href = './dashboard.html';
-            }, 800);
+            showSuccess('로그인 성공! 대시보드로 이동합니다...');
+            setTimeout(() => window.location.href = './dashboard.html', 800);
         }
 
-        // 테스트 계정 자동 선택
-        function selectTestAccount(email, password, role) {
-            document.getElementById('email').value = email;
-            document.getElementById('password').value = password;
-            selectedRole = role;
-
-            // 역할 버튼 업데이트
-            document.querySelectorAll('.role-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.role === role) {
-                    btn.classList.add('active');
-                }
-            });
-
-            console.log('✅ 테스트 계정 선택:', email, 'Role:', role);
-        }
-
-        // 역할 선택 버튼
-        document.querySelectorAll('.role-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                selectedRole = btn.dataset.role;
-            });
-        });
-
-        // 로그인 폼 제출
+        // Form login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const loginBtn = document.getElementById('loginBtn');
-            const errorMsg = document.getElementById('errorMessage');
-            const successMsg = document.getElementById('successMessage');
-
-            errorMsg.classList.remove('show');
-            successMsg.classList.remove('show');
 
             loginBtn.disabled = true;
-            loginBtn.innerHTML = '<span class="spinner"></span>로그인 중...';
+            loginBtn.innerHTML = '<span class="spinner"></span> 로그인 중...';
 
             try {
                 const response = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email, password})
+                    body: JSON.stringify({ email, password })
                 });
 
                 const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(data.detail || '로그인 실패');
-                }
-
-                successMsg.textContent = '✅ 로그인 성공! 대시보드로 이동 중...';
-                successMsg.classList.add('show');
+                if (!response.ok) throw new Error(data.detail || '로그인 실패');
 
                 localStorage.setItem('access_token', data.access_token);
                 localStorage.setItem('user', JSON.stringify(data.user));
-                localStorage.setItem('user_role', selectedRole);
 
-                setTimeout(() => {
-                    window.location.href = './dashboard.html';
-                }, 1000);
-
+                showSuccess('로그인 성공! 대시보드로 이동합니다...');
+                setTimeout(() => window.location.href = './dashboard.html', 800);
             } catch (error) {
-                console.error('❌ 로그인 오류:', error);
-                errorMsg.textContent = `❌ ${error.message}`;
-                errorMsg.classList.add('show');
+                showError(error.message);
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = '로그인';
             }
         });
 
-        // 페이지 로드 시
+        // Message helpers
+        function showError(msg) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 5000);
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMessage');
+            el.textContent = msg;
+            el.classList.add('show');
+        }
+
+        // Check if already logged in
         window.addEventListener('load', () => {
             const token = localStorage.getItem('access_token');
             if (token) {
