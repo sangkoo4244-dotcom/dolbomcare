@@ -458,7 +458,8 @@
 
         async function loadBillingRecords() {
             try {
-                const response = await fetch(`${API_URL}/billing/`, {
+                const centerId = currentUser?.center_id || 1;
+                const response = await fetch(`${API_URL}/billing/?center_id=${centerId}`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -734,7 +735,8 @@
                 }
 
                 const data = await response.json();
-                const newBillings = Array.isArray(data.billings) ? data.billings : (Array.isArray(data) ? data : []);
+                // API 응답: { total_records: 4, records: [...] }
+                const newBillings = Array.isArray(data.records) ? data.records : (Array.isArray(data.billings) ? data.billings : []);
 
                 console.log('📊 새로고침 - API 응답:', {
                     total: newBillings.length,
