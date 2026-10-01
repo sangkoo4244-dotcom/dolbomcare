@@ -389,6 +389,7 @@
                 <button class="filter-btn" onclick="filterByStatus('approved')">승인</button>
                 <button class="filter-btn" onclick="filterByStatus('submitted_to_nhis')">건보 청구</button>
                 <button class="filter-btn" onclick="filterByStatus('confirmed')">환급 확정</button>
+                <button class="filter-btn" onclick="filterByStatus('reimbursed')">환급완료</button>
                 <button class="filter-btn" onclick="filterByStatus('rejected_by_nhis')">건보 반려</button>
                 <button class="filter-btn" onclick="filterByStatus('rejected')">거절</button>
             </div>
@@ -477,6 +478,7 @@
                 const approvedCount = allBillings.filter(r => r.approval_status === 'approved').length;
                 const submittedToNhisCount = allBillings.filter(r => r.approval_status === 'submitted_to_nhis').length;
                 const confirmedCount = allBillings.filter(r => r.approval_status === 'confirmed').length;
+                const reimbursedCount = allBillings.filter(r => r.approval_status === 'reimbursed').length;
                 const rejectedByNhisCount = allBillings.filter(r => r.approval_status === 'rejected_by_nhis').length;
                 const rejectedCount = allBillings.filter(r => r.approval_status === 'rejected').length;
 
