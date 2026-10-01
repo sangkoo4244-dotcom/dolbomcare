@@ -230,6 +230,14 @@
             opacity: 0.5;
             cursor: not-allowed;
             background-color: #f5f5f5;
+            pointer-events: none;
+        }
+
+        .select:not(:disabled) {
+            opacity: 1;
+            background-color: white;
+            cursor: pointer;
+            pointer-events: auto;
         }
 
         .action-buttons {
