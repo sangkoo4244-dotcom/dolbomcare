@@ -522,7 +522,12 @@
                 const user = JSON.parse(localStorage.getItem('user'));
                 const token = localStorage.getItem('access_token');
 
-                console.log('Dashboard load - Token:', token);
+                console.log('🔍 Dashboard Load Debug:');
+                console.log('  User:', user);
+                console.log('  User ID:', user?.id);
+                console.log('  User Role:', user?.role);
+                console.log('  Center ID:', user?.center_id);
+                console.log('  Token:', token);
                 // Always try to load real data from API, even with offline-test-token
 
                 // Load residents count
@@ -582,7 +587,11 @@
                         // 센터장: 모든 센터 청부
                         billUrl = `${API_URL}/billing/?center_id=${centerId}&include_archived=false`;
                     }
-                    console.log('Billing URL:', billUrl, '(Role:', isCaregiver ? 'caregiver' : 'center_manager', ')');
+                    console.log('💳 Billing API Call:');
+                    console.log('  URL:', billUrl);
+                    console.log('  Role:', isCaregiver ? 'caregiver' : 'center_manager');
+                    console.log('  Center ID:', centerId);
+                    console.log('  Caregiver ID:', user?.id);
 
                     const billResp = await fetch(billUrl, {
                         headers: token ? {'Authorization': `Bearer ${token}`} : {}
