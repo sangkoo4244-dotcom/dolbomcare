@@ -566,34 +566,32 @@
                     document.getElementById('recordCount').textContent = '0';
                 }
 
-                // Load billing: count = action needed (pending+rejected), amount = all billing (all statuses)
+                // Load billing: count = action needed (pending+rejected), amount = all active billing (excluding archived)
                 try {
                     console.log('Fetching billing...');
                     let actionCount = 0, totalAmount = 0;
-                    const statuses = ['draft', 'pending', 'rejected', 'approved'];
+                    const centerId = user?.center_id || 1;
 
-                    // Fetch all statuses and sum the amounts (no caregiver filter - show all)
-                    for (const status of statuses) {
-                        const url = `${API_URL}/billing/?status=${status}`;
-                        try {
-                            const resp = await fetch(url, {
-                                headers: token ? {'Authorization': `Bearer ${token}`} : {}
-                            });
-                            if (resp.ok) {
-                                const data = await resp.json();
-                                const records = data.records || [];
+                    // Fetch all active billings (include_archived=false) for the center
+                    const billUrl = `${API_URL}/billing/?center_id=${centerId}&include_archived=false`;
+                    console.log('Billing URL:', billUrl);
 
-                                // Action needed: pending + rejected
-                                if (status === 'pending' || status === 'rejected') {
-                                    actionCount += records.length;
-                                }
+                    const billResp = await fetch(billUrl, {
+                        headers: token ? {'Authorization': `Bearer ${token}`} : {}
+                    });
 
-                                // Total amount: all statuses
-                                totalAmount += records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
-                            }
-                        } catch (e) {
-                            console.error(`Billing fetch for ${status} failed:`, e);
-                        }
+                    if (billResp.ok) {
+                        const billData = await billResp.json();
+                        const records = billData.records || [];
+                        console.log('Billing records:', records.length, records);
+
+                        // Action needed: pending + rejected
+                        actionCount = records.filter(r => r.approval_status === 'pending' || r.approval_status === 'rejected').length;
+
+                        // Total amount: all active statuses (pending, approved, submitted_to_nhis, rejected)
+                        totalAmount = records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
+                    } else {
+                        console.error('Billing fetch failed:', billResp.status);
                     }
 
                     console.log('Billing - Action needed:', actionCount, 'Total amount:', totalAmount);
