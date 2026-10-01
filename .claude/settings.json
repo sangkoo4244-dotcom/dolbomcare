@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(curl -s http://localhost:8000/docs 2>&1)"
+    ]
+  }
+}
