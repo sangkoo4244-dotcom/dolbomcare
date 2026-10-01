@@ -810,23 +810,29 @@
         }
 
         async function deleteBilling(recordId, userRole) {
-            if (!confirm('이 청부를 취소(삭제)하시겠습니까?')) return;
+            if (!confirm('이 청부를 이전 단계로 되돌리시겠습니까?')) return;
 
             try {
-                const response = await fetch(`${API_URL}/billing/${recordId}?user_id=${currentUser.id}&user_role=${userRole}`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' }
+                // 승인됨 → 대기 중으로 되돌리기
+                const response = await fetch(`${API_URL}/billing/${recordId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        approval_status: 'pending',
+                        user_id: currentUser.id,
+                        user_role: userRole
+                    })
                 });
 
                 if (!response.ok) {
-                    throw new Error('청부 삭제 실패');
+                    throw new Error('상태 변경 실패');
                 }
 
-                alert('청부가 취소(삭제)되었습니다');
+                alert('청부 상태가 대기 중으로 변경되었습니다');
                 loadBillingRecords();
             } catch (error) {
-                console.error('❌ 청부 삭제 오류:', error);
-                alert('청부 삭제 중 오류가 발생했습니다: ' + error.message);
+                console.error('❌ 상태 변경 오류:', error);
+                alert('상태 변경 중 오류가 발생했습니다: ' + error.message);
             }
         }
 

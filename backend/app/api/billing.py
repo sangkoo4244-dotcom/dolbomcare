@@ -557,6 +557,41 @@ async def update_billing_status(
         }
     }
 
+@router.patch("/{billing_id}")
+async def update_billing_status(
+    billing_id: int,
+    approval_status: str = Query(...),
+    user_id: int = Query(...),
+    user_role: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    """청부 상태 변경 (approved → pending)"""
+    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    if not billing:
+        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+
+    # 센터장만 상태 변경 가능
+    if user_role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 상태를 변경할 수 있습니다")
+
+    # 현재 상태에서 approved → pending 변경만 허용
+    if billing.approval_status == "approved" and approval_status == "pending":
+        billing.approval_status = "pending"
+    else:
+        raise HTTPException(status_code=400, detail="승인됨 상태에서만 대기 중으로 변경 가능합니다")
+
+    db.add(billing)
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "청부 상태가 변경되었습니다",
+        "data": {
+            "id": billing.id,
+            "approval_status": billing.approval_status
+        }
+    }
+
 @router.delete("/{billing_id}")
 async def delete_billing(
     billing_id: int,
