@@ -347,9 +347,19 @@ async def get_recent_records(
 
         billing_total = sum(b.amount for b in billings if b.daily_record_id and b.amount)
 
+        # 요양사 기준: submitted_to_nhis 제외
+        caregiver = db.query(User).filter(User.id == caregiver_id).first()
+
         response_records = []
         for r in records:
             billing_info = billing_map.get(r.id, {})
+
+            # 요양사 기준: submitted_to_nhis 기록 제외
+            if caregiver and caregiver.role == 'caregiver':
+                linked_billing = db.query(BillingRecord).filter(BillingRecord.daily_record_id == r.id).first()
+                if linked_billing and linked_billing.approval_status == 'submitted_to_nhis':
+                    continue
+
             response_records.append({
                 "id": r.id,
                 "caregiver_id": r.caregiver_id,
@@ -363,8 +373,6 @@ async def get_recent_records(
                 "billing_amount": billing_info.get("amount", 0)
             })
 
-        # 요양사 기준: submitted_to_nhis 제외
-        caregiver = db.query(User).filter(User.id == caregiver_id).first()
         if caregiver and caregiver.role == 'caregiver':
             billing_total = sum(b.amount for b in billings if b.daily_record_id and b.approval_status != 'submitted_to_nhis' and b.amount)
 
@@ -413,11 +421,21 @@ async def get_all_records(
                     "service_type": b.service_type
                 }
 
+        # 요양사 기준: submitted_to_nhis 제외
+        caregiver = db.query(User).filter(User.id == caregiver_id).first()
+
         response_records = []
         billing_total = 0
         for r in records:
             billing_info = billing_map.get(r.id, {})
             billing_amount = billing_info.get("amount", 0)
+
+            # 요양사 기준: submitted_to_nhis 기록 제외
+            if caregiver and caregiver.role == 'caregiver':
+                linked_billing = db.query(BillingRecord).filter(BillingRecord.daily_record_id == r.id).first()
+                if linked_billing and linked_billing.approval_status == 'submitted_to_nhis':
+                    continue
+
             billing_total += billing_amount
             response_records.append({
                 "id": r.id,
@@ -431,9 +449,6 @@ async def get_all_records(
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
                 "billing_amount": billing_amount
             })
-
-        # 요양사 기준: submitted_to_nhis 제외
-        caregiver = db.query(User).filter(User.id == caregiver_id).first()
         if caregiver and caregiver.role == 'caregiver':
             # submitted_to_nhis 청부들의 합계를 제외
             submitted_total = sum(b.amount for b in billings if b.approval_status == 'submitted_to_nhis' and b.daily_record_id)
