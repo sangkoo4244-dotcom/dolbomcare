@@ -489,7 +489,8 @@ async def get_today_records(
                     "service_type": b.service_type
                 }
 
-        billing_total = sum(b.amount for b in billings if b.amount)
+        # daily_record_id가 있는 청부만 합산 (voice_record와 일치)
+        billing_total = sum(b.amount for b in billings if b.daily_record_id and b.amount)
 
         response_records = []
         for r in records:

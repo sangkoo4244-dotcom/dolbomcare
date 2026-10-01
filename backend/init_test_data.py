@@ -187,6 +187,19 @@ try:
     for i, billing_data in enumerate(billings):
         recorded_date = now - timedelta(days=billing_data["days_ago"])
 
+        # 올바른 매핑: billing의 resident와 일치하는 daily_record 찾기
+        matching_daily_record_id = None
+        # 오늘 청부인 경우만 daily_record와 연결 (days_ago == 0)
+        if billing_data.get("days_ago", 0) == 0 and len(today_daily_record_ids) > 0:
+            # 해당 resident의 daily_record 찾기
+            remaining_ids = today_daily_record_ids.copy()  # 리스트 복사본으로 반복
+            for dr_id in remaining_ids:
+                daily = db.query(DailyRecord).filter(DailyRecord.id == dr_id).first()
+                if daily and daily.resident_id == billing_data["resident_id"]:
+                    matching_daily_record_id = dr_id
+                    today_daily_record_ids.remove(dr_id)  # 원본 리스트에서 제거
+                    break
+
         billing = BillingRecord(
             caregiver_id=caregiver_id,
             resident_id=billing_data["resident_id"],
@@ -198,8 +211,8 @@ try:
             approval_status=billing_data["approval_status"],
             recorded_date=recorded_date,
             is_archived=billing_data.get("is_archived", False),
-            # 오늘 청부는 DailyRecord와 연결
-            daily_record_id=today_daily_record_ids[i] if i < len(today_daily_record_ids) else None,
+            # 오늘 청부는 같은 resident의 DailyRecord와 연결
+            daily_record_id=matching_daily_record_id,
         )
 
         if billing_data["approval_status"] == "approved":
