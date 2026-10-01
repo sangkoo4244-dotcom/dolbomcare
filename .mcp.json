@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "dolbomcare": {
+      "command": "node",
+      "args": ["./.claude-flow/mcp-server/index.js"],
+      "env": {
+        "DOLBOMCARE_API_URL": "http://localhost:8000/api/v1",
+        "DOLBOMCARE_JWT_SECRET": "${SECRET_KEY}",
+        "NODE_ENV": "development"
+      }
+    }
+  }
+}
