@@ -523,16 +523,7 @@
                 const token = localStorage.getItem('access_token');
 
                 console.log('Dashboard load - Token:', token);
-
-                if (token === 'offline-test-token') {
-                    // Demo data
-                    console.log('Using demo data (offline mode)');
-                    document.getElementById('residentCount').textContent = '8';
-                    document.getElementById('recordCount').textContent = '45';
-                    document.getElementById('billingCount').textContent = '12';
-                    document.getElementById('billingAmount').textContent = '5,234,000';
-                    return;
-                }
+                // Always try to load real data from API, even with offline-test-token
 
                 // Load residents count
                 try {
