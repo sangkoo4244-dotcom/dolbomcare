@@ -422,12 +422,12 @@
                     <div class="stat-change">이번 달</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">청부 현황</div>
+                    <div class="stat-label">처리 대기</div>
                     <div class="stat-value" id="billingCount">0</div>
-                    <div class="stat-change">대기 중</div>
+                    <div class="stat-change">대기+거절</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">총 청부액</div>
+                    <div class="stat-label">전체 청부액</div>
                     <div class="stat-value" id="billingAmount">0</div>
                     <div class="stat-change">원</div>
                 </div>
@@ -566,38 +566,39 @@
                     document.getElementById('recordCount').textContent = '0';
                 }
 
-                // Load billing count (pending + rejected = action needed)
+                // Load billing: count = action needed (pending+rejected), amount = all billing (all statuses)
                 try {
                     console.log('Fetching billing...');
                     const caregiverId = user?.id || '';
-                    let totalCount = 0, totalAmount = 0;
+                    let actionCount = 0, totalAmount = 0;
+                    const statuses = ['draft', 'pending', 'rejected', 'approved'];
 
-                    // Fetch pending
-                    const pendingUrl = `${API_URL}/billing/?status=pending${caregiverId ? '&caregiver_id=' + caregiverId : ''}`;
-                    const pendingResp = await fetch(pendingUrl, {
-                        headers: token ? {'Authorization': `Bearer ${token}`} : {}
-                    });
-                    if (pendingResp.ok) {
-                        const data = await pendingResp.json();
-                        const records = data.records || [];
-                        totalCount += records.length;
-                        totalAmount += records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
+                    // Fetch all statuses and sum the amounts
+                    for (const status of statuses) {
+                        const url = `${API_URL}/billing/?status=${status}${caregiverId ? '&caregiver_id=' + caregiverId : ''}`;
+                        try {
+                            const resp = await fetch(url, {
+                                headers: token ? {'Authorization': `Bearer ${token}`} : {}
+                            });
+                            if (resp.ok) {
+                                const data = await resp.json();
+                                const records = data.records || [];
+
+                                // Action needed: pending + rejected
+                                if (status === 'pending' || status === 'rejected') {
+                                    actionCount += records.length;
+                                }
+
+                                // Total amount: all statuses
+                                totalAmount += records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
+                            }
+                        } catch (e) {
+                            console.error(`Billing fetch for ${status} failed:`, e);
+                        }
                     }
 
-                    // Fetch rejected
-                    const rejectedUrl = `${API_URL}/billing/?status=rejected${caregiverId ? '&caregiver_id=' + caregiverId : ''}`;
-                    const rejectedResp = await fetch(rejectedUrl, {
-                        headers: token ? {'Authorization': `Bearer ${token}`} : {}
-                    });
-                    if (rejectedResp.ok) {
-                        const data = await rejectedResp.json();
-                        const records = data.records || [];
-                        totalCount += records.length;
-                        totalAmount += records.reduce((sum, r) => sum + (r.total_amount || r.amount || 0), 0);
-                    }
-
-                    console.log('Billing total:', totalCount, 'Amount:', totalAmount);
-                    document.getElementById('billingCount').textContent = totalCount;
+                    console.log('Billing - Action needed:', actionCount, 'Total amount:', totalAmount);
+                    document.getElementById('billingCount').textContent = actionCount;
                     document.getElementById('billingAmount').textContent =
                         new Intl.NumberFormat('ko-KR').format(totalAmount);
                 } catch (e) {
