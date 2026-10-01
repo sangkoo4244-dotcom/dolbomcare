@@ -5,12 +5,12 @@
 
 :root {
   /* 색상 팔레트 */
-  --primary: #3b82f6;           /* 파란색 (메인) */
-  --primary-dark: #1e40af;      /* 진한 파란색 */
-  --primary-light: #dbeafe;     /* 밝은 파란색 */
+  --primary: #10b981;           /* 초록색 (의료/신뢰) */
+  --primary-dark: #059669;      /* 진한 초록색 */
+  --primary-light: #d1fae5;     /* 밝은 초록색 */
 
-  --secondary: #10b981;         /* 초록색 (성공/승인) */
-  --secondary-light: #d1fae5;
+  --secondary: #0084ff;         /* 파란색 (보조) */
+  --secondary-light: #e0f2fe;
 
   --danger: #ef4444;            /* 빨강 (거절/오류) */
   --danger-light: #fee2e2;
