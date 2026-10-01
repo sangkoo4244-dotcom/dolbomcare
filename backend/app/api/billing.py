@@ -255,6 +255,7 @@ async def pay_billing_record(
 @router.get("/")
 async def list_billing_records(
     center_id: int = None,
+    caregiver_id: int = None,
     status: str = None,
     db: Session = Depends(get_db)
 ):
@@ -263,6 +264,9 @@ async def list_billing_records(
 
     if center_id:
         query = query.filter(BillingRecord.center_id == center_id)
+
+    if caregiver_id:
+        query = query.filter(BillingRecord.caregiver_id == caregiver_id)
 
     if status:
         query = query.filter(BillingRecord.status == status)
