@@ -726,8 +726,19 @@
         async function refreshBillingData() {
             try {
                 const response = await fetch(`${API_URL}/billing/`);
-                const data = response.ok ? await response.json() : { billings: [] };
-                allBillings = data.billings || [];
+                if (!response.ok) {
+                    console.error('API 응답 오류:', response.status, response.statusText);
+                    return;  // 실패 시 기존 데이터 유지
+                }
+
+                const data = await response.json();
+                const newBillings = data.billings || [];
+
+                // 데이터가 변경되었을 때만 업데이트
+                if (JSON.stringify(newBillings) !== JSON.stringify(allBillings)) {
+                    allBillings = newBillings;
+                    console.log('✅ 청부 데이터 갱신:', allBillings.length + '건');
+                }
 
                 // 현재 필터 유지하면서 재렌더링
                 const filtered = currentFilter === 'all'
@@ -744,7 +755,7 @@
 
                 renderBillingTable(filtered, residentMap);
             } catch (error) {
-                console.error('새로고침 오류:', error);
+                console.error('❌ 새로고침 오류:', error);
             }
         }
 
@@ -752,7 +763,7 @@
             if (autoRefreshInterval) return;
             autoRefreshInterval = setInterval(() => {
                 refreshBillingData();  // ← 필터 유지하면서 갱신
-            }, 2000); // 2초마다 새로고침
+            }, 3000); // 3초마다 새로고침 (안정성 향상)
         }
 
         function stopAutoRefresh() {
