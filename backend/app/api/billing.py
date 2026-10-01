@@ -269,7 +269,7 @@ async def list_billing_records(
         query = query.filter(BillingRecord.caregiver_id == caregiver_id)
 
     if status:
-        query = query.filter(BillingRecord.status == status)
+        query = query.filter(BillingRecord.approval_status == status)
 
     records = query.all()
 
@@ -283,6 +283,7 @@ async def list_billing_records(
                 "center_id": r.center_id,
                 "service_type": r.service_type,
                 "amount": r.amount,
+                "total_amount": r.amount,
                 "status": r.status,
                 "approval_status": r.approval_status,
                 "rejection_reason": r.rejection_reason,
