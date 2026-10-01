@@ -483,10 +483,10 @@
                 const records = data.records || [];
                 allBillings = records; // 전체 청부 저장
 
-                // 통계 업데이트
-                const pendingCount = records.filter(r => r.approval_status === 'pending').length;
-                const approvedCount = records.filter(r => r.approval_status === 'approved').length;
-                const rejectedCount = records.filter(r => r.approval_status === 'rejected').length;
+                // 통계 업데이트 (approval_status 또는 status 기준)
+                const pendingCount = records.filter(r => (r.approval_status || r.status) === 'pending').length;
+                const approvedCount = records.filter(r => (r.approval_status || r.status) === 'approved').length;
+                const rejectedCount = records.filter(r => (r.approval_status || r.status) === 'rejected').length;
 
                 document.getElementById('totalCount').textContent = records.length;
                 document.getElementById('pendingCount').textContent = pendingCount;
@@ -527,12 +527,16 @@
                 html += `<tr><td colspan="7" style="text-align: center; padding: 40px;">기록이 없습니다</td></tr>`;
             } else {
                 records.forEach(record => {
-                    const statusClass = `status-${record.approval_status}`;
+                    const approvalStatus = record.approval_status || record.status;
+                    const statusClass = `status-${approvalStatus}`;
                     const statusLabel = {
                         'pending': '⏳ 승인 대기',
                         'approved': '✅ 승인됨',
-                        'rejected': '❌ 거절됨'
-                    }[record.approval_status] || record.approval_status;
+                        'rejected': '❌ 거절됨',
+                        'draft': '📝 작성 중',
+                        'submitted': '📤 제출됨',
+                        'paid': '✔️ 완료'
+                    }[approvalStatus] || approvalStatus;
 
                     const serviceLabel = {
                         'basic_care': '기본 요양',
