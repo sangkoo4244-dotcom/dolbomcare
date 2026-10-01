@@ -544,7 +544,10 @@
                 // Load today's records count
                 try {
                     console.log('Fetching records...');
-                    const recResponse = await fetch(`${API_URL}/records/today`, {
+                    const caregiverId = user?.id || '';
+                    const recUrl = `${API_URL}/records/today${caregiverId ? '?caregiver_id=' + caregiverId : ''}`;
+                    console.log('Records URL:', recUrl);
+                    const recResponse = await fetch(recUrl, {
                         headers: token ? {'Authorization': `Bearer ${token}`} : {}
                     });
                     if (recResponse.ok) {
@@ -554,13 +557,21 @@
                         document.getElementById('recordCount').textContent = count;
                     } else {
                         console.error('Records failed:', recResponse.status);
+                        // Fallback to 0
+                        document.getElementById('recordCount').textContent = '0';
                     }
-                } catch (e) { console.error('Records error:', e); }
+                } catch (e) {
+                    console.error('Records error:', e);
+                    document.getElementById('recordCount').textContent = '0';
+                }
 
                 // Load pending billing count and amount
                 try {
                     console.log('Fetching billing...');
-                    const billResponse = await fetch(`${API_URL}/billing/?status=pending`, {
+                    const caregiverId = user?.id || '';
+                    const billUrl = `${API_URL}/billing/?status=pending${caregiverId ? '&caregiver_id=' + caregiverId : ''}`;
+                    console.log('Billing URL:', billUrl);
+                    const billResponse = await fetch(billUrl, {
                         headers: token ? {'Authorization': `Bearer ${token}`} : {}
                     });
                     if (billResponse.ok) {
@@ -576,8 +587,14 @@
                             new Intl.NumberFormat('ko-KR').format(total);
                     } else {
                         console.error('Billing failed:', billResponse.status);
+                        document.getElementById('billingCount').textContent = '0';
+                        document.getElementById('billingAmount').textContent = '0';
                     }
-                } catch (e) { console.error('Billing error:', e); }
+                } catch (e) {
+                    console.error('Billing error:', e);
+                    document.getElementById('billingCount').textContent = '0';
+                    document.getElementById('billingAmount').textContent = '0';
+                }
 
             } catch (error) {
                 console.log('Dashboard data load error:', error);
