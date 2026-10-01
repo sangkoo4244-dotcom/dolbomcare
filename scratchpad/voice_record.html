@@ -59,6 +59,10 @@
             background: rgba(59, 130, 246, 0.1);
         }
 
+        .nav-item.hidden {
+            display: none !important;
+        }
+
         .main-layout {
             margin-left: 250px;
             display: flex;
@@ -569,23 +573,35 @@
 
         // 권한별 메뉴 제어
         function filterMenuByRole() {
-            if (!currentUser) return;
+            console.log('🔐 filterMenuByRole 호출:', currentUser?.role);
 
-            const isCaregiver = currentUser.role === 'caregiver';
-            const isManager = currentUser.role === 'center_manager';
+            if (!currentUser) {
+                console.warn('⚠️ currentUser가 없음');
+                return;
+            }
 
-            // 요양사 메뉴
-            const dashboardMenu = document.getElementById('menu-dashboard');
-            const residentsMenu = document.getElementById('menu-residents');
-            const voiceRecordsMenu = document.getElementById('menu-voice-records');
-            const caregiverBillingMenu = document.getElementById('menu-caregiver-billing');
-            const billingMgmtMenu = document.getElementById('menu-billing-management');
+            const role = currentUser.role;
+            const isCaregiver = role === 'caregiver';
+            const isManager = role === 'center_manager';
 
-            if (dashboardMenu) dashboardMenu.style.display = isCaregiver ? 'none' : 'flex';
-            if (residentsMenu) residentsMenu.style.display = isCaregiver ? 'none' : 'flex';
-            if (voiceRecordsMenu) voiceRecordsMenu.style.display = isCaregiver ? 'flex' : 'none';
-            if (caregiverBillingMenu) caregiverBillingMenu.style.display = isCaregiver ? 'flex' : 'none';
-            if (billingMgmtMenu) billingMgmtMenu.style.display = isManager ? 'flex' : 'none';
+            const menuItems = {
+                'menu-dashboard': !isCaregiver,
+                'menu-residents': !isCaregiver,
+                'menu-voice-records': isCaregiver,
+                'menu-caregiver-billing': isCaregiver,
+                'menu-billing-management': isManager
+            };
+
+            Object.entries(menuItems).forEach(([id, shouldShow]) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (shouldShow) {
+                        el.classList.remove('hidden');
+                    } else {
+                        el.classList.add('hidden');
+                    }
+                }
+            });
         }
 
         function logout() {

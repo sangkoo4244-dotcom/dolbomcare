@@ -50,6 +50,7 @@
 
         .nav-item:hover { color: white; background: rgba(255, 255, 255, 0.05); }
         .nav-item.active { color: #3b82f6; border-left-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .nav-item.hidden { display: none !important; }
 
         .main-layout {
             margin-left: 250px;
@@ -410,20 +411,28 @@
         function filterMenuByRole() {
             if (!currentUser) return;
 
-            const isCaregiver = currentUser.role === 'caregiver';
-            const isManager = currentUser.role === 'center_manager';
+            const role = currentUser.role;
+            const isCaregiver = role === 'caregiver';
+            const isManager = role === 'center_manager';
 
-            const dashboardMenu = document.getElementById('menu-dashboard');
-            const residentsMenu = document.getElementById('menu-residents');
-            const voiceRecordsMenu = document.getElementById('menu-voice-records');
-            const caregiverBillingMenu = document.getElementById('menu-caregiver-billing');
-            const billingMgmtMenu = document.getElementById('menu-billing-management');
+            const menuItems = {
+                'menu-dashboard': !isCaregiver,
+                'menu-residents': !isCaregiver,
+                'menu-voice-records': isCaregiver,
+                'menu-caregiver-billing': isCaregiver,
+                'menu-billing-management': isManager
+            };
 
-            if (dashboardMenu) dashboardMenu.style.display = isCaregiver ? 'none' : 'flex';
-            if (residentsMenu) residentsMenu.style.display = isCaregiver ? 'none' : 'flex';
-            if (voiceRecordsMenu) voiceRecordsMenu.style.display = isCaregiver ? 'flex' : 'none';
-            if (caregiverBillingMenu) caregiverBillingMenu.style.display = isCaregiver ? 'flex' : 'none';
-            if (billingMgmtMenu) billingMgmtMenu.style.display = isManager ? 'flex' : 'none';
+            Object.entries(menuItems).forEach(([id, shouldShow]) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (shouldShow) {
+                        el.classList.remove('hidden');
+                    } else {
+                        el.classList.add('hidden');
+                    }
+                }
+            });
         }
 
         function logout() {
