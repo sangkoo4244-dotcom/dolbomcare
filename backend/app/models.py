@@ -58,6 +58,7 @@ class DailyRecord(Base):
     meal_intake = Column(String)  # 'full', 'partial', 'none'
     medicine_given = Column(Boolean, default=False)
     notes = Column(Text)
+    service_type = Column(String, default="basic_care")  # 'basic_care', 'meal_service', 'medical_care'
     audio_file_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

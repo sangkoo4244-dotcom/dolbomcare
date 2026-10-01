@@ -405,6 +405,41 @@ async def submit_billing_for_approval(
         }
     }
 
+class BillingStatusUpdate(BaseModel):
+    approval_status: str
+
+@router.patch("/{billing_id}")
+async def update_billing_status(
+    billing_id: int,
+    status_update: BillingStatusUpdate,
+    db: Session = Depends(get_db)
+):
+    """청부 상태 업데이트 (pending → draft로 취소)"""
+    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    if not billing:
+        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+
+    # pending → draft로만 업데이트 허용
+    if billing.approval_status != "pending" or status_update.approval_status != "draft":
+        raise HTTPException(
+            status_code=400,
+            detail="pending 상태의 청부만 draft로 되돌릴 수 있습니다"
+        )
+
+    billing.approval_status = status_update.approval_status
+    db.commit()
+    db.refresh(billing)
+
+    return {
+        "status": "success",
+        "message": "청부가 draft 상태로 복원되었습니다",
+        "data": {
+            "id": billing.id,
+            "approval_status": billing.approval_status,
+            "status": billing.status
+        }
+    }
+
 @router.delete("/{billing_id}")
 async def delete_billing(
     billing_id: int,

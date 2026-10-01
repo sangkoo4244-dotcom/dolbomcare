@@ -254,7 +254,7 @@
             gap: 8px;
         }
 
-        .btn-approve, .btn-reject, .btn-delete, .btn-submit, .btn-edit {
+        .btn-approve, .btn-reject, .btn-delete, .btn-submit, .btn-edit, .btn-cancel {
             padding: 6px 12px;
             color: white;
             border: none;
@@ -302,6 +302,16 @@
 
         .btn-edit:hover {
             background: #138496;
+        }
+
+        .btn-cancel {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background: #ffb300;
+            color: #333;
         }
 
         .empty-state {
@@ -533,19 +543,28 @@
                             `;
                         }
                     } else {
-                        if (record.approval_status === 'draft' || record.approval_status === 'rejected') {
-                            let buttons = `
+                        // Caregiver actions based on status
+                        if (record.approval_status === 'draft') {
+                            actionHtml = `
                                 <div class="action-buttons">
-                                    <button class="btn-submit" onclick="submitBilling(${record.id})">제출</button>`;
-
-                            if (record.approval_status === 'rejected') {
-                                buttons += `<button class="btn-edit" onclick="editVoiceRecord(${record.resident_id})">음성기록 수정</button>`;
-                            }
-
-                            buttons += `<button class="btn-delete" onclick="deleteBilling(${record.id}, 'caregiver')">삭제</button>
+                                    <button class="btn-submit" onclick="submitBilling(${record.id})">제출</button>
+                                    <button class="btn-delete" onclick="deleteBilling(${record.id}, 'caregiver')">삭제</button>
                                 </div>
                             `;
-                            actionHtml = buttons;
+                        } else if (record.approval_status === 'pending') {
+                            actionHtml = `
+                                <div class="action-buttons">
+                                    <button class="btn-cancel" onclick="cancelBilling(${record.id})">취소</button>
+                                </div>
+                            `;
+                        } else if (record.approval_status === 'rejected') {
+                            actionHtml = `
+                                <div class="action-buttons">
+                                    <button class="btn-submit" onclick="submitBilling(${record.id})">제출</button>
+                                    <button class="btn-edit" onclick="editVoiceRecord(${record.resident_id})">음성기록 수정</button>
+                                    <button class="btn-delete" onclick="deleteBilling(${record.id}, 'caregiver')">삭제</button>
+                                </div>
+                            `;
                         }
                     }
 
@@ -759,6 +778,45 @@
             } catch (error) {
                 console.error('❌ 삭제 오류:', error);
                 alert('❌ 삭제 중 오류: ' + error.message);
+            }
+        }
+
+        async function cancelBilling(recordId) {
+            if (!confirm('제출을 취소하시겠습니까?\n(draft 상태로 되돌아갑니다)')) {
+                return;
+            }
+
+            try {
+                if (!currentUser || !currentUser.id) {
+                    throw new Error('사용자 정보가 없습니다. 다시 로그인하세요.');
+                }
+
+                const response = await fetch(`${API_URL}/billing/${recordId}`, {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        approval_status: 'draft'
+                    })
+                });
+
+                if (!response.ok) {
+                    let errorMsg = '취소 실패';
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.detail || errorMsg;
+                    } catch (e) {
+                        errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorMsg);
+                }
+
+                const result = await response.json();
+                console.log('취소 성공:', result);
+                showToast('✅ 제출이 취소되었습니다. 다시 수정할 수 있습니다.');
+                setTimeout(() => loadBillingRecords(), 500);
+            } catch (error) {
+                console.error('❌ 취소 오류:', error);
+                alert('❌ 취소 중 오류: ' + error.message);
             }
         }
 
