@@ -1,0 +1,272 @@
+# dolbomcare RUflo Workflows
+# 자동화 시나리오: 음성기록→청부→알림
+
+workflows:
+  # Workflow 1: 음성 기록 생성 → 자동 청부 생성
+  voice_to_billing:
+    name: "음성기록→자동청부"
+    description: "요양사가 음성기록 생성 시 자동으로 청부 생성"
+    trigger:
+      type: "webhook"
+      event: "voice_record.created"
+      source: "dolbomcare-api"
+
+    steps:
+      - id: "step-1"
+        agent: "voice-processor"
+        action: "transcribe_voice"
+        input:
+          voice_id: "$.event.voice_id"
+          audio_url: "$.event.audio_url"
+        retry:
+          max_attempts: 3
+          backoff: "exponential"
+
+      - id: "step-2"
+        agent: "voice-processor"
+        action: "extract_service_type"
+        input:
+          transcription: "$.step-1.output.text"
+          resident_id: "$.event.resident_id"
+        fallback: "basic_care"
+
+      - id: "step-3"
+        agent: "billing-approver"
+        action: "create_billing_record"
+        input:
+          voice_id: "$.event.voice_id"
+          resident_id: "$.event.resident_id"
+          service_type: "$.step-2.output.service_type"
+          amount: "$.step-2.output.calculated_amount"
+          auto_approve: false  # 센터장 검토 필요
+
+      - id: "step-4"
+        agent: "quality-monitor"
+        action: "validate_record"
+        input:
+          record_id: "$.step-3.output.billing_id"
+          rules: ["amount_in_range", "resident_exists", "caregiver_verified"]
+
+    error_handling:
+      - step: "step-1"
+        error: "transcription_failed"
+        action: "alert_caregiver"
+        message: "음성→텍스트 변환 실패. 수동 입력 필요"
+
+      - step: "step-2"
+        error: "service_type_unclear"
+        action: "request_manual_input"
+        prompt: "서비스 유형을 선택해주세요"
+
+    notifications:
+      - recipient: "center_manager"
+        event: "billing_created"
+        template: "new_billing_pending_approval"
+        send_via: ["email", "push"]
+
+  # Workflow 2: 청부 자동 승인 (규칙 기반)
+  auto_billing_approval:
+    name: "청부 자동승인"
+    description: "규칙 기반 청부 자동 승인 (검증 통과 시)"
+    trigger:
+      type: "scheduled"
+      cron: "0 */4 * * *"  # 4시간마다
+      or_event: "billing.pending_review"
+
+    steps:
+      - id: "fetch-pending"
+        agent: "billing-approver"
+        action: "get_pending_billings"
+        input:
+          status: "pending"
+          limit: 100
+          order_by: "created_at"
+
+      - id: "evaluate-each"
+        agent: "billing-approver"
+        action: "evaluate_billing"
+        loop:
+          over: "$.fetch-pending.output.billings"
+          item: "billing"
+        input:
+          billing_id: "$.billing.id"
+          rules:
+            - "amount_between_bounds"  # 편차 범위 내
+            - "caregiver_active"       # 요양사 활성 상태
+            - "resident_valid"         # 이용자 유효
+            - "no_duplicates"          # 중복 기록 없음
+            - "not_flagged"            # 이상 플래그 없음
+        threshold: 0.95  # 신뢰도 95% 이상
+
+      - id: "batch-approve"
+        agent: "billing-approver"
+        action: "approve_batch"
+        input:
+          billings: "$.evaluate-each[*].output.approved"
+          notes: "자동승인 (규칙 통과)"
+        condition: "$.evaluate-each[*].output.approved.length > 0"
+
+      - id: "alert-flagged"
+        agent: "quality-monitor"
+        action: "alert_manual_review"
+        input:
+          billings: "$.evaluate-each[*].output.flagged"
+          reason: "self-learning 규칙 미통과"
+        condition: "$.evaluate-each[*].output.flagged.length > 0"
+
+    notifications:
+      - recipient: "center_manager"
+        event: "batch_approved"
+        template: "auto_approval_summary"
+        data:
+          approved_count: "$.batch-approve.output.count"
+          flagged_count: "$.alert-flagged.output.count"
+
+  # Workflow 3: 일일 보호자 알림
+  daily_guardian_notification:
+    name: "일일 보호자 알림"
+    description: "매일 6시에 어제 요양기록 요약을 보호자에게 발송"
+    trigger:
+      type: "scheduled"
+      cron: "0 18 * * *"  # 매일 6시
+      timezone: "Asia/Seoul"
+
+    steps:
+      - id: "get-residents"
+        agent: "analytics-engine"
+        action: "get_active_residents"
+
+      - id: "generate-summaries"
+        agent: "analytics-engine"
+        action: "generate_daily_summary"
+        loop:
+          over: "$.get-residents.output.residents"
+          item: "resident"
+        input:
+          resident_id: "$.resident.id"
+          date: "yesterday"
+          include: ["voice_records", "health_metrics", "caregiver_notes"]
+          language: "easy_korean"  # 쉬운 한국말
+        timeout: 30s
+
+      - id: "personalize"
+        agent: "guardian-notifier"
+        action: "personalize_message"
+        loop:
+          over: "$.generate-summaries[*].output"
+          item: "summary"
+        input:
+          summary: "$.summary"
+          guardian_id: "$.summary.guardian_id"
+          preferences: "$.summary.guardian_preferences"
+
+      - id: "send-notifications"
+        agent: "guardian-notifier"
+        action: "send_batch_notifications"
+        input:
+          messages: "$.personalize[*].output"
+          channels: ["push", "email"]
+          retry_policy: "exponential_backoff"
+
+    success_metrics:
+      - metric: "delivery_rate"
+        target: "> 95%"
+      - metric: "open_rate"
+        target: "> 70%"
+
+  # Workflow 4: 월간 센터장 리포트
+  monthly_center_report:
+    name: "월간 센터장 리포트"
+    description: "매월 1일에 센터의 청부, 요양사, 이용자 통계"
+    trigger:
+      type: "scheduled"
+      cron: "0 9 1 * *"  # 매월 1일 9시
+
+    steps:
+      - id: "gather-data"
+        agent: "analytics-engine"
+        action: "gather_monthly_data"
+        input:
+          month: "last_month"
+          metrics:
+            - "total_billings"
+            - "approved_billings"
+            - "reimbursement_status"
+            - "caregiver_performance"
+            - "resident_satisfaction"
+
+      - id: "generate-report"
+        agent: "analytics-engine"
+        action: "generate_report"
+        input:
+          data: "$.gather-data.output"
+          format: "pdf"
+          include_charts: true
+
+      - id: "send-report"
+        agent: "guardian-notifier"
+        action: "send_email"
+        input:
+          to: "center_managers"
+          subject: "월간 센터 운영 리포트 - {{ month }}"
+          template: "monthly_center_report"
+          attachments: ["$.generate-report.output.pdf"]
+
+    notifications:
+      - recipient: "center_manager"
+        event: "report_generated"
+        template: "monthly_report_ready"
+
+  # Workflow 5: 품질 모니터링 (실시간)
+  quality_monitoring:
+    name: "품질 모니터링"
+    description: "30분마다 데이터 이상 감지 및 알림"
+    trigger:
+      type: "scheduled"
+      cron: "*/30 * * * *"  # 30분마다
+
+    steps:
+      - id: "check-data"
+        agent: "quality-monitor"
+        action: "check_data_integrity"
+        input:
+          checks:
+            - "billing_amount_variance"   # 청부액 편차
+            - "voice_transcription_quality"  # 음성→텍스트 품질
+            - "missing_records"           # 누락 기록
+            - "duplicate_entries"         # 중복 항목
+
+      - id: "analyze-anomalies"
+        agent: "quality-monitor"
+        action: "detect_anomalies"
+        input:
+          data: "$.check-data.output"
+          baseline: "7_day_average"
+          threshold: 2.5  # 표준편차의 2.5배
+
+      - id: "alert-if-needed"
+        agent: "quality-monitor"
+        action: "send_alerts"
+        input:
+          anomalies: "$.analyze-anomalies.output"
+          severity: "auto"  # 자동 심각도 판단
+        condition: "$.analyze-anomalies.output.count > 0"
+
+    notifications:
+      - recipient: "system_admin"
+        event: "anomaly_detected"
+        template: "quality_alert"
+        severity: "dynamic"
+
+# 워크플로우 간 통신
+inter_workflow_events:
+  - source: "voice_to_billing"
+    event: "billing_created"
+    target: "quality_monitoring"
+    action: "trigger_immediate_check"
+
+  - source: "quality_monitoring"
+    event: "anomaly_detected"
+    target: "auto_billing_approval"
+    action: "pause_auto_approval"
+    resume_condition: "anomaly_resolved"

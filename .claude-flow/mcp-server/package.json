@@ -1,0 +1,27 @@
+{
+  "name": "@dolbomcare/mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for dolbomcare + RUflo integration",
+  "main": "index.js",
+  "bin": {
+    "dolbomcare-mcp": "index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dolbomcare",
+    "ruflo",
+    "mcp",
+    "healthcare",
+    "care-management"
+  ],
+  "author": "dolbomcare-dev",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {}
+}

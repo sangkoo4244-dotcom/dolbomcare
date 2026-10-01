@@ -1,0 +1,124 @@
+# RUflo Agents for dolbomcare
+# 에이전트 정의: 음성기록→청부→보호자 알림 자동화
+
+agents:
+  # 1. 음성 기록 처리 에이전트
+  voice-processor:
+    name: "음성기록 자동처리"
+    description: "음성 파일→텍스트 변환→청부 자동생성"
+    role: "backend"
+    model: "claude-opus"
+    capabilities:
+      - whisper-api  # 음성→텍스트
+      - billing-api  # 청부 생성
+      - memory-store # 학습 기록
+    triggers:
+      - event: "voice_record_created"
+        action: "process_voice_to_billing"
+      - event: "scheduled"
+        schedule: "0 * * * *"  # 매시간
+        action: "batch_process_pending"
+
+  # 2. 청부 승인 에이전트 (센터장)
+  billing-approver:
+    name: "청부 자동승인"
+    description: "규칙 기반 청부 승인 + 이상 감지"
+    role: "center_manager"
+    model: "claude-sonnet"
+    capabilities:
+      - billing-api
+      - validation-rules
+      - anomaly-detection
+    triggers:
+      - event: "billing_pending"
+        action: "auto_approve_if_valid"
+      - event: "scheduled"
+        schedule: "0 9 * * 1"  # 매주 월요일 9시
+        action: "batch_approve_weekly"
+
+  # 3. 보호자 알림 에이전트
+  guardian-notifier:
+    name: "보호자 알림"
+    description: "일일 요양기록→보호자 푸시 알림"
+    role: "system"
+    model: "claude-haiku"  # 가벼운 에이전트
+    capabilities:
+      - push-notification
+      - summary-generation
+      - translation  # 쉬운 한국말
+    triggers:
+      - event: "scheduled"
+        schedule: "0 18 * * *"  # 매일 6시
+        action: "send_daily_summary"
+      - event: "emergency_recorded"
+        action: "immediate_alert"
+
+  # 4. 데이터 분석 에이전트
+  analytics-engine:
+    name: "데이터 분석"
+    description: "월별 통계 생성 + 트렌드 분석"
+    role: "center_manager"
+    model: "claude-opus"
+    capabilities:
+      - agentdb  # 벡터 DB
+      - analytics
+      - report-generation
+    triggers:
+      - event: "scheduled"
+        schedule: "0 0 1 * *"  # 매월 1일
+        action: "generate_monthly_report"
+
+  # 5. 품질 관리 에이전트
+  quality-monitor:
+    name: "품질 모니터"
+    description: "데이터 무결성 + 규칙 위반 감지"
+    role: "system"
+    model: "claude-haiku"
+    capabilities:
+      - validation
+      - anomaly-detection
+      - alerting
+    triggers:
+      - event: "scheduled"
+        schedule: "*/30 * * * *"  # 30분마다
+        action: "check_data_quality"
+
+# Swarm 조율 설정
+swarm:
+  coordinator: "voice-processor"
+  team:
+    - voice-processor
+    - billing-approver
+    - guardian-notifier
+    - analytics-engine
+    - quality-monitor
+
+  # 에이전트 간 통신
+  communication:
+    voice-processor -> billing-approver:
+      event: "billing_created"
+      payload: ["billing_id", "amount", "service_type"]
+
+    billing-approver -> guardian-notifier:
+      event: "billing_approved"
+      payload: ["billing_id", "status"]
+
+    quality-monitor -> all:
+      event: "anomaly_detected"
+      action: "pause_and_alert"
+
+# 메모리 설정 (학습 루프)
+memory:
+  type: "agentdb"
+  patterns:
+    - name: "billing_approval_rules"
+      description: "승인 규칙 학습"
+      threshold: 0.9
+
+    - name: "voice_processing_accuracy"
+      description: "음성→텍스트 정확도 추적"
+      threshold: 0.85
+
+    - name: "caregiver_patterns"
+      description: "요양사별 행동 패턴"
+      threshold: 0.8
