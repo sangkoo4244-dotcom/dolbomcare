@@ -593,6 +593,7 @@
                         actionHtml = `
                             <div class="action-buttons">
                                 <button class="action-btn primary" onclick="submitToNHIS(${record.id})">건보 청구</button>
+                                <button class="action-btn danger" onclick="deleteBilling(${record.id}, '${currentUser.role}')">취소</button>
                             </div>
                         `;
                     } else if (record.approval_status === 'submitted_to_nhis') {
