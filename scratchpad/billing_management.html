@@ -809,6 +809,27 @@
             }
         }
 
+        async function deleteBilling(recordId, userRole) {
+            if (!confirm('이 청부를 취소(삭제)하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/billing/${recordId}?user_id=${currentUser.id}&user_role=${userRole}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error('청부 삭제 실패');
+                }
+
+                alert('청부가 취소(삭제)되었습니다');
+                loadBillingRecords();
+            } catch (error) {
+                console.error('❌ 청부 삭제 오류:', error);
+                alert('청부 삭제 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
         let autoRefreshInterval = null;
 
         async function refreshBillingData() {
