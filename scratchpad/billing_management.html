@@ -725,14 +725,22 @@
 
         async function refreshBillingData() {
             try {
-                const response = await fetch(`${API_URL}/billing/`);
+                // center_id 포함해서 API 호출
+                const centerId = currentUser?.center_id || 1;
+                const response = await fetch(`${API_URL}/billing/?center_id=${centerId}`);
                 if (!response.ok) {
                     console.error('API 응답 오류:', response.status, response.statusText);
                     return;  // 실패 시 기존 데이터 유지
                 }
 
                 const data = await response.json();
-                const newBillings = data.billings || [];
+                const newBillings = Array.isArray(data.billings) ? data.billings : (Array.isArray(data) ? data : []);
+
+                console.log('📊 새로고침 - API 응답:', {
+                    total: newBillings.length,
+                    filter: currentFilter,
+                    statuses: newBillings.map(b => b.approval_status)
+                });
 
                 // 데이터가 변경되었을 때만 업데이트
                 if (JSON.stringify(newBillings) !== JSON.stringify(allBillings)) {
@@ -744,6 +752,12 @@
                 const filtered = currentFilter === 'all'
                     ? allBillings
                     : allBillings.filter(b => b.approval_status === currentFilter);
+
+                console.log('🔍 필터링 결과:', {
+                    filter: currentFilter,
+                    count: filtered.length + '건',
+                    statuses: filtered.map(b => b.approval_status)
+                });
 
                 const residentsRes = await fetch(`${API_URL}/residents/`);
                 const residentsData = residentsRes.ok ? await residentsRes.json() : { residents: [] };
