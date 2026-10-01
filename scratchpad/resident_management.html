@@ -802,34 +802,12 @@
                             <div class="resident-info">ID: ${resident.id} · 생년월일: ${birthStr}</div>
                         </td>
                         <td>${resident.age}세</td>
-                        <td>
-                            <select class="select care-grade-select" data-resident-id="${resident.id}" disabled>
-                                <option value="1" ${resident.care_grade == 1 ? 'selected' : ''}>1등급</option>
-                                <option value="2" ${resident.care_grade == 2 ? 'selected' : ''}>2등급</option>
-                                <option value="3" ${resident.care_grade == 3 ? 'selected' : ''}>3등급</option>
-                                <option value="4" ${resident.care_grade == 4 ? 'selected' : ''}>4등급</option>
-                                <option value="5" ${resident.care_grade == 5 ? 'selected' : ''}>5등급</option>
-                            </select>
-                        </td>
-                        <td>
-                            <select class="select client-type-select" data-resident-id="${resident.id}" disabled>
-                                <option value="일반" ${resident.client_type == '일반' ? 'selected' : ''}>일반</option>
-                                <option value="차상위계층" ${resident.client_type == '차상위계층' ? 'selected' : ''}>차상위계층</option>
-                                <option value="기초생활보장" ${resident.client_type == '기초생활보장' ? 'selected' : ''}>기초생활</option>
-                                <option value="의료급여" ${resident.client_type == '의료급여' ? 'selected' : ''}>의료급여</option>
-                            </select>
-                        </td>
-                        <td>
-                            <select class="select health-status-select" data-resident-id="${resident.id}" disabled>
-                                <option value="stable" ${resident.health_status == 'stable' ? 'selected' : ''}>정상</option>
-                                <option value="warning" ${resident.health_status == 'warning' ? 'selected' : ''}>주의</option>
-                                <option value="critical" ${resident.health_status == 'critical' ? 'selected' : ''}>위험</option>
-                            </select>
-                        </td>
+                        <td>${resident.care_grade}등급</td>
+                        <td>${resident.client_type}</td>
+                        <td>${resident.health_status === 'stable' ? '정상' : resident.health_status === 'warning' ? '주의' : '위험'}</td>
                         <td>
                             <div class="action-buttons">
-                                <button class="action-btn edit" onclick="startEdit(${resident.id})">✏️ 편집</button>
-                                <button class="action-btn save" onclick="saveResident(${resident.id})">💾 저장</button>
+                                <button class="action-btn edit" onclick="openEditModal(${resident.id})">✏️ 편집</button>
                                 <button class="action-btn delete" onclick="deleteResident(${resident.id})" ${!isManager ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>🗑️ 삭제</button>
                             </div>
                         </td>
@@ -845,17 +823,33 @@
             tableContent.innerHTML = html;
         }
 
-        function startEdit(residentId) {
-            // Enable select fields for this resident
-            const row = document.getElementById(`resident-${residentId}`);
-            const selects = row.querySelectorAll('select');
-            selects.forEach(select => select.disabled = false);
+        async function openEditModal(residentId) {
+            const resident = residents.find(r => r.id === residentId);
+            if (!resident) return;
 
-            console.log(`✏️ 편집 모드 시작: ${residentId}`);
+            document.getElementById('editName').value = resident.name;
+            document.getElementById('editBirthDate').value = resident.birth_date || '';
+            document.getElementById('editAge').value = resident.age;
+            document.getElementById('editHealth').value = resident.health_status;
+            document.getElementById('editGrade').value = resident.care_grade || 3;
+            document.getElementById('editClientType').value = resident.client_type || '일반';
+
+            document.getElementById('editForm').dataset.residentId = residentId;
+
+            // 센터장만 이름, 생년월일 수정 가능
+            const isManager = currentUser.role === 'center_manager';
+            document.getElementById('editName').disabled = !isManager;
+            document.getElementById('editBirthDate').disabled = !isManager;
+
+            if (resident.birth_date) {
+                calculateAge('editBirthDate', 'editAge');
+            }
+
+            document.getElementById('editModal').classList.add('active');
         }
 
         function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
+            document.getElementById('editModal').classList.remove('active');
         }
 
         async function handleEditResident(event) {
