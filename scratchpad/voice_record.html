@@ -908,7 +908,8 @@
                 const billResp = await fetch(billUrl);
 
                 if (billResp.ok) {
-                    const records = await billResp.json();
+                    const response = await billResp.json();
+                    const records = response.records || [];
                     let totalAmount = 0;
 
                     if (currentUser.role === 'caregiver') {
