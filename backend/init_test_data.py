@@ -2,7 +2,7 @@
 """테스트 데이터 초기화 스크립트"""
 
 from app.database import SessionLocal
-from app.models import User, Center, Resident, BillingRecord
+from app.models import User, Center, Resident, BillingRecord, DailyRecord
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
 
@@ -88,9 +88,31 @@ try:
         resident_ids.append(resident.id)
         print(f"  - 이용자: {resident.name} ({resident_data['care_grade']}등급, {resident_data['client_type']})")
 
-    # 5. 청부 기록 생성 (다양한 상태)
-    print("✅ 청부 기록 생성 중...")
+    # 5. 음성 기록(DailyRecord) 생성
+    print("✅ 음성 기록 생성 중...")
     now = datetime.now()
+    daily_records = []
+
+    for i, resident_id in enumerate(resident_ids):
+        for day_offset in range(1, 4):  # 3일간 기록
+            daily_record = DailyRecord(
+                caregiver_id=caregiver_id,
+                resident_id=resident_id,
+                recorded_date=now - timedelta(days=day_offset),
+                service_type="basic_care",
+                morning_care=True,
+                meal_intake="full",
+                medicine_given=True,
+                notes=f"이용자 {resident_ids.index(resident_id)+1}의 {day_offset}일전 기록"
+            )
+            db.add(daily_record)
+            db.flush()
+            daily_records.append(daily_record)
+
+    print(f"  - 음성 기록: {len(daily_records)}건 생성")
+
+    # 6. 청부 기록 생성 (다양한 상태)
+    print("✅ 청부 기록 생성 중...")
 
     billings = [
         # 대기 중
@@ -187,6 +209,7 @@ try:
     print(f"  - 센터: 1개")
     print(f"  - 사용자: 2개 (센터장, 요양사)")
     print(f"  - 이용자: {len(resident_ids)}명")
+    print(f"  - 음성 기록: {len(daily_records)}건")
     print(f"  - 청부 기록: {len(billings)}개 (활성: 3개, 아카이브: 1개, 거절: 1개)")
 
 except Exception as e:
