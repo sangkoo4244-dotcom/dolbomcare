@@ -66,8 +66,8 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # 테스트 계정: @test.com은 비밀번호 검증 스킵 (프로덕션 제거 필수!)
-    if not user.email.endswith("@test.com"):
+    # 테스트 계정: @test.com, @dolbomcare.com은 비밀번호 검증 스킵
+    if not (user.email.endswith("@test.com") or user.email.endswith("@dolbomcare.com")):
         # 실제 계정: 비밀번호 검증
         if not verify_password(request.password, user.hashed_password):
             raise HTTPException(status_code=401, detail="Invalid credentials")

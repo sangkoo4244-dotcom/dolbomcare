@@ -374,23 +374,23 @@
                     <div class="stat-value" id="totalCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">대기 중</div>
+                    <div class="stat-label">🔍 검토대기</div>
                     <div class="stat-value" id="pendingCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">승인</div>
+                    <div class="stat-label">✅ 센터장승인</div>
                     <div class="stat-value" id="approvedCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">건보청구</div>
+                    <div class="stat-label">📤 공단청구</div>
                     <div class="stat-value" id="submittedToNhisCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">환급완료</div>
+                    <div class="stat-label">💰 정산완료</div>
                     <div class="stat-value" id="reimbursedCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">거절</div>
+                    <div class="stat-label">❌ 반려</div>
                     <div class="stat-value" id="rejectedCount">0</div>
                 </div>
             </div>
@@ -408,11 +408,11 @@
             <!-- Filters -->
             <div class="filter-section">
                 <button class="filter-btn active" onclick="filterByStatus('all')">전체</button>
-                <button class="filter-btn" onclick="filterByStatus('pending')">대기 중</button>
-                <button class="filter-btn" onclick="filterByStatus('approved')">승인</button>
-                <button class="filter-btn" onclick="filterByStatus('submitted_to_nhis')">건보 청구</button>
-                <button class="filter-btn" onclick="filterByStatus('reimbursed')">환급완료</button>
-                <button class="filter-btn" onclick="filterByStatus('rejected')">거절</button>
+                <button class="filter-btn" onclick="filterByStatus('pending')">🔍 검토대기</button>
+                <button class="filter-btn" onclick="filterByStatus('approved')">✅ 승인</button>
+                <button class="filter-btn" onclick="filterByStatus('submitted_to_nhis')">📤 공단청구</button>
+                <button class="filter-btn" onclick="filterByStatus('reimbursed')">💰 정산</button>
+                <button class="filter-btn" onclick="filterByStatus('rejected')">❌ 반려</button>
             </div>
 
             <!-- Table -->
@@ -443,6 +443,32 @@
 
     <script>
         const API_URL = 'http://localhost:8000/api/v1';
+
+        // 상태값 한글 변환 함수 (요양보호사/센터장 관점)
+        function getStatusLabel(status) {
+            const statusMap = {
+                'draft': '📝 작성중',
+                'pending': '🔍 센터장검토대기',
+                'approved': '✅ 센터장승인',
+                'submitted_to_nhis': '📤 공단청구',
+                'submitted': '📤 공단청구',
+                'reimbursed': '💰 정산완료',
+                'rejected': '❌ 반려',
+                'cancelled': '🚫 취소됨'
+            };
+            return statusMap[status] || status;
+        }
+
+        // 서비스 타입 한글 변환 함수
+        function getServiceLabel(type) {
+            const serviceMap = {
+                'basic_care': '기본 요양',
+                'meal_service': '식사 서비스',
+                'medical_care': '의료 처치',
+                'emergency': '응급 대응'
+            };
+            return serviceMap[type] || type;
+        }
 
         function navigateTo(url) {
             window.location.href = url;
@@ -563,20 +589,8 @@
             } else {
                 records.forEach(record => {
                     const statusClass = `status-${record.approval_status}`;
-                    const statusLabel = {
-                        'pending': '⏳ 승인 대기',
-                        'approved': '✅ 승인됨',
-                        'submitted_to_nhis': '📤 건보 청구됨',
-                        'reimbursed': '💰 환급완료',
-                        'rejected': '❌ 거절됨'
-                    }[record.approval_status] || record.approval_status;
-
-                    const serviceLabel = {
-                        'basic_care': '기본 요양',
-                        'meal_service': '식사 서비스',
-                        'medical_care': '의료 처치',
-                        'emergency': '응급 대응'
-                    }[record.service_type] || record.service_type;
+                    const statusLabel = getStatusLabel(record.approval_status || record.status);
+                    const serviceLabel = getServiceLabel(record.service_type);
 
                     const recordedDate = new Date(record.recorded_date).toLocaleDateString('ko-KR');
                     const residentName = residentMap[record.resident_id] || `ID: ${record.resident_id}`;

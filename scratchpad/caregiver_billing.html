@@ -360,7 +360,7 @@
             <a class="nav-item" id="menu-residents" onclick="navigateTo('./resident_management.html')"><span>👥</span> 이용자 관리</a>
             <a class="nav-item" id="menu-voice-records" onclick="navigateTo('./voice_record.html')"><span>🎤</span> 음성 기록</a>
             <a class="nav-item active" id="menu-caregiver-billing" onclick="navigateTo('./caregiver_billing.html')"><span>💳</span> 나의 청부</a>
-            <a class="nav-item" id="menu-billing-management" onclick="navigateTo('./billing_management.html')"><span>📋</span> 청부 관리</a>
+            <a class="nav-item" id="menu-my-salary" onclick="navigateTo('./my_salary.html')"><span>💰</span> 나의 급여</a>
             <a class="nav-item" id="menu-logout" style="margin-top: 30px;" onclick="logout()"><span>🚪</span> 로그아웃</a>
         </nav>
     </aside>
@@ -389,15 +389,15 @@
                     <div class="stat-value" id="totalCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">대기 중</div>
+                    <div class="stat-label">🔍 검토대기</div>
                     <div class="stat-value" id="pendingCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">승인됨</div>
+                    <div class="stat-label">✅ 센터장승인</div>
                     <div class="stat-value" id="approvedCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">거절됨</div>
+                    <div class="stat-label">❌ 반려</div>
                     <div class="stat-value" id="rejectedCount">0</div>
                 </div>
             </div>
@@ -405,9 +405,9 @@
             <!-- Filters -->
             <div class="filter-section">
                 <button class="filter-btn active" onclick="filterByStatus('all')">전체</button>
-                <button class="filter-btn" onclick="filterByStatus('pending')">대기 중</button>
-                <button class="filter-btn" onclick="filterByStatus('approved')">승인됨</button>
-                <button class="filter-btn" onclick="filterByStatus('rejected')">거절됨</button>
+                <button class="filter-btn" onclick="filterByStatus('pending')">🔍 검토대기</button>
+                <button class="filter-btn" onclick="filterByStatus('approved')">✅ 승인</button>
+                <button class="filter-btn" onclick="filterByStatus('rejected')">❌ 반려</button>
             </div>
 
             <!-- Table -->
@@ -546,11 +546,13 @@
                     const approvalStatus = record.approval_status || record.status;
                     const statusClass = `status-${approvalStatus}`;
                     const statusLabel = {
-                        'pending': '⏳ 승인 대기',
-                        'approved': '✅ 승인됨',
-                        'rejected': '❌ 거절됨',
-                        'draft': '📋 제출대기',
-                        'submitted': '📤 제출됨',
+                        'draft': '📝 작성중',
+                        'pending': '🔍 센터장검토대기',
+                        'approved': '✅ 센터장승인',
+                        'submitted_to_nhis': '📤 공단청구',
+                        'submitted': '📤 공단청구',
+                        'reimbursed': '💰 정산완료',
+                        'rejected': '❌ 반려',
                         'paid': '✔️ 완료'
                     }[approvalStatus] || approvalStatus;
 

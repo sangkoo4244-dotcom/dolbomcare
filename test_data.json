@@ -1,0 +1,10 @@
+{
+  "caregiver_id": 1,
+  "manager_id": 2,
+  "center_id": 1,
+  "record_id": 6,
+  "billing_id": 6,
+  "billing_amount": 67043,
+  "caregiver_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjYXJlZ2l2ZXJAZG9sYm9tY2FyZS5jb20iLCJleHAiOjE3OTA5MDYzNzN9.xasspgkVajlKoOmk74rzaeEHRMod1XtVqvg4Um6X9UE",
+  "manager_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtYW5hZ2VyQGRvbGJvbWNhcmUuY29tIiwiZXhwIjoxNzkwOTA2Mzc1fQ.8UNij2ZtT_GExJSkoqJc40z0_ckj-NqEg6T7uEexHTc"
+}
