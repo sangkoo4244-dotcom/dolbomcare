@@ -19,11 +19,15 @@ function filterMenuByRole() {
     const menuItems = {
         'menu-dashboard': true,                    // 모두 볼 수 있음 (역할별 다른 데이터 표시)
         'menu-residents': true,                    // 모두 볼 수 있음 (요양사는 조회만)
-        'menu-voice-records': isCaregiver,         // 요양사만
-        'menu-caregiver-billing': isCaregiver,     // 요양사만
-        'menu-billing-management': isManager,      // 센터장만
+        'menu-voice-records': isCaregiver,         // 요양사만 - 음성 기록
+        'menu-caregiver-billing': isCaregiver,     // 요양사만 - 나의 청부
+        'menu-notifications': isCaregiver,         // 요양사만 - 알림/공지
+        'menu-billing-management': isManager,      // 센터장만 - 청부 관리
         'menu-staff': isManager,                   // 센터장만 - 직원 관리
         'menu-salary': isManager,                  // 센터장만 - 급여 관리
+        'menu-schedule': isManager,                // 센터장만 - 스케줄 관리
+        'menu-guardian-comm': isManager,           // 센터장만 - 보호자 소통
+        'menu-settings': isManager,                // 센터장만 - 설정
         'menu-logout': true                        // 항상
     };
 
