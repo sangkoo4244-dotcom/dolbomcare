@@ -22,6 +22,8 @@ function filterMenuByRole() {
         'menu-voice-records': isCaregiver,         // 요양사만
         'menu-caregiver-billing': isCaregiver,     // 요양사만
         'menu-billing-management': isManager,      // 센터장만
+        'menu-staff': isManager,                   // 센터장만 - 직원 관리
+        'menu-salary': isManager,                  // 센터장만 - 급여 관리
         'menu-logout': true                        // 항상
     };
 
