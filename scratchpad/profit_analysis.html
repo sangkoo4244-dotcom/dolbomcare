@@ -695,15 +695,27 @@
                 // 청부 데이터 로드
                 const billingRes = await fetch(`${API_URL}/billing/?center_id=${currentUser.center_id}`);
                 const billingData = billingRes.ok ? await billingRes.json() : { records: [] };
-                const billings = billingData.records || [];
+                const allBillings = billingData.records || [];
+
+                // ✅ 데이터 필터링 (my_salary.html과 동일)
+                // 확정된 청부만 포함 (draft/pending 제외)
+                const billings = allBillings.filter(r =>
+                    (r.approval_status === 'approved' || r.approval_status === 'submitted_to_nhis' || r.approval_status === 'reimbursed' || r.status === 'paid')
+                );
 
                 // 요양사 데이터 로드
                 const staffRes = await fetch(`${API_URL}/users/?center_id=${currentUser.center_id}&role=caregiver`);
                 const staffData = staffRes.ok ? await staffRes.json() : { users: [] };
                 const staffCount = (staffData.users || []).length || 1;
 
+                // 청부액 계산 (확정된 청부만)
+                const totalBilling = billings.reduce((sum, b) => sum + (b.amount || 0), 0);
+
+                // 이용자 수 (청부 기록에서 고유 이용자 추출)
+                const uniqueResidents = new Set(billings.map(b => b.resident_id)).size;
+                const residentCount = uniqueResidents;
+
                 // 센터 정보 표시
-                const residentCount = new Set(billings.map(b => b.resident_id)).size;
                 document.getElementById('center-info').textContent = `요양사 ${staffCount}명, 이용자 ${residentCount}명`;
                 window.centerStats = { staffCount, residentCount };
                 window.totalCurrentBilling = totalBilling; // 시나리오 계산용
@@ -712,19 +724,14 @@
                 document.getElementById('sim-caregiver-slider').value = staffCount;
                 document.getElementById('sim-resident-slider').value = residentCount || 1;
 
-                // 이용자 수 (청부 기록에서 고유 이용자 추출)
-                const uniqueResidents = new Set(billings.map(b => b.resident_id)).size;
-
-                // 계산
-                const totalBilling = billings.reduce((sum, b) => sum + (b.amount || 0), 0);
-
-                // 요양사 급여 계산 (my_salary.html 모델 기준)
-                // 각 요양사: 기본급 1,000K + 청부액 × 15% - 세금/보험 4%
+                // 요양사 급여 계산 (my_salary.html과 정확히 일치)
+                // 각 요양사: 기본급 1,000K + 청부액 × 20% - 세금(3%) - 보험(1%)
                 const baseSalaryTotal = 1000000 * staffCount;
-                const bonusTotal = Math.floor(totalBilling * 0.15);
+                const bonusTotal = Math.floor(totalBilling * 0.20); // 청부 수당 20%
                 const subtotal = baseSalaryTotal + bonusTotal;
-                const taxAndInsurance = Math.floor(subtotal * 0.04); // 세금(3%) + 보험(1%)
-                const totalSalary = subtotal - taxAndInsurance; // 세후 실지급액
+                const taxTotal = Math.floor(subtotal * 0.03); // 3% 소득세 (각각 개별 floor)
+                const insuranceTotal = Math.floor(subtotal * 0.01); // 1% 보험료
+                const totalSalary = subtotal - taxTotal - insuranceTotal; // 세후 실지급액
 
                 // 운영비 (센터장이 설정한 값)
                 const operatingExpense = expenses.managerSalary + expenses.admin + expenses.rent + expenses.supplies + expenses.utilities + expenses.tax;
@@ -904,22 +911,23 @@
             document.getElementById('sim-resident-count').textContent = residentCount;
             document.getElementById('sim-resident-billing').textContent = `₩${(billingPerResident / 1000000).toFixed(1)}M`;
 
-            // 계산
+            // 계산 (my_salary.html과 동일)
             const income = residentCount * billingPerResident;
             const baseSalary = 1000000 * caregiverCount; // 기본급 1,000,000
-            const bonus = Math.floor(income * 0.15);
+            const bonus = Math.floor(income * 0.20); // 청부 수당 20%
             const subtotal = baseSalary + bonus;
-            const deduction = Math.floor(subtotal * 0.04); // 세금/보험료 4%
-            const totalSalary = subtotal - deduction; // 세후 실지급액
+            const tax = Math.floor(subtotal * 0.03); // 3% 소득세
+            const insurance = Math.floor(subtotal * 0.01); // 1% 보험료
+            const totalSalary = subtotal - tax - insurance; // 세후 실지급액
             const expense = expenses.managerSalary + expenses.admin + expenses.rent + expenses.supplies + expenses.utilities + expenses.tax;
             const profit = income - totalSalary - expense;
 
-            // 손익분기점 계산
-            // profit = income - totalSalary - expense = 0
-            // income = totalSalary + expense
-            // residentCount * billingPerResident = (1000000 * caregiverCount + income * 0.15) * 0.96 + expense
-            // 단순화: residentCount * billingPerResident * 0.816 ≈ 1000000 * caregiverCount * 0.96 + expense
-            const breakEvenIncome = (1000000 * caregiverCount * 0.96 + expense) / 0.816;
+            // 손익분기점 계산 (20% 청부 + 4% 공제 기준)
+            // profit = income - (baseSalary + income*0.20)*0.96 - expense = 0
+            // income - income*0.20*0.96 = baseSalary*0.96 + expense
+            // income(1 - 0.192) = baseSalary*0.96 + expense
+            // income * 0.808 = baseSalary*0.96 + expense
+            const breakEvenIncome = (1000000 * caregiverCount * 0.96 + expense) / 0.808;
             const breakevenResidents = Math.ceil(breakEvenIncome / billingPerResident);
             const additionalResidents = Math.max(0, breakevenResidents - residentCount);
 
