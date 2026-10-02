@@ -391,20 +391,20 @@
             <div class="salary-overview">
                 <div class="salary-card">
                     <div class="card-label">기본급</div>
-                    <div class="card-value" style="color: #667eea;">₩600,000</div>
-                    <div class="card-subtitle">매월 보장</div>
+                    <div class="card-value" style="color: #667eea;">₩1,000,000</div>
+                    <div class="card-subtitle">매월 보장 (시장최고)</div>
                 </div>
 
                 <div class="salary-card">
                     <div class="card-label">이번 달 청부액</div>
                     <div class="card-value" id="monthlyBilling">₩0</div>
-                    <div class="card-subtitle" id="billingCount">0건</div>
+                    <div class="card-subtitle" id="billingCount">0건 (3명 관리)</div>
                 </div>
 
                 <div class="salary-card">
-                    <div class="card-label">청부 수당 (15%)</div>
+                    <div class="card-label">청부 수당 (20%)</div>
                     <div class="card-value" id="billingBonus" style="color: #28a745;">₩0</div>
-                    <div class="card-subtitle">자동 계산</div>
+                    <div class="card-subtitle">성과 연동</div>
                 </div>
 
                 <div class="salary-card">
@@ -605,10 +605,10 @@
                 return recordMonth === monthYear;
             });
 
-            // 새로운 급여 계산: 기본급 600,000 + 청부수당 15%
-            const baseSalary = 600000; // 기본급
+            // 최종 플랜: 기본급 1,000,000 + 청부수당 20% (이용자 3명 기준)
+            const baseSalary = 1000000; // 기본급 (시장최고 수준)
             const totalBilling = monthlyRecords.reduce((sum, r) => sum + r.amount, 0);
-            const billingBonus = Math.floor(totalBilling * 0.15); // 청부 수당 15%
+            const billingBonus = Math.floor(totalBilling * 0.20); // 청부 수당 20% (성과 연동)
 
             const subtotal = baseSalary + billingBonus; // 소계
             const taxAmount = Math.floor(subtotal * 0.03); // 3% 소득세
@@ -657,9 +657,9 @@
             sortedMonths.forEach(month => {
                 const data = monthlyData[month];
 
-                // 새로운 모델: 기본급 + 청부 수당 15%
-                const baseSalary = 600000;
-                const billingBonus = Math.floor(data.total * 0.15);
+                // 최종 플랜: 기본급 1,000,000 + 청부 수당 20% (이용자 3명 기준)
+                const baseSalary = 1000000;
+                const billingBonus = Math.floor(data.total * 0.20);
                 const subtotal = baseSalary + billingBonus;
 
                 const taxAmount = Math.floor(subtotal * 0.03);
