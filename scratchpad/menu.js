@@ -34,6 +34,7 @@ function filterMenuByRole() {
         'menu-salary': isManager,                    // 센터장 - 급여 관리 (전체)
         'menu-schedule': isManager,                  // 센터장 - 스케줄 관리 (전체 근무표)
         'menu-guardian-comm': isManager,             // 센터장 - 보호자 소통 (센터 공지)
+        'menu-profit': isManager,                    // 센터장 - 손익 분석 (신규!)
         'menu-settings': isManager,                  // 센터장 - 설정
 
         // 공용
