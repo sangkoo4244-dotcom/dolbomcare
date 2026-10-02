@@ -247,8 +247,10 @@ async def upload_audio(
         patient_rate = category_rates.get(client_type, 0.15)
         insurance_rate = 1 - patient_rate
 
-        # 1회 방문당 청부액
-        base_amount = VISIT_AMOUNTS_BY_GRADE.get(care_grade, 78875)
+        # 1회 방문당 청부액 (service_type별로 다름)
+        # SERVICE_TYPE_AMOUNTS를 사용하여 service_type에 맞는 금액 적용
+        service_type = request.service_type if hasattr(request, 'service_type') else "basic_care"
+        base_amount = SERVICE_TYPE_AMOUNTS.get(service_type, {}).get(care_grade, 78875)
         amount = int(base_amount * insurance_rate)
 
         billing_record = BillingRecord(
@@ -257,7 +259,7 @@ async def upload_audio(
             resident_id=resident_id,
             center_id=resident.center_id,
             service_category=service_category,
-            service_type="basic_care",
+            service_type=service_type,  # ✅ 사용자가 선택한 service_type 적용
             amount=amount,
             recorded_date=datetime.now(),  # 로컬 시간 사용
             approval_status="pending",  # 센터장 승인 대기
