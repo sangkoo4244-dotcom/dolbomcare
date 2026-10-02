@@ -234,7 +234,6 @@
             <a class="nav-item" id="menu-residents" onclick="navigateTo('./resident_management.html')"><span>👥</span> 이용자 관리</a>
             <a class="nav-item" id="menu-billing-management" onclick="navigateTo('./billing_management.html')"><span>📋</span> 청부 관리</a>
             <a class="nav-item" id="menu-staff" onclick="navigateTo('./staff_management.html')"><span>👔</span> 직원 관리</a>
-            <a class="nav-item" id="menu-salary" onclick="navigateTo('./salary.html')"><span>💰</span> 급여 관리</a>
             <a class="nav-item active" id="menu-profit" onclick="navigateTo('./profit_analysis.html')"><span>📈</span> 손익 분석</a>
             <a class="nav-item" id="menu-logout" style="margin-top: 30px;" onclick="logout()"><span>🚪</span> 로그아웃</a>
         </nav>
@@ -454,12 +453,11 @@
                 // 계산
                 const totalBilling = billings.reduce((sum, b) => sum + (b.amount || 0), 0);
 
-                // 요양사 급여 계산
-                const totalSalary = billings.reduce((sum, b) => {
-                    const baseSalary = 1000000 / staffCount; // 각 요양사 기본급 분배
-                    const bonus = Math.floor((b.amount || 0) * 0.20);
-                    return sum + baseSalary + bonus;
-                }, 0);
+                // 요양사 급여 계산 (my_salary.html 모델 기준)
+                // 각 요양사: 기본급 600K + 청부액 × 15%
+                const baseSalaryTotal = 600000 * staffCount;
+                const bonusTotal = Math.floor(totalBilling * 0.15);
+                const totalSalary = baseSalaryTotal + bonusTotal;
 
                 // 운영비 (고정)
                 const operatingExpense = 13500000; // 임차료, 인력, 소모품 등
