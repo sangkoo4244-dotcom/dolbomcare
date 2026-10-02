@@ -45,6 +45,14 @@ PATIENT_PAY_RATE = {
     }
 }
 
+# 서비스 유형별 1회 청부액 (등급별)
+SERVICE_TYPE_AMOUNTS = {
+    "basic_care": {1: 78875, 2: 69975, 3: 59650, 4: 54125, 5: 11750},
+    "meal_service": {1: 39437, 2: 34987, 3: 29825, 4: 27062, 5: 5875},
+    "medical_care": {1: 118312, 2: 104962, 3: 89475, 4: 81187, 5: 17625},
+    "emergency": {1: 157750, 2: 139950, 3: 119300, 4: 108250, 5: 23500}
+}
+
 router = APIRouter()
 
 # 음성 파일 저장 디렉토리
@@ -712,12 +720,7 @@ async def delete_record(
 
 
 # ===== VoiceRecord 자동 청부 생성 =====
-SERVICE_TYPE_AMOUNTS = {
-    "basic_care": {1: 78875, 2: 69975, 3: 59650, 4: 54125, 5: 11750},
-    "meal_service": {1: 39437, 2: 34987, 3: 29825, 4: 27062, 5: 5875},
-    "medical_care": {1: 118312, 2: 104962, 3: 89475, 4: 81187, 5: 17625},
-    "emergency": {1: 157750, 2: 139950, 3: 119300, 4: 108250, 5: 23500}
-}
+# SERVICE_TYPE_AMOUNTS는 파일 상단에 정의됨 (create_record와 공유)
 
 @router.post("/voice/create")
 async def create_voice_record(
@@ -749,13 +752,22 @@ async def create_voice_record(
         db.flush()
         
         care_grade = resident.care_grade or 1
-        billing_amount = SERVICE_TYPE_AMOUNTS[service_type].get(care_grade, 40000)
-        
+        client_type = resident.client_type or "일반"
+
+        # ✅ 청부액 계산 통일: create_record와 동일한 방식
+        service_category = "재가급여"
+        category_rates = PATIENT_PAY_RATE.get(service_category, PATIENT_PAY_RATE["재가급여"])
+        patient_rate = category_rates.get(client_type, 0.15)
+        insurance_rate = 1 - patient_rate
+
+        base_amount = SERVICE_TYPE_AMOUNTS[service_type].get(care_grade, 78875)
+        billing_amount = int(base_amount * insurance_rate)
+
         billing_record = BillingRecord(
             caregiver_id=caregiver_id,
             resident_id=resident_id,
             center_id=resident.center_id,
-            service_category="재가급여",
+            service_category=service_category,
             service_type=service_type,
             amount=billing_amount,
             status="draft",

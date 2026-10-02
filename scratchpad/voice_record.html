@@ -903,14 +903,32 @@
                     const canDelete = isManager || isOwnRecord;
 
                     const checkbox = canDelete ? `<input type="checkbox" class="record-checkbox" data-record-id="${record.id}" onchange="updateSelectedCount()">` : '';
-                    const editBtn = isOwnRecord ? `<button style="padding: 6px 12px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="openEditModal(${record.id}, '${record.service_type}', '${(record.notes || '').replace(/'/g, "\\'")}')">✏️ 편집</button>` : '';
-                    const deleteBtn = canDelete ? `<button class="record-btn" onclick="deleteRecord(${record.id})" style="background: #FF3B30; color: white;">삭제</button>` : '';
+                    // ✅ XSS 취약점 수정: onclick에서 data 속성 사용
+                    const editBtn = isOwnRecord ? `<button style="padding: 6px 12px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;" class="edit-btn" data-record-id="${record.id}" data-service-type="${record.service_type}" data-notes="${(record.notes || '').replace(/"/g, '&quot;')}">✏️ 편집</button>` : '';
+                    const deleteBtn = canDelete ? `<button class="record-btn delete-btn" data-record-id="${record.id}" style="background: #FF3B30; color: white;">삭제</button>` : '';
 
                     return `<li class="record-item" id="record-${record.id}"><div style="display: flex; align-items: center; gap: 12px; flex: 1;">${checkbox}<div class="record-info"><div class="record-title">${residents.find(r => r.id == record.resident_id)?.name || '이용자'}</div><div class="record-meta">${serviceType}</div><div class="record-meta">${timeStr}</div></div></div><div class="record-actions" style="display: flex; gap: 8px; align-items: center;"><div style="font-weight: 600; color: #FF9500; min-width: 100px; text-align: right;">₩ ${amount.toLocaleString()}원</div>${editBtn}${deleteBtn}</div></li>`;
                 }).join('');
             });
 
             recordsList.innerHTML = html;
+
+            // ✅ XSS 방지: data 속성에서 안전하게 이벤트 처리
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const recordId = this.dataset.recordId;
+                    const serviceType = this.dataset.serviceType;
+                    const notes = this.dataset.notes || '';
+                    openEditModal(recordId, serviceType, notes);
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const recordId = this.dataset.recordId;
+                    deleteRecord(recordId);
+                });
+            });
         }
 
         async function loadTodayRecords() {
