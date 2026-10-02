@@ -308,6 +308,72 @@
                 </div>
             </div>
 
+            <!-- Operating Expense Settings -->
+            <div class="breakdown-card" style="background: linear-gradient(135deg, #f0f4f8 0%, #f9fafb 100%); border-left: 4px solid #3b82f6;">
+                <div class="breakdown-title">⚙️ 운영비 설정</div>
+                <button onclick="toggleExpenseEdit()" style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 16px;">수정</button>
+
+                <div id="expenseDisplay" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                    <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #e0e0e0;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">센터장 급여</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #333;" id="display-manager-salary">₩0</div>
+                    </div>
+                    <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #e0e0e0;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">행정 인력</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #333;" id="display-admin">₩0</div>
+                    </div>
+                    <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #e0e0e0;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">임차료</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #333;" id="display-rent">₩0</div>
+                    </div>
+                    <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #e0e0e0;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">소모품/의료용품</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #333;" id="display-supplies">₩0</div>
+                    </div>
+                    <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #e0e0e0;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">통신/전기</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #333;" id="display-utilities">₩0</div>
+                    </div>
+                    <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #e0e0e0;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">세금/보험</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #333;" id="display-tax">₩0</div>
+                    </div>
+                </div>
+
+                <div id="expenseEdit" style="display: none; margin-top: 16px; padding: 16px; background: white; border-radius: 8px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px;">센터장 급여</label>
+                            <input type="number" id="input-manager-salary" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="2500000">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px;">행정 인력</label>
+                            <input type="number" id="input-admin" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="1500000">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px;">임차료</label>
+                            <input type="number" id="input-rent" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="3000000">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px;">소모품/의료용품</label>
+                            <input type="number" id="input-supplies" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="3000000">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px;">통신/전기</label>
+                            <input type="number" id="input-utilities" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="1000000">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px;">세금/보험</label>
+                            <input type="number" id="input-tax" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="2000000">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="saveExpenses()" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">저장</button>
+                        <button onclick="toggleExpenseEdit()" style="padding: 8px 16px; background: #999; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">취소</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Breakdown Table -->
             <div class="breakdown-card">
                 <div class="breakdown-title">📋 월별 손익 상세</div>
@@ -335,27 +401,27 @@
                         </div>
                         <div class="breakdown-item">
                             <span class="breakdown-label">센터장 급여</span>
-                            <span class="breakdown-value">₩2,500,000</span>
+                            <span class="breakdown-value" id="br-manager-salary">₩0</span>
                         </div>
                         <div class="breakdown-item">
                             <span class="breakdown-label">행정 인력</span>
-                            <span class="breakdown-value">₩1,500,000</span>
+                            <span class="breakdown-value" id="br-admin">₩0</span>
                         </div>
                         <div class="breakdown-item">
                             <span class="breakdown-label">임차료</span>
-                            <span class="breakdown-value">₩3,000,000</span>
+                            <span class="breakdown-value" id="br-rent">₩0</span>
                         </div>
                         <div class="breakdown-item">
                             <span class="breakdown-label">소모품/의료용품</span>
-                            <span class="breakdown-value">₩3,000,000</span>
+                            <span class="breakdown-value" id="br-supplies">₩0</span>
                         </div>
                         <div class="breakdown-item">
                             <span class="breakdown-label">통신/전기</span>
-                            <span class="breakdown-value">₩1,000,000</span>
+                            <span class="breakdown-value" id="br-utilities">₩0</span>
                         </div>
                         <div class="breakdown-item">
                             <span class="breakdown-label">세금/보험</span>
-                            <span class="breakdown-value">₩2,000,000</span>
+                            <span class="breakdown-value" id="br-tax">₩0</span>
                         </div>
                         <div class="breakdown-item total">
                             <span>합계</span>
@@ -389,8 +455,64 @@
         let currentUser = null;
         let incomeChart = null;
         let expenseChart = null;
+        let expenses = {
+            managerSalary: 2500000,
+            admin: 1500000,
+            rent: 3000000,
+            supplies: 3000000,
+            utilities: 1000000,
+            tax: 2000000
+        };
 
         function navigateTo(url) { window.location.href = url; }
+
+        function loadExpenses() {
+            const saved = localStorage.getItem('dolbomcare_expenses');
+            if (saved) {
+                expenses = JSON.parse(saved);
+            }
+            updateExpenseDisplay();
+        }
+
+        function updateExpenseDisplay() {
+            document.getElementById('display-manager-salary').textContent = `₩${expenses.managerSalary.toLocaleString()}`;
+            document.getElementById('display-admin').textContent = `₩${expenses.admin.toLocaleString()}`;
+            document.getElementById('display-rent').textContent = `₩${expenses.rent.toLocaleString()}`;
+            document.getElementById('display-supplies').textContent = `₩${expenses.supplies.toLocaleString()}`;
+            document.getElementById('display-utilities').textContent = `₩${expenses.utilities.toLocaleString()}`;
+            document.getElementById('display-tax').textContent = `₩${expenses.tax.toLocaleString()}`;
+        }
+
+        function toggleExpenseEdit() {
+            const display = document.getElementById('expenseDisplay');
+            const edit = document.getElementById('expenseEdit');
+            display.style.display = display.style.display === 'none' ? 'grid' : 'none';
+            edit.style.display = edit.style.display === 'none' ? 'block' : 'none';
+
+            if (edit.style.display === 'block') {
+                document.getElementById('input-manager-salary').value = expenses.managerSalary;
+                document.getElementById('input-admin').value = expenses.admin;
+                document.getElementById('input-rent').value = expenses.rent;
+                document.getElementById('input-supplies').value = expenses.supplies;
+                document.getElementById('input-utilities').value = expenses.utilities;
+                document.getElementById('input-tax').value = expenses.tax;
+            }
+        }
+
+        function saveExpenses() {
+            expenses.managerSalary = parseInt(document.getElementById('input-manager-salary').value) || 2500000;
+            expenses.admin = parseInt(document.getElementById('input-admin').value) || 1500000;
+            expenses.rent = parseInt(document.getElementById('input-rent').value) || 3000000;
+            expenses.supplies = parseInt(document.getElementById('input-supplies').value) || 3000000;
+            expenses.utilities = parseInt(document.getElementById('input-utilities').value) || 1000000;
+            expenses.tax = parseInt(document.getElementById('input-tax').value) || 2000000;
+
+            localStorage.setItem('dolbomcare_expenses', JSON.stringify(expenses));
+            updateExpenseDisplay();
+            toggleExpenseEdit();
+            loadProfitData(); // 데이터 다시 로드해서 손익 재계산
+            showToast('운영비가 저장되었습니다');
+        }
 
         function logout() {
             if (confirm('로그아웃 하시겠습니까?')) {
@@ -426,6 +548,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             checkAuth();
+            loadExpenses();
         });
 
         window.addEventListener('load', () => {
@@ -459,8 +582,8 @@
                 const bonusTotal = Math.floor(totalBilling * 0.15);
                 const totalSalary = baseSalaryTotal + bonusTotal;
 
-                // 운영비 (고정)
-                const operatingExpense = 13500000; // 임차료, 인력, 소모품 등
+                // 운영비 (센터장이 설정한 값)
+                const operatingExpense = expenses.managerSalary + expenses.admin + expenses.rent + expenses.supplies + expenses.utilities + expenses.tax;
 
                 // 손익
                 const profit = totalBilling - totalSalary - operatingExpense;
@@ -482,6 +605,12 @@
                 document.getElementById('br-income').textContent = `₩${totalBilling.toLocaleString()}`;
                 document.getElementById('br-income-total').textContent = `₩${totalBilling.toLocaleString()}`;
                 document.getElementById('br-salary').textContent = `₩${Math.round(totalSalary).toLocaleString()}`;
+                document.getElementById('br-manager-salary').textContent = `₩${expenses.managerSalary.toLocaleString()}`;
+                document.getElementById('br-admin').textContent = `₩${expenses.admin.toLocaleString()}`;
+                document.getElementById('br-rent').textContent = `₩${expenses.rent.toLocaleString()}`;
+                document.getElementById('br-supplies').textContent = `₩${expenses.supplies.toLocaleString()}`;
+                document.getElementById('br-utilities').textContent = `₩${expenses.utilities.toLocaleString()}`;
+                document.getElementById('br-tax').textContent = `₩${expenses.tax.toLocaleString()}`;
                 document.getElementById('br-expense-total').textContent = `₩${(Math.round(totalSalary) + operatingExpense).toLocaleString()}`;
                 document.getElementById('br-profit').textContent = `₩${profit.toLocaleString()}`;
                 document.getElementById('br-rate').textContent = `${profitRate}%`;
