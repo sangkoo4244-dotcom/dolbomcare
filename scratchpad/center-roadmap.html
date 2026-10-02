@@ -679,13 +679,9 @@
             const initial = (user.full_name || '사용자').charAt(0).toUpperCase();
             document.getElementById('userAvatar').textContent = initial;
 
-                // 메뉴 필터링
-                if (typeof filterMenuByRole === 'function') {
-                    filterMenuByRole();
-                }
-            } catch (e) {
-                console.error('사용자 정보 파싱 실패:', e);
-                window.location.href = './login.html';
+            // 메뉴 필터링
+            if (typeof filterMenuByRole === 'function') {
+                filterMenuByRole();
             }
         });
 
