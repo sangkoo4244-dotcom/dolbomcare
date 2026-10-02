@@ -702,10 +702,12 @@
                 const totalBilling = billings.reduce((sum, b) => sum + (b.amount || 0), 0);
 
                 // 요양사 급여 계산 (my_salary.html 모델 기준)
-                // 각 요양사: 기본급 600K + 청부액 × 15%
-                const baseSalaryTotal = 600000 * staffCount;
+                // 각 요양사: 기본급 1,000K + 청부액 × 15% - 세금/보험 4%
+                const baseSalaryTotal = 1000000 * staffCount;
                 const bonusTotal = Math.floor(totalBilling * 0.15);
-                const totalSalary = baseSalaryTotal + bonusTotal;
+                const subtotal = baseSalaryTotal + bonusTotal;
+                const taxAndInsurance = Math.floor(subtotal * 0.04); // 세금(3%) + 보험(1%)
+                const totalSalary = subtotal - taxAndInsurance; // 세후 실지급액
 
                 // 운영비 (센터장이 설정한 값)
                 const operatingExpense = expenses.managerSalary + expenses.admin + expenses.rent + expenses.supplies + expenses.utilities + expenses.tax;
@@ -831,20 +833,21 @@
 
             // 계산
             const income = residentCount * billingPerResident;
-            const baseSalary = 600000 * caregiverCount;
+            const baseSalary = 1000000 * caregiverCount; // 기본급 1,000,000
             const bonus = Math.floor(income * 0.15);
-            const totalSalary = baseSalary + bonus;
+            const subtotal = baseSalary + bonus;
+            const deduction = Math.floor(subtotal * 0.04); // 세금/보험료 4%
+            const totalSalary = subtotal - deduction; // 세후 실지급액
             const expense = expenses.managerSalary + expenses.admin + expenses.rent + expenses.supplies + expenses.utilities + expenses.tax;
             const profit = income - totalSalary - expense;
 
             // 손익분기점 계산
-            // profit = residentCount * billingPerResident - (600000 * caregiverCount + residentCount * billingPerResident * 0.15) - expense
-            // 0 = residentCount * billingPerResident - 600000 * caregiverCount - residentCount * billingPerResident * 0.15 - expense
-            // 0 = residentCount * (billingPerResident - billingPerResident * 0.15) - 600000 * caregiverCount - expense
-            // 0 = residentCount * billingPerResident * 0.85 - 600000 * caregiverCount - expense
-            // residentCount * billingPerResident * 0.85 = 600000 * caregiverCount + expense
-            // residentCount = (600000 * caregiverCount + expense) / (billingPerResident * 0.85)
-            const breakevenResidents = Math.ceil((600000 * caregiverCount + expense) / (billingPerResident * 0.85));
+            // profit = income - totalSalary - expense = 0
+            // income = totalSalary + expense
+            // residentCount * billingPerResident = (1000000 * caregiverCount + income * 0.15) * 0.96 + expense
+            // 단순화: residentCount * billingPerResident * 0.816 ≈ 1000000 * caregiverCount * 0.96 + expense
+            const breakEvenIncome = (1000000 * caregiverCount * 0.96 + expense) / 0.816;
+            const breakevenResidents = Math.ceil(breakEvenIncome / billingPerResident);
             const additionalResidents = Math.max(0, breakevenResidents - residentCount);
 
             // 비율 계산
