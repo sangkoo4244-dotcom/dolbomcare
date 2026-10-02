@@ -396,21 +396,21 @@
                 </div>
 
                 <div class="salary-card">
-                    <div class="card-label">이번 달 청부액</div>
-                    <div class="card-value" id="monthlyBilling">₩0</div>
-                    <div class="card-subtitle" id="billingCount">0건 (3명 관리)</div>
+                    <div class="card-label">예상 청부액</div>
+                    <div class="card-value" id="expectedBilling" style="color: #ff9500;">₩0</div>
+                    <div class="card-subtitle" id="expectedBillingCount">0건 (센터장 검토 중)</div>
                 </div>
 
                 <div class="salary-card">
-                    <div class="card-label">청부 수당 (20%)</div>
-                    <div class="card-value" id="billingBonus" style="color: #28a745;">₩0</div>
-                    <div class="card-subtitle">성과 연동</div>
+                    <div class="card-label">확정 청부액</div>
+                    <div class="card-value" id="confirmedBilling" style="color: #28a745;">₩0</div>
+                    <div class="card-subtitle" id="confirmedBillingCount">0건 (승인 완료)</div>
                 </div>
 
                 <div class="salary-card">
-                    <div class="card-label">예상 실수령액</div>
+                    <div class="card-label">💳 예상 수령액</div>
                     <div class="card-value" id="expectedSalary" style="color: #28a745; font-size: 32px;">₩0</div>
-                    <div class="card-subtitle">세금공제 후</div>
+                    <div class="card-subtitle">기본급 + 예상청부</div>
                 </div>
             </div>
 
@@ -576,11 +576,19 @@
                 if (!response.ok) throw new Error('데이터 조회 실패');
 
                 const data = await response.json();
-                allBillings = (data.records || []).filter(r =>
+                const allRecords = data.records || [];
+
+                // 확정 청부 (승인 완료)
+                allBillings = allRecords.filter(r =>
                     (r.approval_status === 'approved' || r.approval_status === 'submitted_to_nhis' || r.approval_status === 'reimbursed' || r.status === 'paid')
                 );
 
-                console.log('✅ 청부 데이터 로드:', allBillings.length + '건');
+                // 예상 청부 (draft + pending 포함)
+                window.pendingBillings = allRecords.filter(r =>
+                    (r.approval_status === 'draft' || r.approval_status === 'pending' || r.status === 'draft')
+                );
+
+                console.log('✅ 청부 데이터 로드:', allBillings.length + '건 (확정), ' + window.pendingBillings.length + '건 (예상)');
 
                 updateSalaryDisplay();
                 loadHistoryTable();
@@ -615,18 +623,42 @@
             const insuranceAmount = Math.floor(subtotal * 0.01); // 1% 보험료
             const netAmount = subtotal - taxAmount - insuranceAmount;
 
-            document.getElementById('monthlyBilling').textContent = `₩${totalBilling.toLocaleString()}`;
-            document.getElementById('billingCount').textContent = `${monthlyRecords.length}건`;
-            document.getElementById('billingBonus').textContent = `₩${billingBonus.toLocaleString()}`;
-            document.getElementById('expectedSalary').textContent = `₩${netAmount.toLocaleString()}`;
+            // 예상 청부 (pending 포함)
+            const monthlyPending = (window.pendingBillings || []).filter(record => {
+                const recordDate = new Date(record.recorded_date);
+                const recordMonth = `${recordDate.getFullYear()}-${String(recordDate.getMonth() + 1).padStart(2, '0')}`;
+                return recordMonth === monthYear;
+            });
+            const pendingAmount = monthlyPending.reduce((sum, r) => sum + r.amount, 0);
+            const expectedTotal = totalBilling + pendingAmount;
+            const expectedBonus = Math.floor(expectedTotal * 0.20);
+            const expectedSubtotal = baseSalary + expectedBonus;
+            const expectedTax = Math.floor(expectedSubtotal * 0.03);
+            const expectedInsurance = Math.floor(expectedSubtotal * 0.01);
+            const expectedNetAmount = expectedSubtotal - expectedTax - expectedInsurance;
+
+            document.getElementById('expectedBilling').textContent = `₩${expectedTotal.toLocaleString()}`;
+            document.getElementById('expectedBillingCount').textContent = `${monthlyPending.length}건 (센터장 검토 중)`;
+
+            document.getElementById('confirmedBilling').textContent = `₩${totalBilling.toLocaleString()}`;
+            document.getElementById('confirmedBillingCount').textContent = `${monthlyRecords.length}건 (승인 완료)`;
+
+            document.getElementById('expectedSalary').textContent = `₩${expectedNetAmount.toLocaleString()}`;
 
             // Breakdown
-            document.getElementById('breakdown-billing').textContent = `₩${totalBilling.toLocaleString()}`;
-            document.getElementById('breakdown-bonus').textContent = `₩${billingBonus.toLocaleString()}`;
-            document.getElementById('breakdown-subtotal').textContent = `₩${subtotal.toLocaleString()}`;
-            document.getElementById('breakdown-tax').textContent = `-₩${taxAmount.toLocaleString()}`;
-            document.getElementById('breakdown-insurance').textContent = `-₩${insuranceAmount.toLocaleString()}`;
-            document.getElementById('breakdown-net').textContent = `₩${netAmount.toLocaleString()}`;
+            document.getElementById('breakdown-billing').textContent = `₩${expectedTotal.toLocaleString()}`;
+            document.getElementById('breakdown-bonus').textContent = `₩${expectedBonus.toLocaleString()}`;
+            document.getElementById('breakdown-subtotal').textContent = `₩${expectedSubtotal.toLocaleString()}`;
+            document.getElementById('breakdown-tax').textContent = `-₩${expectedTax.toLocaleString()}`;
+            document.getElementById('breakdown-insurance').textContent = `-₩${expectedInsurance.toLocaleString()}`;
+            document.getElementById('breakdown-net').textContent = `₩${expectedNetAmount.toLocaleString()}`;
+
+            console.log('💰 급여 계산:', {
+                confirmed: totalBilling,
+                pending: pendingAmount,
+                expected: expectedTotal,
+                expectedSalary: expectedNetAmount
+            });
         }
 
         function loadHistoryTable() {
