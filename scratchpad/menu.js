@@ -17,18 +17,27 @@ function filterMenuByRole() {
     const isManager = role === 'center_manager';
 
     const menuItems = {
-        'menu-dashboard': true,                    // 모두 볼 수 있음 (역할별 다른 데이터 표시)
-        'menu-residents': true,                    // 모두 볼 수 있음 (요양사는 조회만)
-        'menu-voice-records': isCaregiver,         // 요양사만 - 음성 기록
-        'menu-caregiver-billing': isCaregiver,     // 요양사만 - 나의 청부
-        'menu-notifications': isCaregiver,         // 요양사만 - 알림/공지
-        'menu-billing-management': isManager,      // 센터장만 - 청부 관리
-        'menu-staff': isManager,                   // 센터장만 - 직원 관리
-        'menu-salary': isManager,                  // 센터장만 - 급여 관리
-        'menu-schedule': isManager,                // 센터장만 - 스케줄 관리
-        'menu-guardian-comm': isManager,           // 센터장만 - 보호자 소통
-        'menu-settings': isManager,                // 센터장만 - 설정
-        'menu-logout': true                        // 항상
+        'menu-dashboard': true,                      // 모두 볼 수 있음 (역할별 다른 데이터 표시)
+        'menu-residents': true,                      // 모두 볼 수 있음 (요양사는 조회만)
+
+        // 요양사 전용 메뉴
+        'menu-voice-records': isCaregiver,           // 요양사 - 음성 기록
+        'menu-caregiver-billing': isCaregiver,       // 요양사 - 나의 청부
+        'menu-notifications': isCaregiver,           // 요양사 - 알림/공지
+        'menu-my-schedule': isCaregiver,             // 요양사 - 나의 일정 (휴무 신청, 스케줄)
+        'menu-my-salary': isCaregiver,               // 요양사 - 나의 급여 (정산 현황)
+        'menu-resident-family-comm': isCaregiver,    // 요양사 - 담당자 소통
+
+        // 센터장 전용 메뉴
+        'menu-billing-management': isManager,        // 센터장 - 청부 관리 (전체)
+        'menu-staff': isManager,                     // 센터장 - 직원 관리 (전체)
+        'menu-salary': isManager,                    // 센터장 - 급여 관리 (전체)
+        'menu-schedule': isManager,                  // 센터장 - 스케줄 관리 (전체 근무표)
+        'menu-guardian-comm': isManager,             // 센터장 - 보호자 소통 (센터 공지)
+        'menu-settings': isManager,                  // 센터장 - 설정
+
+        // 공용
+        'menu-logout': true                          // 항상
     };
 
     Object.entries(menuItems).forEach(([id, shouldShow]) => {
