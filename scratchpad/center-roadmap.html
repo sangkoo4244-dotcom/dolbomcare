@@ -641,6 +641,44 @@
     </div>
 
     <script>
+        // 기본 함수들
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('currentUser');
+            window.location.href = './login.html';
+        }
+
+        // 페이지 로드 시 인증 확인
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('token');
+            const currentUserStr = localStorage.getItem('currentUser');
+
+            if (!token || !currentUserStr) {
+                window.location.href = './login.html';
+                return;
+            }
+
+            try {
+                window.currentUser = JSON.parse(currentUserStr);
+                document.getElementById('userName').textContent = window.currentUser.name || '사용자';
+                document.getElementById('userRole').textContent = window.currentUser.role === 'center_manager' ? '센터장' : '요양사';
+                const initial = (window.currentUser.name || '사용자')[0];
+                document.getElementById('userAvatar').textContent = initial;
+
+                // 메뉴 필터링
+                if (typeof filterMenuByRole === 'function') {
+                    filterMenuByRole();
+                }
+            } catch (e) {
+                console.error('사용자 정보 파싱 실패:', e);
+                window.location.href = './login.html';
+            }
+        });
+
         // 이용자 추이
         const userTrendCtx = document.getElementById('userTrendChart').getContext('2d');
         new Chart(userTrendCtx, {
