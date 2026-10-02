@@ -478,6 +478,21 @@
         }
     </style>
     <script src="menu.js"></script>
+    <script>
+        // 필수 네비게이션 함수 (early definition)
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('user_role');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -694,17 +709,6 @@
         const API_URL = 'http://localhost:8000/api/v1';
         let currentUser = null;
         let residents = [];
-
-        function navigateTo(url) { window.location.href = url; }
-
-        function logout() {
-            if (confirm('정말 로그아웃 하시겠습니까?')) {
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('user');
-                localStorage.removeItem('user_role');
-                window.location.href = './login.html';
-            }
-        }
 
         window.addEventListener('load', () => {
             checkAuth();
