@@ -286,7 +286,19 @@
             <!-- Simulator -->
             <div class="breakdown-card" style="background: linear-gradient(135deg, #f0fdf4 0%, #f1fdf5 100%); border-left: 4px solid #28a745;">
                 <div class="breakdown-title">📊 센터 규모 시뮬레이터</div>
-                <p style="font-size: 12px; color: #666; margin-bottom: 20px;">슬라이더로 요양사, 이용자 수를 조정하면 실시간으로 손익이 계산됩니다</p>
+                <p style="font-size: 12px; color: #666; margin-bottom: 16px;">요양사의 실제 데이터를 기반으로 3가지 시나리오를 자동으로 계산합니다</p>
+
+                <!-- 시나리오 탭 -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 12px;">
+                    <button onclick="loadScenario('current')" id="btn-scenario-current" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;">📊 현재 추세</button>
+                    <button onclick="loadScenario('normal')" id="btn-scenario-normal" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;">✅ 정상 서비스</button>
+                    <button onclick="loadScenario('optimal')" id="btn-scenario-optimal" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;">🎯 최적 비율</button>
+                </div>
+
+                <!-- 시나리오 설명 -->
+                <div id="scenario-description" style="background: #e8f5e9; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: #2e7d32; border-left: 3px solid #28a745;">
+                    <strong>📊 현재 추세:</strong> 각 이용자당 현재 서비스 수준 유지 (이용자당 ₩65K)
+                </div>
 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px;">
                     <div>
@@ -694,6 +706,7 @@
                 const residentCount = new Set(billings.map(b => b.resident_id)).size;
                 document.getElementById('center-info').textContent = `요양사 ${staffCount}명, 이용자 ${residentCount}명`;
                 window.centerStats = { staffCount, residentCount };
+                window.totalCurrentBilling = totalBilling; // 시나리오 계산용
 
                 // 시뮬레이터 초기값을 실제 센터 데이터로 설정
                 document.getElementById('sim-caregiver-slider').value = staffCount;
@@ -750,8 +763,8 @@
                 // 차트 그리기
                 drawCharts(totalBilling, Math.round(totalSalary), operatingExpense);
 
-                // 시뮬레이터 업데이트 (초기값 동기화)
-                setTimeout(() => updateSimulator(), 100);
+                // 시뮬레이터 업데이트 (초기값 동기화 - 현재 추세)
+                setTimeout(() => loadScenario('current'), 100);
 
                 console.log('✅ 손익 분석 로드:', { totalBilling, totalSalary, operatingExpense, profit, profitRate });
             } catch (error) {
@@ -825,6 +838,59 @@
             `;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
+        }
+
+        // 시나리오 로드 함수
+        function loadScenario(scenario) {
+            if (!window.centerStats) return;
+
+            const { staffCount, residentCount } = window.centerStats;
+            let caregiverCount, residentFinalCount, billingPerResident;
+            let description = '';
+
+            if (scenario === 'current') {
+                // 시나리오 1: 현재 추세 유지
+                caregiverCount = staffCount;
+                residentFinalCount = residentCount;
+
+                // 현재 이용자당 청부액 계산
+                const totalCurrentBilling = window.totalCurrentBilling || 130020;
+                billingPerResident = Math.floor(totalCurrentBilling / (residentCount || 1));
+
+                description = `📊 현재 추세: 각 이용자당 ₩${billingPerResident.toLocaleString()} 서비스 수준 유지`;
+            }
+            else if (scenario === 'normal') {
+                // 시나리오 2: 정상 서비스 (이용자당 ₩1.4M)
+                caregiverCount = staffCount;
+                residentFinalCount = residentCount;
+                billingPerResident = 1400000; // 정상 수준
+
+                description = `✅ 정상 서비스: 각 이용자가 월간 정상적인 서비스를 받으면 (이용자당 ₩1,400,000)`;
+            }
+            else if (scenario === 'optimal') {
+                // 시나리오 3: 최적 비율 (1:3)
+                caregiverCount = staffCount;
+                residentFinalCount = staffCount * 3; // 요양사 1명당 이용자 3명
+                billingPerResident = 1400000; // 정상 수준
+
+                description = `🎯 최적 비율: 요양사 1명당 이용자 3명으로 운영 (이용자당 ₩1,400,000)`;
+            }
+
+            // 슬라이더 업데이트
+            document.getElementById('sim-caregiver-slider').value = caregiverCount;
+            document.getElementById('sim-resident-slider').value = residentFinalCount;
+            document.getElementById('sim-billing-slider').value = billingPerResident;
+
+            // 설명 업데이트
+            document.getElementById('scenario-description').textContent = description;
+
+            // 버튼 스타일 업데이트
+            document.getElementById('btn-scenario-current').style.background = scenario === 'current' ? '#28a745' : '#6c757d';
+            document.getElementById('btn-scenario-normal').style.background = scenario === 'normal' ? '#28a745' : '#6c757d';
+            document.getElementById('btn-scenario-optimal').style.background = scenario === 'optimal' ? '#28a745' : '#6c757d';
+
+            // 시뮬레이터 업데이트
+            updateSimulator();
         }
 
         // 시뮬레이터 함수
