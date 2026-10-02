@@ -221,6 +221,12 @@
         }
     </style>
     <script src="menu.js"></script>
+    <script>
+        // 필수 네비게이션 함수 (early definition)
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+    </script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -564,8 +570,6 @@
             utilities: 1000000,
             tax: 2000000
         };
-
-        function navigateTo(url) { window.location.href = url; }
 
         function loadExpenses() {
             const saved = localStorage.getItem('dolbomcare_expenses');
