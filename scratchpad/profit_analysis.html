@@ -271,6 +271,12 @@
                 </div>
 
                 <div class="overview-card">
+                    <div class="card-label">👤 월 본인부담금</div>
+                    <div class="card-value income" id="monthlyPatientPay">₩0</div>
+                    <div class="card-subtitle">이용자 결제액</div>
+                </div>
+
+                <div class="overview-card">
                     <div class="card-label">🏢 월 운영비</div>
                     <div class="card-value expense" id="monthlyExpense">₩0</div>
                     <div class="card-subtitle">추정 운영비</div>
@@ -541,6 +547,14 @@
         let currentUser = null;
         let incomeChart = null;
         let expenseChart = null;
+
+        // 본인부담율 (건강보험공단 기준)
+        const PATIENT_PAY_RATE = {
+            "일반": 0.15,              // 15%
+            "차상위계층": 0.10,        // 10%
+            "기초생활보장": 0.00,      // 0%
+            "의료급여": 0.00,         // 0%
+        };
         let expenses = {
             managerSalary: 2500000,
             admin: 1500000,
@@ -715,6 +729,12 @@
                 const staffCount = (staffData.users || []).length || 1;
                 console.log('👥 요양사 데이터:', staffCount, '명');
 
+                // 이용자 데이터 로드
+                const residentRes = await fetch(`${API_URL}/residents/?center_id=${currentUser.center_id}`);
+                const residentData = residentRes.ok ? await residentRes.json() : { residents: [] };
+                const residents = residentData.residents || [];
+                console.log('👤 이용자 데이터:', residents.length, '명');
+
                 // 청부액 계산 (확정된 청부만)
                 const totalBilling = billings.reduce((sum, b) => sum + (b.amount || 0), 0);
                 console.log('💰 총 청부액:', totalBilling);
@@ -722,6 +742,20 @@
                 // 이용자 수 (청부 기록에서 고유 이용자 추출)
                 const uniqueResidents = new Set(billings.map(b => b.resident_id)).size;
                 const residentCount = uniqueResidents;
+
+                // 본인부담금 계산
+                let totalPatientPay = 0;
+                billings.forEach(b => {
+                    // 각 청부와 관련된 이용자 정보 조회
+                    const resident = residents.find(r => r.id === b.resident_id);
+                    if (resident) {
+                        const patientRate = PATIENT_PAY_RATE[resident.client_type] || 0.15;
+                        // 본인부담금 = 공단청구액 × (본인부담율 / 공단부담율)
+                        const patientPay = Math.floor(b.amount * patientRate / (1 - patientRate));
+                        totalPatientPay += patientPay;
+                    }
+                });
+                console.log('💰 본인부담금:', totalPatientPay);
 
                 // 센터 정보 표시
                 document.getElementById('center-info').textContent = `요양사 ${staffCount}명, 이용자 ${residentCount}명`;
@@ -755,6 +789,8 @@
 
                 document.getElementById('monthlySalary').textContent = `₩${Math.round(totalSalary).toLocaleString()}`;
                 document.getElementById('salaryStaff').textContent = `${staffCount}명 요양사`;
+
+                document.getElementById('monthlyPatientPay').textContent = `₩${totalPatientPay.toLocaleString()}`;
 
                 document.getElementById('monthlyExpense').textContent = `₩${operatingExpense.toLocaleString()}`;
                 document.getElementById('monthlyProfit').textContent = `₩${profit.toLocaleString()}`;
