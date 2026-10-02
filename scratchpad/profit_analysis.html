@@ -695,6 +695,10 @@
                 document.getElementById('center-info').textContent = `요양사 ${staffCount}명, 이용자 ${residentCount}명`;
                 window.centerStats = { staffCount, residentCount };
 
+                // 시뮬레이터 초기값을 실제 센터 데이터로 설정
+                document.getElementById('sim-caregiver-slider').value = staffCount;
+                document.getElementById('sim-resident-slider').value = residentCount || 1;
+
                 // 이용자 수 (청부 기록에서 고유 이용자 추출)
                 const uniqueResidents = new Set(billings.map(b => b.resident_id)).size;
 
@@ -745,6 +749,9 @@
 
                 // 차트 그리기
                 drawCharts(totalBilling, Math.round(totalSalary), operatingExpense);
+
+                // 시뮬레이터 업데이트 (초기값 동기화)
+                setTimeout(() => updateSimulator(), 100);
 
                 console.log('✅ 손익 분석 로드:', { totalBilling, totalSalary, operatingExpense, profit, profitRate });
             } catch (error) {
