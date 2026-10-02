@@ -645,6 +645,8 @@
             }
 
             currentUser = user;
+            filterMenuByRole();
+
             const initial = user.full_name ? user.full_name.charAt(0) : '사';
             document.getElementById('userAvatar').textContent = initial;
             document.getElementById('userName').textContent = user.full_name || '사용자';
