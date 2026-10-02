@@ -692,24 +692,32 @@
 
         async function loadProfitData() {
             try {
+                console.log('🔍 loadProfitData 시작:', { center_id: currentUser.center_id });
+
                 // 청부 데이터 로드
                 const billingRes = await fetch(`${API_URL}/billing/?center_id=${currentUser.center_id}`);
+                console.log('📡 청부 API 응답:', billingRes.status, billingRes.ok);
+
                 const billingData = billingRes.ok ? await billingRes.json() : { records: [] };
                 const allBillings = billingData.records || [];
+                console.log('✅ 원본 청부 레코드:', allBillings.length, '개 | 합계:', allBillings.reduce((sum, b) => sum + (b.amount || 0), 0));
 
                 // ✅ 데이터 필터링 (my_salary.html과 동일)
                 // 확정된 청부만 포함 (draft/pending 제외)
                 const billings = allBillings.filter(r =>
                     (r.approval_status === 'approved' || r.approval_status === 'submitted_to_nhis' || r.approval_status === 'reimbursed' || r.status === 'paid')
                 );
+                console.log('✅ 필터링 후 청부 레코드:', billings.length, '개 | 합계:', billings.reduce((sum, b) => sum + (b.amount || 0), 0));
 
                 // 요양사 데이터 로드
                 const staffRes = await fetch(`${API_URL}/users/?center_id=${currentUser.center_id}&role=caregiver`);
                 const staffData = staffRes.ok ? await staffRes.json() : { users: [] };
                 const staffCount = (staffData.users || []).length || 1;
+                console.log('👥 요양사 데이터:', staffCount, '명');
 
                 // 청부액 계산 (확정된 청부만)
                 const totalBilling = billings.reduce((sum, b) => sum + (b.amount || 0), 0);
+                console.log('💰 총 청부액:', totalBilling);
 
                 // 이용자 수 (청부 기록에서 고유 이용자 추출)
                 const uniqueResidents = new Set(billings.map(b => b.resident_id)).size;
