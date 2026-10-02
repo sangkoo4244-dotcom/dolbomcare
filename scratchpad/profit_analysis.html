@@ -407,6 +407,14 @@
                 </div>
 
                 <div id="expenseEdit" style="display: none; margin-top: 16px; padding: 16px; background: white; border-radius: 8px;">
+                    <div style="background: #e3f2fd; border-radius: 8px; padding: 12px; margin-bottom: 16px; border-left: 3px solid #2196f3;">
+                        <div style="font-size: 12px; color: #1976d2; margin-bottom: 8px;">💡 권장 운영비 계산</div>
+                        <div style="font-size: 13px; color: #1565c0; margin-bottom: 12px;">
+                            현재 센터: <strong id="center-info">데이터 로드 중...</strong>
+                        </div>
+                        <button onclick="calculateRecommendedExpenses()" style="padding: 8px 16px; background: #2196f3; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;">🔄 권장값 자동 계산</button>
+                    </div>
+
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px;">
                         <div>
                             <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px;">센터장 급여</label>
@@ -565,6 +573,52 @@
             }
         }
 
+        function calculateRecommendedExpenses() {
+            if (!window.centerStats) {
+                showToast('센터 정보를 불러올 수 없습니다');
+                return;
+            }
+
+            const { staffCount, residentCount } = window.centerStats;
+
+            // 권장 운영비 계산 로직
+            // 기본: 요양사 1명당 월 ₩2,200,000 (임차료 포함)
+            // 이용자 수에 따라 비례 조정
+
+            // 기본 운영비 (요양사 1명, 이용자 3명 기준)
+            let baseRent = 1500000; // 기본 임차료
+            let baseSalary = 1500000; // 센터장 급여
+            let baseAdmin = 800000; // 행정 인력
+            let baseSupplies = 1500000; // 소모품
+            let baseUtilities = 700000; // 통신/전기
+            let baseTax = 1000000; // 세금/보험
+
+            // 규모에 따라 조정
+            let rentAdjustment = 1 + (residentCount / 10) * 0.5; // 이용자 10명마다 50% 증가
+            let adminAdjustment = 0.5 + (staffCount / 5) * 0.3; // 요양사 5명마다 30% 증가
+            let suppliesAdjustment = 1 + (residentCount / 10) * 0.4; // 이용자 10명마다 40% 증가
+
+            // 권장값 계산
+            const recommended = {
+                managerSalary: Math.floor(baseSalary * (0.8 + staffCount * 0.1)), // 요양사 수에 따라 증가
+                admin: Math.floor(baseAdmin * adminAdjustment),
+                rent: Math.floor(baseRent * rentAdjustment),
+                supplies: Math.floor(baseSupplies * suppliesAdjustment),
+                utilities: Math.floor(baseUtilities * (1 + residentCount / 15)),
+                tax: Math.floor(baseTax * (1 + (staffCount + residentCount) / 20))
+            };
+
+            // 입력 필드에 권장값 채우기
+            document.getElementById('input-manager-salary').value = recommended.managerSalary;
+            document.getElementById('input-admin').value = recommended.admin;
+            document.getElementById('input-rent').value = recommended.rent;
+            document.getElementById('input-supplies').value = recommended.supplies;
+            document.getElementById('input-utilities').value = recommended.utilities;
+            document.getElementById('input-tax').value = recommended.tax;
+
+            showToast('✅ 권장 운영비가 계산되었습니다. 필요시 수정 후 저장하세요.');
+        }
+
         function saveExpenses() {
             expenses.managerSalary = parseInt(document.getElementById('input-manager-salary').value) || 2500000;
             expenses.admin = parseInt(document.getElementById('input-admin').value) || 1500000;
@@ -635,6 +689,11 @@
                 const staffRes = await fetch(`${API_URL}/users/?center_id=${currentUser.center_id}&role=caregiver`);
                 const staffData = staffRes.ok ? await staffRes.json() : { users: [] };
                 const staffCount = (staffData.users || []).length || 1;
+
+                // 센터 정보 표시
+                const residentCount = new Set(billings.map(b => b.resident_id)).size;
+                document.getElementById('center-info').textContent = `요양사 ${staffCount}명, 이용자 ${residentCount}명`;
+                window.centerStats = { staffCount, residentCount };
 
                 // 이용자 수 (청부 기록에서 고유 이용자 추출)
                 const uniqueResidents = new Set(billings.map(b => b.resident_id)).size;
