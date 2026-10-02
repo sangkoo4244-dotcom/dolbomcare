@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📈 우리 센터 12개월 성장 로드맵 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f5f5; color: #333; }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .header p { font-size: 16px; opacity: 0.9; }
+
+        .phase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .phase-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            border-left: 5px solid;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .phase-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .phase-card.phase1 { border-left-color: #f59e0b; }
+        .phase-card.phase2 { border-left-color: #10b981; }
+        .phase-card.phase3 { border-left-color: #3b82f6; }
+        .phase-card.phase4 { border-left-color: #8b5cf6; }
+
+        .phase-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .phase-duration {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .metric:last-child { border-bottom: none; }
+        .metric-label { color: #666; }
+        .metric-value { font-weight: 600; color: #333; }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .timeline-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 40px;
+        }
+
+        .timeline-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 30px;
+            padding-left: 60px;
+            position: relative;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #10b981;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #10b981;
+            font-size: 14px;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-period {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .timeline-action {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .highlight {
+            background: #fef3c7;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .highlight-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #d97706;
+        }
+
+        .highlight-text {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #059669;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        @media (max-width: 768px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .phase-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .timeline-item {
+                padding-left: 50px;
+            }
+
+            .timeline-marker {
+                width: 35px;
+                height: 35px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 우리 센터 12개월 성장 로드맵</h1>
+            <p>손익분석을 통한 우리 센터의 구체적인 성장 계획</p>
+        </div>
+
+        <!-- Phase 카드 -->
+        <div class="phase-grid">
+            <div class="phase-card phase1">
+                <div class="phase-title">🔧 Phase 1: 운영비 최적화</div>
+                <div class="phase-duration">2026년 10월 - 12월 (3개월)</div>
+                <div class="metric">
+                    <span class="metric-label">이용자:</span>
+                    <span class="metric-value">2명</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">월 청부액:</span>
+                    <span class="metric-value">₩308K</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">운영비:</span>
+                    <span class="metric-value">₩6M → ₩3M</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">월 손익:</span>
+                    <span class="metric-value" style="color: #ef4444;">-₩2.7M</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">목표:</span>
+                    <span class="metric-value">운영비 50% 절감</span>
+                </div>
+            </div>
+
+            <div class="phase-card phase2">
+                <div class="phase-title">📊 Phase 2: 이용자 확대</div>
+                <div class="phase-duration">2027년 1월 - 3월 (3개월)</div>
+                <div class="metric">
+                    <span class="metric-label">이용자:</span>
+                    <span class="metric-value">2명 → 5명</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">월 청부액:</span>
+                    <span class="metric-value">₩308K → ₩770K</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">운영비:</span>
+                    <span class="metric-value">₩3.2M</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">월 손익:</span>
+                    <span class="metric-value" style="color: #ef4444;">-₩3.9M</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">목표:</span>
+                    <span class="metric-value">이용자 5배</span>
+                </div>
+            </div>
+
+            <div class="phase-card phase3">
+                <div class="phase-title">🚀 Phase 3: 안정화</div>
+                <div class="phase-duration">2027년 4월 - 12월 (9개월)</div>
+                <div class="metric">
+                    <span class="metric-label">이용자:</span>
+                    <span class="metric-value">5명 → 20명</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">월 청부액:</span>
+                    <span class="metric-value">₩1.5M → ₩3.9M</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">운영비:</span>
+                    <span class="metric-value">₩4.5M</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">월 손익:</span>
+                    <span class="metric-value" style="color: #ef4444;">-₩1.2M</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">목표:</span>
+                    <span class="metric-value">이용률 70%</span>
+                </div>
+            </div>
+
+            <div class="phase-card phase4">
+                <div class="phase-title">💰 Phase 4: 흑자 달성</div>
+                <div class="phase-duration">2028년 1월+ (지속)</div>
+                <div class="metric">
+                    <span class="metric-label">이용자:</span>
+                    <span class="metric-value">25명+</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">월 청부액:</span>
+                    <span class="metric-value">₩5.5M+</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">운영비:</span>
+                    <span class="metric-value">₩4.5M</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">월 손익:</span>
+                    <span class="metric-value" style="color: #10b981;">+₩1M+</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">목표:</span>
+                    <span class="metric-value">흑자 달성!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 그래프 섹션 -->
+        <div class="charts-section">
+            <div class="chart-container">
+                <div class="chart-title">월별 이용자 추이</div>
+                <canvas id="userTrendChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">월별 손익 추이</div>
+                <canvas id="profitTrendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <div class="chart-container">
+                <div class="chart-title">수입 vs 지출 비교</div>
+                <canvas id="incomeExpenseChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">월별 청부액 추이</div>
+                <canvas id="billingTrendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 타임라인 -->
+        <div class="timeline-section">
+            <div class="timeline-title">🎯 우리 센터의 12개월 실행 계획</div>
+
+            <div class="highlight">
+                <div class="highlight-title">💡 핵심 전략</div>
+                <div class="highlight-text">
+                    현재 -₩6.7M 적자 상태에서 <strong>12개월 후 월 +₩1M+ 흑자</strong>로 전환합니다.
+                    운영비 최적화(50%), 이용자 확대(10배), 이용률 개선(70%)의 3가지 전략을 통해 달성합니다.
+                </div>
+            </div>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-marker">1</div>
+                    <div class="timeline-content">
+                        <div class="timeline-period">2026년 10월 - 12월: Phase 1 운영비 최적화</div>
+                        <div class="timeline-action">
+                            ✓ 운영비 구조 분석 (임차료, 인력, 공과금, 소모품)<br>
+                            ✓ 절감 계획 수립 (₩6M → ₩3M)<br>
+                            ✓ 현재 이용자 2명 안정적 유지<br>
+                            ✓ 손익분석 대시보드로 자동 관리
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-label">운영비 절감</div>
+                                <div class="stat-value">50%</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">월 손실</div>
+                                <div class="stat-value">-₩2.7M</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">2</div>
+                    <div class="timeline-content">
+                        <div class="timeline-period">2027년 1월 - 3월: Phase 2 이용자 확대</div>
+                        <div class="timeline-action">
+                            ✓ 의료기관 연계 구축 (병원, 의원 3곳+)<br>
+                            ✓ 이용자 5명 달성 (월 1-2명 신규)<br>
+                            ✓ 요양사 추가 고용<br>
+                            ✓ 월 청부액 ₩770K 달성
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-label">이용자</div>
+                                <div class="stat-value">5명</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">청부액</div>
+                                <div class="stat-value">₩770K</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">3</div>
+                    <div class="timeline-content">
+                        <div class="timeline-period">2027년 4월 - 6월: Phase 3 성장 중기</div>
+                        <div class="timeline-action">
+                            ✓ 이용자 10명 달성<br>
+                            ✓ 요양사 4명으로 확대<br>
+                            ✓ 월 청부액 ₩1.75M<br>
+                            ✓ 이용률 25% → 40% 개선
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-label">이용자</div>
+                                <div class="stat-value">10명</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">청부액</div>
+                                <div class="stat-value">₩1.75M</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">4</div>
+                    <div class="timeline-content">
+                        <div class="timeline-period">2027년 7월 - 12월: Phase 3 성장 후기</div>
+                        <div class="timeline-action">
+                            ✓ 이용자 15명 → 20명 달성<br>
+                            ✓ 이용률 70% 달성<br>
+                            ✓ 월 청부액 ₩3.9M<br>
+                            ✓ 월 손익 -₩1.2M → -₩500K로 개선
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-label">이용자</div>
+                                <div class="stat-value">20명</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">이용률</div>
+                                <div class="stat-value">70%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">5</div>
+                    <div class="timeline-content">
+                        <div class="timeline-period">2028년 1월+: Phase 4 흑자 달성</div>
+                        <div class="timeline-action">
+                            ✓ 이용자 25명+ 안정화<br>
+                            ✓ 월 청부액 ₩5.5M+<br>
+                            ✓ 월 손익 +₩1M+ (흑자!)<br>
+                            ✓ 지속 가능한 사업 구조 완성
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-label">이용자</div>
+                                <div class="stat-value">25명+</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">월 손익</div>
+                                <div class="stat-value" style="color: #10b981;">+₩1M+</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 최종 통계 -->
+        <div class="highlight">
+            <div class="highlight-title">📊 12개월 누적 결과</div>
+            <div class="highlight-text">
+                <strong>현재:</strong> 월 -₩6.7M 손실 (센터 운영 불가능)<br>
+                <strong>12개월 후:</strong> 월 +₩1M+ 흑자 (지속 가능한 수익)<br>
+                <strong>누적 손실:</strong> 약 ₩30-40M (3년 투자 기간 고려)<br>
+                <strong>성공 열쇠:</strong> 운영비 50% 절감 + 이용자 10배 확대 + 이용률 70% 달성
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="downloadReport()">📥 월별 목표 다운로드</button>
+            <button class="btn btn-secondary" onclick="goToDashboard()">💰 손익분석으로 돌아가기</button>
+        </div>
+    </div>
+
+    <script>
+        // 이용자 추이 그래프
+        const userTrendCtx = document.getElementById('userTrendChart').getContext('2d');
+        new Chart(userTrendCtx, {
+            type: 'line',
+            data: {
+                labels: ['10월', '11월', '12월', '1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월'],
+                datasets: [{
+                    label: '이용자 수',
+                    data: [2, 2, 2, 3, 4, 5, 7, 9, 10, 13, 16, 20],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: true, labels: { font: { size: 12 } } }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 25,
+                        grid: { drawBorder: false, color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 손익 추이 그래프
+        const profitTrendCtx = document.getElementById('profitTrendChart').getContext('2d');
+        new Chart(profitTrendCtx, {
+            type: 'bar',
+            data: {
+                labels: ['10월', '11월', '12월', '1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월'],
+                datasets: [{
+                    label: '월 손익 (₩)',
+                    data: [-2677, -2677, -2677, -3930, -3930, -3930, -4550, -3550, -2550, -2000, -1500, -500],
+                    backgroundColor: function(context) {
+                        return context.parsed.y < 0 ? '#ef4444' : '#10b981';
+                    },
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        grid: { drawBorder: false, color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: {
+                            callback: function(value) {
+                                return '₩' + (value / 1000).toFixed(1) + 'K';
+                            }
+                        }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 수입 vs 지출
+        const incomeExpenseCtx = document.getElementById('incomeExpenseChart').getContext('2d');
+        new Chart(incomeExpenseCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4'],
+                datasets: [
+                    {
+                        label: '월 수입 (청부+환자부담)',
+                        data: [308, 770, 1750, 5500],
+                        backgroundColor: '#10b981'
+                    },
+                    {
+                        label: '월 지출 (급여+운영비)',
+                        data: [3985, 5700, 6300, 4500],
+                        backgroundColor: '#ef4444'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { font: { size: 12 } } }
+                },
+                scales: {
+                    y: {
+                        grid: { drawBorder: false, color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: {
+                            callback: function(value) {
+                                return '₩' + (value / 1000).toFixed(0) + 'K';
+                            }
+                        }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 청부액 추이
+        const billingTrendCtx = document.getElementById('billingTrendChart').getContext('2d');
+        new Chart(billingTrendCtx, {
+            type: 'line',
+            data: {
+                labels: ['10월', '11월', '12월', '1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월'],
+                datasets: [{
+                    label: '월 청부액',
+                    data: [308, 308, 308, 385, 550, 770, 1050, 1400, 1750, 2625, 3150, 3900],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { drawBorder: false, color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: {
+                            callback: function(value) {
+                                return '₩' + (value / 1000).toFixed(0) + 'K';
+                            }
+                        }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        function downloadReport() {
+            alert('📥 월별 목표표를 다운로드 하시려면 센터장에게 문의하세요.\n(Excel 형식으로 준비 예정)');
+        }
+
+        function goToDashboard() {
+            window.location.href = 'profit_analysis.html';
+        }
+    </script>
+</body>
+</html>
