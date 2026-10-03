@@ -40,9 +40,7 @@ app.include_router(residents.router, prefix="/api/v1/residents", tags=["resident
 app.include_router(salary.router, prefix="/api/v1/salary", tags=["salary"])
 app.include_router(schedule.router, prefix="/api/v1/schedule", tags=["schedule"])
 
-# API 문서 라우트도 보호
-app.openapi()
-app.setup()
+# API는 자동으로 /docs와 /openapi.json 엔드포인트 제공
 
 # 정적 파일 마운트 비활성화 (API 우선순위 문제 해결)
 # scratchpad_path = str(Path(__file__).parent.parent / "scratchpad")
