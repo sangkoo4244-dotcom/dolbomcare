@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>월별 정산 - 돌봄케어</title>
+    <link rel="stylesheet" href="../design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            color: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-logo { font-size: 24px; }
+        .sidebar-title { font-size: 16px; font-weight: 700; }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border-left: 3px solid transparent;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active {
+            color: #3b82f6;
+            border-left-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .main-layout {
+            margin-left: 250px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .topbar-title h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+            background: var(--bg-light);
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .control-group input,
+        .control-group select {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+        }
+
+        .btn:hover {
+            background: #059669;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid #3b82f6;
+        }
+
+        .summary-card.success {
+            border-left-color: #10b981;
+        }
+
+        .summary-card.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .summary-card.info {
+            border-left-color: #8b5cf6;
+        }
+
+        .card-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .card-meta {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            padding: 12px 20px;
+            text-align: left;
+            background: var(--bg-light);
+            border-bottom: 2px solid var(--border);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        td {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:hover {
+            background: var(--bg-light);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge.approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge.submitted {
+            background: #bfdbfe;
+            color: #1e40af;
+        }
+
+        .badge.paid {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .amount {
+            text-align: right;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+
+        .amount::before {
+            content: '₩';
+        }
+
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                overflow: hidden;
+            }
+
+            .main-layout {
+                margin-left: 0;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-logo">🏥</span>
+            <span class="sidebar-title">돌봄케어</span>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>월별 정산</h1>
+            </div>
+            <div class="user-info">
+                <span id="currentUserName"></span>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Error Message -->
+            <div id="errorContainer"></div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <div class="control-group">
+                    <label>연도</label>
+                    <input type="number" id="yearSelect" min="2020" max="2099">
+                </div>
+                <div class="control-group">
+                    <label>월</label>
+                    <select id="monthSelect">
+                        <option value="1">1월</option>
+                        <option value="2">2월</option>
+                        <option value="3">3월</option>
+                        <option value="4">4월</option>
+                        <option value="5">5월</option>
+                        <option value="6">6월</option>
+                        <option value="7">7월</option>
+                        <option value="8">8월</option>
+                        <option value="9">9월</option>
+                        <option value="10">10월</option>
+                        <option value="11">11월</option>
+                        <option value="12">12월</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="loadSettlementData()">조회</button>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-cards" id="summaryCards"></div>
+
+            <!-- Caregiver Stats Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>요양사별 실적</h3>
+                </div>
+                <table id="caregiverStatsTable">
+                    <thead>
+                        <tr>
+                            <th>요양사</th>
+                            <th style="text-align: center;">청부 건수</th>
+                            <th style="text-align: right;">총 금액</th>
+                            <th style="text-align: center;">승인</th>
+                            <th style="text-align: center;">대기</th>
+                        </tr>
+                    </thead>
+                    <tbody id="caregiverStatsBody">
+                        <tr><td colspan="5" class="empty-state">데이터를 조회해주세요.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Service Stats Table -->
+            <div class="table-container" style="margin-top: 20px;">
+                <div class="table-header">
+                    <h3>서비스별 수익</h3>
+                </div>
+                <table id="serviceStatsTable">
+                    <thead>
+                        <tr>
+                            <th>서비스</th>
+                            <th style="text-align: center;">건수</th>
+                            <th style="text-align: right;">수익</th>
+                        </tr>
+                    </thead>
+                    <tbody id="serviceStatsBody">
+                        <tr><td colspan="3" class="empty-state">데이터를 조회해주세요.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api/v1';
+        let currentUser = null;
+
+        // 한글 서비스명 매핑
+        const serviceNameMap = {
+            'basic_care': '기본요양',
+            'meal_service': '식사지원',
+            'medical_care': '의료관리',
+            'emergency': '응급'
+        };
+
+        // Initialize
+        async function init() {
+            try {
+                // Load current user
+                const userStr = localStorage.getItem('currentUser');
+                if (!userStr) {
+                    window.location.href = '/pages/login.html';
+                    return;
+                }
+
+                currentUser = JSON.parse(userStr);
+                document.getElementById('currentUserName').textContent = `${currentUser.full_name} (${currentUser.role === 'center_manager' ? '센터장' : '요양사'})`;
+
+                // Load sidebar
+                await loadSidebar();
+
+                // Set default month/year
+                const today = new Date();
+                document.getElementById('yearSelect').value = today.getFullYear();
+                document.getElementById('monthSelect').value = today.getMonth() + 1;
+
+                // Load data
+                await loadSettlementData();
+            } catch (error) {
+                console.error('❌ 초기화 오류:', error);
+                showError('초기화 중 오류가 발생했습니다');
+            }
+        }
+
+        async function loadSidebar() {
+            const sidebarNav = document.getElementById('sidebarNav');
+            const menuItems = [
+                { icon: '📊', label: '대시보드', href: 'dashboard.html' },
+                { icon: '🎤', label: '음성기록', href: 'voice_record.html', role: 'caregiver' },
+                { icon: '📋', label: '나의청부', href: 'caregiver_billing.html', role: 'caregiver' },
+                { icon: '💰', label: '나의급여', href: 'my_salary.html', role: 'caregiver' },
+                { icon: '📅', label: '나의일정', href: 'my_schedule.html', role: 'caregiver' },
+                { icon: '👥', label: '직원관리', href: 'staff_management.html', role: 'center_manager' },
+                { icon: '🏥', label: '이용자관리', href: 'resident_management.html' },
+                { icon: '💳', label: '청부관리', href: 'billing_management.html', role: 'center_manager' },
+                { icon: '📊', label: '월별정산', href: 'monthly_settlement.html', role: 'center_manager' },
+                { icon: '📈', label: '수익분석', href: 'profit_analysis.html', role: 'center_manager' }
+            ];
+
+            sidebarNav.innerHTML = menuItems
+                .filter(item => !item.role || item.role === currentUser.role)
+                .map(item => `
+                    <a href="${item.href}" class="nav-item ${item.href === 'monthly_settlement.html' ? 'active' : ''}">
+                        <span>${item.icon}</span>
+                        <span>${item.label}</span>
+                    </a>
+                `)
+                .join('');
+        }
+
+        async function loadSettlementData() {
+            try {
+                const year = parseInt(document.getElementById('yearSelect').value);
+                const month = parseInt(document.getElementById('monthSelect').value);
+                const centerId = currentUser.center_id;
+
+                // Fetch statistics
+                const response = await fetch(
+                    `${API_URL}/records/monthly-statistics?center_id=${centerId}&year=${year}&month=${month}`
+                );
+
+                if (!response.ok) {
+                    throw new Error('정산 데이터 조회 실패');
+                }
+
+                const data = await response.json();
+                if (data.status !== 'success') {
+                    throw new Error(data.detail || '조회 실패');
+                }
+
+                // Update summary cards
+                updateSummaryCards(data.total_summary);
+
+                // Update caregiver stats
+                updateCaregiverStats(data.by_caregiver);
+
+                // Update service stats
+                updateServiceStats(data.by_service);
+
+                hideError();
+            } catch (error) {
+                console.error('❌ 정산 데이터 조회 오류:', error);
+                showError(`정산 데이터 조회 중 오류: ${error.message}`);
+                document.getElementById('summaryCards').innerHTML = '';
+                document.getElementById('caregiverStatsBody').innerHTML = '<tr><td colspan="5" class="empty-state">데이터를 조회할 수 없습니다.</td></tr>';
+                document.getElementById('serviceStatsBody').innerHTML = '<tr><td colspan="3" class="empty-state">데이터를 조회할 수 없습니다.</td></tr>';
+            }
+        }
+
+        function updateSummaryCards(summary) {
+            const html = `
+                <div class="summary-card">
+                    <div class="card-label">총 청부 건수</div>
+                    <div class="card-value">${summary.total_records}</div>
+                    <div class="card-meta">건</div>
+                </div>
+                <div class="summary-card success">
+                    <div class="card-label">총 청부액</div>
+                    <div class="card-value">₩${(summary.total_amount || 0).toLocaleString()}</div>
+                    <div class="card-meta">원</div>
+                </div>
+                <div class="summary-card info">
+                    <div class="card-label">승인됨</div>
+                    <div class="card-value">${summary.approved_count}</div>
+                    <div class="card-meta">건</div>
+                </div>
+                <div class="summary-card warning">
+                    <div class="card-label">대기 중</div>
+                    <div class="card-value">${summary.pending_count}</div>
+                    <div class="card-meta">건</div>
+                </div>
+            `;
+            document.getElementById('summaryCards').innerHTML = html;
+        }
+
+        function updateCaregiverStats(stats) {
+            if (!stats || stats.length === 0) {
+                document.getElementById('caregiverStatsBody').innerHTML = '<tr><td colspan="5" class="empty-state">데이터 없음</td></tr>';
+                return;
+            }
+
+            const html = stats.map(stat => `
+                <tr>
+                    <td><strong>${stat.caregiver_name}</strong></td>
+                    <td style="text-align: center;">${stat.total_records}</td>
+                    <td class="amount">${stat.total_amount.toLocaleString()}</td>
+                    <td style="text-align: center;"><span class="badge approved">${stat.approved_count}</span></td>
+                    <td style="text-align: center;"><span class="badge pending">${stat.pending_count}</span></td>
+                </tr>
+            `).join('');
+
+            document.getElementById('caregiverStatsBody').innerHTML = html;
+        }
+
+        function updateServiceStats(stats) {
+            if (!stats || stats.length === 0) {
+                document.getElementById('serviceStatsBody').innerHTML = '<tr><td colspan="3" class="empty-state">데이터 없음</td></tr>';
+                return;
+            }
+
+            const html = stats.map(stat => `
+                <tr>
+                    <td><strong>${serviceNameMap[stat.service_type] || stat.service_type}</strong></td>
+                    <td style="text-align: center;">${stat.total_records}</td>
+                    <td class="amount">${stat.total_amount.toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('serviceStatsBody').innerHTML = html;
+        }
+
+        function showError(message) {
+            const container = document.getElementById('errorContainer');
+            container.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function hideError() {
+            document.getElementById('errorContainer').innerHTML = '';
+        }
+
+        // Init on load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
