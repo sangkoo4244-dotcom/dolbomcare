@@ -1,12 +1,18 @@
 FROM python:3.11-slim
 
-WORKDIR /app/backend
+FROM python:3.11-slim
 
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r /app/requirements.txt
+WORKDIR /app
 
+# 의존성 설치
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 백엔드 코드 복사
 COPY backend/ ./
 
-EXPOSE 8000
+# 포트 노출
+EXPOSE 8080
 
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Uvicorn 실행
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

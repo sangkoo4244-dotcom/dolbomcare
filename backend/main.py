@@ -2,6 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+import sys
+import os
+from pathlib import Path
+
+# 백엔드 경로를 Python 경로에 추가
+sys.path.insert(0, str(Path(__file__).parent))
+
 from app.api import health
 from app.api import users
 from app.api import billing
@@ -10,8 +17,6 @@ from app.api import residents
 from app.api import salary
 from app.api import schedule
 from app.database import Base, engine
-import os
-from pathlib import Path
 
 # Base.metadata.create_all(bind=engine)  # PostgreSQL 연결 실패 시 서버 시작 불가 → 비활성화
 
