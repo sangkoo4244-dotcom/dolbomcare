@@ -9,11 +9,74 @@ from app.api import records
 from app.api import residents
 from app.api import salary
 from app.api import schedule
-from app.database import Base, engine
+from app.database import Base, engine, SessionLocal
 import os
 from pathlib import Path
+from sqlalchemy import text
 
 # Base.metadata.create_all(bind=engine)
+
+# 데이터베이스 마이그레이션 (자동)
+def run_migrations():
+    """자동 마이그레이션: year_month 컬럼 추가 (SQLite & PostgreSQL 호환)"""
+    try:
+        db = SessionLocal()
+        db_url = str(engine.url)
+
+        # SQLite 또는 PostgreSQL 감지
+        is_postgres = "postgresql" in db_url
+
+        # year_month 컬럼이 없으면 추가
+        if is_postgres:
+            # PostgreSQL 문법
+            db.execute(text("""
+                ALTER TABLE billing_records
+                ADD COLUMN IF NOT EXISTS year_month VARCHAR
+            """))
+            # PostgreSQL에서 year_month 채우기
+            db.execute(text("""
+                UPDATE billing_records
+                SET year_month = TO_CHAR(recorded_date, 'YYYY-MM')
+                WHERE year_month IS NULL AND recorded_date IS NOT NULL
+            """))
+        else:
+            # SQLite 문법
+            try:
+                # SQLite에서 컬럼 존재 여부 확인
+                result = db.execute(text("""
+                    PRAGMA table_info(billing_records)
+                """)).fetchall()
+
+                column_names = [row[1] for row in result]
+
+                if "year_month" not in column_names:
+                    db.execute(text("""
+                        ALTER TABLE billing_records
+                        ADD COLUMN year_month VARCHAR
+                    """))
+
+                    # SQLite에서 year_month 채우기
+                    db.execute(text("""
+                        UPDATE billing_records
+                        SET year_month = strftime('%Y-%m', recorded_date)
+                        WHERE year_month IS NULL AND recorded_date IS NOT NULL
+                    """))
+            except Exception as e:
+                print(f"⚠️  SQLite 마이그레이션 부분 오류: {e}")
+
+        db.commit()
+        print("✅ 마이그레이션 완료: year_month 컬럼 추가됨")
+    except Exception as e:
+        print(f"⚠️  마이그레이션 오류: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+# 서버 시작 전 마이그레이션 실행
+try:
+    run_migrations()
+except Exception as e:
+    print(f"❌ 마이그레이션 실패: {e}")
 
 app = FastAPI(
     title="dolbomcare API",
