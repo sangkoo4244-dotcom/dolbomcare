@@ -535,7 +535,7 @@ async def get_all_center_records(
         Resident.center_id == center_id
     ).order_by(DailyRecord.recorded_date.desc()).all()
 
-    # 해당 센터의 청부 기록
+    # 해당 센터의 청부 기록 (음성 기록과 매칭된 것만)
     billings = db.query(BillingRecord).filter(
         BillingRecord.center_id == center_id
     ).all()
@@ -546,7 +546,7 @@ async def get_all_center_records(
     for b in billings:
         if b.daily_record_id:
             billing_map[b.daily_record_id] = b.amount
-        billing_total += b.amount
+            billing_total += b.amount  # 음성 기록과 매칭된 것만 합산
 
     return {
         "total_records": len(records),
@@ -600,7 +600,7 @@ async def get_today_center_records(
     for b in billings:
         if b.daily_record_id:
             billing_map[b.daily_record_id] = b.amount
-        billing_total += b.amount
+            billing_total += b.amount  # 음성 기록과 매칭된 것만 합산
 
     return {
         "date": today.isoformat(),
