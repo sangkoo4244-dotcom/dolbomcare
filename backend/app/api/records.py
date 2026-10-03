@@ -45,12 +45,37 @@ PATIENT_PAY_RATE = {
     }
 }
 
-# 서비스 유형별 1회 청부액 (등급별)
+# 서비스 유형별 1회 청부액 (등급별) - NHIS 건강보험공단 기준
+# 2등급: 1등급 × 85% | 3등급: 1등급 × 70%
 SERVICE_TYPE_AMOUNTS = {
-    "basic_care": {1: 78875, 2: 69975, 3: 59650, 4: 54125, 5: 11750},
-    "meal_service": {1: 39437, 2: 34987, 3: 29825, 4: 27062, 5: 5875},
-    "medical_care": {1: 118312, 2: 104962, 3: 89475, 4: 81187, 5: 17625},
-    "emergency": {1: 157750, 2: 139950, 3: 119300, 4: 108250, 5: 23500}
+    "basic_care": {
+        1: 78875,
+        2: 67043,   # 85%
+        3: 55211,   # 70%
+        4: 55211,   # 70% (4등급 = 3등급)
+        5: 55211    # 70% (5등급 = 3등급)
+    },
+    "meal_service": {
+        1: 39437,
+        2: 33521,   # 85%
+        3: 27605,   # 70%
+        4: 27605,
+        5: 27605
+    },
+    "medical_care": {
+        1: 118312,
+        2: 100565,  # 85%
+        3: 82818,   # 70%
+        4: 82818,
+        5: 82818
+    },
+    "emergency": {
+        1: 157750,
+        2: 134087,  # 85%
+        3: 110425,  # 70%
+        4: 110425,
+        5: 110425
+    }
 }
 
 router = APIRouter()
@@ -102,16 +127,15 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Resident not found")
         print(f"[DEBUG] 이용자 찾음: {resident.id}, center_id={resident.center_id}")
 
-        # 청계 계산
+        # NHIS 기준 청부 계산: 서비스 유형 + 요양 등급
         with open("/tmp/debug.log", "a") as f:
-            f.write(f"  Calculating billing...\n")
+            f.write(f"  Calculating billing (NHIS standard)...\n")
         care_grade = resident.care_grade or 1
-        client_type = resident.client_type or "일반"
-        rates = PATIENT_PAY_RATE.get("재가급여", {})
-        patient_rate = rates.get(client_type, 0.15)
-        insurance_rate = 1 - patient_rate
-        base_amount = VISIT_AMOUNTS_BY_GRADE.get(care_grade, 78875)
-        amount = int(base_amount * insurance_rate)
+        service_type = request.service_type or "basic_care"
+
+        # SERVICE_TYPE_AMOUNTS에서 청부액 조회
+        service_rates = SERVICE_TYPE_AMOUNTS.get(service_type, SERVICE_TYPE_AMOUNTS["basic_care"])
+        amount = service_rates.get(care_grade, service_rates[1])
 
         # DailyRecord 생성
         with open("/tmp/debug.log", "a") as f:
@@ -793,16 +817,10 @@ async def create_voice_record(
         db.flush()
         
         care_grade = resident.care_grade or 1
-        client_type = resident.client_type or "일반"
 
-        # ✅ 청부액 계산 통일: create_record와 동일한 방식
-        service_category = "재가급여"
-        category_rates = PATIENT_PAY_RATE.get(service_category, PATIENT_PAY_RATE["재가급여"])
-        patient_rate = category_rates.get(client_type, 0.15)
-        insurance_rate = 1 - patient_rate
-
-        base_amount = SERVICE_TYPE_AMOUNTS[service_type].get(care_grade, 78875)
-        billing_amount = int(base_amount * insurance_rate)
+        # NHIS 기준: 서비스 유형 + 요양 등급별 청부액 (건강보험공단 정산액)
+        service_rates = SERVICE_TYPE_AMOUNTS.get(service_type, SERVICE_TYPE_AMOUNTS["basic_care"])
+        billing_amount = service_rates.get(care_grade, service_rates[1])
 
         billing_record = BillingRecord(
             caregiver_id=caregiver_id,
