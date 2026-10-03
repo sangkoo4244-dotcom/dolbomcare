@@ -153,10 +153,13 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 - **문제**: jose, email-validator 패키지 누락
 - **해결**: python-jose, email-validator, bcrypt 추가
 
-#### 5. Backend 데이터베이스 자동 생성 비활성화
+#### 5. ⚠️ Backend 데이터베이스 자동 생성 비활성화 (매우 중요!)
+- **규칙**: main.py 16번 줄의 `Base.metadata.create_all(bind=engine)` 반드시 주석 처리!
 - **이유**: PostgreSQL 연결 실패 시 서버 시작 불가
-- **현재**: main.py에서 Base.metadata.create_all() 주석 처리
-- **향후**: 데이터베이스 연동 후 활성화
+- **위험**: 활성화 상태로 서버 시작 → 모든 테이블 초기화 → 전체 데이터 손실!
+- **2026-10-03 교훈**: 비활성화 상태 확인 안 했다가 데이터 손실 (VoiceRecords, Salaries 등)
+- **확인 방법**: Backend 시작 전에 항상 main.py 16번 줄 확인
+- **현재**: 주석 처리됨 ✅
 
 ---
 

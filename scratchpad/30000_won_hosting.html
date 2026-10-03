@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>월 3만원대 호스팅 - Hetzner vs Vultr</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { color: #dc2626; border-bottom: 3px solid #dc2626; padding-bottom: 10px; }
+        h2 { color: #1f2937; margin-top: 30px; border-left: 4px solid #dc2626; padding-left: 15px; }
+        .best { background: #fee2e2; border-left: 4px solid #dc2626; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .card { background: #f9fafb; border: 1px solid #e5e7eb; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .price { font-size: 32px; font-weight: 700; color: #dc2626; margin: 10px 0; }
+        .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .comparison-item { background: #f9fafb; border: 2px solid #e5e7eb; padding: 20px; border-radius: 8px; }
+        .comparison-item.winner { border-color: #dc2626; background: #fef2f2; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #e5e7eb; padding: 12px; text-align: left; }
+        th { background: #f3f4f6; font-weight: 600; }
+        .pros { color: #059669; font-weight: 600; }
+        .cons { color: #dc2626; font-weight: 600; }
+        .star { color: #fbbf24; font-size: 20px; }
+        .step { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 15px 0; border-radius: 4px; }
+        code { background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; }
+        ul { line-height: 2; }
+        .badge { display: inline-block; background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin: 2px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 월 3만원대 호스팅 완벽 가이드</h1>
+        <p style="font-size: 16px; color: #666;">
+            <strong>FastAPI + PostgreSQL 배포 가능한 가장 저렴한 옵션</strong><br>
+            Hetzner (€3) vs Vultr ($2.5) 비교
+        </p>
+
+        <!-- ============ 최고 추천 ============ -->
+        <div class="best">
+            <h2><span class="star">⭐⭐⭐⭐⭐</span> 최고 추천: Hetzner Cloud (€3 = ₩4,000/월)</h2>
+
+            <div class="price">€3/월 ≈ ₩4,000</div>
+
+            <h3><span class="pros">✅ 왜 Hetzner인가?</span></h3>
+            <ul>
+                <li><strong>가격</strong>: €3/월 (Vultr보다 저렴)</li>
+                <li><strong>성능</strong>: 1 vCPU, 1GB RAM, 25GB SSD (Vultr보다 좋음)</li>
+                <li><strong>네트워크</strong>: 매우 빠른 성능 (독일 데이터센터)</li>
+                <li><strong>신뢰도</strong>: 독일 회사, 유럽 기준 (엄격한 규제)</li>
+                <li><strong>커뮤니티</strong>: 매우 활발 (한국인 유저 많음)</li>
+                <li><strong>지원</strong>: 영문이지만 응답 빠름 (24시간)</li>
+            </ul>
+
+            <h3><span class="cons">⚠️ 단점</span></h3>
+            <ul>
+                <li>한국 기술지원 없음 (영문 위주)</li>
+                <li>서버 위치: 독일/핀란드 (지연 150-200ms)</li>
+            </ul>
+
+            <h3>🎯 추천 이유</h3>
+            <p style="font-size: 16px; font-weight: 600; color: #991b1b;">
+                <strong>성능 대비 가격이 최고</strong><br>
+                같은 사양을 다른 곳에서 구하면 ₩10만대인데, Hetzner는 ₩4,000에 제공
+            </p>
+        </div>
+
+        <!-- ============ 비교표 ============ -->
+        <h2>📊 Hetzner vs Vultr vs AWS</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>항목</th>
+                    <th style="background: #fef2f2;">🏆 Hetzner</th>
+                    <th>Vultr</th>
+                    <th>AWS Lightsail</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>월 비용</strong></td>
+                    <td style="background: #fef2f2; font-weight: 600;">€3 (₩4,000)</td>
+                    <td>$2.5 (₩3,250)</td>
+                    <td>₩100만</td>
+                </tr>
+                <tr>
+                    <td><strong>CPU</strong></td>
+                    <td style="background: #fef2f2;">1 vCore (충분)</td>
+                    <td>1 vCore</td>
+                    <td>1 vCore</td>
+                </tr>
+                <tr>
+                    <td><strong>RAM</strong></td>
+                    <td style="background: #fef2f2;">1GB ⭐</td>
+                    <td>512MB</td>
+                    <td>512MB</td>
+                </tr>
+                <tr>
+                    <td><strong>스토리지</strong></td>
+                    <td style="background: #fef2f2;">25GB SSD</td>
+                    <td>10GB SSD</td>
+                    <td>20GB</td>
+                </tr>
+                <tr>
+                    <td><strong>대역폭</strong></td>
+                    <td style="background: #fef2f2;">1Gbps 무제한</td>
+                    <td>1TB/월</td>
+                    <td>제한 없음</td>
+                </tr>
+                <tr>
+                    <td><strong>한국 지원</strong></td>
+                    <td style="background: #fef2f2;">❌ 영문</td>
+                    <td>❌ 영문</td>
+                    <td>✅ 한국</td>
+                </tr>
+                <tr>
+                    <td><strong>한국 서버</strong></td>
+                    <td style="background: #fef2f2;">❌ 독일/핀란드</td>
+                    <td>❌ 일본/싱가포르</td>
+                    <td>✅ Seoul</td>
+                </tr>
+                <tr>
+                    <td><strong>추천도</strong></td>
+                    <td style="background: #fef2f2; font-weight: 600;">⭐⭐⭐⭐⭐</td>
+                    <td>⭐⭐⭐⭐</td>
+                    <td>⭐⭐</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ============ 상세 비교 ============ -->
+        <h2>🔍 상세 비교</h2>
+
+        <div class="comparison">
+            <div class="comparison-item winner">
+                <h3>🏆 Hetzner Cloud</h3>
+                <div class="price">€3/월</div>
+
+                <h4><span class="pros">✅ 장점</span></h4>
+                <ul style="font-size: 14px;">
+                    <li>가장 저렴 (€3)</li>
+                    <li>RAM 1GB (넉넉함)</li>
+                    <li>SSD 25GB (충분)</li>
+                    <li>네트워크 빠름</li>
+                    <li>비용 대비 성능 최고</li>
+                </ul>
+
+                <h4><span class="cons">❌ 단점</span></h4>
+                <ul style="font-size: 14px;">
+                    <li>해외 서버 (200ms)</li>
+                    <li>영문만</li>
+                    <li>개인정보 해외</li>
+                </ul>
+
+                <p style="margin-top: 15px; font-weight: 600; color: #991b1b;">
+                    ⭐ <strong>최고 추천</strong>
+                </p>
+            </div>
+
+            <div class="comparison-item">
+                <h3>Vultr</h3>
+                <div class="price">$2.5/월</div>
+
+                <h4><span class="pros">✅ 장점</span></h4>
+                <ul style="font-size: 14px;">
+                    <li>더 저렴 ($2.5)</li>
+                    <li>계정 개설 빠름</li>
+                    <li>좋은 커뮤니티</li>
+                    <li>일본 서버 선택 가능</li>
+                </ul>
+
+                <h4><span class="cons">❌ 단점</span></h4>
+                <ul style="font-size: 14px;">
+                    <li>RAM 512MB (조금 적음)</li>
+                    <li>SSD 10GB (작음)</li>
+                    <li>대역폭 제한 (1TB)</li>
+                    <li>Hetzner보다 성능 떨어짐</li>
+                </ul>
+
+                <p style="margin-top: 15px;">
+                    ✅ <strong>2순위</strong> (더 저렴하지만 성능↓)
+                </p>
+            </div>
+        </div>
+
+        <!-- ============ 한국 서버 옵션 ============ -->
+        <h2>🇰🇷 한국 서버가 필요하면?</h2>
+
+        <div class="card">
+            <h3>가비아 Linux 호스팅 (₩30,000/월)</h3>
+            <div class="price">₩30,000/월</div>
+
+            <h4><span class="pros">✅ 장점</span></h4>
+            <ul>
+                <li>한국 회사 (신뢰도 높음)</li>
+                <li>한국 서버 (지연 1-5ms)</li>
+                <li>한국 기술지원 (전화 가능)</li>
+                <li>개인정보보호법 준수</li>
+            </ul>
+
+            <h4><span class="cons">❌ 단점</span></h4>
+            <ul>
+                <li>Hetzner보다 7.5배 비쌈</li>
+                <li>성능: 공유 호스팅 (전용 서버 아님)</li>
+                <li>FastAPI 설정이 복잡할 수 있음 (Linux 호스팅은 PHP 중심)</li>
+                <li>스케일링 제한</li>
+            </ul>
+
+            <p style="margin-top: 15px; font-weight: 600; color: #991b1b;">
+                💡 <strong>파일럿 성공 후 사용</strong> (Phase 2부터 추천)
+            </p>
+        </div>
+
+        <!-- ============ 추천 선택 ============ -->
+        <h2>🎯 당신 상황별 추천</h2>
+
+        <div class="comparison">
+            <div class="comparison-item">
+                <h3>상황 1️⃣</h3>
+                <p><strong>파일럿 검증 (3-6개월)</strong></p>
+                <p>센터와 계약 X, 기능만 확인</p>
+                <hr>
+                <p style="font-weight: 600; color: #991b1b;">👉 Hetzner Cloud (€3)</p>
+                <p>이유: 가장 저렴 + 성능 좋음</p>
+            </div>
+
+            <div class="comparison-item winner">
+                <h3>상황 2️⃣</h3>
+                <p><strong>센터 1개와 계약 (본격 시작)</strong></p>
+                <p>실제 담당자 사용, 안정성 필요</p>
+                <hr>
+                <p style="font-weight: 600; color: #991b1b;">👉 가비아 또는 AWS Lightsail</p>
+                <p>이유: 한국 서버 필수</p>
+            </div>
+        </div>
+
+        <!-- ============ Hetzner 가입 & 배포 ============ -->
+        <h2>🚀 Hetzner 가입 & 배포 (3단계, 30분)</h2>
+
+        <div class="step">
+            <h3>Step 1: Hetzner 계정 생성 (5분)</h3>
+            <ul>
+                <li>사이트: <code>https://www.hetzner.com/cloud</code></li>
+                <li>회원가입: 이메일 + 신용카드</li>
+                <li>첫 결제: €3 (약 ₩4,000)</li>
+                <li>혹시 USD로 표시되면 신용카드 국가 설정 확인</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: 서버 생성 (10분)</h3>
+            <ul>
+                <li>Hetzner 대시보드 → Servers → Create Server</li>
+                <li><strong>Location</strong>: Falkenstein (독일) 선택</li>
+                <li><strong>Image</strong>: Ubuntu 22.04</li>
+                <li><strong>Type</strong>: CPX11 (₩4,000/월) - <strong>추천</strong></li>
+                <li><strong>SSH Key</strong>: 새로 생성 또는 기존 키 업로드</li>
+                <li><strong>Create</strong> 클릭</li>
+            </ul>
+            <p style="background: #eff6ff; padding: 10px; margin-top: 10px; border-radius: 4px;">
+                <code>CPX11</code> = 1 vCPU, 1GB RAM, 25GB SSD (€3)
+            </p>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: FastAPI + PostgreSQL 배포 (15분)</h3>
+
+            <p><strong>Step 3-1: 서버에 접속</strong></p>
+            <pre style="background: #f3f4f6; padding: 15px; border-radius: 4px; overflow-x: auto;">ssh -i ~/.ssh/id_rsa root@your-server-ip</pre>
+
+            <p><strong>Step 3-2: 기본 패키지 설치</strong></p>
+            <pre style="background: #f3f4f6; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>apt update && apt upgrade -y
+apt install -y python3.11 python3-pip postgresql postgresql-contrib nginx git</code></pre>
+
+            <p><strong>Step 3-3: PostgreSQL 설정</strong></p>
+            <pre style="background: #f3f4f6; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>sudo -u postgres psql
+CREATE DATABASE dolbomcare_db;
+CREATE USER dolbomcare WITH PASSWORD 'your_password';
+ALTER ROLE dolbomcare SET client_encoding TO 'utf8';
+ALTER ROLE dolbomcare SET default_transaction_isolation TO 'read committed';
+GRANT ALL PRIVILEGES ON DATABASE dolbomcare_db TO dolbomcare;
+\q</code></pre>
+
+            <p><strong>Step 3-4: FastAPI 배포</strong></p>
+            <pre style="background: #f3f4f6; padding: 15px; border-radius: 4px; overflow-x: auto;"><code># 프로젝트 클론
+git clone https://github.com/your-repo/dolbomcare.git
+cd dolbomcare/backend
+
+# 의존성 설치
+pip install -r requirements.txt
+
+# FastAPI 백그라운드 실행
+nohup uvicorn main:app --host 0.0.0.0 --port 8000 > /var/log/dolbomcare.log 2>&1 &</code></pre>
+
+            <p><strong>Step 3-5: Nginx 리버스 프록시 설정</strong></p>
+            <pre style="background: #f3f4f6; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>sudo nano /etc/nginx/sites-available/default
+
+# 다음을 추가:
+server {
+    listen 80;
+    server_name your-domain.com;  # 또는 IP 주소
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+# 저장 후:
+sudo systemctl restart nginx</code></pre>
+
+            <p><strong>Step 3-6: SSL 인증서 (Let's Encrypt)</strong></p>
+            <pre style="background: #f3f4f6; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>apt install certbot python3-certbot-nginx -y
+certbot --nginx -d your-domain.com</code></pre>
+
+            <p><strong>✅ 완료!</strong> 브라우저에서 확인: <code>http://your-server-ip</code></p>
+        </div>
+
+        <!-- ============ 비용 계산 ============ -->
+        <h2>💰 연간 비용 예상</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>서비스</th>
+                    <th>월 비용</th>
+                    <th>연간</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: #fef2f2;">
+                    <td><strong>Hetzner Cloud</strong></td>
+                    <td><strong>€3 (₩4,000)</strong></td>
+                    <td><strong>€36 (₩48,000)</strong></td>
+                </tr>
+                <tr>
+                    <td>Vultr</td>
+                    <td>$2.5 (₩3,250)</td>
+                    <td>$30 (₩39,000)</td>
+                </tr>
+                <tr style="background: #fee2e2;">
+                    <td>가비아 (한국)</td>
+                    <td>₩30,000</td>
+                    <td>₩360,000</td>
+                </tr>
+                <tr style="background: #fee2e2;">
+                    <td>AWS Lightsail</td>
+                    <td>₩100만+</td>
+                    <td>₩1,200만+</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ============ 팁 ============ -->
+        <h2>💡 Hetzner 유용한 팁</h2>
+
+        <div class="card">
+            <h4>1️⃣ 자동 재부팅 설정</h4>
+            <p>메모리 누수 방지 (선택사항)</p>
+            <pre style="background: #f3f4f6; padding: 10px; border-radius: 4px;">crontab -e
+# 매일 03:00 재부팅
+0 3 * * * /sbin/reboot</pre>
+        </div>
+
+        <div class="card">
+            <h4>2️⃣ 자동 백업</h4>
+            <p>PostgreSQL 백업 (매일 02:00)</p>
+            <pre style="background: #f3f4f6; padding: 10px; border-radius: 4px;">0 2 * * * pg_dump -U dolbomcare dolbomcare_db > /backup/$(date +\%Y\%m\%d).sql</pre>
+        </div>
+
+        <div class="card">
+            <h4>3️⃣ 모니터링</h4>
+            <p>서버 상태 확인 (CPU, 메모리, 디스크)</p>
+            <pre style="background: #f3f4f6; padding: 10px; border-radius: 4px;">htop  # 또는
+free -h  # 메모리 확인
+df -h    # 디스크 확인</pre>
+        </div>
+
+        <!-- ============ 문제 해결 ============ -->
+        <h2>⚠️ 자주하는 문제 & 해결</h2>
+
+        <div class="card">
+            <h3>Q1: 한국에서 느린데?</h3>
+            <p>
+                ✅ 정상입니다. 독일 서버라서 200ms 지연 발생.<br>
+                파일럿 검증용으로는 괜찮고, 실제 센터 운영 시 한국 서버로 마이그레이션.
+            </p>
+        </div>
+
+        <div class="card">
+            <h3>Q2: 자동 로그인이 안 되요</h3>
+            <p>
+                ✅ PostgreSQL 비밀번호 확인<br>
+                <code>.env</code> 파일에서 DATABASE_URL 확인
+            </p>
+        </div>
+
+        <div class="card">
+            <h3>Q3: 메모리가 부족해요</h3>
+            <p>
+                ✅ 1GB는 1-2개 센터 (약 50-100명 사용자) 충분<br>
+                더 필요하면 Hetzner에서 업그레이드 (CX21: €8/월)
+            </p>
+        </div>
+
+        <div class="card">
+            <h3>Q4: 신용카드가 거절되요</h3>
+            <p>
+                ✅ 국제 결제 가능한 카드 사용<br>
+                또는 PayPal 사용 가능
+            </p>
+        </div>
+
+        <!-- ============ 최종 결론 ============ -->
+        <div class="best">
+            <h2>🎯 최종 결론</h2>
+
+            <p style="font-size: 18px; font-weight: 700; color: #991b1b; margin: 20px 0;">
+                <span class="star">⭐⭐⭐⭐⭐</span> Hetzner Cloud (€3/월) 추천
+            </p>
+
+            <h3>왜 Hetzner를 선택할까?</h3>
+            <ul style="font-size: 16px;">
+                <li><strong>₩4,000/월</strong> - 가장 저렴한 수준</li>
+                <li><strong>1GB RAM + 25GB SSD</strong> - 성능 충분</li>
+                <li><strong>FastAPI + PostgreSQL</strong> - 완벽 호환</li>
+                <li><strong>비용 대비 성능</strong> - 최고 수준</li>
+            </ul>
+
+            <h3>배포 순서</h3>
+            <ol style="font-size: 16px;">
+                <li><strong>지금</strong>: Hetzner에서 파일럿 검증 (3-6개월)</li>
+                <li><strong>센터 계약 시</strong>: 가비아 또는 AWS Seoul로 마이그레이션</li>
+                <li><strong>확대 시</strong>: 네이버/카카오 클라우드로 확장</li>
+            </ol>
+
+            <p style="margin-top: 20px; font-size: 14px; color: #666; background: #fef2f2; padding: 15px; border-radius: 4px;">
+                💡 <strong>Tip:</strong> Hetzner에서 시작하면<br>
+                3년 운영해도 비용이 ₩144,000 (AWS는 3년에 ₩3,600만 ❌)
+            </p>
+        </div>
+
+        <p style="margin-top: 30px; color: #999; font-size: 13px;">
+            🔗 Hetzner Cloud: https://www.hetzner.com/cloud<br>
+            🔗 Vultr: https://www.vultr.com<br>
+            📅 최종 업데이트: 2026-10-03
+        </p>
+    </div>
+</body>
+</html>

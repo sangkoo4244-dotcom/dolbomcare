@@ -126,3 +126,20 @@ class BillingRecord(Base):
     is_archived = Column(Boolean, default=False, index=True)  # 아카이브 여부
     archived_at = Column(DateTime, nullable=True)  # 아카이브 시간
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class Schedule(Base):
+    __tablename__ = "schedules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    caregiver_id = Column(Integer, ForeignKey("users.id"), index=True)  # 요양사
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)  # 이용자
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+
+    scheduled_date = Column(DateTime, index=True)  # 예정 날짜/시간
+    service_type = Column(String, default="basic_care")  # 'basic_care', 'meal_service', 'medical_care'
+
+    status = Column(String, default="scheduled")  # 'scheduled', 'completed', 'cancelled'
+    notes = Column(Text, nullable=True)  # 특이사항
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

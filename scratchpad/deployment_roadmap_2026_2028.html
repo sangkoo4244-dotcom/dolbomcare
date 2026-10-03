@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>돌봄케어 배포 로드맵 2026-2028</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { color: #10b981; border-bottom: 3px solid #10b981; padding-bottom: 10px; }
+        h2 { color: #1f2937; margin-top: 30px; border-left: 4px solid #667eea; padding-left: 15px; }
+        h3 { color: #3730a3; margin-top: 20px; }
+        .phase { background: #f0fdf4; border-left: 5px solid #10b981; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .timeline { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
+        .timeline-item { flex: 1; min-width: 200px; background: #f3f4f6; padding: 15px; border-radius: 4px; }
+        .timeline-item h4 { margin: 0 0 10px 0; color: #1f2937; }
+        .timeline-item p { margin: 5px 0; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #e5e7eb; padding: 12px; text-align: left; }
+        th { background: #f3f4f6; font-weight: 600; color: #1f2937; }
+        tr:hover { background: #f9fafb; }
+        .risk { background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 15px 0; border-radius: 4px; }
+        .success { background: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 15px 0; border-radius: 4px; }
+        .budget { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 15px 0; border-radius: 4px; }
+        ul { line-height: 1.8; }
+        .highlight { background: #fef3c7; padding: 2px 6px; border-radius: 3px; font-weight: 500; }
+        code { background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; }
+        .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .comparison-item { background: #f9fafb; padding: 15px; border-radius: 4px; border: 1px solid #e5e7eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 돌봄케어(Dolbomcare) 배포 로드맵 2026-2028</h1>
+
+        <p style="font-size: 16px; color: #666;">
+            한국 요양관리 플랫폼(케어포, 이지케어) + 국제 케어 플랫폼(AxisCare, ShiftCare) 분석을 바탕으로 한
+            <strong>MVP → 전국 확대</strong> 3단계 배포 전략
+        </p>
+
+        <!-- ============ PHASE 1: MVP ============ -->
+        <div class="phase">
+            <h2>📍 PHASE 1: MVP 파일럿 (2026년 6-9월) - 서울 1개 센터</h2>
+
+            <h3>✅ 목표</h3>
+            <ul>
+                <li><strong>1개 센터에서 완전 운영</strong>: 요양사 20-30명, 이용자 50-100명</li>
+                <li><strong>핵심 기능 검증</strong>: 로그인 → 일정 관리 → 청부 기록 → 급여 정산</li>
+                <li><strong>운영 프로세스 정립</strong>: 기술 지원, 데이터 보안, 규정준수</li>
+                <li><strong>초기 고객 확보 (Reference customer)</strong>: 추후 마케팅의 9.2배 채택률 향상</li>
+            </ul>
+
+            <h3>⚡ 기술 스택 (국제 플랫폼 표준)</h3>
+            <div class="comparison">
+                <div class="comparison-item">
+                    <strong>클라우드 인프라</strong>
+                    <ul>
+                        <li>AWS Seoul Region (ap-northeast-2)</li>
+                        <li>RDS PostgreSQL 15 (자동 백업)</li>
+                        <li>Auto Scaling (요청 증가 시)</li>
+                        <li>CloudFront CDN (모바일 앱 배포)</li>
+                    </ul>
+                </div>
+                <div class="comparison-item">
+                    <strong>보안 & 규정준수</strong>
+                    <ul>
+                        <li>SSL/TLS 암호화</li>
+                        <li>개인정보 암호화 저장 (AES-256)</li>
+                        <li>접근 제어 (RBAC)</li>
+                        <li>감사 로그 (audit trail)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🎯 파일럿 센터 선정 기준</h3>
+            <ul>
+                <li><span class="highlight">Location</span>: 서울 강남/서초/송파 (기술 지원 접근성)</li>
+                <li><span class="highlight">Size</span>: 20-30명 요양사 (조직 구조 복잡하지 않음)</li>
+                <li><span class="highlight">Tech-savviness</span>: 센터장이 새로운 기술 개방적</li>
+                <li><span class="highlight">Pain point</span>: 현재 수작업 급여/청부 관리 (명확한 ROI)</li>
+                <li><span class="highlight">Commitment</span>: 4개월 집중 사용 약속 + 피드백</li>
+            </ul>
+
+            <h3>📅 타임라인</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>6월 (4주)</h4>
+                    <p><strong>센터 선정 & 계약</strong></p>
+                    <ul style="font-size: 13px; margin: 5px 0;">
+                        <li>5-10개 센터 인터뷰</li>
+                        <li>서비스 레벨 협정(SLA) 작성</li>
+                        <li>기술 지원 팀 배치</li>
+                    </ul>
+                </div>
+                <div class="timeline-item">
+                    <h4>7월 (4주)</h4>
+                    <p><strong>구현 & 온보딩</strong></p>
+                    <ul style="font-size: 13px; margin: 5px 0;">
+                        <li>데이터 마이그레이션</li>
+                        <li>스태프 훈련 (3일)</li>
+                        <li>시스템 안정화</li>
+                    </ul>
+                </div>
+                <div class="timeline-item">
+                    <h4>8월 (4주)</h4>
+                    <p><strong>운영 & 버그 수정</strong></p>
+                    <ul style="font-size: 13px; margin: 5px 0;">
+                        <li>일일 지원</li>
+                        <li>피드백 수집</li>
+                        <li>기능 개선</li>
+                    </ul>
+                </div>
+                <div class="timeline-item">
+                    <h4>9월 (4주)</h4>
+                    <p><strong>성과 검증 & 다음 단계 계획</strong></p>
+                    <ul style="font-size: 13px; margin: 5px 0;">
+                        <li>ROI 측정</li>
+                        <li>케이스 스터디 작성</li>
+                        <li>Phase 2 준비</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>💰 예상 비용</h3>
+            <div class="budget">
+                <ul>
+                    <li><strong>AWS 클라우드</strong>: ~₩150만/월 (서버, DB, 대역폭)</li>
+                    <li><strong>보안 인증</strong>: ISO 27001 사전심사 ~₩300만</li>
+                    <li><strong>인력</strong>: 기술 지원 담당자 1명, 개발자 0.5명 (지속 개선)</li>
+                    <li><strong>합계 Phase 1</strong>: ~₩800만 (4개월)</li>
+                </ul>
+            </div>
+
+            <div class="success">
+                <strong>✅ Phase 1 성공 지표</strong>
+                <ul>
+                    <li>일 가용성 99% 이상</li>
+                    <li>센터 만족도 4.5/5.0 이상</li>
+                    <li>기능 사용률 80% 이상 (일정관리, 청부 기록)</li>
+                    <li>운영 비용 30% 절감 (대비 수작업)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ============ PHASE 2: 지역 확대 ============ -->
+        <div class="phase">
+            <h2>🌍 PHASE 2: 지역 확대 (2026년 10월 - 2027년 3월) - 서울 + 경기 20개 센터</h2>
+
+            <h3>✅ 목표</h3>
+            <ul>
+                <li><strong>고객 규모</strong>: 20개 센터 (요양사 400-500명, 이용자 1,000-1,500명)</li>
+                <li><strong>지역</strong>: 서울 (기축) + 경기도 (인접)</li>
+                <li><strong>마케팅 채택</strong>: Phase 1 파일럿 센터를 Reference 고객으로 활용 (9.2배 효과)</li>
+                <li><strong>기술 성숙도</strong>: 자동화된 배포 파이프라인, 기술 지원 체계 확립</li>
+            </ul>
+
+            <h3>📊 마케팅 전략 (한국 업체 분석)</h3>
+            <ul>
+                <li><span class="highlight">직접 영업</span>: 한국 요양사협회, 센터 협회 파트너십 (케어포, 이지케어 사례)</li>
+                <li><span class="highlight">Reference 고객</span>: Phase 1 센터 방문 후기 + ROI 사례</li>
+                <li><span class="highlight">온라인</span>: 블로그 (급여/청부 계산 가이드), YouTube (기능 데모)</li>
+                <li><span class="highlight">제휴</span>: 회계/세무 사무소 (급여정산 자동화 추천)</li>
+                <li><span class="highlight">판매 사이클</span>: 평균 125일 (영업) + 8-10주 (구현) = 6-8개월</li>
+            </ul>
+
+            <h3>📅 실행 타임라인</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>기간</th>
+                        <th>마일스톤</th>
+                        <th>주요 활동</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>10월 (4주)</strong></td>
+                        <td>고객 확보 시작</td>
+                        <td>요양사협회 MOU 체결, 영업팀 구성, 가격 정책 결정</td>
+                    </tr>
+                    <tr>
+                        <td><strong>11-12월 (8주)</strong></td>
+                        <td>5-10개 센터 영업</td>
+                        <td>데모, 계약 체결, 데이터 마이그레이션 계획</td>
+                    </tr>
+                    <tr>
+                        <td><strong>1월 (4주)</strong></td>
+                        <td>구현 가속화</td>
+                        <td>4-5개 센터 동시 온보딩, 기술 지원팀 확대</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2월 (4주)</strong></td>
+                        <td>기존 고객 최적화</td>
+                        <td>Phase 1-2 고객 안정화, 피드백 수집, 기능 개선</td>
+                    </tr>
+                    <tr>
+                        <td><strong>3월 (4주)</strong></td>
+                        <td>검증 & 확대 준비</td>
+                        <td>16개 센터 운영 중, Phase 3 전략 수립</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>💰 예상 비용 & 수익</h3>
+            <div class="budget">
+                <p><strong>운영 비용</strong></p>
+                <ul>
+                    <li>AWS 클라우드: ~₩400만/월 (20개 센터, 더 많은 데이터)</li>
+                    <li>인력: 영업 2명, 기술 지원 2명, 개발 1명</li>
+                    <li>마케팅: ₩200만/월 (온라인, 협회 활동)</li>
+                    <li><strong>월 운영 비용: ~₩1,500만</strong></li>
+                </ul>
+                <p style="margin-top: 15px;"><strong>예상 매출</strong></p>
+                <ul>
+                    <li>가격 정책: 센터당 ₩300만-500만/월 (요양사 수, 기능 기준)</li>
+                    <li>평균 20개 센터 × ₩400만 = <span class="highlight">₩8,000만/월</span></li>
+                    <li>연간 예상: ~₩9.6억 (4개월 6개월분 계산)</li>
+                </ul>
+            </div>
+
+            <div class="risk">
+                <strong>⚠️ Phase 2 주요 위험</strong>
+                <ul>
+                    <li><strong>판매 사이클 연장</strong>: 계획보다 영업이 느릴 수 있음 → 초기 목표를 10개로 낮추고 3개월 후 평가</li>
+                    <li><strong>기술 지원 부족</strong>: 빠른 확대로 고객 만족도 하락 → 기술 지원 팀 사전 확대 필수</li>
+                    <li><strong>경쟁사 응전</strong>: 케어포, 이지케어가 기능 강화 → 차별점 강조 (한국식 급여 정산, 청부 워크플로우)</li>
+                    <li><strong>데이터 보안 문제</strong>: 개인정보 유출 사건 시 이미지 손상 → ISO 27001 인증 완료 필수</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ============ PHASE 3: 전국 확대 ============ -->
+        <div class="phase">
+            <h2>🗺️ PHASE 3: 전국 확대 & 생태계 (2027년 4월 - 2028년) - 전국 150-200개 센터</h2>
+
+            <h3>✅ 목표</h3>
+            <ul>
+                <li><strong>고객 규모</strong>: 150-200개 센터 (요양사 3,000-4,000명, 이용자 10,000명+)</li>
+                <li><strong>지역</strong>: 서울 → 경기 → 인천 → 부산/대구/대전 (인구 밀도 순)</li>
+                <li><strong>생태계</strong>: 의료기관 연계, 보호자 앱, 자동 청구 시스템</li>
+                <li><strong>수익</strong>: 월 ₩50억+ (종속 기업 전환 가능 규모)</li>
+            </ul>
+
+            <h3>🏥 의료기관 & 정부 연계</h3>
+            <p>한국 케어포, 이지케어의 경우 정부 의료정보화 사업(2026년 통합 돌봄 시스템)과 연계되어 전국 확대 달성</p>
+            <ul>
+                <li><strong>정부 지원</strong>: 보건복지부 "통합 돌봄" 시범사업 참여 (30개 지자체)</li>
+                <li><strong>요양기관 인증</strong>: 대한요양기관협회 표준 시스템 인정</li>
+                <li><strong>의료 데이터 연계</strong>: 건강보험심사평가원 청구 시스템 직연</li>
+                <li><strong>보호자 앱</strong>: iOS/Android 독립 앱 (이용자 상태 실시간 공유)</li>
+            </ul>
+
+            <h3>💰 수익 모델 확대</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>제품/서비스</th>
+                        <th>대상</th>
+                        <th>가격</th>
+                        <th>예상 고객</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>코어 SaaS</strong> (일정, 청부, 급여)</td>
+                        <td>요양 센터</td>
+                        <td>₩300-500만/월</td>
+                        <td>150-200개 센터</td>
+                    </tr>
+                    <tr>
+                        <td><strong>보호자 앱</strong></td>
+                        <td>이용자 가족</td>
+                        <td>무료 (센터 라이선스 포함)</td>
+                        <td>10,000+ 이용자</td>
+                    </tr>
+                    <tr>
+                        <td><strong>데이터 분석 (BI)</strong></td>
+                        <td>센터 경영진</td>
+                        <td>추가 ₩100만/월</td>
+                        <td>50-100개 센터</td>
+                    </tr>
+                    <tr>
+                        <td><strong>의료 연계 모듈</strong></td>
+                        <td>의료 기관</td>
+                        <td>연건 계약</td>
+                        <td>20-30개 기관</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>📊 예상 재무 (2028년)</h3>
+            <div class="budget">
+                <ul>
+                    <li><strong>월 매출</strong>: ₩50-70억 (150-200 센터)</li>
+                    <li><strong>월 운영 비용</strong>: ₩15-20억 (개발, 인프라, 지원팀)</li>
+                    <li><strong>EBITDA</strong>: ₩30-50억/월 (45-65% 마진)</li>
+                    <li><strong>연간 순익</strong>: ₩200-300억 (Series B 투자 유치 기준)</li>
+                </ul>
+            </div>
+
+            <div class="success">
+                <strong>✅ Phase 3 성공의 의미</strong>
+                <ul>
+                    <li>한국 시장 점유율 15-20% (전체 요양센터 ~1,200개 기준)</li>
+                    <li>종속회사 전환 가능 (매출 200억+ 달성)</li>
+                    <li>일본, 싱가포르 등 아시아 확대 교두보</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ============ 기술 & 규정준수 ============ -->
+        <div class="phase">
+            <h2>🔒 기술 & 규정준수 로드맵 (병렬 진행)</h2>
+
+            <h3>보안 인증 (전체 3단계)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>인증</th>
+                        <th>완료 시기</th>
+                        <th>비용</th>
+                        <th>필요성</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>ISO 27001</strong> (정보보안)</td>
+                        <td>2026년 9월 (Phase 1 후)</td>
+                        <td>₩500만-1,000만</td>
+                        <td>필수 (고객 신뢰)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ISMS 인증</strong> (한국)</td>
+                        <td>2027년 3월 (Phase 2 후)</td>
+                        <td>₩300만</td>
+                        <td>필수 (정부 계약)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>개인정보보호 심사</strong></td>
+                        <td>2026년 8월 (지속)</td>
+                        <td>₩200만/년</td>
+                        <td>필수 (법령)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>기술 인프라 진화</h3>
+            <ul>
+                <li><strong>Phase 1</strong>: 단일 AWS 리전 (Seoul), RDS PostgreSQL, Auto Scaling 기본</li>
+                <li><strong>Phase 2</strong>: 다중 가용 영역 (AZ), 읽기 복제본, CDN 확대</li>
+                <li><strong>Phase 3</strong>: 재해 복구 체계 (DR 리전), 실시간 분석 (DMS → Redshift), 마이크로서비스 전환</li>
+            </ul>
+
+            <h3>국제 진출 준비 (선택사항)</h3>
+            <ul>
+                <li><strong>일본</strong>: 간호사 기록 법규 다름 (2027년)</li>
+                <li><strong>싱가포르</strong>: 영어 지원 + PDPA 준수 (2028년)</li>
+                <li><strong>동남아</strong>: 현지화된 급여 정산 로직</li>
+            </ul>
+        </div>
+
+        <!-- ============ 비교 분석 ============ -->
+        <div class="phase">
+            <h2>📈 한국 vs 국제 배포 모델 비교</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>요소</th>
+                        <th>한국 모델 (케어포)</th>
+                        <th>국제 모델 (AxisCare)</th>
+                        <th>Dolbomcare 전략</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>초기 시장</strong></td>
+                        <td>서울 요양센터</td>
+                        <td>미국 노인요양시설</td>
+                        <td>서울 요양센터 (한국 시장 우선)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>고객 규모 목표</strong></td>
+                        <td>5년 500개</td>
+                        <td>10년 4,000개 (미국)</td>
+                        <td>2년 200개 (한국)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>정부 파트너십</strong></td>
+                        <td>보건복지부 연계 (필수)</td>
+                        <td>CMS (Medicare) 승인</td>
+                        <td>국민건강보험공단 연계</td>
+                    </tr>
+                    <tr>
+                        <td><strong>규정준수</strong></td>
+                        <td>개인정보보호법</td>
+                        <td>HIPAA + GDPR</td>
+                        <td>개인정보보호법 + ISMS</td>
+                    </tr>
+                    <tr>
+                        <td><strong>판매 채널</strong></td>
+                        <td>협회 파트너십</td>
+                        <td>직접 영업 + 파트너</td>
+                        <td>협회 + 온라인 + 세무사</td>
+                    </tr>
+                    <tr>
+                        <td><strong>가격 정책</strong></td>
+                        <td>센터 규모 기반</td>
+                        <td>침대 수 기반</td>
+                        <td>요양사 수 + 이용자 수 (하이브리드)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ============ 다음 단계 ============ -->
+        <div class="phase">
+            <h2>🎯 다음 단계 (즉시 실행)</h2>
+
+            <h3>✅ 이번 주 (2026-10-03)</h3>
+            <ul>
+                <li>[ ] 파일럿 센터 5-10개 대상 리스트 작성 (강남/서초/송파 요양센터)</li>
+                <li>[ ] 가격 정책 결정 (센터당 ₩300-500만/월)</li>
+                <li>[ ] 기술 지원 담당자 1명 채용 공고 발행</li>
+                <li>[ ] AWS 비용 최적화 (현재 상태 → 프로덕션 준비)</li>
+            </ul>
+
+            <h3>✅ 10월 (Phase 1 시작)</h3>
+            <ul>
+                <li>[ ] 파일럿 센터 1-2개 체결 및 구현 시작</li>
+                <li>[ ] 요양사협회 경기지부 MOU 협상</li>
+                <li>[ ] ISO 27001 사전심사 신청</li>
+                <li>[ ] 마케팅 자료 준비 (ROI 계산 도구, 교육 동영상)</li>
+            </ul>
+
+            <div class="success">
+                <strong>💡 핵심 통찰</strong>
+                <ul>
+                    <li><span class="highlight">초기 Reference 고객</span>이 가장 중요함 (향후 마케팅 비용 90% 절감 가능)</li>
+                    <li><span class="highlight">기술 지원</span>이 성공을 좌우함 (첫 3개월이 critical)</li>
+                    <li><span class="highlight">정부 연계</span>는 Phase 3에서만 필수 (Phase 1-2는 직접 영업 중심)</li>
+                    <li><span class="highlight">가격은 낮게 시작</span>: Phase 1 ₩200만/월로 시작 → Phase 2-3에서 인상</li>
+                </ul>
+            </div>
+        </div>
+
+        <p style="margin-top: 30px; color: #999; font-size: 13px;">
+            📚 출처: 요양관리 플랫폼 배포 전략 연구 (2026-10-03)<br>
+            한국: 케어포, 이지케어, 스마트돌봄 사례 분석<br>
+            국제: AxisCare, ShiftCare, Homecare Homebase, CarePredict 사례 분석
+        </p>
+    </div>
+</body>
+</html>

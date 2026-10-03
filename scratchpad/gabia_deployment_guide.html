@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가비아로 FastAPI 배포하기 - 완벽 가이드</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { color: #0052cc; border-bottom: 3px solid #0052cc; padding-bottom: 10px; }
+        h2 { color: #1f2937; margin-top: 30px; border-left: 4px solid #0052cc; padding-left: 15px; }
+        h3 { color: #1e40af; margin-top: 20px; }
+        .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .success { background: #d1fae5; border-left: 4px solid #059669; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .danger { background: #fee2e2; border-left: 4px solid #dc2626; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .card { background: #f9fafb; border: 1px solid #e5e7eb; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .step { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 15px 0; border-radius: 4px; }
+        .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .comparison-item { background: #f9fafb; border: 2px solid #e5e7eb; padding: 20px; border-radius: 8px; }
+        .comparison-item.recommended { border-color: #0052cc; background: #eff6ff; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #e5e7eb; padding: 12px; text-align: left; }
+        th { background: #f3f4f6; font-weight: 600; }
+        tr:hover { background: #f9fafb; }
+        code { background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; }
+        pre { background: #f3f4f6; padding: 15px; border-radius: 4px; overflow-x: auto; margin: 10px 0; }
+        .price { font-size: 20px; font-weight: 700; color: #0052cc; }
+        ul { line-height: 1.9; }
+        .highlight { background: #fef3c7; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🇰🇷 가비아(Gabia)로 FastAPI 배포하기</h1>
+        <p style="font-size: 16px; color: #666;">
+            <strong>한국 기반 호스팅으로 FastAPI 배포</strong><br>
+            가비아 VPS 또는 리눅스 호스팅 이용
+        </p>
+
+        <!-- ============ 가비아 선택지 ============ -->
+        <h2>🔍 가비아 상품 선택</h2>
+
+        <div class="comparison">
+            <div class="comparison-item recommended">
+                <h3>✅ VPS (추천)</h3>
+                <div class="price">₩30,000-50,000/월</div>
+
+                <h4>사양</h4>
+                <ul>
+                    <li>CPU: 2 Core</li>
+                    <li>RAM: 2GB</li>
+                    <li>SSD: 50GB</li>
+                    <li>대역폭: 무제한</li>
+                </ul>
+
+                <h4>장점</h4>
+                <ul style="color: #059669;">
+                    <li>✅ 완전한 서버 제어</li>
+                    <li>✅ FastAPI 배포 쉬움</li>
+                    <li>✅ 한국 지원 (전화)</li>
+                    <li>✅ 개인정보보호법 준수</li>
+                </ul>
+
+                <h4>단점</h4>
+                <ul style="color: #dc2626;">
+                    <li>❌ 수동 관리 필요</li>
+                    <li>❌ 초기 설정 필요 (30분)</li>
+                </ul>
+
+                <p style="margin-top: 15px; font-weight: 600; color: #0052cc;">
+                    👉 <strong>이 방법 추천!</strong>
+                </p>
+            </div>
+
+            <div class="comparison-item">
+                <h3>⚠️ 리눅스 호스팅</h3>
+                <div class="price">₩5,000-20,000/월</div>
+
+                <h4>사양</h4>
+                <ul>
+                    <li>공유 호스팅</li>
+                    <li>PHP 중심</li>
+                    <li>제한적 접근</li>
+                    <li>낮은 권한</li>
+                </ul>
+
+                <h4>장점</h4>
+                <ul style="color: #059669;">
+                    <li>✅ 저렴함</li>
+                    <li>✅ 한국 지원</li>
+                </ul>
+
+                <h4>단점</h4>
+                <ul style="color: #dc2626;">
+                    <li>❌ FastAPI 설정 어려움</li>
+                    <li>❌ Python 지원 제한</li>
+                    <li>❌ 자유도 낮음</li>
+                </ul>
+
+                <p style="margin-top: 15px; color: #666;">
+                    ⚠️ <strong>권장하지 않음</strong>
+                </p>
+            </div>
+        </div>
+
+        <!-- ============ 가비아 VPS 배포 가이드 ============ -->
+        <h2>🚀 가비아 VPS로 배포하기 (추천)</h2>
+
+        <div class="warning">
+            <h3>📌 가비아 공식 사이트</h3>
+            <p><code>https://www.gabia.com</code></p>
+            <p>상품명: <strong>Gabia VPS</strong> 또는 <strong>클라우드 VPS</strong></p>
+        </div>
+
+        <!-- Step 1 -->
+        <div class="step">
+            <h3>Step 1: 가비아 VPS 구매 (10분)</h3>
+
+            <p><strong>1-1. 가비아 사이트 방문</strong></p>
+            <ul>
+                <li><code>https://www.gabia.com</code></li>
+                <li>우측 상단 "로그인" 또는 회원가입</li>
+            </ul>
+
+            <p><strong>1-2. 상품 선택</strong></p>
+            <ul>
+                <li>메뉴 → "호스팅" → "클라우드 VPS" 또는 "VPS"</li>
+                <li><strong>추천 사양</strong>: 2 Core, 2GB RAM, 50GB SSD</li>
+                <li>가격: ₩30,000-50,000/월 (프로모션 있을 수 있음)</li>
+            </ul>
+
+            <p><strong>1-3. 결제</strong></p>
+            <ul>
+                <li>결제 방법: 신용카드, 계좌이체</li>
+                <li>기간: 1개월 추천 (테스트 후 연장)</li>
+            </ul>
+
+            <p><strong>1-4. 가입 완료</strong></p>
+            <ul>
+                <li>이메일로 <span class="highlight">서버 접속 정보</span> 받음</li>
+                <li>IP 주소, SSH 포트, 루트 비밀번호 저장</li>
+            </ul>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step">
+            <h3>Step 2: 서버에 SSH로 접속 (5분)</h3>
+
+            <p><strong>Windows 또는 Mac에서</strong></p>
+
+            <p>터미널 열기</p>
+            <pre>ssh root@your-server-ip -p 22
+# 비밀번호 입력</pre>
+
+            <p><strong>또는 (더 안전함)</strong></p>
+            <pre>ssh -i ~/.ssh/id_rsa root@your-server-ip</pre>
+
+            <p style="color: #666; font-size: 13px;">
+                💡 Tip: 가비아에서 받은 접속 정보에 포트 번호가 다를 수 있음 (예: 22 대신 2222)<br>
+                메일에서 정확한 포트 번호 확인 필수!
+            </p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step">
+            <h3>Step 3: 기본 설정 (10분)</h3>
+
+            <p><strong>3-1. 시스템 업데이트</strong></p>
+            <pre>apt update && apt upgrade -y</pre>
+
+            <p><strong>3-2. 필수 패키지 설치</strong></p>
+            <pre>apt install -y python3.11 python3-pip postgresql postgresql-contrib nginx git curl</pre>
+
+            <p><strong>3-3. Python 버전 확인</strong></p>
+            <pre>python3 --version
+pip3 --version</pre>
+
+            <p><strong>3-4. 가비아 방화벽 설정</strong></p>
+            <ul>
+                <li>가비아 콘솔 접속</li>
+                <li>VPS 관리 → 보안 그룹</li>
+                <li>포트 개방: 22 (SSH), 80 (HTTP), 443 (HTTPS), 8000 (FastAPI)</li>
+            </ul>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step">
+            <h3>Step 4: PostgreSQL 설정 (10분)</h3>
+
+            <p><strong>4-1. PostgreSQL 시작</strong></p>
+            <pre>sudo systemctl start postgresql
+sudo systemctl enable postgresql</pre>
+
+            <p><strong>4-2. 데이터베이스 생성</strong></p>
+            <pre>sudo -u postgres psql
+CREATE DATABASE dolbomcare_db;
+CREATE USER dolbomcare WITH PASSWORD 'your_strong_password';
+ALTER ROLE dolbomcare SET client_encoding TO 'utf8';
+ALTER ROLE dolbomcare SET default_transaction_isolation TO 'read committed';
+GRANT ALL PRIVILEGES ON DATABASE dolbomcare_db TO dolbomcare;
+\q</pre>
+
+            <p><strong>4-3. .env 파일 생성</strong></p>
+            <pre>nano ~/.env
+# 다음 내용 입력:
+DATABASE_URL=postgresql://dolbomcare:your_password@localhost:5432/dolbomcare_db
+SECRET_KEY=your-secret-key-very-long-string
+DEBUG=False
+ENVIRONMENT=production</pre>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="step">
+            <h3>Step 5: FastAPI 배포 (15분)</h3>
+
+            <p><strong>5-1. 프로젝트 클론</strong></p>
+            <pre>cd /var/www
+git clone https://github.com/your-username/dolbomcare.git
+cd dolbomcare/backend</pre>
+
+            <p><strong>5-2. 의존성 설치</strong></p>
+            <pre>pip install -r requirements.txt</pre>
+
+            <p><strong>5-3. Supervisor 설정 (자동 시작)</strong></p>
+            <pre>sudo nano /etc/supervisor/conf.d/dolbomcare.conf</pre>
+
+            <p>다음 내용 입력:</p>
+            <pre>[program:dolbomcare]
+directory=/var/www/dolbomcare/backend
+command=/usr/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/dolbomcare.err.log
+stdout_logfile=/var/log/dolbomcare.out.log
+user=root</pre>
+
+            <p><strong>5-4. Supervisor 시작</strong></p>
+            <pre>sudo systemctl start supervisor
+sudo systemctl enable supervisor
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start dolbomcare</pre>
+
+            <p><strong>5-5. 상태 확인</strong></p>
+            <pre>sudo supervisorctl status dolbomcare
+# 출력: dolbomcare RUNNING pid 1234, uptime 0:00:05</pre>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="step">
+            <h3>Step 6: Nginx 설정 (포트 8000 → 80) (10분)</h3>
+
+            <p><strong>6-1. Nginx 설정 파일 편집</strong></p>
+            <pre>sudo nano /etc/nginx/sites-available/default</pre>
+
+            <p>다음 내용으로 교체:</p>
+            <pre>server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+</pre>
+
+            <p><strong>6-2. Nginx 재시작</strong></p>
+            <pre>sudo systemctl restart nginx
+sudo systemctl enable nginx</pre>
+
+            <p><strong>6-3. 상태 확인</strong></p>
+            <pre>sudo systemctl status nginx</pre>
+        </div>
+
+        <!-- Step 7 -->
+        <div class="step">
+            <h3>Step 7: SSL 인증서 (무료 Let's Encrypt) (5분)</h3>
+
+            <p><strong>7-1. Certbot 설치</strong></p>
+            <pre>sudo apt install certbot python3-certbot-nginx -y</pre>
+
+            <p><strong>7-2. 인증서 발급</strong></p>
+            <pre>sudo certbot --nginx -d your-domain.com</pre>
+
+            <p style="color: #666; font-size: 13px;">
+                💡 <strong>도메인이 없으면?</strong><br>
+                - 가비아에서 도메인 구매 (연간 ₩5,000-30,000)<br>
+                - 또는 IP 주소로 직접 접속 (https://your-ip:443)
+            </p>
+
+            <p><strong>7-3. 자동 갱신 설정</strong></p>
+            <pre>sudo systemctl enable certbot.timer
+sudo systemctl start certbot.timer</pre>
+        </div>
+
+        <!-- ============ 최종 확인 ============ -->
+        <h2>✅ 배포 완료 확인</h2>
+
+        <div class="success">
+            <p><strong>브라우저에서 확인:</strong></p>
+            <ul>
+                <li><code>http://your-server-ip</code> 또는 <code>https://your-domain.com</code></li>
+                <li>API Docs: <code>https://your-domain.com/docs</code></li>
+                <li>로그인 테스트: 요양사/센터장 계정으로 로그인</li>
+            </ul>
+
+            <p><strong>로그 확인 (문제 발생 시):</strong></p>
+            <pre>sudo supervisorctl tail dolbomcare
+sudo tail -f /var/log/nginx/error.log</pre>
+        </div>
+
+        <!-- ============ 이후 유지보수 ============ -->
+        <h2>🔧 유지보수 (매월)</h2>
+
+        <div class="card">
+            <h3>매월 체크리스트</h3>
+            <ul>
+                <li>✅ 서버 상태 확인: <code>sudo supervisorctl status</code></li>
+                <li>✅ 디스크 용량 확인: <code>df -h</code></li>
+                <li>✅ 데이터베이스 백업: <code>pg_dump dolbomcare_db > backup.sql</code></li>
+                <li>✅ SSL 인증서 갱신: 자동 (certbot)</li>
+                <li>✅ 로그 확인: 에러 있는지 체크</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>자동 백업 설정 (선택)</h3>
+            <pre>crontab -e
+# 매일 02:00에 백업
+0 2 * * * pg_dump -U dolbomcare dolbomcare_db > /backup/$(date +\%Y\%m\%d).sql</pre>
+        </div>
+
+        <!-- ============ 비용 정리 ============ -->
+        <h2>💰 가비아 VPS 비용</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>항목</th>
+                    <th>비용</th>
+                    <th>용도</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>VPS (2 Core, 2GB RAM, 50GB SSD)</strong></td>
+                    <td><strong>₩30,000-50,000/월</strong></td>
+                    <td>FastAPI + PostgreSQL</td>
+                </tr>
+                <tr>
+                    <td>도메인 (옵션)</td>
+                    <td>₩5,000-30,000/년</td>
+                    <td>your-domain.com</td>
+                </tr>
+                <tr>
+                    <td>SSL 인증서</td>
+                    <td>₩0 (Let's Encrypt)</td>
+                    <td>HTTPS</td>
+                </tr>
+                <tr style="background: #eff6ff; font-weight: 600;">
+                    <td><strong>총 월 비용</strong></td>
+                    <td><strong>₩30,000-50,000</strong></td>
+                    <td>연간 ₩360K-600K</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ============ Railway vs 가비아 비교 ============ -->
+        <h2>📊 Railway vs 가비아 비교</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>항목</th>
+                    <th>Railway</th>
+                    <th>가비아 VPS</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>월 비용</strong></td>
+                    <td>$5 (₩6.5k)</td>
+                    <td>₩30-50k</td>
+                </tr>
+                <tr>
+                    <td><strong>배포 난이도</strong></td>
+                    <td>⭐ 매우 쉬움 (5분)</td>
+                    <td>⭐⭐⭐ 중간 (1시간)</td>
+                </tr>
+                <tr>
+                    <td><strong>한국 서버</strong></td>
+                    <td>❌ 해외</td>
+                    <td>✅ 한국</td>
+                </tr>
+                <tr>
+                    <td><strong>한국 지원</strong></td>
+                    <td>❌ 영문</td>
+                    <td>✅ 한국 (전화)</td>
+                </tr>
+                <tr>
+                    <td><strong>개인정보 법</strong></td>
+                    <td>⚠️ 모호</td>
+                    <td>✅ 완벽</td>
+                </tr>
+                <tr>
+                    <td><strong>추천 시기</strong></td>
+                    <td>파일럿 검증</td>
+                    <td>실제 센터 운영</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ============ 권장 배포 순서 ============ -->
+        <h2>📈 권장 배포 순서</h2>
+
+        <div class="success">
+            <h3>1️⃣ Phase 0 (지금)</h3>
+            <p><strong>Railway ($5/월)</strong> → 빠른 파일럿 검증</p>
+            <ul>
+                <li>5분 내 배포 완료</li>
+                <li>기능 테스트 목표</li>
+                <li>센터와 계약 전 단계</li>
+            </ul>
+        </div>
+
+        <div class="warning">
+            <h3>2️⃣ Phase 1 (센터 계약 시)</h3>
+            <p><strong>가비아 VPS (₩30-50k)</strong> → 실제 운영</p>
+            <ul>
+                <li>한국 서버 필수</li>
+                <li>개인정보보호법 준수</li>
+                <li>센터 담당자의 요청사항 수용</li>
+                <li>Railway에서 1시간 내 마이그레이션 가능</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>3️⃣ Phase 2+ (여러 센터)</h3>
+            <p><strong>네이버/카카오 클라우드 (₩300만)</strong></p>
+            <ul>
+                <li>다중 센터 운영</li>
+                <li>기술지원 필요</li>
+                <li>자동 스케일링</li>
+            </ul>
+        </div>
+
+        <!-- ============ 문제 해결 ============ -->
+        <h2>🆘 문제 해결</h2>
+
+        <div class="card">
+            <h3>Q1: FastAPI가 시작 안 됨</h3>
+            <p><strong>해결:</strong></p>
+            <pre>sudo supervisorctl restart dolbomcare
+sudo supervisorctl tail dolbomcare  # 로그 확인</pre>
+        </div>
+
+        <div class="card">
+            <h3>Q2: 데이터베이스 연결 실패</h3>
+            <p><strong>해결:</strong></p>
+            <pre>.env 파일에서 DATABASE_URL 확인
+psql -U dolbomcare -d dolbomcare_db  # 연결 테스트</pre>
+        </div>
+
+        <div class="card">
+            <h3>Q3: Nginx가 연결 못 함</h3>
+            <p><strong>해결:</strong></p>
+            <pre>sudo systemctl restart nginx
+sudo systemctl status nginx  # 상태 확인
+sudo tail -f /var/log/nginx/error.log  # 에러 로그</pre>
+        </div>
+
+        <div class="card">
+            <h3>Q4: 방화벽 포트 막혔을 때</h3>
+            <p><strong>해결:</strong></p>
+            <ul>
+                <li>가비아 콘솔 → VPS 관리 → 보안 그룹</li>
+                <li>포트 22, 80, 443, 8000 개방 확인</li>
+            </ul>
+        </div>
+
+        <!-- ============ 최종 체크리스트 ============ -->
+        <div class="success">
+            <h2>✅ 배포 최종 체크리스트</h2>
+            <ul>
+                <li>[ ] 가비아 VPS 구매</li>
+                <li>[ ] SSH 접속 테스트</li>
+                <li>[ ] Python, PostgreSQL, Nginx 설치</li>
+                <li>[ ] GitHub 저장소 클론</li>
+                <li>[ ] 의존성 설치 (requirements.txt)</li>
+                <li>[ ] PostgreSQL 데이터베이스 생성</li>
+                <li>[ ] Supervisor로 FastAPI 자동 시작 설정</li>
+                <li>[ ] Nginx 리버스 프록시 설정</li>
+                <li>[ ] SSL 인증서 (Let's Encrypt)</li>
+                <li>[ ] 브라우저에서 https://your-domain.com 접속 테스트</li>
+            </ul>
+        </div>
+
+        <p style="margin-top: 30px; color: #999; font-size: 13px;">
+            📌 가비아 공식 사이트: https://www.gabia.com<br>
+            🆘 가비아 고객지원: 1544-7979<br>
+            📚 참고: 이 가이드는 CentOS/Ubuntu 기준입니다.
+        </p>
+    </div>
+</body>
+</html>

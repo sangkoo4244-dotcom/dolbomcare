@@ -8,11 +8,12 @@ from app.api import billing
 from app.api import records
 from app.api import residents
 from app.api import salary
+from app.api import schedule
 from app.database import Base, engine
 import os
 from pathlib import Path
 
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)  # PostgreSQL 연결 실패 시 서버 시작 불가 → 비활성화
 
 app = FastAPI(
     title="dolbomcare API",
@@ -37,6 +38,7 @@ app.include_router(billing.router, prefix="/api/v1/billing", tags=["billing"])
 app.include_router(records.router, prefix="/api/v1/records", tags=["records"])
 app.include_router(residents.router, prefix="/api/v1/residents", tags=["residents"])
 app.include_router(salary.router, prefix="/api/v1/salary", tags=["salary"])
+app.include_router(schedule.router, prefix="/api/v1/schedule", tags=["schedule"])
 
 # API 문서 라우트도 보호
 app.openapi()

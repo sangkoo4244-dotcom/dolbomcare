@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>돌봄케어 - 나의 일정</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body {
+            background: var(--bg-secondary);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            color: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-logo {
+            font-size: 24px;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border-left: 3px solid transparent;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active {
+            color: #10b981;
+            border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .nav-item.hidden {
+            display: none !important;
+        }
+
+        .main-layout {
+            margin-left: 250px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .topbar-title h1 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--text-primary);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: all var(--transition-fast);
+        }
+
+        .logout-btn:hover {
+            background: var(--danger-light);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-header h2 {
+            margin: 0;
+            font-size: 28px;
+            color: var(--text-primary);
+        }
+
+        .view-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 3px solid transparent;
+            transition: all var(--transition-fast);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Calendar */
+        .calendar-container {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--text-primary);
+        }
+
+        .calendar-nav button {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0 4px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            background: var(--border);
+            padding: 2px;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .calendar-day {
+            background: white;
+            padding: 12px;
+            min-height: 80px;
+            position: relative;
+        }
+
+        .calendar-day-header {
+            font-weight: 600;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .calendar-date {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .calendar-date.today {
+            color: white;
+            background: var(--primary);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+        }
+
+        .schedule-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        /* Card Grid View */
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .schedule-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--primary);
+            transition: all var(--transition-base);
+        }
+
+        .schedule-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .card-date {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-scheduled {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-cancelled {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .resident-section {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .resident-name {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .resident-detail {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 3px 0;
+        }
+
+        .service-section {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .service-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .service-type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .service-type-basic {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .service-type-meal {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .service-type-medical {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        .time-section {
+            margin-bottom: 12px;
+        }
+
+        .time-info {
+            font-size: 13px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .time-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .notes-section {
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-action:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .btn-complete {
+            border-color: #10b981;
+            color: #10b981;
+        }
+
+        .btn-complete:hover {
+            background: #d1fae5;
+        }
+
+        .btn-cancel {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .btn-cancel:hover {
+            background: #fee2e2;
+        }
+
+        /* List View */
+        .schedule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .list-item {
+            background: white;
+            padding: 16px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all var(--transition-fast);
+        }
+
+        .list-item:hover {
+            box-shadow: var(--shadow-sm);
+        }
+
+        .list-info {
+            flex: 1;
+        }
+
+        .list-date {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .list-details {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: var(--text-tertiary);
+            background: white;
+            border-radius: var(--radius-lg);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                overflow: hidden;
+                transition: width var(--transition-base);
+            }
+
+            .main-layout {
+                margin-left: 0;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .schedule-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+    <script src="menu.js"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">❤️</div>
+            <div class="sidebar-title">돌봄케어</div>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-item" id="menu-dashboard" onclick="navigateTo('./dashboard.html')">
+                <span>📊</span> 대시보드
+            </a>
+            <a class="nav-item" id="menu-residents" onclick="navigateTo('./resident_management.html')">
+                <span>👥</span> 이용자 관리
+            </a>
+            <a class="nav-item" id="menu-voice-records" onclick="navigateTo('./voice_record.html')">
+                <span>🎤</span> 음성 기록
+            </a>
+            <a class="nav-item" id="menu-caregiver-billing" onclick="navigateTo('./caregiver_billing.html')">
+                <span>💳</span> 나의 청부
+            </a>
+            <a class="nav-item" id="menu-notifications" onclick="navigateTo('./notifications.html')">
+                <span>📲</span> 알림/공지
+            </a>
+            <a class="nav-item active" id="menu-my-schedule" onclick="navigateTo('./my_schedule.html')">
+                <span>📅</span> 나의 일정
+            </a>
+            <a class="nav-item" id="menu-my-salary" onclick="navigateTo('./my_salary.html')">
+                <span>💰</span> 나의 급여
+            </a>
+            <a class="nav-item" id="menu-resident-family-comm" onclick="navigateTo('./resident_family_communication.html')">
+                <span>👨‍👩‍👧</span> 담당자 소통
+            </a>
+            <a class="nav-item" id="menu-logout" style="margin-top: 30px;" onclick="logout()">
+                <span>🚪</span> 로그아웃
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>나의 일정</h1>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">사용자</div>
+                    <div class="user-role">요양사</div>
+                </div>
+                <div class="avatar" id="userAvatar">U</div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <div class="page-header">
+                <h2>📅 나의 일정</h2>
+            </div>
+
+            <!-- View Tabs -->
+            <div class="view-tabs">
+                <button class="tab-btn active" onclick="switchView('calendar')">📆 캘린더</button>
+                <button class="tab-btn" onclick="switchView('card')">🎴 카드</button>
+                <button class="tab-btn" onclick="switchView('list')">📋 리스트</button>
+            </div>
+
+            <!-- Calendar View -->
+            <div id="calendarView" style="display: block;">
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <h3 id="calendarMonth">2026년 10월</h3>
+                        <div class="calendar-nav">
+                            <button onclick="prevMonth()">← 이전</button>
+                            <button onclick="todayMonth()">오늘</button>
+                            <button onclick="nextMonth()">다음 →</button>
+                        </div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+            </div>
+
+            <!-- Card View -->
+            <div id="cardView" style="display: none;">
+                <div class="schedule-grid" id="scheduleCards"></div>
+            </div>
+
+            <!-- List View -->
+            <div id="listView" style="display: none;">
+                <div class="schedule-list" id="scheduleList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api/v1';
+        let currentUser = null;
+        let schedules = [];
+        let currentDate = new Date();
+
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.clear();
+                window.location.href = './login.html';
+            }
+        }
+
+        function loadUserInfo() {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) {
+                window.location.href = './login.html';
+                return;
+            }
+
+            const user = JSON.parse(userStr);
+            currentUser = user;
+
+            if (user.role !== 'caregiver') {
+                alert('요양사만 접근 가능합니다');
+                window.location.href = './dashboard.html';
+                return;
+            }
+
+            document.getElementById('userName').textContent = user.email.split('@')[0];
+            const initial = user.email.charAt(0).toUpperCase();
+            document.getElementById('userAvatar').textContent = initial;
+
+            if (typeof filterMenuByRole === 'function') {
+                filterMenuByRole();
+            }
+        }
+
+        async function loadSchedules() {
+            try {
+                const token = localStorage.getItem('access_token');
+                const url = `${API_URL}/schedule/?caregiver_id=${currentUser.id}`;
+
+                const response = await fetch(url, {
+                    headers: token ? {'Authorization': `Bearer ${token}`} : {}
+                });
+
+                if (!response.ok) throw new Error('일정 로드 실패');
+                const data = await response.json();
+
+                schedules = data.schedules || [];
+                renderCalendar();
+                renderCardView();
+                renderListView();
+            } catch (error) {
+                console.error('Error loading schedules:', error);
+                showEmptyState();
+            }
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            document.getElementById('calendarMonth').textContent = `${year}년 ${month + 1}월`;
+
+            const firstDay = new Date(year, month, 1);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            dayNames.forEach(day => {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day calendar-day-header';
+                dayEl.textContent = day;
+                grid.appendChild(dayEl);
+            });
+
+            let currentIterDate = new Date(startDate);
+            for (let i = 0; i < 42; i++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+
+                if (currentIterDate.getMonth() !== month) {
+                    dayEl.style.opacity = '0.5';
+                }
+
+                const dateStr = currentIterDate.getDate().toString();
+                const isToday = currentIterDate.toDateString() === new Date().toDateString();
+
+                if (isToday) {
+                    const dateEl = document.createElement('div');
+                    dateEl.className = 'calendar-date today';
+                    dateEl.textContent = dateStr;
+                    dayEl.appendChild(dateEl);
+                } else {
+                    const dateEl = document.createElement('div');
+                    dateEl.className = 'calendar-date';
+                    dateEl.textContent = dateStr;
+                    dayEl.appendChild(dateEl);
+                }
+
+                const daySchedules = schedules.filter(s => {
+                    const schedDate = new Date(s.scheduled_date);
+                    return schedDate.getDate() === currentIterDate.getDate() &&
+                           schedDate.getMonth() === currentIterDate.getMonth() &&
+                           schedDate.getFullYear() === currentIterDate.getFullYear();
+                });
+
+                daySchedules.forEach(s => {
+                    const dot = document.createElement('div');
+                    dot.className = 'schedule-dot';
+                    if (s.status === 'completed') dot.style.background = '#10b981';
+                    if (s.status === 'cancelled') dot.style.background = '#ef4444';
+                    dayEl.appendChild(dot);
+                });
+
+                grid.appendChild(dayEl);
+                currentIterDate.setDate(currentIterDate.getDate() + 1);
+            }
+        }
+
+        function prevMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        function todayMonth() {
+            currentDate = new Date();
+            renderCalendar();
+        }
+
+        function renderCardView() {
+            const container = document.getElementById('scheduleCards');
+
+            if (!schedules || schedules.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="empty-icon">📅</div>
+                        <p>등록된 일정이 없습니다</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = schedules.map(schedule => {
+                const date = new Date(schedule.scheduled_date);
+                const dateStr = date.toLocaleDateString('ko-KR', {
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                const timeStr = date.toLocaleTimeString('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const serviceTypeText = {
+                    'basic_care': '기본 돌봄',
+                    'meal_service': '식사 지원',
+                    'medical_care': '의료 돌봄'
+                }[schedule.service_type] || schedule.service_type;
+
+                const statusText = {
+                    'scheduled': '예정',
+                    'completed': '완료',
+                    'cancelled': '취소'
+                }[schedule.status] || schedule.status;
+
+                return `
+                    <div class="schedule-card">
+                        <div class="card-header">
+                            <div class="card-date">${dateStr}</div>
+                            <span class="status-badge status-${schedule.status}">
+                                ${statusText}
+                            </span>
+                        </div>
+
+                        <div class="resident-section">
+                            <div class="resident-name">이용자 #${schedule.resident_id}</div>
+                            <div class="resident-detail">
+                                <strong>건강상태:</strong> 안정적
+                            </div>
+                        </div>
+
+                        <div class="service-section">
+                            <div class="service-label">서비스</div>
+                            <span class="service-type-badge service-type-${schedule.service_type}">
+                                ${serviceTypeText}
+                            </span>
+                        </div>
+
+                        <div class="time-section">
+                            <div class="time-label">방문 시간</div>
+                            <div class="time-info">⏰ ${timeStr}</div>
+                        </div>
+
+                        ${schedule.notes ? `
+                            <div class="notes-section">
+                                <strong>📝 특이사항:</strong><br>${schedule.notes}
+                            </div>
+                        ` : ''}
+
+                        <div class="action-buttons">
+                            <button class="btn-action btn-complete" onclick="updateStatus(${schedule.id}, 'completed')">✓ 완료</button>
+                            <button class="btn-action btn-cancel" onclick="updateStatus(${schedule.id}, 'cancelled')">✕ 취소</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderListView() {
+            const container = document.getElementById('scheduleList');
+
+            if (!schedules || schedules.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📅</div>
+                        <p>등록된 일정이 없습니다</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = schedules.map(schedule => {
+                const date = new Date(schedule.scheduled_date);
+                const dateStr = date.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const statusText = {
+                    'scheduled': '예정',
+                    'completed': '완료',
+                    'cancelled': '취소'
+                }[schedule.status] || schedule.status;
+
+                return `
+                    <div class="list-item">
+                        <div class="list-info">
+                            <div class="list-date">${dateStr}</div>
+                            <div class="list-details">
+                                이용자 #${schedule.resident_id} · ${schedule.notes || '특이사항 없음'}
+                            </div>
+                        </div>
+                        <span class="status-badge status-${schedule.status}">
+                            ${statusText}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function switchView(view) {
+            const calendarView = document.getElementById('calendarView');
+            const cardView = document.getElementById('cardView');
+            const listView = document.getElementById('listView');
+            const tabs = document.querySelectorAll('.tab-btn');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            if (view === 'calendar') {
+                calendarView.style.display = 'block';
+                cardView.style.display = 'none';
+                listView.style.display = 'none';
+                tabs[0].classList.add('active');
+            } else if (view === 'card') {
+                calendarView.style.display = 'none';
+                cardView.style.display = 'grid';
+                listView.style.display = 'none';
+                tabs[1].classList.add('active');
+            } else {
+                calendarView.style.display = 'none';
+                cardView.style.display = 'none';
+                listView.style.display = 'flex';
+                tabs[2].classList.add('active');
+            }
+        }
+
+        async function updateStatus(scheduleId, newStatus) {
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`${API_URL}/schedule/${scheduleId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token && {'Authorization': `Bearer ${token}`})
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (!response.ok) throw new Error('상태 변경 실패');
+
+                alert('일정 상태가 변경되었습니다');
+                loadSchedules();
+            } catch (error) {
+                console.error('Error updating status:', error);
+                alert('상태 변경 중 오류가 발생했습니다');
+            }
+        }
+
+        function showEmptyState() {
+            document.getElementById('scheduleCards').innerHTML = `
+                <div class="empty-state" style="grid-column: 1/-1;">
+                    <div class="empty-icon">⚠️</div>
+                    <p>일정을 불러올 수 없습니다</p>
+                </div>
+            `;
+            document.getElementById('scheduleList').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <p>일정을 불러올 수 없습니다</p>
+                </div>
+            `;
+        }
+
+        window.addEventListener('load', () => {
+            loadUserInfo();
+            loadSchedules();
+        });
+    </script>
+</body>
+</html>

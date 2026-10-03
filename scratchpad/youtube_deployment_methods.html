@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유튜브 추천 배포 방식 - FastAPI 2024-2025</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { color: #e11d48; border-bottom: 3px solid #e11d48; padding-bottom: 10px; }
+        h2 { color: #1f2937; margin-top: 30px; border-left: 4px solid #e11d48; padding-left: 15px; }
+        h3 { color: #be123c; margin-top: 20px; }
+        .best { background: #ffe4e6; border-left: 4px solid #be123c; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .card { background: #f9fafb; border: 1px solid #e5e7eb; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .price { font-size: 24px; font-weight: 700; color: #be123c; margin: 10px 0; }
+        .method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .method-item { background: #f9fafb; border: 2px solid #e5e7eb; padding: 20px; border-radius: 8px; }
+        .method-item.popular { border-color: #be123c; background: #ffe4e6; }
+        .pros { color: #059669; font-weight: 600; }
+        .cons { color: #dc2626; font-weight: 600; }
+        .youtube { color: #dc2626; font-weight: 600; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #e5e7eb; padding: 12px; text-align: left; }
+        th { background: #f3f4f6; font-weight: 600; }
+        tr:hover { background: #f9fafb; }
+        .badge { display: inline-block; background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin: 2px; }
+        .youtube-logo { color: #dc2626; font-size: 18px; margin-right: 5px; }
+        .step { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 15px 0; border-radius: 4px; }
+        .comparison { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .comparison-item { background: #f9fafb; padding: 15px; border-radius: 4px; border: 1px solid #e5e7eb; }
+        code { background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; }
+        ul { line-height: 1.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 유튜브 추천 배포 방식 (2024-2025)</h1>
+        <p style="font-size: 16px; color: #666;">
+            <strong>FastAPI 배포의 최신 트렌드</strong><br>
+            유명 유튜브 채널 + Google Cloud 공식 가이드 + 커뮤니티 추천
+        </p>
+
+        <!-- ============ 최고 추천 ============ -->
+        <div class="best">
+            <h2><span class="youtube-logo">📺</span> 가장 인기 있는 배포 방식 (2024-2025)</h2>
+
+            <h3>1️⃣ Railway (가장 인기)</h3>
+            <div class="price">월 $5 크레딧 (거의 무료)</div>
+
+            <p><span class="youtube">🎬 유튜브 채널</span>: Traversy Media, Tech With Tim, pixegami</p>
+
+            <ul>
+                <li><strong>배포 방식</strong>: GitHub 자동 연동 (Push → 자동 배포)</li>
+                <li><strong>포함</strong>: FastAPI, PostgreSQL, Redis</li>
+                <li><strong>비용</strong>: 월 $5 크레딧으로 충분</li>
+                <li><strong>특징</strong>: 가장 쉬움, 한국 유튜버들도 추천</li>
+                <li><strong>영상</strong>: "Deploy FastAPI on Railway" (조회수 높음)</li>
+            </ul>
+
+            <h3>2️⃣ Google Cloud Run (공식 추천)</h3>
+            <div class="price">월 $0 (항상 무료 크레딧)</div>
+
+            <p><span class="youtube">🎬 유튜브 채널</span>: Google Cloud (공식)</p>
+
+            <ul>
+                <li><strong>배포 방식</strong>: Google Cloud Console (1-click 배포)</li>
+                <li><strong>포함</strong>: FastAPI, 자동 스케일링</li>
+                <li><strong>비용</strong>: 매월 $300 크레딧</li>
+                <li><strong>특징</strong>: 공식 가이드 (Google Cloud Codelabs)</li>
+                <li><strong>영상</strong>: "Hello Cloud Run with FastAPI" (공식 튜토리얼)</li>
+            </ul>
+
+            <h3>3️⃣ Vercel (프론트엔드) + Railway (백엔드) 조합</h3>
+            <div class="price">프론트엔드: 무료 | 백엔드: 월 $5</div>
+
+            <p><span class="youtube">🎬 유튜브 채널</span>: Web Dev Simplified, JavaScript Mastery</p>
+
+            <ul>
+                <li><strong>배포 방식</strong>: GitHub 자동 연동 (Frontend + Backend 동시)</li>
+                <li><strong>특징</strong>: 가장 현대적인 방식</li>
+                <li><strong>인기</strong>: 최신 유튜브 영상 대다수 이 방식 사용</li>
+            </ul>
+        </div>
+
+        <!-- ============ 배포 방식 비교 ============ -->
+        <h2>📊 배포 방식 상세 비교 (2024-2025)</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>서비스</th>
+                    <th>비용</th>
+                    <th>배포 방식</th>
+                    <th>유튜브 인기도</th>
+                    <th>추천도</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: #ffe4e6;">
+                    <td><strong>🔴 Railway</strong></td>
+                    <td><strong>$5 크레딧</strong></td>
+                    <td>GitHub 자동 연동</td>
+                    <td>⭐⭐⭐⭐⭐</td>
+                    <td>⭐⭐⭐⭐⭐</td>
+                </tr>
+                <tr style="background: #eff6ff;">
+                    <td><strong>🔵 Google Cloud Run</strong></td>
+                    <td><strong>$300 크레딧</strong></td>
+                    <td>1-click 배포</td>
+                    <td>⭐⭐⭐⭐⭐</td>
+                    <td>⭐⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>⚫ Render</strong></td>
+                    <td>$7/월</td>
+                    <td>GitHub 자동 연동</td>
+                    <td>⭐⭐⭐⭐</td>
+                    <td>⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>⚪ Vercel (Frontend)</strong></td>
+                    <td>무료</td>
+                    <td>GitHub 자동 연동</td>
+                    <td>⭐⭐⭐⭐⭐</td>
+                    <td>⭐⭐⭐⭐⭐</td>
+                </tr>
+                <tr style="background: #fee2e2;">
+                    <td><strong>❌ Heroku</strong></td>
+                    <td>₩150만+</td>
+                    <td>과거 표준</td>
+                    <td>⭐ (구식)</td>
+                    <td>❌ 권장 안 함</td>
+                </tr>
+                <tr>
+                    <td><strong>🟢 Hetzner</strong></td>
+                    <td>€3 (₩4k)</td>
+                    <td>수동 배포</td>
+                    <td>⭐⭐⭐</td>
+                    <td>⭐⭐⭐⭐</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ============ 유튜브 채널 추천 ============ -->
+        <h2><span class="youtube-logo">📺</span> 유튜브 채널 추천 (FastAPI 배포 튜토리얼)</h2>
+
+        <div class="method-grid">
+            <div class="method-item popular">
+                <h3>1. Traversy Media (🔥 최고 추천)</h3>
+                <p style="color: #666;">구독자: 200만+</p>
+                <p><strong>대표 영상</strong>:</p>
+                <ul style="font-size: 14px;">
+                    <li>"Deploy FastAPI on Railway"</li>
+                    <li>"Full Stack Python FastAPI"</li>
+                    <li>"FastAPI with PostgreSQL"</li>
+                </ul>
+                <p style="font-weight: 600; color: #be123c;">✅ 강점: 명확한 설명, 실시간 코딩</p>
+            </div>
+
+            <div class="method-item">
+                <h3>2. Tech With Tim</h3>
+                <p style="color: #666;">구독자: 150만+</p>
+                <p><strong>대표 영상</strong>:</p>
+                <ul style="font-size: 14px;">
+                    <li>"FastAPI Tutorial"</li>
+                    <li>"Deploy Python to Cloud"</li>
+                    <li>"FastAPI + React Project"</li>
+                </ul>
+                <p style="font-weight: 600; color: #059669;">✅ 강점: 초급자 친화, 프로젝트 기반</p>
+            </div>
+
+            <div class="method-item">
+                <h3>3. pixegami</h3>
+                <p style="color: #666;">구독자: 50만+</p>
+                <p><strong>대표 영상</strong>:</p>
+                <ul style="font-size: 14px;">
+                    <li>"Full Stack Project Deploy"</li>
+                    <li>"FastAPI + Frontend Integration"</li>
+                    <li>"Production Deployment Guide"</li>
+                </ul>
+                <p style="font-weight: 600; color: #059669;">✅ 강점: 풀스택 프로젝트, 실무 중심</p>
+            </div>
+
+            <div class="method-item">
+                <h3>4. freeCodeCamp.org</h3>
+                <p style="color: #666;">구독자: 800만+</p>
+                <p><strong>대표 영상</strong>:</p>
+                <ul style="font-size: 14px;">
+                    <li>"FastAPI Complete Course (4시간+)"</li>
+                    <li>"Deployment Chapter (20-30분)"</li>
+                    <li>"PostgreSQL Integration"</li>
+                </ul>
+                <p style="font-weight: 600; color: #059669;">✅ 강점: 완전 무료, 심화 과정</p>
+            </div>
+
+            <div class="method-item">
+                <h3>5. Google Cloud (공식)</h3>
+                <p style="color: #666;">구독자: 300만+</p>
+                <p><strong>대표 영상</strong>:</p>
+                <ul style="font-size: 14px;">
+                    <li>"Cloud Run Quickstart"</li>
+                    <li>"Deploy FastAPI to Cloud Run"</li>
+                    <li>"Containerized Python Apps"</li>
+                </ul>
+                <p style="font-weight: 600; color: #059669;">✅ 강점: 공식 가이드, 가장 신뢰도 높음</p>
+            </div>
+
+            <div class="method-item">
+                <h3>6. Corey Schafer</h3>
+                <p style="color: #666;">구독자: 100만+</p>
+                <p><strong>대표 영상</strong>:</p>
+                <ul style="font-size: 14px;">
+                    <li>"Python Virtual Environment"</li>
+                    <li>"Flask/FastAPI Basics"</li>
+                    <li>"Deployment Basics"</li>
+                </ul>
+                <p style="font-weight: 600; color: #059669;">✅ 강점: 기초 명확, 천천히 진행</p>
+            </div>
+        </div>
+
+        <!-- ============ Railway 배포 가이드 ============ -->
+        <h2>🚀 Railway로 배포하기 (가장 쉬운 방법)</h2>
+
+        <p style="font-size: 16px; color: #666; margin-bottom: 20px;">
+            <strong>유튜브에서 가장 많이 추천하는 방식</strong><br>
+            GitHub에 Push → 자동 배포 (5분 내)
+        </p>
+
+        <div class="step">
+            <h3>Step 1: Railway 가입 (2분)</h3>
+            <ul>
+                <li>사이트: <code>https://railway.app</code></li>
+                <li>GitHub로 로그인</li>
+                <li>Dashboard 확인</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: 프로젝트 생성 (3분)</h3>
+            <ul>
+                <li>GitHub 저장소 연결</li>
+                <li>자동 감지: FastAPI 인식</li>
+                <li>"Deploy Now" 클릭</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: 환경 변수 설정 (2분)</h3>
+            <p>Railway Dashboard → Environment Variables</p>
+            <pre style="background: #f3f4f6; padding: 10px; border-radius: 4px;"><code>DATABASE_URL=postgresql://user:pass@db:5432/dolbomcare_db
+SECRET_KEY=your-secret-key
+DEBUG=False</code></pre>
+        </div>
+
+        <div class="step">
+            <h3>Step 4: PostgreSQL 추가 (2분)</h3>
+            <ul>
+                <li>Railway Dashboard → Add Service → PostgreSQL</li>
+                <li>자동으로 DATABASE_URL 생성됨</li>
+                <li>DB가 자동 연결됨</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>✅ 완료!</h3>
+            <p>브라우저에서 확인: <code>https://your-app.railway.app</code></p>
+            <p style="margin-top: 10px; font-weight: 600; color: #be123c;">
+                이제 GitHub에 Push하면 자동으로 배포됨!
+            </p>
+        </div>
+
+        <!-- ============ Vercel + Railway 조합 ============ -->
+        <h2>⭐ 최신 방식: Vercel + Railway 조합</h2>
+
+        <p style="font-size: 16px; color: #666; margin-bottom: 20px;">
+            <strong>2024-2025년 가장 인기 있는 풀스택 배포</strong><br>
+            Frontend (Vercel) + Backend (Railway) 동시 배포
+        </p>
+
+        <div class="comparison">
+            <div class="comparison-item">
+                <h3>🔵 Vercel (Frontend)</h3>
+                <p><strong>React/Next.js/Vue</strong></p>
+                <ul style="font-size: 13px;">
+                    <li>비용: 무료</li>
+                    <li>배포: GitHub 자동</li>
+                    <li>CDN: 글로벌</li>
+                    <li>SSL: 무료</li>
+                </ul>
+            </div>
+
+            <div class="comparison-item">
+                <h3>🔴 Railway (Backend)</h3>
+                <p><strong>FastAPI/Node/Python</strong></p>
+                <ul style="font-size: 13px;">
+                    <li>비용: $5/월</li>
+                    <li>배포: GitHub 자동</li>
+                    <li>DB: PostgreSQL 포함</li>
+                    <li>환경변수: 자동</li>
+                </ul>
+            </div>
+
+            <div class="comparison-item">
+                <h3>📡 통신</h3>
+                <p><strong>API 연결</strong></p>
+                <ul style="font-size: 13px;">
+                    <li>Frontend: Vercel</li>
+                    <li>API: Railway</li>
+                    <li>CORS: 설정 필요</li>
+                    <li>속도: 빠름</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="best" style="margin-top: 20px;">
+            <h3>✅ 이 조합이 최고인 이유</h3>
+            <ul style="font-size: 16px;">
+                <li><strong>비용</strong>: $0 + $5 = $5/월 (₩6,500)</li>
+                <li><strong>설정</strong>: 5분 (GitHub만 연결)</li>
+                <li><strong>자동 배포</strong>: Push → 자동 배포</li>
+                <li><strong>유튜브 많이 사용</strong>: 최신 추천 방식</li>
+                <li><strong>유지보수</strong>: 거의 없음</li>
+            </ul>
+        </div>
+
+        <!-- ============ Google Cloud Run ============ -->
+        <h2>🔵 Google Cloud Run (공식 추천)</h2>
+
+        <p style="font-size: 16px; color: #666; margin-bottom: 20px;">
+            <strong>Google 공식 가이드</strong><br>
+            매월 $300 크레딧 (거의 무료)
+        </p>
+
+        <div class="card">
+            <h3>특징</h3>
+            <ul>
+                <li><strong>비용</strong>: $300/월 크레딧 (파일럿용 무제한)</li>
+                <li><strong>배포</strong>: gcloud CLI 또는 Console (1-click)</li>
+                <li><strong>스케일링</strong>: 자동</li>
+                <li><strong>신뢰도</strong>: Google 인프라 (가장 안정적)</li>
+            </ul>
+
+            <h3>공식 튜토리얼</h3>
+            <p style="background: #eff6ff; padding: 10px; border-radius: 4px;">
+                <strong>Google Cloud Codelabs</strong><br>
+                "Hello Cloud Run with FastAPI" (30분 실습)
+            </p>
+
+            <h3>배포 명령어</h3>
+            <pre style="background: #f3f4f6; padding: 10px; border-radius: 4px;"><code># 설치
+gcloud init
+gcloud auth login
+
+# 배포
+gcloud run deploy dolbomcare \
+  --source . \
+  --platform managed \
+  --region asia-northeast1 \
+  --allow-unauthenticated</code></pre>
+        </div>
+
+        <!-- ============ 권장 선택지 ============ -->
+        <h2>🎯 Dolbomcare에 맞는 추천</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>상황</th>
+                    <th>추천</th>
+                    <th>비용</th>
+                    <th>배포 방식</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: #ffe4e6;">
+                    <td><strong>파일럿 검증<br>(지금 바로)</strong></td>
+                    <td><strong>Railway</strong></td>
+                    <td>$5/월</td>
+                    <td>GitHub 자동</td>
+                </tr>
+                <tr style="background: #eff6ff;">
+                    <td><strong>Frontend + Backend<br>풀스택</strong></td>
+                    <td><strong>Vercel + Railway</strong></td>
+                    <td>$5/월</td>
+                    <td>GitHub 자동 동시</td>
+                </tr>
+                <tr style="background: #eff6ff;">
+                    <td><strong>완전 무료<br>(크레딧)</strong></td>
+                    <td><strong>Google Cloud Run</strong></td>
+                    <td>$0 (크레딧)</td>
+                    <td>Console 1-click</td>
+                </tr>
+                <tr>
+                    <td><strong>센터 계약<br>실제 운영</strong></td>
+                    <td><strong>Hetzner (€3)</strong></td>
+                    <td>€3/월</td>
+                    <td>수동 배포</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ============ 단계별 추천 ============ -->
+        <h2>📈 단계별 배포 전략</h2>
+
+        <div class="card">
+            <h3>1️⃣ Phase 0 (지금, 파일럿 검증)</h3>
+            <ul>
+                <li><strong>배포</strong>: Railway ($5/월)</li>
+                <li><strong>Frontend</strong>: Vercel (무료)</li>
+                <li><strong>시간</strong>: 5분</li>
+                <li><strong>유튜브</strong>: Traversy Media "Deploy FastAPI on Railway"</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>2️⃣ Phase 1 (센터 파일럿)</h3>
+            <ul>
+                <li><strong>배포</strong>: Hetzner (€3/월, 한국 지원 필요 시 가비아 ₩30k)</li>
+                <li><strong>이유</strong>: 한국 서버 필요, 안정성</li>
+                <li><strong>마이그레이션</strong>: Railway → Hetzner (30분)</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>3️⃣ Phase 2+ (여러 센터)</h3>
+            <ul>
+                <li><strong>배포</strong>: 네이버/카카오 클라우드 (₩300만)</li>
+                <li><strong>이유</strong>: 한국 기술지원, 대규모 운영</li>
+            </ul>
+        </div>
+
+        <!-- ============ 비용 정리 ============ -->
+        <h2>💰 최종 비용 비교</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>배포 방식</th>
+                    <th>월 비용</th>
+                    <th>연간</th>
+                    <th>추천 기간</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: #ffe4e6;">
+                    <td><strong>🔴 Railway</strong></td>
+                    <td><strong>$5 (₩6.5k)</strong></td>
+                    <td>₩78k</td>
+                    <td>Phase 0 (3-6개월)</td>
+                </tr>
+                <tr style="background: #eff6ff;">
+                    <td><strong>🔵 Google Cloud Run</strong></td>
+                    <td><strong>$0 (크레딧)</strong></td>
+                    <td>₩0</td>
+                    <td>Phase 0 (무료)</td>
+                </tr>
+                <tr>
+                    <td><strong>🟢 Hetzner</strong></td>
+                    <td><strong>€3 (₩4k)</strong></td>
+                    <td>₩48k</td>
+                    <td>Phase 1 (파일럿)</td>
+                </tr>
+                <tr>
+                    <td><strong>🟡 가비아</strong></td>
+                    <td><strong>₩30,000</strong></td>
+                    <td>₩360k</td>
+                    <td>Phase 1 (법적)</td>
+                </tr>
+                <tr>
+                    <td><strong>🔵 네이버</strong></td>
+                    <td><strong>₩300,000</strong></td>
+                    <td>₩3.6M</td>
+                    <td>Phase 2+ (확대)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ============ 다음 단계 ============ -->
+        <div class="best">
+            <h2>🎬 지금 바로 할 일</h2>
+
+            <h3>1단계: 유튜브 영상 보기 (30분)</h3>
+            <p><strong>Traversy Media</strong>: "Deploy FastAPI on Railway"</p>
+            <ul>
+                <li>아주 명확한 설명</li>
+                <li>한글 자막 있음</li>
+                <li>바로 따라할 수 있음</li>
+            </ul>
+
+            <h3>2단계: Railway 배포 (5분)</h3>
+            <ul>
+                <li>GitHub 저장소 준비</li>
+                <li>Railway 계정 생성</li>
+                <li>프로젝트 연결</li>
+            </ul>
+
+            <h3>3단계: Vercel Frontend 배포 (선택, 5분)</h3>
+            <ul>
+                <li>GitHub 저장소의 Frontend 부분</li>
+                <li>Vercel에 연결</li>
+                <li>자동 배포</li>
+            </ul>
+
+            <p style="margin-top: 20px; font-weight: 600; color: #be123c; font-size: 16px;">
+                ✅ <strong>총 30-40분이면 완전한 풀스택 배포 완료!</strong>
+            </p>
+        </div>
+
+        <p style="margin-top: 30px; color: #999; font-size: 13px;">
+            🎬 추천 유튜브 채널<br>
+            • Traversy Media: https://www.youtube.com/@TraversyMedia<br>
+            • Tech With Tim: https://www.youtube.com/@TechWithTim<br>
+            • Google Cloud: https://www.youtube.com/@googlecloud<br>
+            • freeCodeCamp: https://www.youtube.com/@freecodecamp<br>
+            📅 정보 기준: 2024-2025
+        </p>
+    </div>
+</body>
+</html>

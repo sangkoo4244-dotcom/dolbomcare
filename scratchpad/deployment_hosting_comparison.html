@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로그램 배포 호스팅 비교 (한국 기반)</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+        h2 { color: #1f2937; margin-top: 30px; border-left: 4px solid #667eea; padding-left: 15px; }
+        h3 { color: #3730a3; margin-top: 20px; }
+        .comparison-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+        .comparison-table th { background: #f3f4f6; padding: 15px; text-align: left; font-weight: 600; border: 1px solid #e5e7eb; }
+        .comparison-table td { padding: 15px; border: 1px solid #e5e7eb; }
+        .comparison-table tr:nth-child(even) { background: #f9fafb; }
+        .best { background: #d1fae5 !important; }
+        .best::before { content: "⭐ "; color: #059669; font-weight: bold; }
+        .warning { background: #fef2f2; color: #dc2626; }
+        .service-card { background: #f9fafb; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .service-card h3 { margin-top: 0; color: #1f2937; }
+        .pros { color: #059669; }
+        .cons { color: #dc2626; }
+        .price { font-size: 16px; font-weight: 600; color: #667eea; }
+        .badge { display: inline-block; background: #e0e7ff; color: #3730a3; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 12px; font-weight: 600; }
+        .recommendation { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .recommendation strong { color: #d97706; }
+        table { width: 100%; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid #e5e7eb; }
+        th { background: #f3f4f6; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 프로그램 배포 호스팅 비교 (한국 기반)</h1>
+        <p style="font-size: 16px; color: #666; margin: 0;">
+            <strong>Dolbomcare 스택</strong>: FastAPI (Backend) + PostgreSQL (DB) + React Native/HTML (Frontend)<br>
+            <strong>초기 규모</strong>: 1개 센터 파일럿 (요양사 20-30명, 이용자 50-100명)
+        </p>
+
+        <!-- ============ 빠른 비교표 ============ -->
+        <h2>📊 한눈에 보기: 비용 & 성능 비교</h2>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>서비스</th>
+                    <th>월 비용<br>(최소)</th>
+                    <th>Backend</th>
+                    <th>Database</th>
+                    <th>Frontend</th>
+                    <th>한국 지원</th>
+                    <th>추천도</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="best">
+                    <td><strong>🔵 네이버 클라우드</strong></td>
+                    <td>₩150-200만</td>
+                    <td>✅ Container</td>
+                    <td>✅ PostgreSQL</td>
+                    <td>✅ CDN</td>
+                    <td>✅✅✅ 최고</td>
+                    <td>⭐⭐⭐⭐⭐</td>
+                </tr>
+                <tr class="best">
+                    <td><strong>🟢 카카오 클라우드</strong></td>
+                    <td>₩100-150만</td>
+                    <td>✅ VM</td>
+                    <td>✅ PostgreSQL</td>
+                    <td>✅ CDN</td>
+                    <td>✅✅✅ 최고</td>
+                    <td>⭐⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>🟡 AWS (Seoul)</strong></td>
+                    <td>₩150-300만</td>
+                    <td>✅ EC2/RDS</td>
+                    <td>✅ RDS</td>
+                    <td>✅ S3/CloudFront</td>
+                    <td>✅✅ 좋음</td>
+                    <td>⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>🔴 가비아 (한국)</strong></td>
+                    <td>₩50-100만</td>
+                    <td>✅ Linux 호스팅</td>
+                    <td>✅ PostgreSQL</td>
+                    <td>✅ 웹호스팅</td>
+                    <td>✅✅✅ 최고</td>
+                    <td>⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>🟣 Heroku</strong></td>
+                    <td>$50-100</td>
+                    <td>✅ Dyno</td>
+                    <td>✅ PostgreSQL</td>
+                    <td>✅ Static</td>
+                    <td>❌ 영문만</td>
+                    <td>⭐⭐⭐</td>
+                </tr>
+                <tr class="warning">
+                    <td><strong>❌ Lightsail</strong></td>
+                    <td>₩300만+</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅ 한국</td>
+                    <td>⭐⭐</td>
+                </tr>
+                <tr class="warning">
+                    <td><strong>⚠️ Railway</strong></td>
+                    <td>불안정</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                    <td>⭐</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ============ 상세 비교 ============ -->
+        <h2>🏆 추천 Top 3</h2>
+
+        <!-- 1. 네이버 클라우드 -->
+        <div class="service-card">
+            <h3>1️⃣ 네이버 클라우드 ⭐⭐⭐⭐⭐ (최고 추천)</h3>
+
+            <div class="price">월 ₩150-200만</div>
+
+            <p><strong>제공 기능:</strong></p>
+            <ul>
+                <li><strong>Server</strong>: Linux VM (vCPU 2, RAM 4GB) = ₩50만/월</li>
+                <li><strong>Database</strong>: PostgreSQL 15 관리형 DB = ₩60-80만/월</li>
+                <li><strong>Frontend</strong>: CDN (무료 or ₩20만/월)</li>
+                <li><strong>Backup</strong>: 자동 일일 백업 (포함)</li>
+                <li><strong>SSL/TLS</strong>: 무료 인증서</li>
+            </ul>
+
+            <p><strong class="pros">✅ 장점:</strong></p>
+            <ul>
+                <li>한국 서버 = 초저지연 (1ms 이내)</li>
+                <li>24시간 한국 기술지원 (전화 지원)</li>
+                <li>한국 법인/센터가 이용 중 (신뢰도 높음)</li>
+                <li>요양 데이터 = 한국 서버 저장 (GDPR/개인정보보호법 준수)</li>
+                <li>정부/금융 클라우드 기준 충족 (ISO 27001 사전구성)</li>
+                <li>초기 스타트업 할인 가능 (문의하면 20-30% 할인)</li>
+            </ul>
+
+            <p><strong class="cons">❌ 단점:</strong></p>
+            <ul>
+                <li>AWS보다 문서 적음 (하지만 한국 기술 블로그 풍부)</li>
+                <li>스케일링이 AWS보다 제한적 (하지만 Phase 1-2에는 충분)</li>
+            </ul>
+
+            <p><strong>필요 서버 사양 (Phase 1):</strong></p>
+            <table>
+                <tr><td><strong>CPU</strong></td><td>2 vCore</td></tr>
+                <tr><td><strong>메모리</strong></td><td>4GB RAM</td></tr>
+                <tr><td><strong>디스크</strong></td><td>100GB SSD</td></tr>
+                <tr><td><strong>대역폭</strong></td><td>1Gbps (무제한)</td></tr>
+            </table>
+
+            <p><strong>🎯 설정:</strong></p>
+            <ul>
+                <li>FastAPI uvicorn 데몬 + Supervisor 자동 재시작</li>
+                <li>Nginx 리버스 프록시 (포트 8000 → 80/443)</li>
+                <li>PostgreSQL 자동 백업 (일 1회)</li>
+                <li>cron: 매일 03:00 자동 재부팅 (메모리 누수 방지)</li>
+            </ul>
+
+            <div class="recommendation">
+                <strong>💡 추천 이유:</strong> 한국 기업/센터가 이용하는 시스템이고, 기술지원이 한국어로 가능하며, 초기 규모(1-2개 센터)에 완벽함. Phase 2로 확대할 때도 비용 증가가 적음.
+            </div>
+        </div>
+
+        <!-- 2. 카카오 클라우드 -->
+        <div class="service-card">
+            <h3>2️⃣ 카카오 클라우드 ⭐⭐⭐⭐⭐ (비용 최저)</h3>
+
+            <div class="price">월 ₩100-150만</div>
+
+            <p><strong>제공 기능:</strong></p>
+            <ul>
+                <li><strong>Server</strong>: Linux VM (vCPU 2, RAM 4GB) = ₩40만/월</li>
+                <li><strong>Database</strong>: PostgreSQL 관리형 = ₩50-60만/월</li>
+                <li><strong>Frontend</strong>: CDN (₩10-20만/월)</li>
+                <li><strong>특징</strong>: 신용카드 결제 시 10% 추가 할인</li>
+            </ul>
+
+            <p><strong class="pros">✅ 장점:</strong></p>
+            <ul>
+                <li>가장 저렴한 비용 ⭐</li>
+                <li>한국 서버 (카카오 인프라 신뢰도 높음)</li>
+                <li>한국 기술지원</li>
+                <li>신용카드 결제 시 추가 할인</li>
+                <li>초기 3개월 트라이얼 가능</li>
+            </ul>
+
+            <p><strong class="cons">❌ 단점:</strong></p>
+            <ul>
+                <li>네이버보다 시장 점유율 낮음 (신뢰도 약간 낮음)</li>
+                <li>UI/문서가 네이버보다 복잡함</li>
+                <li>기술지원이 네이버보다 느림 (이메일 중심)</li>
+            </ul>
+
+            <div class="recommendation">
+                <strong>💡 추천 이유:</strong> 비용이 최저이고, Phase 1 파일럿에서 비용을 최소화하려면 최고의 선택. 나중에 네이버로 마이그레이션 가능.
+            </div>
+        </div>
+
+        <!-- 3. AWS Lightsail -->
+        <div class="service-card">
+            <h3>3️⃣ AWS Lightsail ⭐⭐⭐ (중간 추천)</h3>
+
+            <div class="price">월 ₩300만+ (비싼 편)</div>
+
+            <p><strong>제공 기능:</strong></p>
+            <ul>
+                <li><strong>서버</strong>: $10-40/월 (VPS 호스팅 대체)</li>
+                <li><strong>Database</strong>: 별도 구성 필요</li>
+            </ul>
+
+            <p><strong class="pros">✅ 장점:</strong></p>
+            <ul>
+                <li>AWS 생태계 (향후 확장성 좋음)</li>
+                <li>현재 이미 사용 중 (마이그레이션 불필요)</li>
+            </ul>
+
+            <p><strong class="cons">❌ 단점:</strong></p>
+            <ul>
+                <li>네이버/카카오보다 2-3배 비쌈</li>
+                <li>한국 지원 제한적 (영문 위주)</li>
+                <li>초보자 친화적이 아님</li>
+                <li>한국 의료법/개인정보 담당자가 검증하기 어려움</li>
+            </ul>
+
+            <div class="recommendation">
+                <strong>💡 추천 이유:</strong> 지금 AWS를 쓰고 있다면 유지해도 되지만, 새로 시작한다면 네이버/카카오가 더 나음.
+            </div>
+        </div>
+
+        <!-- ============ 절대 피하기 ============ -->
+        <h2>⚠️ 절대 피하기</h2>
+
+        <div class="service-card" style="border-left-color: #dc2626;">
+            <h3>❌ Railway, Render, Vercel, Replit</h3>
+            <p><strong class="cons">왜 안 되는가:</strong></p>
+            <ul>
+                <li><strong>불안정한 요금제</strong>: 사용량 초과하면 갑자기 청구 (한 달에 ₩500만+ 가능)</li>
+                <li><strong>데이터 센터가 미국</strong>: 지연 시간 높음 (100-200ms) → 모바일 앱 반응성 나쁨</li>
+                <li><strong>한국 의료법 미준수</strong>: 개인정보 해외 저장 금지 가능</li>
+                <li><strong>기술지원 없음</strong>: 커뮤니티 포럼만 가능</li>
+                <li><strong>Heroku 종료</strong>: Railway/Render도 시간 문제 (불안정)</li>
+            </ul>
+        </div>
+
+        <div class="service-card" style="border-left-color: #dc2626;">
+            <h3>❌ 가비아 (낮은 등급 호스팅)</h3>
+            <p><strong class="cons">왜 안 되는가:</strong></p>
+            <ul>
+                <li>Linux 호스팅은 FastAPI 배포 어려움 (PHP/Node 중심)</li>
+                <li>PostgreSQL 관리가 불편함</li>
+                <li>확장성 제한 (크기 커지면 업체 변경 필수)</li>
+                <li>기술지원이 웹 호스팅 수준 (개발자 지원 약함)</li>
+            </ul>
+        </div>
+
+        <!-- ============ 추천 선택지 ============ -->
+        <h2>🎯 Dolbomcare 맞춤 추천</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>상황</th>
+                    <th>추천 서비스</th>
+                    <th>비용</th>
+                    <th>이유</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>✅ Phase 1 파일럿<br>(1-2개 센터)</strong></td>
+                    <td><strong>카카오 클라우드</strong> (1순위)<br>or 네이버 클라우드 (2순위)</td>
+                    <td>₩100-200만/월</td>
+                    <td>저비용 + 안정성</td>
+                </tr>
+                <tr>
+                    <td><strong>✅ Phase 2 확대<br>(5-20개 센터)</strong></td>
+                    <td><strong>네이버 클라우드</strong></td>
+                    <td>₩300-400만/월</td>
+                    <td>기술지원 필요 + 확장성</td>
+                </tr>
+                <tr>
+                    <td><strong>✅ Phase 3 전국<br>(100+ 센터)</strong></td>
+                    <td><strong>AWS Seoul</strong> or <strong>다중 클라우드</strong></td>
+                    <td>₩500만+/월</td>
+                    <td>엔터프라이즈급 기능</td>
+                </tr>
+                <tr>
+                    <td><strong>❌ 절대 피하기</strong></td>
+                    <td>Railway, Render, Heroku</td>
+                    <td>불안정</td>
+                    <td>비용/신뢰도 모두 문제</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ============ 구체적 설정 ============ -->
+        <h2>📝 네이버 클라우드 구체적 설정</h2>
+
+        <h3>Step 1: 서버 구성</h3>
+        <div class="service-card">
+            <table style="font-size: 14px;">
+                <tr>
+                    <td><strong>상품명</strong></td>
+                    <td>Standard vServer</td>
+                </tr>
+                <tr>
+                    <td><strong>사양</strong></td>
+                    <td>vCPU 2, Memory 4GB, SSD 100GB</td>
+                </tr>
+                <tr>
+                    <td><strong>OS</strong></td>
+                    <td>Ubuntu 22.04 LTS</td>
+                </tr>
+                <tr>
+                    <td><strong>위치</strong></td>
+                    <td>Seoul Region (ap-southeast-1)</td>
+                </tr>
+                <tr>
+                    <td><strong>월 비용</strong></td>
+                    <td>₩50-80만</td>
+                </tr>
+            </table>
+
+            <p style="margin-top: 15px;"><strong>설치할 소프트웨어:</strong></p>
+            <ul style="font-family: 'Courier New', monospace; background: #f3f4f6; padding: 15px; border-radius: 4px;">
+                <li>Python 3.11 + pip</li>
+                <li>FastAPI + uvicorn</li>
+                <li>Nginx (리버스 프록시)</li>
+                <li>Supervisor (프로세스 관리)</li>
+                <li>PostgreSQL 15 (클라이언트만 - DB는 관리형 사용)</li>
+                <li>Git + GitHub 연동 (자동 배포)</li>
+            </ul>
+        </div>
+
+        <h3>Step 2: Database 구성</h3>
+        <div class="service-card">
+            <table style="font-size: 14px;">
+                <tr>
+                    <td><strong>상품명</strong></td>
+                    <td>Cloud DB for PostgreSQL</td>
+                </tr>
+                <tr>
+                    <td><strong>버전</strong></td>
+                    <td>PostgreSQL 15</td>
+                </tr>
+                <tr>
+                    <td><strong>사양</strong></td>
+                    <td>고가용성 (Master-Slave) 구성</td>
+                </tr>
+                <tr>
+                    <td><strong>백업</strong></td>
+                    <td>자동 일일 백업 (30일 보관)</td>
+                </tr>
+                <tr>
+                    <td><strong>월 비용</strong></td>
+                    <td>₩60-100만</td>
+                </tr>
+            </table>
+
+            <p style="margin-top: 15px;"><strong>보안 설정:</strong></p>
+            <ul>
+                <li>SSL 연결 필수</li>
+                <li>VPC 내부 통신만 허용 (외부 접근 차단)</li>
+                <li>자동 백업 + 포인트 인타임 복구 (PITR) 활성화</li>
+            </ul>
+        </div>
+
+        <h3>Step 3: Frontend 배포</h3>
+        <div class="service-card">
+            <ul>
+                <li><strong>HTML/CSS/JS 파일</strong>: Nginx 서버에서 직접 서빙</li>
+                <li><strong>모바일 앱 (React Native)</strong>: Expo 또는 AppStore/PlayStore 배포</li>
+                <li><strong>CDN (선택)</strong>: 나중에 필요하면 네이버 CDN (₩20만/월)</li>
+            </ul>
+        </div>
+
+        <h3>Step 4: 배포 파이프라인</h3>
+        <div class="service-card">
+            <p style="font-family: 'Courier New', monospace; background: #f3f4f6; padding: 15px; border-radius: 4px;">
+                <strong>GitHub → Webhook → 네이버 클라우드 자동 배포</strong><br><br>
+                1. GitHub에 push<br>
+                2. Webhook 트리거<br>
+                3. 서버에서 git pull<br>
+                4. pip install -r requirements.txt<br>
+                5. systemctl restart dolbomcare (FastAPI 재시작)<br>
+                6. 무중단 배포 (Supervisor 관리)
+            </p>
+        </div>
+
+        <!-- ============ 비용 요약 ============ -->
+        <h2>💰 월별 비용 요약 (네이버 클라우드 기준)</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>항목</th>
+                    <th>Phase 1<br>(1개 센터)</th>
+                    <th>Phase 2<br>(20개 센터)</th>
+                    <th>Phase 3<br>(200개 센터)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Server</strong></td>
+                    <td>₩50만</td>
+                    <td>₩100만<br>(2배 사양)</td>
+                    <td>₩300만<br>(스케일 아웃)</td>
+                </tr>
+                <tr>
+                    <td><strong>Database</strong></td>
+                    <td>₩80만</td>
+                    <td>₩150만<br>(읽기 복제본)</td>
+                    <td>₩500만<br>(마스터-슬레이브)</td>
+                </tr>
+                <tr>
+                    <td><strong>CDN/대역폭</strong></td>
+                    <td>무료</td>
+                    <td>₩20만</td>
+                    <td>₩100만</td>
+                </tr>
+                <tr>
+                    <td><strong>모니터링/로깅</strong></td>
+                    <td>무료</td>
+                    <td>₩10만</td>
+                    <td>₩50만</td>
+                </tr>
+                <tr style="background: #e0e7ff; font-weight: 600;">
+                    <td><strong>합계</strong></td>
+                    <td><strong>₩150만</strong></td>
+                    <td><strong>₩300만</strong></td>
+                    <td><strong>₩1,000만</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ============ 최종 결론 ============ -->
+        <h2>🏁 최종 결론</h2>
+
+        <div class="recommendation">
+            <h3>✅ Phase 1 (지금 바로) - 카카오 클라우드</h3>
+            <ul>
+                <li>월 ₩100-150만으로 시작</li>
+                <li>파일럿 성공 후 네이버로 마이그레이션</li>
+                <li>비용 절감 + 성공 가능성 높음</li>
+            </ul>
+        </div>
+
+        <div class="recommendation" style="background: #d1fae5; border-left-color: #059669;">
+            <h3>✅ Phase 2 (10월 이후) - 네이버 클라우드</h3>
+            <ul>
+                <li>월 ₩300-400만</li>
+                <li>기술지원 필요할 때 전화 지원 가능</li>
+                <li>다중 센터 운영에 최적화</li>
+            </ul>
+        </div>
+
+        <div class="recommendation" style="background: #eff6ff; border-left-color: #3b82f6;">
+            <h3>✅ Phase 3 (내년) - AWS 또는 다중 클라우드</h3>
+            <ul>
+                <li>국제 확장 계획 시 고려</li>
+                <li>지금은 불필요함</li>
+            </ul>
+        </div>
+
+        <p style="margin-top: 30px; color: #999; font-size: 13px;">
+            💡 Tip: 카카오/네이버 클라우드 모두 <strong>초기 가입 시 크레딧 10-20만원</strong> 지급합니다. 문의하기 전에 꼭 확인하세요!
+        </p>
+    </div>
+</body>
+</html>
