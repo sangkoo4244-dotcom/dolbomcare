@@ -339,7 +339,7 @@
             <!-- 기본 플랜 -->
             <div class="pricing-card">
                 <div class="plan-name">기본</div>
-                <div class="price" id="price-basic">50,000<span>원</span></div>
+                <div class="price" id="price-basic">29,900<span>원</span></div>
                 <div class="price-period">1개월 단위</div>
                 <ul class="features-list">
                     <li>최대 30명 스태프 관리</li>
@@ -357,7 +357,7 @@
             <div class="pricing-card featured">
                 <div class="badge">가장 인기있음</div>
                 <div class="plan-name">프로</div>
-                <div class="price" id="price-pro">150,000<span>원</span></div>
+                <div class="price" id="price-pro">79,900<span>원</span></div>
                 <div class="price-period">1개월 단위</div>
                 <ul class="features-list">
                     <li>최대 100명 스태프 관리</li>
@@ -374,7 +374,7 @@
             <!-- 엔터프라이즈 -->
             <div class="pricing-card">
                 <div class="plan-name">엔터프라이즈</div>
-                <div class="price" id="price-enterprise">400,000<span>원+</span></div>
+                <div class="price" id="price-enterprise">199,900<span>원+</span></div>
                 <div class="price-period">맞춤형 가격</div>
                 <ul class="features-list">
                     <li>무제한 스태프 관리</li>
@@ -410,7 +410,7 @@
                 </div>
                 <div class="faq-item">
                     <h3>지금 가입하면 정말 비용을 절감할 수 있나요?</h3>
-                    <p>네. 평균 요양센터는 월 50~100만원의 행정비(기록, 청부 계산, 급여 정산)를 절감합니다. 투자 대비 수익률(ROI)은 2~3개월입니다.</p>
+                    <p>네. 평균 요양센터는 월 110~180만원의 행정비(음성 기록, 청부 계산, 급여 정산)를 절감합니다. 프로 플랜(월 79,900원)으로 투자 회수는 약 2~3개월입니다.</p>
                 </div>
                 <div class="faq-item">
                     <h3>기술 지원은 어떻게?</h3>
@@ -455,8 +455,8 @@
             event.target.classList.add('active');
 
             const prices = {
-                monthly: { basic: '50,000', pro: '150,000', enterprise: '400,000+' },
-                yearly: { basic: '480,000', pro: '1,440,000', enterprise: '3,840,000+' }
+                monthly: { basic: '29,900', pro: '79,900', enterprise: '199,900+' },
+                yearly: { basic: '251,160', pro: '671,160', enterprise: '1,679,160+' }
             };
 
             document.getElementById('price-basic').innerHTML = prices[type].basic + '<span>원</span>';
