@@ -84,6 +84,33 @@ router = APIRouter()
 UPLOAD_DIR = "uploads/audio"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+# 건강보험공단 기준 청부액 계산 함수
+def calculate_billing_amount(base_amount: int, client_type: str, service_category: str = "재가급여") -> int:
+    """
+    건강보험공단 기준으로 실제 청부액 계산
+
+    청부액 = 기준액 × (1 - 본인부담률)
+
+    예시:
+    - 기본요양 1등급 기준액 ₩78,875
+    - 일반인: ₩78,875 × 85% = ₩67,043
+    - 차상위: ₩78,875 × 90% = ₩70,988
+    - 기초/의료: ₩78,875 × 100% = ₩78,875
+    """
+    # client_type 정규화
+    if client_type is None:
+        client_type = "일반"
+
+    # 본인부담률 조회
+    category_rates = PATIENT_PAY_RATE.get(service_category, PATIENT_PAY_RATE["재가급여"])
+    patient_rate = category_rates.get(client_type, category_rates.get("일반", 0.15))
+
+    # 청부액 = 기준액 × (1 - 본인부담률)
+    insurance_rate = 1 - patient_rate
+    actual_amount = int(base_amount * insurance_rate)
+
+    return actual_amount
+
 # Request 모델
 class CreateRecordRequest(BaseModel):
     caregiver_id: int
@@ -127,15 +154,19 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Resident not found")
         print(f"[DEBUG] 이용자 찾음: {resident.id}, center_id={resident.center_id}")
 
-        # NHIS 기준 청부 계산: 서비스 유형 + 요양 등급
+        # NHIS 기준 청부 계산: 서비스 유형 + 요양 등급 + client_type별 보험료
         with open("/tmp/debug.log", "a") as f:
             f.write(f"  Calculating billing (NHIS standard)...\n")
         care_grade = resident.care_grade or 1
         service_type = request.service_type or "basic_care"
+        client_type = resident.client_type or "일반"
 
-        # SERVICE_TYPE_AMOUNTS에서 청부액 조회
+        # 1. 기준액 조회 (SERVICE_TYPE_AMOUNTS는 NHIS 기준액)
         service_rates = SERVICE_TYPE_AMOUNTS.get(service_type, SERVICE_TYPE_AMOUNTS["basic_care"])
-        amount = service_rates.get(care_grade, service_rates[1])
+        base_amount = service_rates.get(care_grade, service_rates[1])
+
+        # 2. client_type별 보험료 적용하여 실제 청부액 계산
+        amount = calculate_billing_amount(base_amount, client_type, "재가급여")
 
         # DailyRecord 생성
         with open("/tmp/debug.log", "a") as f:
@@ -824,10 +855,14 @@ async def create_voice_record(
         db.flush()
         
         care_grade = resident.care_grade or 1
+        client_type = resident.client_type or "일반"
 
-        # NHIS 기준: 서비스 유형 + 요양 등급별 청부액 (건강보험공단 정산액)
+        # NHIS 기준: 서비스 유형 + 요양 등급 + client_type별 보험료
         service_rates = SERVICE_TYPE_AMOUNTS.get(service_type, SERVICE_TYPE_AMOUNTS["basic_care"])
-        billing_amount = service_rates.get(care_grade, service_rates[1])
+        base_amount = service_rates.get(care_grade, service_rates[1])
+
+        # client_type별 보험료 적용하여 실제 청부액 계산
+        billing_amount = calculate_billing_amount(base_amount, client_type, "재가급여")
 
         billing_record = BillingRecord(
             caregiver_id=caregiver_id,

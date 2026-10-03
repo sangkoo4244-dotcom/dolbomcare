@@ -15,6 +15,28 @@ SERVICE_TYPE_AMOUNTS = {
     "medical_care": {1: 118312, 2: 100565, 3: 82818},
 }
 
+# 건강보험공단 기준 본인부담율
+PATIENT_PAY_RATE = {
+    "재가급여": {
+        "일반": 0.15,           # 본인 15%, 공단 85%
+        "차상위계층": 0.10,      # 본인 10%, 공단 90%
+        "기초생활보장": 0.00,    # 본인 0%, 공단 100%
+        "의료급여": 0.00,       # 본인 0%, 공단 100%
+    }
+}
+
+# 청부액 계산 함수
+def calculate_billing_amount(base_amount: int, client_type: str) -> int:
+    """
+    청부액 = 기준액 × (1 - 본인부담률)
+    """
+    if client_type is None:
+        client_type = "일반"
+
+    patient_rate = PATIENT_PAY_RATE.get("재가급여", {}).get(client_type, 0.15)
+    insurance_rate = 1 - patient_rate
+    return int(base_amount * insurance_rate)
+
 db = SessionLocal()
 
 try:
@@ -159,9 +181,12 @@ try:
         db.add(daily_record)
         db.flush()
 
-        # SERVICE_TYPE_AMOUNTS에서 청부액 조회
+        # 기준액 조회
         service_rates = SERVICE_TYPE_AMOUNTS.get(service_type, SERVICE_TYPE_AMOUNTS["basic_care"])
-        amount = service_rates.get(care_grade, service_rates[1])
+        base_amount = service_rates.get(care_grade, service_rates[1])
+
+        # client_type별 보험료 적용
+        amount = calculate_billing_amount(base_amount, resident.client_type)
 
         # 청부 생성
         billing = BillingRecord(
