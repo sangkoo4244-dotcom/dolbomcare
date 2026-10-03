@@ -32,6 +32,33 @@
             max-width: 500px;
             width: 100%;
             padding: 50px 40px;
+            position: relative;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            z-index: 10;
+        }
+
+        .back-button:hover {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
         }
         .logo {
             font-size: 24px;
@@ -144,6 +171,7 @@
 </head>
 <body>
     <div class="container">
+        <a href="/pricing.html" class="back-button">← 요금제로</a>
         <div class="logo">이음로직</div>
         <h1>계정 만들기</h1>
         <p class="subtitle">요양센터 운영을 시작하세요</p>
