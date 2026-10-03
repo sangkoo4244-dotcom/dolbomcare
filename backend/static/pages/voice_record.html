@@ -37,9 +37,7 @@
         .sidebar-logo { font-size: 28px; line-height: 1; }
         .sidebar-title { font-size: 16px; font-weight: 700; }
 
-        .sidebar-nav {
-            padding: 24px 0;
-        }
+        .sidebar-nav { padding: 24px 0; }
 
         .nav-item {
             padding: 12px 20px;
@@ -55,17 +53,8 @@
             font-weight: 500;
         }
 
-        .nav-item:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .nav-item.active {
-            color: #10b981;
-            border-left-color: #10b981;
-            background: rgba(16, 185, 129, 0.1);
-        }
-
+        .nav-item:hover { color: white; background: rgba(255, 255, 255, 0.05); }
+        .nav-item.active { color: #10b981; border-left-color: #10b981; background: rgba(16, 185, 129, 0.1); }
         .nav-item.hidden { display: none; }
 
         .main-layout {
@@ -136,6 +125,55 @@
         .content {
             flex: 1;
             padding: 32px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 32px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #9ca3af;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: #f97316;
+            border-bottom-color: #f97316;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 32px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #f97316;
         }
 
         .record-section {
@@ -215,42 +253,6 @@
             box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            border: 1px solid #e5e7eb;
-            transition: all 0.3s;
-        }
-
-        .stat-card:hover {
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #6b7280;
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 36px;
-            font-weight: 700;
-            color: #f97316;
-        }
-
         .record-list {
             background: white;
             border-radius: 12px;
@@ -269,14 +271,9 @@
         }
 
         .record-item:last-child { border-bottom: none; }
+        .record-item:hover { background: #f9fafb; }
 
-        .record-item:hover {
-            background: #f9fafb;
-        }
-
-        .record-info {
-            flex: 1;
-        }
+        .record-info { flex: 1; }
 
         .record-title {
             font-weight: 600;
@@ -410,16 +407,20 @@
 
         <!-- Content -->
         <div class="content">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" id="tabToday" onclick="switchTab('today')">
+                    📅 오늘 기록 (<span id="todayCount">0</span>)
+                </button>
+                <button class="tab-btn" id="tabAll" onclick="switchTab('all')">
+                    📊 전체 기록 (<span id="totalCount">0</span>)
+                </button>
+            </div>
+
             <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">오늘 기록</div>
-                    <div class="stat-value" id="todayCount">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">전체 기록</div>
-                    <div class="stat-value" id="totalCount">0</div>
-                </div>
+            <div class="stat-card">
+                <div class="stat-label" id="statLabel">오늘 청부액</div>
+                <div class="stat-value" id="statAmount">₩0</div>
             </div>
 
             <!-- Record Form -->
@@ -437,10 +438,10 @@
                             <label for="serviceType">서비스 유형</label>
                             <select id="serviceType" required>
                                 <option value="">유형을 선택하세요</option>
+                                <option value="basic_care">기본 돌봄</option>
                                 <option value="meal_service">식사 서빙</option>
                                 <option value="medical_care">의료 관리</option>
-                                <option value="mobility_assistance">이동 보조</option>
-                                <option value="personal_care">개인 위생</option>
+                                <option value="emergency">응급</option>
                             </select>
                         </div>
                     </div>
@@ -452,9 +453,9 @@
                 </form>
             </div>
 
-            <!-- Recent Records -->
+            <!-- Records List -->
             <div class="record-section">
-                <h2>최근 기록</h2>
+                <h2>기록 목록</h2>
                 <div id="recordList" class="record-list">
                     <div class="empty-state">
                         <div class="empty-state-icon">⏳</div>
@@ -468,8 +469,10 @@
     <script>
         const API_URL = '/api/v1';
         let currentUser = null;
+        let todayRecords = [];
         let allRecords = [];
         let residents = [];
+        let currentTab = 'today';
 
         function navigateTo(url) { window.location.href = url; }
 
@@ -496,9 +499,7 @@
             document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
             document.getElementById('userAvatar').textContent = (user.full_name || '사용자').charAt(0).toUpperCase();
 
-            // 메뉴 필터링은 menu.js의 filterMenuByRole() 함수에서 처리
             filterMenuByRole();
-
             return true;
         }
 
@@ -523,30 +524,51 @@
 
         async function loadRecords() {
             try {
-                // 요양사: 자신의 기록만, 센터장: 센터 전체 기록
-                let url = `${API_URL}/records/`;
                 if (currentUser.role === 'caregiver') {
-                    url += `?user_id=${currentUser.id}`;
+                    const todayResp = await fetch(`${API_URL}/records/today?caregiver_id=${currentUser.id}`);
+                    const allResp = await fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`);
+
+                    if (todayResp.ok) {
+                        const data = await todayResp.json();
+                        todayRecords = data.records || [];
+                    }
+
+                    if (allResp.ok) {
+                        const data = await allResp.json();
+                        allRecords = data.records || [];
+                    }
                 } else if (currentUser.role === 'center_manager') {
-                    url += `?center_id=${currentUser.center_id}`;
+                    const todayResp = await fetch(`${API_URL}/records/today/center?center_id=${currentUser.center_id}`);
+
+                    if (todayResp.ok) {
+                        const data = await todayResp.json();
+                        todayRecords = data.records || [];
+                        allRecords = todayRecords;
+                    }
                 }
 
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed');
-                const data = await response.json();
-                const records = data.records || [];
-                allRecords = records;
-
-                const today = new Date().toISOString().split('T')[0];
-                const todayCount = records.filter(r => r.recorded_date?.startsWith(today)).length;
-
-                document.getElementById('todayCount').textContent = todayCount;
-                document.getElementById('totalCount').textContent = records.length;
-
-                renderRecords(records.slice(0, 10));
+                document.getElementById('todayCount').textContent = todayRecords.length;
+                document.getElementById('totalCount').textContent = allRecords.length;
+                renderCurrentTab();
             } catch (error) {
                 console.error('기록 로드 실패:', error);
             }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tabToday').classList.toggle('active', tab === 'today');
+            document.getElementById('tabAll').classList.toggle('active', tab === 'all');
+            document.getElementById('statLabel').textContent = tab === 'today' ? '오늘 청부액' : '전체 청부액';
+            renderCurrentTab();
+        }
+
+        function renderCurrentTab() {
+            const records = currentTab === 'today' ? todayRecords : allRecords;
+            const totalAmount = records.reduce((sum, r) => sum + (r.billing_amount || 0), 0);
+
+            document.getElementById('statAmount').textContent = `₩${totalAmount.toLocaleString()}`;
+            renderRecords(records);
         }
 
         function renderRecords(records) {
@@ -559,17 +581,18 @@
 
             let html = '';
             records.forEach(r => {
-                const date = new Date(r.recorded_date).toLocaleDateString('ko-KR');
+                const date = new Date(r.recorded_at).toLocaleDateString('ko-KR');
                 const residentName = residents.find(res => res.id === r.resident_id)?.name || '알 수 없음';
                 html += `
                     <div class="record-item">
                         <div class="record-info">
                             <div class="record-title">${residentName}</div>
-                            <div class="record-meta">${r.service_type} • ₩${r.amount?.toLocaleString() || '0'}</div>
+                            <div class="record-meta">${r.service_type} • ₩${(r.billing_amount || 0).toLocaleString()}</div>
                             <div class="record-date">${date}</div>
                         </div>
                         <div class="action-buttons">
                             <button class="btn-sm" onclick="viewRecord(${r.id})">보기</button>
+                            <button class="btn-sm" onclick="editRecord(${r.id})">수정</button>
                             <button class="btn-sm" onclick="deleteRecord(${r.id})">삭제</button>
                         </div>
                     </div>
@@ -580,11 +603,42 @@
         }
 
         function viewRecord(id) {
-            const record = allRecords.find(r => r.id === id);
+            const allData = currentTab === 'today' ? todayRecords : allRecords;
+            const record = allData.find(r => r.id === id);
             if (!record) return;
             const residentName = residents.find(r => r.id === record.resident_id)?.name || '알 수 없음';
-            const date = new Date(record.recorded_date).toLocaleDateString('ko-KR');
-            alert(`이용자: ${residentName}\n서비스: ${record.service_type}\n날짜: ${date}\n\n내용:\n${record.notes || '기록 없음'}`);
+            const date = new Date(record.recorded_at).toLocaleDateString('ko-KR');
+            alert(`이용자: ${residentName}\n서비스: ${record.service_type}\n청부액: ₩${(record.billing_amount || 0).toLocaleString()}\n날짜: ${date}\n\n내용:\n${record.notes || '기록 없음'}`);
+        }
+
+        async function editRecord(id) {
+            const allData = currentTab === 'today' ? todayRecords : allRecords;
+            const record = allData.find(r => r.id === id);
+            if (!record) return;
+
+            const newNotes = prompt('내용을 수정하세요:', record.notes || '');
+            if (newNotes === null) return;
+
+            try {
+                const response = await fetch(`${API_URL}/records/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({ notes: newNotes })
+                });
+
+                if (response.ok) {
+                    alert('수정되었습니다');
+                    loadRecords();
+                } else {
+                    alert('수정 중 오류가 발생했습니다');
+                }
+            } catch (error) {
+                console.error('수정 오류:', error);
+                alert('수정 중 오류가 발생했습니다');
+            }
         }
 
         async function deleteRecord(id) {
@@ -622,14 +676,13 @@
 
             try {
                 const payload = {
-                    user_id: currentUser.id,
+                    caregiver_id: currentUser.id,
                     resident_id: parseInt(residentId),
                     service_type: serviceType,
-                    notes: notes,
-                    recorded_date: new Date().toISOString()
+                    notes: notes
                 };
 
-                const response = await fetch(`${API_URL}/records/`, {
+                const response = await fetch(`${API_URL}/records/create`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
