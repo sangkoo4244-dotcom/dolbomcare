@@ -92,34 +92,14 @@ try:
     print("✅ 음성 기록 생성 중...")
     now = datetime.now()
     daily_records = []
-    today_daily_record_ids = []
+    daily_record_by_resident = {}  # resident_id별 daily_record_ids 저장
 
-    # 오늘 기록: 5건 (청부 5개와 연결)
+    # 음성 기록: 9건 (각 이용자별 3건씩: 오늘, 1일전, 2일전)
     for i, resident_id in enumerate(resident_ids):
-        # 이용자1: 2개 (pending, rejected)
-        # 이용자2: 2개 (approved, reimbursed)
-        # 이용자3: 1개 (submitted_to_nhis)
-        count = 2 if i < 2 else 1
+        daily_record_by_resident[resident_id] = []
 
-        for j in range(count):
-            daily_record = DailyRecord(
-                caregiver_id=caregiver_id,
-                resident_id=resident_id,
-                recorded_date=now,  # 오늘
-                service_type="basic_care",
-                morning_care=True,
-                meal_intake="full",
-                medicine_given=True,
-                notes=f"이용자 {i+1}의 오늘 기록 #{j+1}"
-            )
-            db.add(daily_record)
-            db.flush()
-            daily_records.append(daily_record)
-            today_daily_record_ids.append(daily_record.id)
-
-    # 과거 기록: 7건 (전체 기록 테스트용)
-    for i, resident_id in enumerate(resident_ids):
-        for day_offset in range(1, 3):  # 1~2일 전
+        # 각 이용자별 3개 기록 (오늘, 1일전, 2일전)
+        for day_offset in range(0, 3):
             daily_record = DailyRecord(
                 caregiver_id=caregiver_id,
                 resident_id=resident_id,
@@ -133,112 +113,71 @@ try:
             db.add(daily_record)
             db.flush()
             daily_records.append(daily_record)
+            daily_record_by_resident[resident_id].append((daily_record.id, day_offset))
 
-    print(f"  - 음성 기록: {len(daily_records)}건 (오늘: 2건, 과거: 7건)")
+    print(f"  - 음성 기록: {len(daily_records)}건 (이용자당 3건씩)")
 
-    # 6. 청부 기록 생성 (다양한 상태)
+    # 6. 청부 기록 생성 (모든 음성 기록과 일대일 대응)
     print("✅ 청부 기록 생성 중...")
 
-    billings = [
-        # 대기 중 (오늘 + 이용자1)
-        {
-            "resident_id": resident_ids[0],
-            "approval_status": "pending",
-            "status": "draft",
-            "amount": 1400000,
-            "days_ago": 0
-        },
-        # 승인됨 (오늘 + 이용자2)
-        {
-            "resident_id": resident_ids[1],
-            "approval_status": "approved",
-            "status": "draft",
-            "amount": 1260000,
-            "days_ago": 0
-        },
-        # 건보 청구됨 (오늘 + 이용자3)
-        {
-            "resident_id": resident_ids[2],
-            "approval_status": "submitted_to_nhis",
-            "status": "draft",
-            "amount": 1070000,
-            "days_ago": 0
-        },
-        # 거절됨 (오늘 + 이용자1)
-        {
-            "resident_id": resident_ids[0],
-            "approval_status": "rejected",
-            "status": "draft",
-            "amount": 1260000,
-            "days_ago": 0,
-            "rejection_reason": "서류 누락"
-        },
-        # 환급완료 (과거 + 아카이브됨 - voice_record 오늘에서 제외)
-        {
-            "resident_id": resident_ids[1],
-            "approval_status": "reimbursed",
-            "status": "draft",
-            "amount": 1400000,
-            "days_ago": 10,
-            "is_archived": True
-        },
+    billings = []
+
+    # 각 이용자별 3개 청부 기록 (각 음성 기록에 대응)
+    billing_statuses = [
+        ("pending", "⏳ 대기 중"),
+        ("approved", "✅ 승인됨"),
+        ("submitted_to_nhis", "📤 건보 청구"),
+        ("rejected", "❌ 거절"),
+        ("reimbursed", "💰 환급완료"),
     ]
 
-    for i, billing_data in enumerate(billings):
-        recorded_date = now - timedelta(days=billing_data["days_ago"])
+    billing_index = 0
+    for resident_idx, resident_id in enumerate(resident_ids):
+        for daily_record_id, day_offset in daily_record_by_resident[resident_id]:
+            # 상태를 순환하며 할당 (pending → approved → submitted_to_nhis → rejected → reimbursed)
+            approval_status, status_label = billing_statuses[billing_index % len(billing_statuses)]
 
-        # 올바른 매핑: billing의 resident와 일치하는 daily_record 찾기
-        matching_daily_record_id = None
-        # 오늘 청부인 경우만 daily_record와 연결 (days_ago == 0)
-        if billing_data.get("days_ago", 0) == 0 and len(today_daily_record_ids) > 0:
-            # 해당 resident의 daily_record 찾기
-            remaining_ids = today_daily_record_ids.copy()  # 리스트 복사본으로 반복
-            for dr_id in remaining_ids:
-                daily = db.query(DailyRecord).filter(DailyRecord.id == dr_id).first()
-                if daily and daily.resident_id == billing_data["resident_id"]:
-                    matching_daily_record_id = dr_id
-                    today_daily_record_ids.remove(dr_id)  # 원본 리스트에서 제거
-                    break
+            # 과거 기록은 아카이브 (reimbursed 상태만)
+            is_archived = (day_offset > 0 and approval_status == "reimbursed")
 
-        billing = BillingRecord(
-            caregiver_id=caregiver_id,
-            resident_id=billing_data["resident_id"],
-            center_id=center_id,
-            service_category="재가급여",
-            service_type="basic_care",
-            amount=billing_data["amount"],
-            status=billing_data["status"],
-            approval_status=billing_data["approval_status"],
-            recorded_date=recorded_date,
-            is_archived=billing_data.get("is_archived", False),
-            # 오늘 청부는 같은 resident의 DailyRecord와 연결
-            daily_record_id=matching_daily_record_id,
-        )
+            recorded_date = now - timedelta(days=day_offset)
 
-        if billing_data["approval_status"] == "approved":
-            billing.approved_by = manager_id
-            billing.approved_at = recorded_date + timedelta(hours=2)
-        elif billing_data["approval_status"] == "rejected":
-            billing.rejection_reason = billing_data.get("rejection_reason", "")
-            billing.approved_by = manager_id
-            billing.approved_at = recorded_date + timedelta(hours=1)
-        elif billing_data["approval_status"] == "submitted_to_nhis":
-            billing.approved_by = manager_id
-            billing.approved_at = recorded_date + timedelta(hours=1)
-        elif billing_data["approval_status"] == "reimbursed":
-            billing.approved_by = manager_id
-            billing.approved_at = recorded_date
-            billing.archived_at = recorded_date + timedelta(hours=1)
+            billing = BillingRecord(
+                caregiver_id=caregiver_id,
+                resident_id=resident_id,
+                center_id=center_id,
+                service_category="재가급여",
+                service_type="basic_care",
+                amount=1300000 + (resident_idx * 100000),  # 이용자별 다른 금액
+                status="draft",
+                approval_status=approval_status,
+                recorded_date=recorded_date,
+                is_archived=is_archived,
+                daily_record_id=daily_record_id,  # 모든 청부를 음성 기록과 연결
+            )
 
-        db.add(billing)
-        status_label = {
-            "pending": "⏳ 대기 중",
-            "approved": "✅ 승인됨",
-            "submitted_to_nhis": "📤 건보 청구",
-            "rejected": "❌ 거절",
-            "reimbursed": "💰 환급완료 (아카이브)"
-        }
-        print(f"  - 청부 {i+1}: {status_label.get(billing_data['approval_status'], '?')} (₩{billing_data['amount']:,})")
+            if approval_status == "approved":
+                billing.approved_by = manager_id
+                billing.approved_at = recorded_date + timedelta(hours=2)
+            elif approval_status == "rejected":
+                billing.rejection_reason = "서류 누락"
+                billing.approved_by = manager_id
+                billing.approved_at = recorded_date + timedelta(hours=1)
+            elif approval_status == "submitted_to_nhis":
+                billing.approved_by = manager_id
+                billing.approved_at = recorded_date + timedelta(hours=1)
+            elif approval_status == "reimbursed":
+                billing.approved_by = manager_id
+                billing.approved_at = recorded_date
+                billing.archived_at = recorded_date + timedelta(hours=1)
+
+            db.add(billing)
+            billings.append((billing, status_label))
+            billing_index += 1
+
+    # 출력
+    for i, (billing, status_label) in enumerate(billings):
+        print(f"  - 청부 {i+1}: {status_label} (₩{billing.amount:,}) → 음성기록 ID {billing.daily_record_id}")
 
     db.commit()
     print("\n✅ 테스트 데이터 초기화 완료!")
@@ -249,8 +188,9 @@ try:
     print(f"  - 센터: 1개")
     print(f"  - 사용자: 2개 (센터장, 요양사)")
     print(f"  - 이용자: {len(resident_ids)}명")
-    print(f"  - 음성 기록: {len(daily_records)}건")
-    print(f"  - 청부 기록: {len(billings)}개 (활성: 3개, 아카이브: 1개, 거절: 1개)")
+    print(f"  - 음성 기록: {len(daily_records)}건 (이용자당 3건)")
+    print(f"  - 청부 기록: {len(billings)}개 (음성 기록과 1:1 대응)")
+    print(f"\n✅ 모든 음성 기록이 청부 기록과 연결됨!")
 
 except Exception as e:
     db.rollback()
