@@ -36,7 +36,9 @@ function filterMenuByRole() {
             'menu-residents',              // 이용자 관리 (전체)
             'menu-voice-records',          // 음성 기록 (센터 전체)
             'menu-billing-management',     // 청부 관리
-            'menu-staff'                   // 직원 관리
+            'menu-staff',                  // 직원 관리
+            'menu-profit',                 // 수익 분석
+            'menu-roadmap'                 // 성과 로드맵
         ];
         managerMenus.forEach(id => {
             const el = document.getElementById(id);
