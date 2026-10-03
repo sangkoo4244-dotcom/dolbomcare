@@ -343,11 +343,7 @@ async def get_recent_records(
             billing_amount = billing_info.get("amount", 0)
             approval_status = billing_info.get("approval_status", "")
 
-            # 요양사 기준: submitted_to_nhis 기록 제외
-            if caregiver and caregiver.role == 'caregiver':
-                if approval_status == 'submitted_to_nhis':
-                    continue
-
+            # 요양사도 모든 자신의 기록을 조회할 수 있어야 함 (submitted_to_nhis 포함)
             billing_total += billing_amount
             response_records.append({
                 "id": r.id,
@@ -416,12 +412,7 @@ async def get_all_records(
             billing_info = billing_map.get(r.id, {})
             billing_amount = billing_info.get("amount", 0)
 
-            # 요양사 기준: submitted_to_nhis 기록 제외
-            if caregiver and caregiver.role == 'caregiver':
-                linked_billing = db.query(BillingRecord).filter(BillingRecord.daily_record_id == r.id).first()
-                if linked_billing and linked_billing.approval_status == 'submitted_to_nhis':
-                    continue
-
+            # 요양사도 모든 자신의 기록을 조회할 수 있어야 함 (submitted_to_nhis 포함)
             billing_total += billing_amount
             response_records.append({
                 "id": r.id,
@@ -502,11 +493,7 @@ async def get_today_records(
             billing_amount = billing_info.get("amount", 0)
             approval_status = billing_info.get("approval_status", "")
 
-            # 요양사 기준: submitted_to_nhis 기록 제외
-            if caregiver and caregiver.role == 'caregiver':
-                if approval_status == 'submitted_to_nhis':
-                    continue
-
+            # 요양사도 모든 자신의 기록을 조회할 수 있어야 함 (submitted_to_nhis 포함)
             billing_total += billing_amount
             response_records.append({
                 "id": r.id,
