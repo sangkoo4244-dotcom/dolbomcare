@@ -738,14 +738,18 @@ async def update_record(
 @router.delete("/{record_id}")
 async def delete_record(
     record_id: int,
-    user_id: int,
-    user_role: str,
+    user_id: int = Query(None),
+    user_role: str = Query(None),
     db: Session = Depends(get_db)
 ):
     """
     기록 삭제
     - 센터장: 모든 기록 삭제 가능
     - 요양사: 자신의 기록만 삭제 가능
+
+    Query Parameters:
+    - user_id: 요청자의 사용자 ID
+    - user_role: 요청자의 역할 (center_manager 또는 caregiver)
     """
 
     # 기록 조회
@@ -754,6 +758,9 @@ async def delete_record(
         raise HTTPException(status_code=404, detail="기록을 찾을 수 없습니다")
 
     # 권한 검증
+    if user_id is None or user_role is None:
+        raise HTTPException(status_code=401, detail="user_id와 user_role이 필요합니다")
+
     is_manager = user_role == "center_manager"
     is_own_record = record.caregiver_id == user_id
 
