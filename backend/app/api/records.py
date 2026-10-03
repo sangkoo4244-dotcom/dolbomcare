@@ -681,7 +681,7 @@ async def get_today_center_records(
         ]
     }
 
-@router.get("/{record_id}")
+@router.get("/daily/{record_id}")
 async def get_record(
     record_id: int,
     db: Session = Depends(get_db)
@@ -720,7 +720,7 @@ async def get_record(
         ]
     }
 
-@router.patch("/{record_id}")
+@router.patch("/daily/{record_id}")
 async def update_record(
     record_id: int,
     request: UpdateRecordRequest,
@@ -772,136 +772,8 @@ async def update_record(
         print(f"[ERROR] update_record: {type(e).__name__}: {e}\n{error_trace}")
         raise HTTPException(status_code=500, detail=f"수정 중 오류 발생: {str(e)}")
 
-@router.delete("/{record_id}")
-async def delete_record(
-    record_id: int,
-    user_id: int = Query(None),
-    user_role: str = Query(None),
-    db: Session = Depends(get_db)
-):
-    """
-    기록 삭제
-    - 센터장: 모든 기록 삭제 가능
-    - 요양사: 자신의 기록만 삭제 가능
 
-    Query Parameters:
-    - user_id: 요청자의 사용자 ID
-    - user_role: 요청자의 역할 (center_manager 또는 caregiver)
-    """
-
-    # 기록 조회
-    record = db.query(DailyRecord).filter(DailyRecord.id == record_id).first()
-    if not record:
-        raise HTTPException(status_code=404, detail="기록을 찾을 수 없습니다")
-
-    # 권한 검증
-    if user_id is None or user_role is None:
-        raise HTTPException(status_code=401, detail="user_id와 user_role이 필요합니다")
-
-    is_manager = user_role == "center_manager"
-    is_own_record = record.caregiver_id == user_id
-
-    if not (is_manager or is_own_record):
-        raise HTTPException(status_code=403, detail="삭제 권한이 없습니다 (자신의 기록만 삭제 가능)")
-
-    # 관련 청구 기록도 함께 삭제 (이 DailyRecord와 연결된 청부만)
-    billings = db.query(BillingRecord).filter(
-        BillingRecord.daily_record_id == record.id
-    ).all()
-
-    try:
-        # 청구 기록 삭제 (이 DailyRecord와 연결된 청부만)
-        for billing in billings:
-            db.delete(billing)
-
-        # 일일 기록 삭제
-        db.delete(record)
-        db.commit()
-
-        return {
-            "status": "success",
-            "message": "기록이 삭제되었습니다",
-            "record_id": record_id
-        }
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"삭제 중 오류 발생: {str(e)}")
-
-
-# ===== VoiceRecord 자동 청부 생성 =====
-# SERVICE_TYPE_AMOUNTS는 파일 상단에 정의됨 (create_record와 공유)
-
-@router.post("/voice/create")
-async def create_voice_record(
-    caregiver_id: int,
-    resident_id: int,
-    service_type: str = "basic_care",
-    transcription: str = "",
-    db: Session = Depends(get_db)
-):
-    """Create voice record + auto-generate billing"""
-    try:
-        resident = db.query(Resident).filter(Resident.id == resident_id).first()
-        if not resident:
-            raise HTTPException(status_code=404, detail="Resident not found")
-        
-        if service_type not in SERVICE_TYPE_AMOUNTS:
-            raise HTTPException(status_code=400, detail="Invalid service_type")
-        
-        now = datetime.now()
-        voice_record = VoiceRecord(
-            caregiver_id=caregiver_id,
-            resident_id=resident_id,
-            center_id=resident.center_id,
-            recorded_date=now,
-            service_type=service_type,
-            transcription=transcription,
-            created_at=now
-        )
-        db.add(voice_record)
-        db.flush()
-
-        care_grade = resident.care_grade or 1
-        client_type = resident.client_type or "일반"
-
-        # NHIS 기준: 서비스 유형 + 요양 등급 + client_type별 보험료
-        service_rates = SERVICE_TYPE_AMOUNTS.get(service_type, SERVICE_TYPE_AMOUNTS["basic_care"])
-        base_amount = service_rates.get(care_grade, service_rates[1])
-
-        # client_type별 보험료 적용하여 실제 청부액 계산
-        billing_amount = calculate_billing_amount(base_amount, client_type, "재가급여")
-
-        billing_record = BillingRecord(
-            caregiver_id=caregiver_id,
-            resident_id=resident_id,
-            center_id=resident.center_id,
-            service_category="재가급여",
-            service_type=service_type,
-            amount=billing_amount,
-            status="draft",
-            approval_status="pending",
-            recorded_date=now,
-            year_month=get_year_month(now),
-            created_at=now
-        )
-        db.add(billing_record)
-        db.flush()
-
-        voice_record.billing_record_id = billing_record.id
-        db.commit()
-        
-        return {
-            "status": "success",
-            "voice_record_id": voice_record.id,
-            "billing_record_id": billing_record.id,
-            "amount": billing_amount
-        }
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# ===== 월별 정산 =====
+# ===== 월별 정산 (구체적 경로는 DELETE보다 먼저) =====
 
 @router.get("/monthly-summary")
 def get_monthly_summary(
@@ -1045,3 +917,134 @@ def get_monthly_statistics(
         "by_caregiver": list(caregiver_stats.values()),
         "by_service": list(service_stats.values())
     }
+
+
+@router.delete("/daily/{record_id}")
+async def delete_record(
+    record_id: int,
+    user_id: int = Query(None),
+    user_role: str = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    기록 삭제
+    - 센터장: 모든 기록 삭제 가능
+    - 요양사: 자신의 기록만 삭제 가능
+
+    Query Parameters:
+    - user_id: 요청자의 사용자 ID
+    - user_role: 요청자의 역할 (center_manager 또는 caregiver)
+    """
+
+    # 기록 조회
+    record = db.query(DailyRecord).filter(DailyRecord.id == record_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="기록을 찾을 수 없습니다")
+
+    # 권한 검증
+    if user_id is None or user_role is None:
+        raise HTTPException(status_code=401, detail="user_id와 user_role이 필요합니다")
+
+    is_manager = user_role == "center_manager"
+    is_own_record = record.caregiver_id == user_id
+
+    if not (is_manager or is_own_record):
+        raise HTTPException(status_code=403, detail="삭제 권한이 없습니다 (자신의 기록만 삭제 가능)")
+
+    # 관련 청구 기록도 함께 삭제 (이 DailyRecord와 연결된 청부만)
+    billings = db.query(BillingRecord).filter(
+        BillingRecord.daily_record_id == record.id
+    ).all()
+
+    try:
+        # 청구 기록 삭제 (이 DailyRecord와 연결된 청부만)
+        for billing in billings:
+            db.delete(billing)
+
+        # 일일 기록 삭제
+        db.delete(record)
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": "기록이 삭제되었습니다",
+            "record_id": record_id
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"삭제 중 오류 발생: {str(e)}")
+
+
+# ===== VoiceRecord 자동 청부 생성 =====
+# SERVICE_TYPE_AMOUNTS는 파일 상단에 정의됨 (create_record와 공유)
+
+@router.post("/voice/create")
+async def create_voice_record(
+    caregiver_id: int,
+    resident_id: int,
+    service_type: str = "basic_care",
+    transcription: str = "",
+    db: Session = Depends(get_db)
+):
+    """Create voice record + auto-generate billing"""
+    try:
+        resident = db.query(Resident).filter(Resident.id == resident_id).first()
+        if not resident:
+            raise HTTPException(status_code=404, detail="Resident not found")
+        
+        if service_type not in SERVICE_TYPE_AMOUNTS:
+            raise HTTPException(status_code=400, detail="Invalid service_type")
+        
+        now = datetime.now()
+        voice_record = VoiceRecord(
+            caregiver_id=caregiver_id,
+            resident_id=resident_id,
+            center_id=resident.center_id,
+            recorded_date=now,
+            service_type=service_type,
+            transcription=transcription,
+            created_at=now
+        )
+        db.add(voice_record)
+        db.flush()
+
+        care_grade = resident.care_grade or 1
+        client_type = resident.client_type or "일반"
+
+        # NHIS 기준: 서비스 유형 + 요양 등급 + client_type별 보험료
+        service_rates = SERVICE_TYPE_AMOUNTS.get(service_type, SERVICE_TYPE_AMOUNTS["basic_care"])
+        base_amount = service_rates.get(care_grade, service_rates[1])
+
+        # client_type별 보험료 적용하여 실제 청부액 계산
+        billing_amount = calculate_billing_amount(base_amount, client_type, "재가급여")
+
+        billing_record = BillingRecord(
+            caregiver_id=caregiver_id,
+            resident_id=resident_id,
+            center_id=resident.center_id,
+            service_category="재가급여",
+            service_type=service_type,
+            amount=billing_amount,
+            status="draft",
+            approval_status="pending",
+            recorded_date=now,
+            year_month=get_year_month(now),
+            created_at=now
+        )
+        db.add(billing_record)
+        db.flush()
+
+        voice_record.billing_record_id = billing_record.id
+        db.commit()
+        
+        return {
+            "status": "success",
+            "voice_record_id": voice_record.id,
+            "billing_record_id": billing_record.id,
+            "amount": billing_amount
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
