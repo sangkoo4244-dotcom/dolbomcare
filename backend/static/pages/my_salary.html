@@ -591,17 +591,10 @@
             return true;
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('📄 DOMContentLoaded: 급여 관리');
-            checkAuth();
-        });
-
         window.addEventListener('load', () => {
-            console.log('🔍 Load 이벤트: 급여 관리');
-            if (!currentUser) {
-                checkAuth();
+            if (checkAuth()) {
+                loadSalaryData();
             }
-            loadSalaryData();
         });
 
         async function loadSalaryData() {

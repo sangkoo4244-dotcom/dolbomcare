@@ -93,13 +93,8 @@ function logout() {
     }
 }
 
-// 페이지 로드 시 메뉴 필터링
-document.addEventListener('DOMContentLoaded', () => {
-    // 약간의 지연 후 필터링 (DOM 준비 완료 후)
-    setTimeout(() => {
-        filterMenuByRole();
-    }, 0);
-});
+// 메뉴 필터링은 각 페이지에서 checkAuth() 후 호출됨
+// menu.js에서는 호출하지 않음 (중복 방지)
 
 // 메뉴 항목 활성화 상태 설정
 function setActiveMenu(menuId) {

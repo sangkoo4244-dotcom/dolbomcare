@@ -561,7 +561,7 @@
             alert('음성 기록 저장은 준비 중입니다');
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('load', () => {
             if (checkAuth()) {
                 loadResidents();
                 loadRecords();

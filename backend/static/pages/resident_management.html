@@ -535,7 +535,7 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('load', () => {
             if (checkAuth()) {
                 loadResidents();
             }
