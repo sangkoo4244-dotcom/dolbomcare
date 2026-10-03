@@ -586,8 +586,8 @@
                     rejected: rejectedCount
                 });
 
-                // 주민 정보 로드
-                const residentsRes = await fetch(`${API_URL}/residents/`);
+                // 주민 정보 로드 (센터의 모든 주민)
+                const residentsRes = await fetch(`${API_URL}/residents/?center_id=${centerId}`);
                 const residentsData = residentsRes.ok ? await residentsRes.json() : { residents: [] };
                 const residents = residentsData.residents || [];
                 const residentMap = {};
@@ -690,9 +690,10 @@
                 records: filtered.map(r => r.approval_status)
             });
 
-            // 주민 정보 로드
+            // 주민 정보 로드 (센터의 모든 주민)
             try {
-                const residentsRes = await fetch(`${API_URL}/residents/`);
+                const centerId = currentUser?.center_id || 1;
+                const residentsRes = await fetch(`${API_URL}/residents/?center_id=${centerId}`);
                 const residentsData = residentsRes.ok ? await residentsRes.json() : { residents: [] };
                 const residents = residentsData.residents || [];
                 const residentMap = {};

@@ -478,8 +478,15 @@
                 const tableDiv = document.getElementById('billingTable');
                 tableDiv.innerHTML = '<div class="empty-state">로드 중...</div>';
 
-                // 주민 정보 로드
-                const residentsRes = await fetch(`${API_URL}/residents/`);
+                // 주민 정보 로드 (역할에 따라 필터링)
+                let residentsUrl = `${API_URL}/residents/`;
+                if (currentUser.role === 'caregiver') {
+                    residentsUrl += `?caregiver_id=${currentUser.id}`;
+                } else if (currentUser.role === 'center_manager') {
+                    residentsUrl += `?center_id=${currentUser.center_id}`;
+                }
+
+                const residentsRes = await fetch(residentsUrl);
                 const residentsData = residentsRes.ok ? await residentsRes.json() : { residents: [] };
                 const residents = residentsData.residents || [];
                 const residentMap = {};
@@ -487,10 +494,12 @@
                     residentMap[r.id] = r.name;
                 });
 
-                // 센터장은 전체 청부, 요양사는 자신의 청부만 조회
+                // 청부 조회 (역할에 따라 필터링)
                 let url = `${API_URL}/billing/`;
                 if (currentUser.role === 'caregiver') {
                     url += `?caregiver_id=${currentUser.id}`;
+                } else if (currentUser.role === 'center_manager') {
+                    url += `?center_id=${currentUser.center_id}`;
                 }
 
                 const response = await fetch(url);

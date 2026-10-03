@@ -489,51 +489,39 @@
             <div class="sidebar-title">돌봄케어</div>
         </div>
         <nav class="sidebar-nav">
+            <!-- 공통 메뉴 -->
             <a class="nav-item active" id="menu-dashboard" onclick="navigateTo('./dashboard.html')">
                 <span>📊</span> 대시보드
             </a>
-            <a class="nav-item" id="menu-residents" onclick="navigateTo('./resident_management.html')">
+
+            <!-- 역할별 메뉴: menu.js에서 필터링 -->
+            <a class="nav-item hidden" id="menu-residents" onclick="navigateTo('./resident_management.html')">
                 <span>👥</span> 이용자 관리
             </a>
-            <a class="nav-item" id="menu-voice-records" onclick="navigateTo('./voice_record.html')">
+            <a class="nav-item hidden" id="menu-voice-records" onclick="navigateTo('./voice_record.html')">
                 <span>🎤</span> 음성 기록
             </a>
-            <a class="nav-item" id="menu-caregiver-billing" onclick="navigateTo('./caregiver_billing.html')">
+
+            <!-- 요양사 메뉴 -->
+            <a class="nav-item hidden" id="menu-caregiver-billing" onclick="navigateTo('./caregiver_billing.html')">
                 <span>💳</span> 나의 청부
             </a>
-            <a class="nav-item" id="menu-notifications" onclick="navigateTo('./notifications.html')">
-                <span>📲</span> 알림/공지
-            </a>
-            <a class="nav-item" id="menu-my-schedule" onclick="navigateTo('./my_schedule.html')">
-                <span>📅</span> 나의 일정
-            </a>
-            <a class="nav-item" id="menu-my-salary" onclick="navigateTo('./my_salary.html')">
+            <a class="nav-item hidden" id="menu-my-salary" onclick="navigateTo('./my_salary.html')">
                 <span>💰</span> 나의 급여
             </a>
-            <a class="nav-item" id="menu-resident-family-comm" onclick="navigateTo('./resident_family_communication.html')">
-                <span>👨‍👩‍👧</span> 담당자 소통
+            <a class="nav-item hidden" id="menu-my-schedule" onclick="navigateTo('./my_schedule.html')">
+                <span>📅</span> 나의 일정
             </a>
-            <a class="nav-item" id="menu-billing-management" onclick="navigateTo('./billing_management.html')">
+
+            <!-- 센터장 메뉴 -->
+            <a class="nav-item hidden" id="menu-billing-management" onclick="navigateTo('./billing_management.html')">
                 <span>📋</span> 청부 관리
             </a>
-            <a class="nav-item" id="menu-staff" onclick="navigateTo('./staff_management.html')">
+            <a class="nav-item hidden" id="menu-staff" onclick="navigateTo('./staff_management.html')">
                 <span>👔</span> 직원 관리
             </a>
-            <a class="nav-item" id="menu-schedule" onclick="navigateTo('./schedule_management.html')">
-                <span>📅</span> 스케줄 관리
-            </a>
-            <a class="nav-item" id="menu-guardian-comm" onclick="navigateTo('./guardian_communication.html')">
-                <span>📢</span> 보호자 소통
-            </a>
-            <a class="nav-item" id="menu-profit" onclick="navigateTo('./profit_analysis.html')">
-                <span>📈</span> 손익 분석
-            </a>
-            <a class="nav-item" id="menu-roadmap" onclick="navigateTo('./center-roadmap.html')">
-                <span>📊</span> 성장 로드맵
-            </a>
-            <a class="nav-item" id="menu-settings" onclick="navigateTo('./settings.html')">
-                <span>⚙️</span> 설정
-            </a>
+
+            <!-- 로그아웃 (공통) -->
             <a class="nav-item" id="menu-logout" style="margin-top: 30px;" onclick="logout()">
                 <span>🚪</span> 로그아웃
             </a>
@@ -815,8 +803,8 @@
             const centerId = user?.center_id || 1;
 
             try {
-                // 이용자 수
-                const resResponse = await fetch(`${API_URL}/residents/`, {
+                // 이용자 수 (센터의 모든 주민)
+                const resResponse = await fetch(`${API_URL}/residents/?center_id=${centerId}`, {
                     headers: token ? {'Authorization': `Bearer ${token}`} : {}
                 });
                 if (resResponse.ok) {
@@ -861,8 +849,8 @@
             const centerId = user?.center_id || 1;
 
             try {
-                // 오늘 일정 (거주자 수)
-                const resResponse = await fetch(`${API_URL}/residents/`, {
+                // 담당 거주자 수 (자신이 담당하는 주민만)
+                const resResponse = await fetch(`${API_URL}/residents/?caregiver_id=${user.id}`, {
                     headers: token ? {'Authorization': `Bearer ${token}`} : {}
                 });
                 if (resResponse.ok) {

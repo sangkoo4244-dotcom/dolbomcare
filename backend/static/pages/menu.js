@@ -31,13 +31,12 @@ function filterMenuByRole() {
             if (el) el.classList.remove('hidden');
         });
     } else if (role === 'center_manager') {
-        // 센터장 메뉴
+        // 센터장 메뉴 (실제 dashboard.html의 ID와 일치)
         const managerMenus = [
-            'menu-residents',      // 이용자 관리 (전체)
-            'menu-voice-records',  // 음성 기록 (센터 전체)
-            'menu-billing-mgmt',   // 청부 관리
-            'menu-salary-mgmt',    // 급여 관리
-            'menu-schedule-mgmt'   // 일정 관리
+            'menu-residents',              // 이용자 관리 (전체)
+            'menu-voice-records',          // 음성 기록 (센터 전체)
+            'menu-billing-management',     // 청부 관리
+            'menu-staff'                   // 직원 관리
         ];
         managerMenus.forEach(id => {
             const el = document.getElementById(id);
