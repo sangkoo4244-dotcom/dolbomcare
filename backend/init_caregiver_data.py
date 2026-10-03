@@ -8,6 +8,25 @@ from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# 건강보험공단 요양등급별 서비스 청부액 (1등급 기준)
+NHIS_BILLING_RATES = {
+    "basic_care": {       # 기본 요양 (입욕, 배설, 수면 등)
+        1: 78875,         # 1등급: 최고 수준
+        2: 67043,         # 2등급: 약 85%
+        3: 55211,         # 3등급: 약 70%
+    },
+    "meal_service": {     # 식사 지원
+        1: 39437,         # 1등급
+        2: 33521,         # 2등급: 약 85%
+        3: 27605,         # 3등급: 약 70%
+    },
+    "medical_care": {     # 의료 관리
+        1: 118312,        # 1등급
+        2: 100565,        # 2등급: 약 85%
+        3: 82818,         # 3등급: 약 70%
+    }
+}
+
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -147,9 +166,12 @@ try:
             status = statuses[status_idx % len(statuses)]
             status_idx += 1
 
-            # 이용자의 등급에 따라 청부액 결정
+            # 건강보험공단 기준: 서비스 유형 + 요양 등급별 청부액
             resident = db.query(Resident).filter(Resident.id == daily_record.resident_id).first()
-            base_amount = 1500000 - ((resident.care_grade - 1) * 200000)
+
+            # service_type에 해당하는 청부액 조회 (없으면 기본요양으로 기본값)
+            service_rates = NHIS_BILLING_RATES.get(daily_record.service_type, NHIS_BILLING_RATES["basic_care"])
+            amount = service_rates.get(resident.care_grade, service_rates[1])
 
             billing = BillingRecord(
                 caregiver_id=caregiver_id,
@@ -157,7 +179,7 @@ try:
                 center_id=center_id,
                 service_category="재가급여",
                 service_type=daily_record.service_type,
-                amount=base_amount,
+                amount=amount,  # NHIS 기준 청부액
                 status="draft",
                 approval_status=status,
                 recorded_date=daily_record.recorded_date,
