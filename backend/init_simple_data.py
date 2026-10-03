@@ -199,6 +199,7 @@ try:
             status="draft",
             approval_status="pending",
             recorded_date=today,
+            year_month=today.strftime("%Y-%m"),
             daily_record_id=daily_record.id
         )
         db.add(billing)

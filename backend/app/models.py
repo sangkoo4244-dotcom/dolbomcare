@@ -123,9 +123,32 @@ class BillingRecord(Base):
     rejection_reason = Column(String, nullable=True)  # 거절 사유
     recorded_date = Column(DateTime, index=True)
     submitted_date = Column(DateTime, nullable=True)
+    year_month = Column(String, index=True, nullable=True)  # 'YYYY-MM' (정산월)
     is_archived = Column(Boolean, default=False, index=True)  # 아카이브 여부
     archived_at = Column(DateTime, nullable=True)  # 아카이브 시간
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class MonthlySummary(Base):
+    """월별 정산 요약"""
+    __tablename__ = "monthly_summaries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    caregiver_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # NULL이면 센터 전체
+    year_month = Column(String, index=True)  # 'YYYY-MM'
+
+    total_records = Column(Integer, default=0)  # 총 청부 건수
+    total_amount = Column(Integer, default=0)  # 총 청부액
+    approved_count = Column(Integer, default=0)  # 승인된 건수
+    submitted_count = Column(Integer, default=0)  # 제출된 건수
+    paid_count = Column(Integer, default=0)  # 환급된 건수
+
+    submitted_to_nhis_at = Column(DateTime, nullable=True)  # 건보 청구 날짜
+    reimbursement_confirmed_at = Column(DateTime, nullable=True)  # 환급 확인 날짜
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 
 class Schedule(Base):
     __tablename__ = "schedules"

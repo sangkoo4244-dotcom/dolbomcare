@@ -2,7 +2,8 @@
 from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.orm import Session
-from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord
+from sqlalchemy import func
+from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary
 from app.schemas import DailyRecordResponse
 from app.database import get_db
 from datetime import datetime, time
@@ -111,6 +112,10 @@ def calculate_billing_amount(base_amount: int, client_type: str, service_categor
 
     return actual_amount
 
+def get_year_month(date: datetime) -> str:
+    """날짜로부터 YYYY-MM 형식의 정산월 추출"""
+    return date.strftime("%Y-%m")
+
 # Request 모델
 class CreateRecordRequest(BaseModel):
     caregiver_id: int
@@ -199,6 +204,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
             service_type=request.service_type,
             amount=amount,
             recorded_date=now,
+            year_month=get_year_month(now),
             status="draft",
             approval_status="draft"
         )
@@ -842,18 +848,19 @@ async def create_voice_record(
         if service_type not in SERVICE_TYPE_AMOUNTS:
             raise HTTPException(status_code=400, detail="Invalid service_type")
         
+        now = datetime.now()
         voice_record = VoiceRecord(
             caregiver_id=caregiver_id,
             resident_id=resident_id,
             center_id=resident.center_id,
-            recorded_date=datetime.utcnow(),
+            recorded_date=now,
             service_type=service_type,
             transcription=transcription,
-            created_at=datetime.utcnow()
+            created_at=now
         )
         db.add(voice_record)
         db.flush()
-        
+
         care_grade = resident.care_grade or 1
         client_type = resident.client_type or "일반"
 
@@ -868,17 +875,18 @@ async def create_voice_record(
             caregiver_id=caregiver_id,
             resident_id=resident_id,
             center_id=resident.center_id,
-            service_category=service_category,
+            service_category="재가급여",
             service_type=service_type,
             amount=billing_amount,
             status="draft",
             approval_status="pending",
-            recorded_date=datetime.utcnow(),
-            created_at=datetime.utcnow()
+            recorded_date=now,
+            year_month=get_year_month(now),
+            created_at=now
         )
         db.add(billing_record)
         db.flush()
-        
+
         voice_record.billing_record_id = billing_record.id
         db.commit()
         
@@ -891,3 +899,149 @@ async def create_voice_record(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== 월별 정산 =====
+
+@router.get("/monthly-summary")
+def get_monthly_summary(
+    center_id: int,
+    year_month: Optional[str] = None,
+    caregiver_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    월별 정산 요약 조회
+    - center_id: 필수 (센터 ID)
+    - year_month: 선택 (YYYY-MM 형식, 미지정시 현재월)
+    - caregiver_id: 선택 (특정 요양사만, 미지정시 전체)
+    """
+    if not year_month:
+        year_month = datetime.now().strftime("%Y-%m")
+
+    # year_month 형식 검증
+    if len(year_month) != 7 or year_month[4] != "-":
+        raise HTTPException(status_code=400, detail="year_month는 YYYY-MM 형식이어야 합니다")
+
+    query = db.query(BillingRecord).filter(
+        BillingRecord.center_id == center_id,
+        BillingRecord.year_month == year_month,
+        BillingRecord.is_archived == False
+    )
+
+    if caregiver_id:
+        query = query.filter(BillingRecord.caregiver_id == caregiver_id)
+
+    records = query.all()
+
+    # 통계 계산
+    total_records = len(records)
+    total_amount = sum(r.amount for r in records) if records else 0
+    approved_count = sum(1 for r in records if r.approval_status == "approved")
+    submitted_count = sum(1 for r in records if r.approval_status == "submitted_to_nhis")
+    paid_count = sum(1 for r in records if r.approval_status == "reimbursed")
+
+    return {
+        "status": "success",
+        "year_month": year_month,
+        "center_id": center_id,
+        "caregiver_id": caregiver_id,
+        "summary": {
+            "total_records": total_records,
+            "total_amount": total_amount,
+            "approved_count": approved_count,
+            "submitted_count": submitted_count,
+            "paid_count": paid_count,
+            "pending_count": total_records - approved_count - submitted_count - paid_count
+        },
+        "records": [
+            {
+                "id": r.id,
+                "resident_id": r.resident_id,
+                "caregiver_id": r.caregiver_id,
+                "service_type": r.service_type,
+                "amount": r.amount,
+                "approval_status": r.approval_status,
+                "recorded_date": r.recorded_date.isoformat() if r.recorded_date else None
+            }
+            for r in records
+        ]
+    }
+
+
+@router.get("/monthly-statistics")
+def get_monthly_statistics(
+    center_id: int,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    월별 통계 조회
+    - center_id: 필수
+    - year, month: 선택 (미지정시 현재월)
+    """
+    if not year:
+        year = datetime.now().year
+    if not month:
+        month = datetime.now().month
+
+    year_month = f"{year:04d}-{month:02d}"
+
+    # 센터 전체 청부 조회
+    records = db.query(BillingRecord).filter(
+        BillingRecord.center_id == center_id,
+        BillingRecord.year_month == year_month,
+        BillingRecord.is_archived == False
+    ).all()
+
+    # 요양사별 통계
+    caregiver_stats = {}
+    for record in records:
+        caregiver_id = record.caregiver_id
+        if caregiver_id not in caregiver_stats:
+            caregiver = db.query(User).filter(User.id == caregiver_id).first()
+            caregiver_stats[caregiver_id] = {
+                "caregiver_id": caregiver_id,
+                "caregiver_name": caregiver.full_name if caregiver else "Unknown",
+                "total_records": 0,
+                "total_amount": 0,
+                "approved_count": 0,
+                "pending_count": 0
+            }
+
+        caregiver_stats[caregiver_id]["total_records"] += 1
+        caregiver_stats[caregiver_id]["total_amount"] += record.amount
+
+        if record.approval_status == "approved":
+            caregiver_stats[caregiver_id]["approved_count"] += 1
+        else:
+            caregiver_stats[caregiver_id]["pending_count"] += 1
+
+    # 서비스 유형별 통계
+    service_stats = {}
+    for record in records:
+        service_type = record.service_type
+        if service_type not in service_stats:
+            service_stats[service_type] = {
+                "service_type": service_type,
+                "total_records": 0,
+                "total_amount": 0
+            }
+
+        service_stats[service_type]["total_records"] += 1
+        service_stats[service_type]["total_amount"] += record.amount
+
+    return {
+        "status": "success",
+        "year_month": year_month,
+        "center_id": center_id,
+        "total_summary": {
+            "total_records": len(records),
+            "total_amount": sum(r.amount for r in records) if records else 0,
+            "approved_count": sum(1 for r in records if r.approval_status == "approved"),
+            "pending_count": sum(1 for r in records if r.approval_status != "approved")
+        },
+        "by_caregiver": list(caregiver_stats.values()),
+        "by_service": list(service_stats.values())
+    }

@@ -171,6 +171,7 @@ try:
                 status="draft",
                 approval_status=status,
                 recorded_date=daily_record.recorded_date,
+                year_month=daily_record.recorded_date.strftime("%Y-%m"),
                 is_archived=(status == "reimbursed"),
                 daily_record_id=daily_record.id  # 반드시 연결!
             )
