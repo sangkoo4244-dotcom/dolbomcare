@@ -44,11 +44,10 @@ app.include_router(schedule.router, prefix="/api/v1/schedule", tags=["schedule"]
 app.openapi()
 app.setup()
 
-# 정적 파일 마운트 - 모든 HTML, CSS, JS를 /에서 제공
-# (StaticFiles는 마지막에 마운트하여 API 라우터에 영향 없음)
-scratchpad_path = str(Path(__file__).parent.parent / "scratchpad")
-if Path(scratchpad_path).exists():
-    app.mount("/", StaticFiles(directory=scratchpad_path, html=True), name="scratchpad")
+# 정적 파일 마운트 비활성화 (API 우선순위 문제 해결)
+# scratchpad_path = str(Path(__file__).parent.parent / "scratchpad")
+# if Path(scratchpad_path).exists():
+#     app.mount("/", StaticFiles(directory=scratchpad_path, html=True), name="scratchpad")
 
 if __name__ == "__main__":
     import uvicorn
