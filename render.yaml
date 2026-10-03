@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: dolbomcare
+    env: docker
+    plan: free
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: ENVIRONMENT
+        value: production
+    dockerfile: ./Dockerfile
+    dockerContext: .
