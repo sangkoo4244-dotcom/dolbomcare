@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>돌봄케어 - 로그인</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-2xl);
+            overflow: hidden;
+        }
+
+        /* Header with gradient background */
+        .login-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .logo-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            color: white;
+            margin: 0 0 4px 0;
+        }
+
+        .login-header p {
+            font-size: 13px;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        /* Main content */
+        .login-content {
+            padding: 40px;
+        }
+
+        /* Tab selector */
+        .tab-selector {
+            display: flex;
+            gap: 0;
+            margin-bottom: 30px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+            padding: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-size: 13px;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Test accounts section */
+        .test-accounts {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .account-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .account-btn {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            background: white;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-align: center;
+        }
+
+        .account-btn:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .account-btn.caregiver:hover {
+            border-color: var(--secondary);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .account-role {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .account-btn.caregiver .account-role {
+            color: var(--secondary);
+        }
+
+        .account-btn.manager .account-role {
+            color: var(--primary);
+        }
+
+        .account-email {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .account-password {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            font-family: var(--font-mono);
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Form styles */
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            transition: all var(--transition-fast);
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: white;
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        /* Submit button */
+        .submit-btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Messages */
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+            animation: slideDown 300ms ease-out;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert.error {
+            background: var(--danger-light);
+            color: #991b1b;
+            border-left: 3px solid var(--danger);
+        }
+
+        .alert.success {
+            background: var(--secondary-light);
+            color: #065f46;
+            border-left: 3px solid var(--secondary);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Tab content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-header {
+                padding: 30px 20px;
+            }
+
+            .login-content {
+                padding: 30px 20px;
+            }
+
+            .login-header h1 {
+                font-size: 24px;
+            }
+
+            .account-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="login-header">
+                <div class="logo-icon">❤️</div>
+                <h1>돌봄케어</h1>
+                <p>요양관리 플랫폼</p>
+            </div>
+
+            <!-- Content -->
+            <div class="login-content">
+                <div id="errorMessage" class="alert error"></div>
+                <div id="successMessage" class="alert success"></div>
+
+                <!-- Tab Selector -->
+                <div class="tab-selector">
+                    <button class="tab-btn active" onclick="switchTab('quick')">빠른 시작</button>
+                    <button class="tab-btn" onclick="switchTab('manual')">직접 입력</button>
+                </div>
+
+                <!-- Quick Login Tab -->
+                <div id="quick-tab" class="tab-content active">
+                    <div class="test-accounts">
+                        <p class="section-title">테스트 계정 선택</p>
+                        <div class="account-grid">
+                            <!-- Caregiver Account -->
+                            <button class="account-btn caregiver" onclick="quickLogin('caregiver@test.com', 'caregiver', 2, 1, 'Test Caregiver')">
+                                <div class="account-role">👤 요양사</div>
+                                <div class="account-email">caregiver@test.com</div>
+                                <div class="account-password">test123</div>
+                            </button>
+
+                            <!-- Manager Account -->
+                            <button class="account-btn manager" onclick="quickLogin('manager@test.com', 'center_manager', 1, 1, 'Test Manager')">
+                                <div class="account-role">🏢 센터장</div>
+                                <div class="account-email">manager@test.com</div>
+                                <div class="account-password">test123</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Login Tab -->
+                <div id="manual-tab" class="tab-content">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="email">이메일</label>
+                            <input type="email" id="email" placeholder="your@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">비밀번호</label>
+                            <input type="password" id="password" placeholder="••••••••" required>
+                        </div>
+
+                        <button type="submit" class="submit-btn" id="loginBtn">
+                            <span>로그인</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api/v1';
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tab + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Quick login
+        function quickLogin(email, role, userId, centerId, fullName) {
+            const user = {
+                email: email,
+                role: role,
+                id: userId,
+                center_id: centerId,
+                full_name: fullName
+            };
+
+            localStorage.setItem('access_token', 'offline-test-token');
+            localStorage.setItem('user', JSON.stringify(user));
+
+            showSuccess('로그인 성공! 대시보드로 이동합니다...');
+            setTimeout(() => window.location.href = './dashboard.html', 800);
+        }
+
+        // Form login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="spinner"></span> 로그인 중...';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.detail || '로그인 실패');
+
+                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+
+                showSuccess('로그인 성공! 대시보드로 이동합니다...');
+                setTimeout(() => window.location.href = './dashboard.html', 800);
+            } catch (error) {
+                showError(error.message);
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '로그인';
+            }
+        });
+
+        // Message helpers
+        function showError(msg) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 5000);
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMessage');
+            el.textContent = msg;
+            el.classList.add('show');
+        }
+
+        // Check if already logged in
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                window.location.href = './dashboard.html';
+            }
+        });
+    </script>
+</body>
+</html>
