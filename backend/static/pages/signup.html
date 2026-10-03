@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - 이음로직</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --bg-light: #f9fafb;
+            --bg-white: #ffffff;
+            --border: #e5e7eb;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: var(--bg-white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            max-width: 500px;
+            width: 100%;
+            padding: 50px 40px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .plan-badge {
+            background: #ecfdf5;
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        .terms {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .login-link {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .login-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        .error {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">이음로직</div>
+        <h1>계정 만들기</h1>
+        <p class="subtitle">요양센터 운영을 시작하세요</p>
+
+        <div id="planBadge" class="plan-badge" style="display:none;"></div>
+        <div class="error" id="errorMsg"></div>
+
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="centerName">센터명</label>
+                <input type="text" id="centerName" name="centerName" placeholder="예: 사랑 요양센터" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="presidentName">센터장명</label>
+                    <input type="text" id="presidentName" name="presidentName" placeholder="이름" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffCount">스태프 규모</label>
+                    <select id="staffCount" name="staffCount" required>
+                        <option value="">선택</option>
+                        <option value="10-20">10~20명</option>
+                        <option value="20-50">20~50명</option>
+                        <option value="50-100">50~100명</option>
+                        <option value="100+">100명 이상</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">휴대폰</label>
+                <input type="tel" id="phone" name="phone" placeholder="010-0000-0000" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" placeholder="최소 8자" required minlength="8">
+            </div>
+
+            <div class="form-group">
+                <label for="passwordConfirm">비밀번호 확인</label>
+                <input type="password" id="passwordConfirm" name="passwordConfirm" placeholder="비밀번호 재입력" required>
+            </div>
+
+            <div class="terms">
+                <input type="checkbox" id="agree" name="agree" required>
+                <label for="agree" style="display: inline; margin: 0; font-weight: 400;">
+                    <a href="#" style="color: var(--primary); text-decoration: none;">이용약관</a>과
+                    <a href="#" style="color: var(--primary); text-decoration: none;">개인정보 보호정책</a>에 동의합니다
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">가입하기</button>
+        </form>
+
+        <div class="login-link">
+            이미 계정이 있으신가요? <a href="/pages/login.html">로그인</a>
+        </div>
+    </div>
+
+    <script>
+        // URL에서 요금제 정보 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const plan = urlParams.get('plan') || 'pro';
+
+        const planNames = {
+            'basic': '기본 플랜 (월 50,000원)',
+            'pro': '프로 플랜 (월 150,000원)',
+            'enterprise': '엔터프라이즈 플랜'
+        };
+
+        if (plan && planNames[plan]) {
+            document.getElementById('planBadge').textContent = '선택한 요금제: ' + planNames[plan];
+            document.getElementById('planBadge').style.display = 'block';
+        }
+
+        // 폼 제출
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // 비밀번호 확인
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('passwordConfirm').value;
+            if (password !== passwordConfirm) {
+                showError('비밀번호가 일치하지 않습니다.');
+                return;
+            }
+
+            // API 호출 (나중에 실제 구현)
+            const formData = {
+                center_name: document.getElementById('centerName').value,
+                president_name: document.getElementById('presidentName').value,
+                staff_count: document.getElementById('staffCount').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                password: password,
+                plan: plan
+            };
+
+            try {
+                // 임시: 로컬 스토리지에 저장
+                localStorage.setItem('signupData', JSON.stringify(formData));
+
+                // 대시보드로 이동
+                alert('가입 완료! 30일 무료 체험을 시작합니다.');
+                window.location.href = '/pages/dashboard.html';
+            } catch (error) {
+                showError('가입 중 오류가 발생했습니다. 다시 시도해주세요.');
+            }
+        });
+
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+            setTimeout(() => {
+                errorMsg.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
