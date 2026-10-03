@@ -539,11 +539,16 @@
                     }
                 } else if (currentUser.role === 'center_manager') {
                     const todayResp = await fetch(`${API_URL}/records/today/center?center_id=${currentUser.center_id}`);
+                    const allResp = await fetch(`${API_URL}/records/all/center?center_id=${currentUser.center_id}`);
 
                     if (todayResp.ok) {
                         const data = await todayResp.json();
                         todayRecords = data.records || [];
-                        allRecords = todayRecords;
+                    }
+
+                    if (allResp.ok) {
+                        const data = await allResp.json();
+                        allRecords = data.records || [];
                     }
                 }
 

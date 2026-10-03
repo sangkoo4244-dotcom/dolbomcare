@@ -533,6 +533,51 @@ async def get_today_records(
         print(f"[ERROR] get_today_records: {type(e).__name__}: {e}\n{error_trace}")
         raise HTTPException(status_code=500, detail=f"기록 조회 중 오류 발생: {str(e)}")
 
+@router.get("/all/center")
+async def get_all_center_records(
+    center_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    센터 전체의 모든 기록 조회 (센터장용)
+    해당 센터 요양관리사의 모든 기록 조회
+    """
+    records = db.query(DailyRecord).join(
+        Resident, DailyRecord.resident_id == Resident.id
+    ).filter(
+        Resident.center_id == center_id
+    ).order_by(DailyRecord.recorded_date.desc()).all()
+
+    # 해당 센터의 청부 기록
+    billings = db.query(BillingRecord).filter(
+        BillingRecord.center_id == center_id
+    ).all()
+
+    # daily_record_id별 청부액 매핑
+    billing_map = {}
+    billing_total = 0
+    for b in billings:
+        if b.daily_record_id:
+            billing_map[b.daily_record_id] = b.amount
+        billing_total += b.amount
+
+    return {
+        "total_records": len(records),
+        "total_billing_amount": billing_total,
+        "records": [
+            {
+                "id": r.id,
+                "caregiver_id": r.caregiver_id,
+                "resident_id": r.resident_id,
+                "service_type": r.service_type or "basic_care",
+                "notes": r.notes,
+                "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
+                "billing_amount": billing_map.get(r.id, 0)
+            }
+            for r in records
+        ]
+    }
+
 @router.get("/today/center")
 async def get_today_center_records(
     center_id: int,
@@ -555,14 +600,20 @@ async def get_today_center_records(
         DailyRecord.recorded_date <= today_end
     ).all()
 
-    # 해당 센터의 청부 기록만 조회
+    # 해당 센터의 청부 기록 (billing_amount 포함)
     billings = db.query(BillingRecord).filter(
         BillingRecord.center_id == center_id,
         BillingRecord.recorded_date >= today_start,
         BillingRecord.recorded_date <= today_end
     ).all()
 
-    billing_total = sum(b.amount for b in billings)
+    # daily_record_id별 청부액 매핑
+    billing_map = {}
+    billing_total = 0
+    for b in billings:
+        if b.daily_record_id:
+            billing_map[b.daily_record_id] = b.amount
+        billing_total += b.amount
 
     return {
         "date": today.isoformat(),
@@ -573,7 +624,10 @@ async def get_today_center_records(
                 "id": r.id,
                 "caregiver_id": r.caregiver_id,
                 "resident_id": r.resident_id,
+                "service_type": r.service_type or "basic_care",
+                "notes": r.notes,
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
+                "billing_amount": billing_map.get(r.id, 0)
             }
             for r in records
         ]
