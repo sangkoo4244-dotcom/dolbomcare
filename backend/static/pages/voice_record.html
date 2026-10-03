@@ -348,14 +348,15 @@
             <div class="sidebar-title">돌봄케어</div>
         </div>
         <nav class="sidebar-nav">
-            <a class="nav-item" onclick="navigateTo('./dashboard.html')"><span>📊</span> 대시보드</a>
-            <a class="nav-item" onclick="navigateTo('./resident_management.html')"><span>👥</span> 이용자 관리</a>
-            <a class="nav-item active" onclick="navigateTo('./voice_record.html')"><span>🎤</span> 음성 기록</a>
-            <a class="nav-item" onclick="navigateTo('./caregiver_billing.html')"><span>💳</span> 나의 청부</a>
-            <a class="nav-item" onclick="navigateTo('./my_salary.html')"><span>💰</span> 나의 급여</a>
-            <a class="nav-item" onclick="navigateTo('./my_schedule.html')"><span>📅</span> 나의 일정</a>
-            <a class="nav-item" id="menu-billing-mgmt" style="display:none;" onclick="navigateTo('./billing_management.html')"><span>📋</span> 청부 관리</a>
-            <a class="nav-item" style="margin-top: 30px;" onclick="logout()"><span>🚪</span> 로그아웃</a>
+            <a class="nav-item" id="menu-dashboard" onclick="navigateTo('./dashboard.html')"><span>📊</span> 대시보드</a>
+            <a class="nav-item" id="menu-residents" onclick="navigateTo('./resident_management.html')"><span>👥</span> 이용자 관리</a>
+            <a class="nav-item active" id="menu-voice-records" onclick="navigateTo('./voice_record.html')"><span>🎤</span> 음성 기록</a>
+            <a class="nav-item" id="menu-caregiver-billing" onclick="navigateTo('./caregiver_billing.html')"><span>💳</span> 나의 청부</a>
+            <a class="nav-item" id="menu-my-salary" onclick="navigateTo('./my_salary.html')"><span>💰</span> 나의 급여</a>
+            <a class="nav-item" id="menu-my-schedule" onclick="navigateTo('./my_schedule.html')"><span>📅</span> 나의 일정</a>
+            <a class="nav-item" id="menu-billing-mgmt" onclick="navigateTo('./billing_management.html')"><span>📋</span> 청부 관리</a>
+            <a class="nav-item" id="menu-salary-mgmt" onclick="navigateTo('./salary_management.html')"><span>💼</span> 급여 관리</a>
+            <a class="nav-item" id="menu-logout" style="margin-top: 30px;" onclick="logout()"><span>🚪</span> 로그아웃</a>
         </nav>
     </aside>
 
@@ -462,9 +463,8 @@
             document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
             document.getElementById('userAvatar').textContent = (user.full_name || '사용자').charAt(0).toUpperCase();
 
-            if (user.role === 'center_manager') {
-                document.getElementById('menu-billing-mgmt').style.display = 'flex';
-            }
+            // 메뉴 필터링은 menu.js의 filterMenuByRole() 함수에서 처리
+            filterMenuByRole();
 
             return true;
         }
@@ -490,7 +490,15 @@
 
         async function loadRecords() {
             try {
-                const response = await fetch(`${API_URL}/records/?user_id=${currentUser.id}`);
+                // 요양사: 자신의 기록만, 센터장: 센터 전체 기록
+                let url = `${API_URL}/records/`;
+                if (currentUser.role === 'caregiver') {
+                    url += `?user_id=${currentUser.id}`;
+                } else if (currentUser.role === 'center_manager') {
+                    url += `?center_id=${currentUser.center_id}`;
+                }
+
+                const response = await fetch(url);
                 if (!response.ok) throw new Error('Failed');
                 const data = await response.json();
                 const records = data.records || [];
