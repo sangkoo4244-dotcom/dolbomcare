@@ -13,7 +13,7 @@ from app.database import Base, engine
 import os
 from pathlib import Path
 
-# Base.metadata.create_all(bind=engine)  # PostgreSQL 연결 실패 시 서버 시작 불가 → 비활성화
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="dolbomcare API",
@@ -21,7 +21,6 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# CORS 설정
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,7 +29,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Root path - 이음로직 회사 소개 페이지
 @app.get("/", response_class=HTMLResponse)
 def home():
     return """<!DOCTYPE html>
@@ -38,7 +36,7 @@ def home():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>이음로직 - AI 기반 돌봄 관리 솔루션</title>
+    <title>이음로직 - 요양 관리 혁신 플랫폼</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -47,23 +45,25 @@ def home():
             --primary-light: #ecfdf5;
             --text-primary: #111827;
             --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
             --bg-light: #f9fafb;
+            --bg-white: #ffffff;
             --border: #e5e7eb;
-            --shadow: 0 1px 3px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
         }
         html { scroll-behavior: smooth; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             color: var(--text-primary);
-            background: white;
+            background: var(--bg-white);
         }
         nav {
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(255,255,255,0.97);
+            background: rgba(255,255,255,0.98);
             backdrop-filter: blur(10px);
             z-index: 1000;
             border-bottom: 1px solid var(--border);
@@ -79,12 +79,12 @@ def home():
             height: 64px;
         }
         .logo {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--primary);
             text-decoration: none;
         }
-        .nav-links { display: flex; gap: 30px; list-style: none; }
+        .nav-links { display: flex; gap: 35px; list-style: none; align-items: center; }
         .nav-links a {
             color: var(--text-secondary);
             text-decoration: none;
@@ -93,31 +93,44 @@ def home():
             transition: color 0.3s;
         }
         .nav-links a:hover { color: var(--primary); }
-        .cta-button {
+        .nav-cta {
             background: var(--primary);
             color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 10px 20px;
+            border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
             font-size: 14px;
             transition: background 0.3s;
         }
-        .cta-button:hover { background: var(--primary-dark); }
+        .nav-cta:hover { background: var(--primary-dark); }
         .hero {
             margin-top: 64px;
-            padding: 120px 20px;
+            padding: 120px 20px 80px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
-            text-align: center;
-            min-height: 600px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
-        .hero h1 { font-size: 56px; font-weight: 800; margin-bottom: 20px; line-height: 1.2; }
-        .hero-subtitle { font-size: 20px; margin-bottom: 40px; opacity: 0.95; }
-        .hero-buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .hero-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .hero h1 {
+            font-size: 52px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+        .hero-subtitle {
+            font-size: 18px;
+            margin-bottom: 40px;
+            opacity: 0.95;
+            line-height: 1.7;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
         .btn {
             padding: 14px 32px;
             border-radius: 8px;
@@ -131,80 +144,149 @@ def home():
         .btn-primary {
             background: white;
             color: var(--primary);
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow-md);
         }
-        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        }
         .btn-secondary {
             background: transparent;
             color: white;
             border-color: white;
         }
-        .btn-secondary:hover { background: white; color: var(--primary); }
-        .section { padding: 100px 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .section-header { text-align: center; margin-bottom: 60px; }
-        .section-header h2 { font-size: 42px; font-weight: 700; margin-bottom: 20px; color: var(--text-primary); }
-        .section-header p { font-size: 18px; color: var(--text-secondary); max-width: 600px; margin: 0 auto; }
-        .section-dark { background: var(--bg-light); }
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 40px; }
-        .card {
-            padding: 40px 30px;
-            border-radius: 12px;
+        .btn-secondary:hover {
             background: white;
+            color: var(--primary);
+        }
+        .section {
+            padding: 100px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 70px;
+        }
+        .section-header h2 {
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+        .section-header p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .section-dark { background: var(--bg-light); }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+        .card {
+            padding: 45px 35px;
+            border-radius: 12px;
+            background: var(--bg-white);
             border: 1px solid var(--border);
             transition: all 0.3s;
         }
-        .card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
-        .card-icon { font-size: 40px; margin-bottom: 20px; }
-        .card h3 { font-size: 20px; font-weight: 700; margin-bottom: 15px; color: var(--text-primary); }
-        .card p { color: var(--text-secondary); line-height: 1.7; }
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-top: 50px; }
-        .stat-card {
-            padding: 30px;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            text-align: center;
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
         }
-        .stat-number { font-size: 42px; font-weight: 800; color: var(--primary); margin-bottom: 10px; }
-        .stat-label { color: var(--text-secondary); font-weight: 500; }
-        .tech-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 30px;
-            justify-content: center;
+        .card-icon {
+            font-size: 50px;
+            margin-bottom: 25px;
         }
-        .tech-tag {
-            background: var(--primary-light);
-            color: var(--primary-dark);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
+        .card h3 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--text-primary);
         }
-        .product-card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 12px;
+        .card p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            font-size: 15px;
+        }
+        .testimonial {
+            background: var(--bg-white);
             padding: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
             margin-bottom: 30px;
         }
-        .product-card h3 { font-size: 28px; font-weight: 700; margin-bottom: 20px; color: var(--text-primary); }
-        .product-desc { font-size: 16px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 30px; }
-        .feature-list {
+        .testimonial-quote {
+            font-size: 16px;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-style: italic;
+            line-height: 1.8;
+        }
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .author-info h4 {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        .author-info p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
+            gap: 40px;
+            margin-top: 50px;
         }
-        .feature-list li {
+        .stat-card {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        .stat-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 15px;
+        }
+        .problem-solution {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            margin: 60px 0;
+        }
+        .ps-content h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+        .ps-content ul {
             list-style: none;
+        }
+        .ps-content li {
+            padding: 12px 0;
             padding-left: 30px;
             position: relative;
             color: var(--text-secondary);
         }
-        .feature-list li:before {
+        .ps-content li:before {
             content: "✓";
             position: absolute;
             left: 0;
@@ -212,20 +294,24 @@ def home():
             font-weight: bold;
             font-size: 18px;
         }
-        .links { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
-        .link-btn {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            padding: 10px 16px;
-            border-radius: 6px;
+        .cta-box {
             background: var(--primary-light);
-            transition: all 0.3s;
+            padding: 80px 20px;
+            text-align: center;
+            border-radius: 12px;
+            margin: 80px 0;
         }
-        .link-btn:hover { background: var(--primary); color: white; }
-        .cta-section { text-align: center; background: var(--primary-light); padding: 100px 20px; }
-        .cta-section h2 { color: var(--primary-dark); margin-bottom: 20px; }
-        .cta-section p { color: var(--text-secondary); font-size: 18px; margin-bottom: 30px; }
+        .cta-box h2 {
+            font-size: 38px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+        }
+        .cta-box p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
         footer {
             background: var(--text-primary);
             color: white;
@@ -236,27 +322,30 @@ def home():
             max-width: 1200px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 40px;
             margin-bottom: 40px;
         }
         .footer-section h4 {
             font-weight: 700;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             font-size: 14px;
             text-transform: uppercase;
-            opacity: 0.7;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
         }
         .footer-section a {
             display: block;
             color: rgba(255,255,255,0.7);
             text-decoration: none;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             font-size: 14px;
             transition: color 0.3s;
         }
         .footer-section a:hover { color: white; }
         .footer-bottom {
+            max-width: 1200px;
+            margin: 0 auto;
             border-top: 1px solid rgba(255,255,255,0.1);
             padding-top: 30px;
             text-align: center;
@@ -267,9 +356,11 @@ def home():
             .nav-links { display: none; }
             .hero h1 { font-size: 36px; }
             .section { padding: 60px 20px; }
-            .section-header h2 { font-size: 32px; }
+            .section-header h2 { font-size: 30px; }
+            .problem-solution { grid-template-columns: 1fr; gap: 30px; }
+            .grid-3 { grid-template-columns: 1fr; }
             .hero-buttons { flex-direction: column; }
-            .btn { width: 100%; max-width: 300px; }
+            .btn { width: 100%; text-align: center; }
         }
     </style>
 </head>
@@ -278,61 +369,96 @@ def home():
         <div class="nav-container">
             <a href="/" class="logo">이음로직</a>
             <ul class="nav-links">
-                <li><a href="#features">기능</a></li>
-                <li><a href="#products">제품</a></li>
-                <li><a href="#tech">기술</a></li>
-                <li><a href="/docs" class="cta-button">API 문서</a></li>
+                <li><a href="#problems">왜 필요한가</a></li>
+                <li><a href="#solution">솔루션</a></li>
+                <li><a href="#testimonials">성공 사례</a></li>
+                <li><a href="#contact" class="nav-cta">시작하기</a></li>
             </ul>
         </div>
     </nav>
 
     <section class="hero">
-        <div>
-            <h1>요양 관리의 미래를 만들고 있습니다</h1>
-            <p class="hero-subtitle">AI 기반 솔루션으로 요양사, 센터, 보호자를 연결합니다<br>더 나은 돌봄 경험을 제공합니다</p>
+        <div class="hero-container">
+            <h1>요양 관리를 단순하게</h1>
+            <p class="hero-subtitle">요양사의 업무 부담을 줄이고, 센터는 효율성을 높이고, 보호자의 신뢰를 얻으세요. AI 기반 dolbomcare가 모든 것을 가능하게 합니다.</p>
             <div class="hero-buttons">
-                <a href="#products" class="btn btn-primary">제품 알아보기</a>
-                <a href="/docs" class="btn btn-secondary">문서 보기</a>
+                <a href="#contact" class="btn btn-primary">무료 데모 신청</a>
+                <a href="#solution" class="btn btn-secondary">자세히 알아보기</a>
             </div>
         </div>
     </section>
 
-    <section id="features" class="section">
+    <section id="problems" class="section section-dark">
         <div class="container">
             <div class="section-header">
-                <h2>왜 이음로직을 선택할까요</h2>
-                <p>최첨단 AI 기술과 깊이 있는 의료 전문성으로 실제 문제를 해결합니다</p>
+                <h2>요양 센터의 현실</h2>
+                <p>매일 반복되는 수작업, 복잡한 청부 계산, 정보 흩어짐으로 인한 실수가 일어나고 있습니다</p>
             </div>
-            <div class="grid-2">
+            <div class="grid-3">
                 <div class="card">
-                    <div class="card-icon">🤖</div>
-                    <h3>AI 기반</h3>
-                    <p>고급 머신러닝과 음성인식 기술로 지능형 돌봄 기록 시스템</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon">📱</div>
-                    <h3>모바일 중심</h3>
-                    <p>iOS와 Android에서 seamless한 경험과 오프라인 기능 지원</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon">🔒</div>
-                    <h3>엔터프라이즈 보안</h3>
-                    <p>의료 표준 준수, 엔드-투-엔드 암호화 및 역할 기반 접근 제어</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon">⚡</div>
-                    <h3>실시간 동기화</h3>
-                    <p>모든 기기와 이해관계자 간 지연 없는 즉각적인 데이터 동기화</p>
+                    <div class="card-icon">😤</div>
+                    <h3>요양사</h3>
+                    <p>손으로 쓰는 기록, 전화로 청부 확인, 급여 정산까지 기다리는 과정의 반복</p>
                 </div>
                 <div class="card">
                     <div class="card-icon">📊</div>
-                    <h3>고급 분석</h3>
-                    <p>포괄적인 대시보드와 인사이트로 더 나은 의사결정 지원</p>
+                    <h3>센터장</h3>
+                    <p>정산 실수, 관리자 확인, 건강보험 청구 지연, 데이터 관리의 어려움</p>
                 </div>
                 <div class="card">
-                    <div class="card-icon">🔗</div>
-                    <h3>완전한 통합</h3>
-                    <p>REST API를 통한 기존 의료 시스템과 타사 서비스 연동</p>
+                    <div class="card-icon">😰</div>
+                    <h3>보호자</h3>
+                    <p>요양 상태를 실시간으로 확인할 수 없음, 제때 답장 받기 어려움</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="solution" class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2>dolbomcare 플랫폼</h2>
+                <p>모두의 업무를 간단히, 투명하게, 빠르게 만드는 통합 솔루션</p>
+            </div>
+            <div class="problem-solution">
+                <div class="ps-content">
+                    <h3>🎤 음성 기반 기록</h3>
+                    <ul>
+                        <li>손쓰기 시간 80% 절감</li>
+                        <li>실수 없는 정확한 기록</li>
+                        <li>야근 없이 퇴근 가능</li>
+                    </ul>
+                </div>
+                <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 40px; border-radius: 12px;">
+                    <div style="font-size: 80px; text-align: center;">🎙️</div>
+                </div>
+            </div>
+
+            <div class="problem-solution" style="grid-template-columns: 1fr 1fr; direction: rtl;">
+                <div class="ps-content" style="direction: ltr;">
+                    <h3>💰 스마트 청부 관리</h3>
+                    <ul>
+                        <li>자동 계산으로 정산 오류 제거</li>
+                        <li>실시간 청부 현황 확인</li>
+                        <li>투명한 급여 정산</li>
+                    </ul>
+                </div>
+                <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 40px; border-radius: 12px;">
+                    <div style="font-size: 80px; text-align: center;">💳</div>
+                </div>
+            </div>
+
+            <div class="problem-solution">
+                <div class="ps-content">
+                    <h3>👨‍👩‍👧 보호자 신뢰</h3>
+                    <ul>
+                        <li>실시간 요양 상태 공유</li>
+                        <li>의료 기록 안전 관리</li>
+                        <li>즉시 소통으로 신뢰 구축</li>
+                    </ul>
+                </div>
+                <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 40px; border-radius: 12px;">
+                    <div style="font-size: 80px; text-align: center;">👨‍👩‍👦</div>
                 </div>
             </div>
         </div>
@@ -341,80 +467,56 @@ def home():
     <section class="section section-dark">
         <div class="container">
             <div class="section-header">
-                <h2>성장하는 시장 기회</h2>
-                <p>한국의 요양 관리 시장은 빠르게 성장하고 있습니다</p>
+                <h2>이미 믿고 있습니다</h2>
+                <p>전국 요양센터와 요양사들이 dolbomcare로 업무 효율을 높이고 있습니다</p>
             </div>
-            <div class="stat-grid">
+            <div class="stats">
                 <div class="stat-card">
-                    <div class="stat-number">65.8B</div>
-                    <div class="stat-label">시장 규모 (USD)</div>
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">활성 사용자</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">10.6%</div>
-                    <div class="stat-label">연평균 성장률</div>
+                    <div class="stat-number">80%</div>
+                    <div class="stat-label">업무 시간 단축</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">2026</div>
-                    <div class="stat-label">설립연도</div>
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">정산 정확도</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 60px;">
+                <div class="testimonial">
+                    <div class="testimonial-quote">"음성 기록으로 퇴근 시간이 한두 시간 앞당겨졌어요. 대기 시간 없이 급여도 투명하게 확인됩니다."</div>
+                    <div class="testimonial-author">
+                        <div style="width: 50px; height: 50px; background: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">김</div>
+                        <div class="author-info">
+                            <h4>김은지</h4>
+                            <p>요양사 · 서울 요양센터</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-quote">"관리가 쉬워져서 센터 운영에 집중할 수 있게 됐습니다. 직원 만족도도 올라가고, 보호자 신뢰도 높아졌어요."</div>
+                    <div class="testimonial-author">
+                        <div style="width: 50px; height: 50px; background: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">이</div>
+                        <div class="author-info">
+                            <h4>이준호</h4>
+                            <p>센터장 · 부산 요양센터</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="products" class="section">
+    <section id="testimonials" class="section">
         <div class="container">
-            <div class="section-header">
-                <h2>우리의 플랫폼</h2>
-                <p>현대 의료 생태계를 위해 설계된 포괄적인 솔루션</p>
+            <div class="cta-box" id="contact">
+                <h2>지금 시작하세요</h2>
+                <p>5분 안에 요양센터 운영이 달라집니다. 무료 데모를 신청하세요.</p>
+                <a href="#contact" class="btn btn-primary">무료 데모 신청</a>
             </div>
-            <div class="product-card">
-                <h3>dolbomcare 플랫폼</h3>
-                <p class="product-desc">
-                    요양사, 센터장, 보호자를 연결하는 통합 요양 관리 플랫폼입니다.
-                    AI 기반 인사이트로 문서화, 청구, 의사소통을 효율화합니다.
-                </p>
-                <h4 style="font-size: 18px; font-weight: 700; margin: 30px 0 20px 0;">핵심 기능</h4>
-                <ul class="feature-list">
-                    <li><strong>음성 기반 기록</strong> - AI 음성 인식으로 hands-free 문서화</li>
-                    <li><strong>스마트 청부 관리</strong> - 자동 청부 계산 및 정산 추적</li>
-                    <li><strong>일정 관리</strong> - 지능형 스케줄링 및 근무 계획</li>
-                    <li><strong>이용자 프로필</strong> - 포괄적인 돌봄 이력 및 의료 기록</li>
-                    <li><strong>역할별 대시보드</strong> - 요양사, 관리자, 보호자를 위한 맞춤 뷰</li>
-                    <li><strong>실시간 알림</strong> - 중요 사항 및 변경 즉시 알림</li>
-                </ul>
-                <div class="links">
-                    <a href="/api/v1/health" class="link-btn">상태 확인</a>
-                    <a href="/docs" class="link-btn">API 문서</a>
-                    <a href="/openapi.json" class="link-btn">OpenAPI 명세</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="tech" class="section section-dark">
-        <div class="container">
-            <div class="section-header">
-                <h2>최신 기술 스택</h2>
-                <p>안정성, 확장성, 성능을 위한 엔터프라이즈급 기술</p>
-            </div>
-            <div class="tech-tags">
-                <span class="tech-tag">FastAPI</span>
-                <span class="tech-tag">PostgreSQL</span>
-                <span class="tech-tag">React Native</span>
-                <span class="tech-tag">JWT 인증</span>
-                <span class="tech-tag">REST API</span>
-                <span class="tech-tag">Docker</span>
-                <span class="tech-tag">Render Cloud</span>
-                <span class="tech-tag">Cloudflare CDN</span>
-            </div>
-        </div>
-    </section>
-
-    <section class="cta-section">
-        <div class="container">
-            <h2>지금 시작하세요</h2>
-            <p>dolbomcare의 강력한 REST API로 플랫폼을 통합하세요</p>
-            <a href="/docs" class="btn btn-primary">API 탐색하기</a>
         </div>
     </section>
 
@@ -422,37 +524,32 @@ def home():
         <div class="footer-content">
             <div class="footer-section">
                 <h4>제품</h4>
-                <a href="/docs">문서</a>
-                <a href="/api/v1/health">API 상태</a>
-                <a href="#features">기능</a>
+                <a href="#solution">기능</a>
+                <a href="#problems">용도</a>
             </div>
             <div class="footer-section">
                 <h4>회사</h4>
-                <a href="#about">소개</a>
-                <a href="#tech">기술</a>
-                <a href="#products">제품</a>
-            </div>
-            <div class="footer-section">
-                <h4>리소스</h4>
-                <a href="/docs">API 문서</a>
-                <a href="/openapi.json">OpenAPI 명세</a>
                 <a href="/">홈</a>
+                <a href="/">소개</a>
             </div>
             <div class="footer-section">
-                <h4>법률</h4>
-                <a href="#">개인정보 보호</a>
-                <a href="#">서비스 약관</a>
-                <a href="#">연락처</a>
+                <h4>개발자</h4>
+                <a href="/docs">API 문서</a>
+                <a href="/openapi.json">기술 문서</a>
+            </div>
+            <div class="footer-section">
+                <h4>연락처</h4>
+                <a href="mailto:contact@eeum-logic.com">이메일</a>
+                <a href="#">카카오톡</a>
             </div>
         </div>
         <div class="footer-bottom">
-            <p>© 2026 이음로직. All rights reserved. | <a href="https://seniorcareinfo.kr" style="color: rgba(255,255,255,0.7); text-decoration: none;">seniorcareinfo.kr</a></p>
+            <p>© 2026 이음로직. 모든 권리 보유. | seniorcareinfo.kr</p>
         </div>
     </footer>
 </body>
 </html>"""
 
-# 라우터 포함 (StaticFiles 전에 등록해야 우선순위 획득)
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(users.router, prefix="/api/v1/auth", tags=["auth"])
