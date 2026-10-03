@@ -348,15 +348,48 @@
             <div class="sidebar-title">돌봄케어</div>
         </div>
         <nav class="sidebar-nav">
-            <a class="nav-item" id="menu-dashboard" onclick="navigateTo('./dashboard.html')"><span>📊</span> 대시보드</a>
-            <a class="nav-item" id="menu-residents" onclick="navigateTo('./resident_management.html')"><span>👥</span> 이용자 관리</a>
-            <a class="nav-item active" id="menu-voice-records" onclick="navigateTo('./voice_record.html')"><span>🎤</span> 음성 기록</a>
-            <a class="nav-item" id="menu-caregiver-billing" onclick="navigateTo('./caregiver_billing.html')"><span>💳</span> 나의 청부</a>
-            <a class="nav-item" id="menu-my-salary" onclick="navigateTo('./my_salary.html')"><span>💰</span> 나의 급여</a>
-            <a class="nav-item" id="menu-my-schedule" onclick="navigateTo('./my_schedule.html')"><span>📅</span> 나의 일정</a>
-            <a class="nav-item" id="menu-billing-mgmt" onclick="navigateTo('./billing_management.html')"><span>📋</span> 청부 관리</a>
-            <a class="nav-item" id="menu-salary-mgmt" onclick="navigateTo('./salary_management.html')"><span>💼</span> 급여 관리</a>
-            <a class="nav-item" id="menu-logout" style="margin-top: 30px;" onclick="logout()"><span>🚪</span> 로그아웃</a>
+            <!-- 공통 메뉴 -->
+            <a class="nav-item" id="menu-dashboard" onclick="navigateTo('./dashboard.html')">
+                <span>📊</span> 대시보드
+            </a>
+
+            <!-- 역할별 메뉴: menu.js에서 필터링 -->
+            <a class="nav-item hidden" id="menu-residents" onclick="navigateTo('./resident_management.html')">
+                <span>👥</span> 이용자 관리
+            </a>
+            <a class="nav-item hidden active" id="menu-voice-records" onclick="navigateTo('./voice_record.html')">
+                <span>🎤</span> 음성 기록
+            </a>
+
+            <!-- 요양사 메뉴 -->
+            <a class="nav-item hidden" id="menu-caregiver-billing" onclick="navigateTo('./caregiver_billing.html')">
+                <span>💳</span> 나의 청부
+            </a>
+            <a class="nav-item hidden" id="menu-my-salary" onclick="navigateTo('./my_salary.html')">
+                <span>💰</span> 나의 급여
+            </a>
+            <a class="nav-item hidden" id="menu-my-schedule" onclick="navigateTo('./my_schedule.html')">
+                <span>📅</span> 나의 일정
+            </a>
+
+            <!-- 센터장 메뉴 -->
+            <a class="nav-item hidden" id="menu-billing-management" onclick="navigateTo('./billing_management.html')">
+                <span>📋</span> 청부 관리
+            </a>
+            <a class="nav-item hidden" id="menu-staff" onclick="navigateTo('./staff_management.html')">
+                <span>👔</span> 직원 관리
+            </a>
+            <a class="nav-item hidden" id="menu-profit" onclick="navigateTo('./profit_analysis.html')">
+                <span>📈</span> 수익 분석
+            </a>
+            <a class="nav-item hidden" id="menu-roadmap" onclick="navigateTo('./center-roadmap.html')">
+                <span>🗺️</span> 성과 로드맵
+            </a>
+
+            <!-- 로그아웃 (공통) -->
+            <a class="nav-item" id="menu-logout" style="margin-top: 30px;" onclick="logout()">
+                <span>🚪</span> 로그아웃
+            </a>
         </nav>
     </aside>
 
@@ -547,18 +580,76 @@
         }
 
         function viewRecord(id) {
-            alert('상세 보기는 준비 중입니다');
+            const record = allRecords.find(r => r.id === id);
+            if (!record) return;
+            const residentName = residents.find(r => r.id === record.resident_id)?.name || '알 수 없음';
+            const date = new Date(record.recorded_date).toLocaleDateString('ko-KR');
+            alert(`이용자: ${residentName}\n서비스: ${record.service_type}\n날짜: ${date}\n\n내용:\n${record.notes || '기록 없음'}`);
         }
 
-        function deleteRecord(id) {
-            if (confirm('기록을 삭제하시겠습니까?')) {
-                alert('삭제는 준비 중입니다');
+        async function deleteRecord(id) {
+            if (!confirm('기록을 삭제하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/records/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                });
+
+                if (response.ok) {
+                    alert('기록이 삭제되었습니다');
+                    loadRecords();
+                } else {
+                    alert('삭제 중 오류가 발생했습니다');
+                }
+            } catch (error) {
+                console.error('삭제 오류:', error);
+                alert('삭제 중 오류가 발생했습니다');
             }
         }
 
-        document.getElementById('recordForm').addEventListener('submit', (e) => {
+        document.getElementById('recordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            alert('음성 기록 저장은 준비 중입니다');
+
+            const residentId = document.getElementById('resident').value;
+            const serviceType = document.getElementById('serviceType').value;
+            const notes = document.getElementById('notes').value;
+
+            if (!residentId || !serviceType || !notes) {
+                alert('모든 필드를 입력하세요');
+                return;
+            }
+
+            try {
+                const payload = {
+                    user_id: currentUser.id,
+                    resident_id: parseInt(residentId),
+                    service_type: serviceType,
+                    notes: notes,
+                    recorded_date: new Date().toISOString()
+                };
+
+                const response = await fetch(`${API_URL}/records/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert('기록이 저장되었습니다');
+                    document.getElementById('recordForm').reset();
+                    loadRecords();
+                } else {
+                    const error = await response.json();
+                    alert(`저장 실패: ${error.detail || '오류가 발생했습니다'}`);
+                }
+            } catch (error) {
+                console.error('저장 오류:', error);
+                alert('저장 중 오류가 발생했습니다');
+            }
         });
 
         window.addEventListener('load', () => {
