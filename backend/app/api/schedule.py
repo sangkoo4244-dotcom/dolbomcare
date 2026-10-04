@@ -214,7 +214,7 @@ def caregiver_schedule_view(
             "duration_minutes": r.duration_minutes,
             "planned_items": [],
             "done_items": _codes(r.care_items),
-            "state": "계획 외",
+            "state": "완료",
             "daily_record_id": r.id,
             "schedule_id": None,
             "arrived_at": None,

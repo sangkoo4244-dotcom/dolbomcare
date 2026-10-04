@@ -165,7 +165,8 @@
             const s = d.summary || {};
             const parts = [`방문 계획 ${d.items.filter(it => it.planned).length}건`, `완료 ${s['완료'] || 0}건`];
             if (s['미기록']) parts.push(`⚠️ 기록 미작성 ${s['미기록']}건`);
-            if (s['계획 외']) parts.push(`계획 외 ${s['계획 외']}건`);
+            const unplanned = d.items.filter(it => !it.planned).length;
+            if (unplanned) parts.push(`계획 외 ${unplanned}건`);
             document.getElementById('summaryLine').textContent = parts.join(' · ');
         }
 
