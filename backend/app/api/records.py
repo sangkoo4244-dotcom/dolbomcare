@@ -830,6 +830,9 @@ def get_monthly_summary(
             {
                 "id": r.id,
                 "resident_id": r.resident_id,
+                "resident_name": r.resident_name,  # 정산 시점의 이용자 이름
+                "care_grade": r.care_grade,  # 정산 시점의 요양등급
+                "client_type": r.client_type,  # 정산 시점의 소득분류
                 "caregiver_id": r.caregiver_id,
                 "service_type": r.service_type,
                 "amount": r.amount,

@@ -295,6 +295,9 @@ async def list_billing_records(
         response_records.append({
             "id": r.id,
             "resident_id": r.resident_id,
+            "resident_name": r.resident_name,  # 청부 시점의 이용자 이름
+            "care_grade": r.care_grade,  # 청부 시점의 요양등급
+            "client_type": r.client_type,  # 청부 시점의 소득분류
             "caregiver_id": r.caregiver_id,
             "center_id": r.center_id,
             "service_type": r.service_type,
