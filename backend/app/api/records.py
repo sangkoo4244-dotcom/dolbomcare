@@ -996,9 +996,17 @@ async def create_voice_record(
             raise HTTPException(status_code=400, detail="Invalid service_type")
         
         now = datetime.now()
+
+        # 음성기록 시점의 이용자 정보 스냅샷 저장
+        care_grade = resident.care_grade or 1
+        client_type = resident.client_type or "일반"
+
         voice_record = VoiceRecord(
             caregiver_id=caregiver_id,
             resident_id=resident_id,
+            resident_name=resident.name,  # 스냅샷: 음성기록 시점의 이용자 이름
+            care_grade=care_grade,  # 스냅샷: 음성기록 시점의 요양등급
+            client_type=client_type,  # 스냅샷: 음성기록 시점의 소득분류
             center_id=resident.center_id,
             recorded_date=now,
             service_type=service_type,
@@ -1007,9 +1015,6 @@ async def create_voice_record(
         )
         db.add(voice_record)
         db.flush()
-
-        care_grade = resident.care_grade or 1
-        client_type = resident.client_type or "일반"
 
         # NHIS 기준: 서비스 유형 + 요양 등급 + client_type별 보험료
         service_rates = SERVICE_TYPE_AMOUNTS.get(service_type, SERVICE_TYPE_AMOUNTS["basic_care"])
@@ -1021,6 +1026,9 @@ async def create_voice_record(
         billing_record = BillingRecord(
             caregiver_id=caregiver_id,
             resident_id=resident_id,
+            resident_name=resident.name,  # 스냅샷: 청구 시점의 이용자 이름
+            care_grade=care_grade,  # 스냅샷: 청구 시점의 요양등급
+            client_type=client_type,  # 스냅샷: 청구 시점의 소득분류
             center_id=resident.center_id,
             service_category="재가급여",
             service_type=service_type,

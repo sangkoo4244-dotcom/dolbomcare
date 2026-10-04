@@ -97,6 +97,9 @@ class VoiceRecord(Base):
     id = Column(Integer, primary_key=True, index=True)
     caregiver_id = Column(Integer, ForeignKey("users.id"))
     resident_id = Column(Integer, ForeignKey("residents.id"))
+    resident_name = Column(String, nullable=True)  # 음성기록 시점의 이용자 이름 (스냅샷)
+    care_grade = Column(Integer, nullable=True)  # 음성기록 시점의 요양등급 (스냅샷)
+    client_type = Column(String, nullable=True)  # 음성기록 시점의 소득분류 (스냅샷)
     center_id = Column(Integer, ForeignKey("centers.id"))
     recorded_date = Column(DateTime, index=True)
     service_type = Column(String, default="basic_care")  # 'basic_care', 'meal_service', 'medical_care', 'emergency'
@@ -112,6 +115,9 @@ class BillingRecord(Base):
     daily_record_id = Column(Integer, ForeignKey("daily_records.id"), nullable=True)
     caregiver_id = Column(Integer, ForeignKey("users.id"))
     resident_id = Column(Integer, ForeignKey("residents.id"))
+    resident_name = Column(String, nullable=True)  # 청구 시점의 이용자 이름 (스냅샷)
+    care_grade = Column(Integer, nullable=True)  # 청구 시점의 요양등급 (스냅샷)
+    client_type = Column(String, nullable=True)  # 청구 시점의 소득분류 (스냅샷)
     center_id = Column(Integer, ForeignKey("centers.id"))
     service_category = Column(String, default="재가급여")  # '재가급여' or '시설급여'
     service_type = Column(String)  # 'basic_care', 'meal_service', 'medical_care', 'emergency'
