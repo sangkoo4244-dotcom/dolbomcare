@@ -285,6 +285,8 @@ async def list_billing_records(
     if caregiver_id:
         caregiver = db.query(User).filter(User.id == caregiver_id).first()
 
+    residents = {x.id: x for x in db.query(Resident).all()}
+
     response_records = []
     for r in records:
         # caregiver는 submitted_to_nhis 기록 제외
@@ -292,13 +294,14 @@ async def list_billing_records(
             if r.approval_status == 'submitted_to_nhis':
                 continue
 
+        current = residents.get(r.resident_id)
         response_records.append({
             "id": r.id,
             "daily_record_id": r.daily_record_id,
             "resident_id": r.resident_id,
-            "resident_name": r.resident_name,  # 청부 시점의 이용자 이름
-            "care_grade": r.care_grade,  # 청부 시점의 요양등급
-            "client_type": r.client_type,  # 청부 시점의 소득분류
+            "resident_name": r.resident_name or (current.name if current else None),
+            "care_grade": r.care_grade or (current.care_grade if current else None),
+            "client_type": r.client_type or (current.client_type if current else None),
             "caregiver_id": r.caregiver_id,
             "center_id": r.center_id,
             "service_type": r.service_type,

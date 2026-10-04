@@ -92,6 +92,14 @@ def run_migrations():
                 if column not in existing:
                     db.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"))
 
+        db.execute(text("""
+            UPDATE billing_records SET
+                resident_name = (SELECT name FROM residents WHERE residents.id = billing_records.resident_id),
+                care_grade = (SELECT care_grade FROM residents WHERE residents.id = billing_records.resident_id),
+                client_type = (SELECT client_type FROM residents WHERE residents.id = billing_records.resident_id)
+            WHERE resident_name IS NULL
+        """))
+
         db.commit()
         print("✅ 마이그레이션 완료: year_month 컬럼 추가됨")
     except Exception as e:
