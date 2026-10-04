@@ -17,6 +17,15 @@ from sqlalchemy import text
 # Base.metadata.create_all(bind=engine)
 
 # 데이터베이스 마이그레이션 (자동)
+SNAPSHOT_COLUMNS = [
+    ("voice_records", "resident_name", "VARCHAR"),
+    ("voice_records", "care_grade", "INTEGER"),
+    ("voice_records", "client_type", "VARCHAR"),
+    ("billing_records", "resident_name", "VARCHAR"),
+    ("billing_records", "care_grade", "INTEGER"),
+    ("billing_records", "client_type", "VARCHAR"),
+]
+
 def run_migrations():
     """자동 마이그레이션: year_month 컬럼 추가 (SQLite & PostgreSQL 호환)"""
     try:
@@ -63,6 +72,14 @@ def run_migrations():
                     """))
             except Exception as e:
                 print(f"⚠️  SQLite 마이그레이션 부분 오류: {e}")
+
+        for table, column, col_type in SNAPSHOT_COLUMNS:
+            if is_postgres:
+                db.execute(text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {col_type}"))
+            else:
+                existing = [row[1] for row in db.execute(text(f"PRAGMA table_info({table})")).fetchall()]
+                if column not in existing:
+                    db.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"))
 
         db.commit()
         print("✅ 마이그레이션 완료: year_month 컬럼 추가됨")
