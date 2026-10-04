@@ -144,6 +144,13 @@ app.include_router(residents.router, prefix="/api/v1/residents", tags=["resident
 app.include_router(salary.router, prefix="/api/v1/salary", tags=["salary"])
 app.include_router(schedule.router, prefix="/api/v1/schedule", tags=["schedule"])
 
+@app.middleware("http")
+async def revalidate_pages(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/pages/") or request.url.path.endswith(".html") or request.url.path.endswith(".js"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":
