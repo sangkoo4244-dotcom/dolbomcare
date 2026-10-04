@@ -418,7 +418,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:8000/api/v1';
+        const API_URL = '/api/v1';
         let currentUser = null;
 
         // 한글 서비스명 매핑
@@ -433,9 +433,9 @@
         async function init() {
             try {
                 // Load current user
-                const userStr = localStorage.getItem('currentUser');
+                const userStr = localStorage.getItem('user');
                 if (!userStr) {
-                    window.location.href = '/pages/login.html';
+                    window.location.href = './login.html';
                     return;
                 }
 
