@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.models import BillingRecord, User, Resident, Center
+from app.models import BillingRecord, User, Resident, Center, DailyRecord
+from app.review import review_flags
 from app.schemas import BillingRecordCreate, BillingRecordResponse, BillingMonthlySummary
 from app.database import get_db
 from datetime import datetime, timedelta, time
@@ -14,6 +15,7 @@ router = APIRouter()
 class ApprovalRequest(BaseModel):
     user_id: int
     user_role: str
+    reason: str = ""
 
 class RejectionRequest(BaseModel):
     user_id: int
@@ -194,6 +196,15 @@ async def approve_billing_record(
     record = db.query(BillingRecord).filter(BillingRecord.id == record_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Billing record not found")
+    if record.approval_status != "pending":
+        raise HTTPException(status_code=400, detail="대기 중인 청부만 승인 가능합니다")
+
+    daily = db.query(DailyRecord).filter(DailyRecord.id == record.daily_record_id).first() if record.daily_record_id else None
+    flags = review_flags(db, record, daily)
+    note = (request.reason or "").strip()
+    if flags and not note:
+        raise HTTPException(status_code=400, detail=f"확인 사유를 입력해 주세요: {', '.join(flags)}")
+    record.review_note = note or None
 
     record.approval_status = "approved"
     record.approved_by = request.user_id
@@ -286,6 +297,8 @@ async def list_billing_records(
         caregiver = db.query(User).filter(User.id == caregiver_id).first()
 
     residents = {x.id: x for x in db.query(Resident).all()}
+    daily_ids = [r.daily_record_id for r in records if r.daily_record_id]
+    dailies = {d.id: d for d in db.query(DailyRecord).filter(DailyRecord.id.in_(daily_ids)).all()} if daily_ids else {}
 
     response_records = []
     for r in records:
@@ -298,6 +311,8 @@ async def list_billing_records(
         response_records.append({
             "id": r.id,
             "daily_record_id": r.daily_record_id,
+            "review_flags": review_flags(db, r, dailies.get(r.daily_record_id)),
+            "review_note": r.review_note,
             "resident_id": r.resident_id,
             "resident_name": current.name if current else r.resident_name,
             "care_grade": r.care_grade or (current.care_grade if current else None),

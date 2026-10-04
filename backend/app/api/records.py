@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, 
 from pydantic import BaseModel
 from typing import Literal, Optional
 from app.billing_rules import split_visit, VALID_DURATIONS
+from app.review import find_schedule
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary
@@ -77,6 +78,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
         with open("/tmp/debug.log", "a") as f:
             f.write(f"  Creating DailyRecord...\n")
         now = datetime.now()  # 로컬 시간 사용 (UTC 대신)
+        linked_schedule = find_schedule(db, request.caregiver_id, request.resident_id, now)
         daily_record = DailyRecord(
             resident_id=request.resident_id,
             caregiver_id=request.caregiver_id,
@@ -88,6 +90,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
             care_items=request.care_items or None,
             condition=request.condition,
             duration_minutes=request.duration_minutes,
+            schedule_id=linked_schedule.id if linked_schedule else None,
             service_type=request.service_type,
             audio_file_url=None
         )

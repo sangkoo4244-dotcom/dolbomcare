@@ -68,6 +68,7 @@ class DailyRecord(Base):
     notes = Column(Text)
     care_items = Column(String, nullable=True)  # 제공 항목 코드 (쉼표 구분)
     duration_minutes = Column(Integer, nullable=True)  # 1회 제공 시간 (30~240분)
+    schedule_id = Column(Integer, ForeignKey("schedules.id"), nullable=True)  # 연결된 방문 계획
     condition = Column(String, nullable=True)  # 'good', 'normal', 'poor'
     service_type = Column(String, default="basic_care")  # 'basic_care', 'meal_service', 'medical_care'
     audio_file_url = Column(String, nullable=True)
@@ -133,6 +134,7 @@ class BillingRecord(Base):
     service_type = Column(String)  # 'basic_care', 'meal_service', 'medical_care', 'emergency'
     amount = Column(Integer)  # 청구액 (원)
     total_cost = Column(Integer, nullable=True)  # 급여비용 총액 (본인부담 포함, 월한도 기준)
+    review_note = Column(String, nullable=True)  # 확인 플래그가 있는 청구의 센터장 확인 사유
     status = Column(String, default="draft")  # 'draft', 'submitted', 'paid'
     approval_status = Column(String, default="pending")  # 'pending', 'approved', 'rejected'
     approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # 승인자 ID
