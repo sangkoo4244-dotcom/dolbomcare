@@ -1,9 +1,34 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.models import Schedule, User, Resident, Center
+from app.models import Schedule, User, Resident, Center, DailyRecord, BillingRecord
 from app.database import get_db
-from datetime import datetime
+from datetime import datetime, timedelta
+
+STATE_BY_APPROVAL = {
+    "draft": "작성중",
+    "pending": "검토중",
+    "approved": "승인",
+    "submitted_to_nhis": "승인",
+    "reimbursed": "승인",
+    "rejected": "보완요청",
+}
+
+def _visit_item(record, billing, names, schedule):
+    return {
+        "date": record.recorded_date.date().isoformat(),
+        "time": record.recorded_date.strftime("%H:%M"),
+        "resident_id": record.resident_id,
+        "resident_name": names.get(record.resident_id),
+        "service_type": record.service_type,
+        "duration_minutes": record.duration_minutes,
+        "state": STATE_BY_APPROVAL.get(billing.approval_status, "작성중") if billing else "작성중",
+        "amount": billing.amount if billing else None,
+        "daily_record_id": record.id,
+        "billing_id": billing.id if billing else None,
+        "schedule_id": schedule.id if schedule else None,
+        "planned": schedule is not None,
+    }
 
 class ScheduleCreate(BaseModel):
     caregiver_id: int
@@ -120,6 +145,82 @@ async def create_schedule(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"스케줄 생성 중 오류: {str(e)}")
+
+@router.get("/caregiver-view")
+def caregiver_schedule_view(
+    caregiver_id: int,
+    year_month: str,
+    db: Session = Depends(get_db)
+):
+    """요양사 일정: 계획(Schedule)과 실제 방문 기록·청부 상태를 날짜·이용자 기준으로 맞춘 결과"""
+    start = datetime.strptime(f"{year_month}-01", "%Y-%m-%d")
+    end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
+    today = datetime.now().date()
+
+    schedules = db.query(Schedule).filter(
+        Schedule.caregiver_id == caregiver_id,
+        Schedule.scheduled_date >= start,
+        Schedule.scheduled_date < end,
+        Schedule.status != "cancelled",
+    ).all()
+    records = db.query(DailyRecord).filter(
+        DailyRecord.caregiver_id == caregiver_id,
+        DailyRecord.recorded_date >= start,
+        DailyRecord.recorded_date < end,
+    ).all()
+    billings = {}
+    if records:
+        billings = {
+            b.daily_record_id: b
+            for b in db.query(BillingRecord).filter(
+                BillingRecord.daily_record_id.in_([r.id for r in records])
+            ).all()
+        }
+    names = {rid: name for rid, name in db.query(Resident.id, Resident.name).all()}
+
+    used = set()
+    items = []
+    for s in schedules:
+        day = s.scheduled_date.date()
+        match = next(
+            (r for r in records if r.id not in used and r.resident_id == s.resident_id and r.recorded_date.date() == day),
+            None,
+        )
+        if match:
+            used.add(match.id)
+            item = _visit_item(match, billings.get(match.id), names, s)
+            item["time"] = s.scheduled_date.strftime("%H:%M")
+            items.append(item)
+        else:
+            items.append({
+                "date": day.isoformat(),
+                "time": s.scheduled_date.strftime("%H:%M"),
+                "resident_id": s.resident_id,
+                "resident_name": names.get(s.resident_id),
+                "service_type": s.service_type,
+                "duration_minutes": None,
+                "state": "미기록" if day < today else "예정",
+                "amount": None,
+                "daily_record_id": None,
+                "billing_id": None,
+                "schedule_id": s.id,
+                "planned": True,
+            })
+    for r in records:
+        if r.id not in used:
+            items.append(_visit_item(r, billings.get(r.id), names, None))
+
+    items.sort(key=lambda x: (x["date"], x["time"]))
+    summary = {}
+    for it in items:
+        summary[it["state"]] = summary.get(it["state"], 0) + 1
+
+    return {
+        "year_month": year_month,
+        "items": items,
+        "summary": summary,
+        "total_amount": sum(it["amount"] or 0 for it in items),
+    }
 
 @router.get("/{schedule_id}")
 async def get_schedule(schedule_id: int, db: Session = Depends(get_db)):
