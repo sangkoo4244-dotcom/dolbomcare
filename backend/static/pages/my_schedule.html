@@ -35,7 +35,10 @@
                             <button onclick="nextMonth()" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-100">다음 ▶</button>
                         </div>
                     </div>
-                    <div id="calendar" class="grid grid-cols-7 gap-2"></div>
+                    <div class="flex justify-end mb-4">
+                    <button onclick="openPropose()" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700">+ 방문 계획 제안</button>
+                </div>
+                <div id="calendar" class="grid grid-cols-7 gap-2"></div>
                 </div>
 
                 <!-- 오늘의 일정 -->
@@ -92,7 +95,9 @@
             '방문중': 'bg-amber-100 text-amber-800',
             '완료': 'bg-emerald-100 text-emerald-800',
             '미기록': 'bg-red-600 text-white',
-            '계획 외': 'bg-gray-100 text-gray-700'
+            '계획 외': 'bg-gray-100 text-gray-700',
+            '승인 대기': 'bg-amber-100 text-amber-800',
+            '반려': 'bg-red-100 text-red-800'
         };
         const OPEN_STATES = ['예정', '방문중', '미기록'];
 
@@ -111,6 +116,8 @@
             return `./voice_record.html?resident_id=${it.resident_id}${planned}`;
         }
         function actions(it) {
+            if (it.state === '승인 대기') return '<span class="text-sm text-amber-700">센터장 승인을 기다리는 중입니다</span>';
+            if (it.state === '반려') return `<button onclick="openResubmit(${it.schedule_id})" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">수정 후 다시 제안</button>`;
             if (!it.planned) return `<a href="${recordUrl(it)}" class="text-xs font-bold text-emerald-700 underline">기록 보기</a>`;
             if (it.state === '예정') return `<button onclick="markArrived(${it.schedule_id})" class="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700">도착</button>`;
             if (it.state === '방문중') return `<button onclick="markLeft(${it.schedule_id})" class="px-4 py-2 bg-amber-500 text-white text-sm font-bold rounded-lg hover:bg-amber-600">퇴실</button>
@@ -223,6 +230,8 @@
                 ].filter(Boolean).join(' · ');
                 const address = it.address ? `<div class="text-sm text-gray-700 mt-2">📍 ${it.address}</div>` : '';
                 const notes = it.care_notes ? `<div class="text-sm text-gray-600 mt-1">📝 ${it.care_notes.slice(0, 80)}</div>` : '';
+                const rejected = it.state === '반려' && it.review_note
+                    ? `<div class="text-sm text-red-600 font-semibold mt-2">반려 사유: ${it.review_note}</div>` : '';
                 const hint = it.state === '미기록'
                     ? '<div class="text-sm text-red-600 font-semibold mt-2">방문 후 기록이 없습니다. 기록을 작성해 주세요.</div>' : '';
                 return `
@@ -239,6 +248,7 @@
                             </div>
                         </div>
                         ${plan}
+                        ${rejected}
                         ${hint}
                     </div>`;
             }).join('');
@@ -259,6 +269,90 @@
                     <td class="py-4 px-4 text-sm text-gray-700">${coverage(it)}</td>
                     <td class="py-4 px-4">${badge(it.state)}</td>
                 </tr>`).join('');
+        }
+
+        let proposeMode = { scheduleId: null };
+
+        function ensureProposeModal() {
+            if (document.getElementById('proposeModal')) return;
+            const wrap = document.createElement('div');
+            wrap.id = 'proposeModal';
+            wrap.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;';
+            wrap.innerHTML = `
+                <div class="bg-white rounded-xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                    <h2 id="proposeTitle" class="text-xl font-bold mb-4">방문 계획 제안</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold mb-1">이용자</label>
+                            <select id="proposeResident" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">방문 날짜와 시간</label>
+                            <input id="proposeDate" type="datetime-local" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">제공 시간</label>
+                            <select id="proposeDuration" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${[30, 60, 90, 120, 180, 240].map(m => `<option value="${m}" ${m === 60 ? 'selected' : ''}>${m}분</option>`).join('')}</select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">계획 제공 항목</label>
+                            <div class="grid grid-cols-2 gap-2 text-sm">${Object.entries(CARE_ITEM_LABELS).map(([v, l]) => `<label class="flex items-center gap-2"><input type="checkbox" name="proposeItem" value="${v}"> ${l}</label>`).join('')}</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="saveProposal()" class="flex-1 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700">제안하기</button>
+                        <button onclick="closePropose()" class="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200">취소</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(wrap);
+        }
+
+        async function openPropose(item) {
+            ensureProposeModal();
+            proposeMode.scheduleId = item ? item.schedule_id : null;
+            document.getElementById('proposeTitle').textContent = item ? '방문 계획 수정 후 다시 제안' : '방문 계획 제안';
+            const sel = document.getElementById('proposeResident');
+            sel.disabled = !!item;
+            const d = await (await fetch(`${API_URL}/residents/?center_id=${currentUser.center_id || 1}`)).json();
+            sel.innerHTML = (d.residents || []).map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            const base = item ? new Date(item.date + 'T' + item.time) : new Date(selectedDate + 'T09:00');
+            document.getElementById('proposeDate').value = `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}T${pad(base.getHours())}:${pad(base.getMinutes())}`;
+            document.getElementById('proposeDuration').value = item && item.duration_minutes ? item.duration_minutes : 60;
+            const planned = item ? item.planned_items : [];
+            document.querySelectorAll('input[name="proposeItem"]').forEach(cb => { cb.checked = planned.includes(cb.value); });
+            if (item) sel.value = item.resident_id;
+            document.getElementById('proposeModal').style.display = 'flex';
+        }
+
+        function closePropose() {
+            document.getElementById('proposeModal').style.display = 'none';
+        }
+
+        function openResubmit(scheduleId) {
+            const item = items.find(it => it.schedule_id === scheduleId);
+            if (item) openPropose(item);
+        }
+
+        async function saveProposal() {
+            const date = document.getElementById('proposeDate').value;
+            if (!date) { alert('방문 날짜와 시간을 입력해 주세요'); return; }
+            const body = {
+                user_id: currentUser.id,
+                user_role: 'caregiver',
+                scheduled_date: date,
+                duration_minutes: parseInt(document.getElementById('proposeDuration').value),
+                planned_items: Array.from(document.querySelectorAll('input[name="proposeItem"]:checked')).map(cb => cb.value).join(',')
+            };
+            let r;
+            if (proposeMode.scheduleId) {
+                r = await fetch(`${API_URL}/schedule/${proposeMode.scheduleId}/resubmit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            } else {
+                r = await fetch(`${API_URL}/schedule/propose`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, caregiver_id: currentUser.id, resident_id: parseInt(document.getElementById('proposeResident').value) }) });
+            }
+            if (!r.ok) { const e = await r.json().catch(() => ({})); alert(e.detail || '제안에 실패했습니다'); return; }
+            closePropose();
+            alert('방문 계획을 제안했습니다. 센터장 승인을 기다려 주세요.');
+            loadSchedules();
         }
 
         function prevMonth() { currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1); selectedDate = null; loadSchedules(); }

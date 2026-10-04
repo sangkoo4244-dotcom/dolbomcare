@@ -182,6 +182,7 @@ class Schedule(Base):
     planned_items = Column(String, nullable=True)  # 계획된 제공 항목 코드 (쉼표 구분)
     arrived_at = Column(DateTime, nullable=True)  # 실제 도착 시각
     left_at = Column(DateTime, nullable=True)  # 실제 퇴실 시각
+    review_note = Column(String, nullable=True)  # 계획 반려 사유
     service_type = Column(String, default="basic_care")  # 'basic_care', 'meal_service', 'medical_care'
 
     status = Column(String, default="scheduled")  # 'scheduled', 'completed', 'cancelled'

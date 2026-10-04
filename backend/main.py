@@ -39,6 +39,7 @@ ADDITIVE_COLUMNS = [
     ("schedules", "planned_items", "VARCHAR"),
     ("schedules", "arrived_at", "TIMESTAMP"),
     ("schedules", "left_at", "TIMESTAMP"),
+    ("schedules", "review_note", "VARCHAR"),
     ("daily_records", "schedule_id", "INTEGER"),
     ("billing_records", "review_note", "VARCHAR"),
 ]

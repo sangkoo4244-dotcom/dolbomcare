@@ -11,6 +11,7 @@ const SIDEBAR_MENUS = {
         { href: 'dashboard.html', icon: '📊', label: '대시보드' },
         { href: 'resident_management.html', icon: '👥', label: '이용자관리' },
         { href: 'voice_record.html', icon: '🎤', label: '음성 기록' },
+        { href: 'schedule_approval.html', icon: '📝', label: '방문계획 승인' },
         { href: 'billing_management.html', icon: '💰', label: '청부관리' },
         { href: 'staff_management.html', icon: '👔', label: '직원관리' },
         { href: 'monthly_settlement.html', icon: '📈', label: '월별정산' },

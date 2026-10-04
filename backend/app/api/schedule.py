@@ -135,6 +135,10 @@ def _assert_owner(schedule, user_id, user_role):
         raise HTTPException(status_code=403, detail="본인의 일정만 기록할 수 있습니다")
 
 def _visit_state(schedule, matched, now):
+    if schedule.status == "proposed":
+        return "승인 대기"
+    if schedule.status == "rejected":
+        return "반려"
     if matched:
         return "완료"
     if schedule.arrived_at:
@@ -174,10 +178,12 @@ def caregiver_schedule_view(
     for s in schedules:
         planned = _codes(s.planned_items)
         day = s.scheduled_date.date()
-        match = next(
-            (r for r in records if r.id not in used and r.resident_id == s.resident_id and r.recorded_date.date() == day),
-            None,
-        )
+        match = None
+        if s.status == "scheduled":
+            match = next(
+                (r for r in records if r.id not in used and r.resident_id == s.resident_id and r.recorded_date.date() == day),
+                None,
+            )
         if match:
             used.add(match.id)
         state = _visit_state(s, match, now)
@@ -197,6 +203,7 @@ def caregiver_schedule_view(
             "schedule_id": s.id,
             "arrived_at": s.arrived_at.isoformat() if s.arrived_at else None,
             "left_at": s.left_at.isoformat() if s.left_at else None,
+            "review_note": s.review_note,
             "planned": True,
         })
 
@@ -236,6 +243,8 @@ def mark_arrived(schedule_id: int, user_id: int = None, user_role: str = None, d
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
     _assert_owner(schedule, user_id, user_role)
+    if schedule.status != "scheduled":
+        raise HTTPException(status_code=400, detail="센터장이 승인한 일정만 도착을 기록할 수 있습니다")
     if schedule.arrived_at is None:
         schedule.arrived_at = datetime.now()
         db.commit()
@@ -248,12 +257,143 @@ def mark_left(schedule_id: int, user_id: int = None, user_role: str = None, db: 
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
     _assert_owner(schedule, user_id, user_role)
+    if schedule.status != "scheduled":
+        raise HTTPException(status_code=400, detail="센터장이 승인한 일정만 퇴실을 기록할 수 있습니다")
     if schedule.arrived_at is None:
         raise HTTPException(status_code=400, detail="도착 기록 후 퇴실을 기록할 수 있습니다")
     if schedule.left_at is None:
         schedule.left_at = datetime.now()
         db.commit()
     return {"status": "success", "left_at": schedule.left_at.isoformat()}
+class ProposalRequest(BaseModel):
+    user_id: int
+    user_role: str
+    caregiver_id: int
+    resident_id: int
+    scheduled_date: str
+    duration_minutes: int = None
+    planned_items: str = None
+    notes: str = None
+
+class ReviewRequest(BaseModel):
+    user_id: int
+    user_role: str
+    reason: str = ""
+
+class ResubmitRequest(BaseModel):
+    user_id: int
+    user_role: str
+    scheduled_date: str = None
+    duration_minutes: int = None
+    planned_items: str = None
+
+@router.post("/propose")
+def propose_schedule(req: ProposalRequest, db: Session = Depends(get_db)):
+    """요양사가 방문 계획을 제안 (센터장 승인 대기)"""
+    if req.user_role != "caregiver" or req.user_id != req.caregiver_id:
+        raise HTTPException(status_code=403, detail="요양사 본인의 방문 계획만 제안할 수 있습니다")
+    resident = db.query(Resident).filter(Resident.id == req.resident_id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    schedule = Schedule(
+        caregiver_id=req.caregiver_id,
+        resident_id=req.resident_id,
+        center_id=resident.center_id,
+        scheduled_date=datetime.fromisoformat(req.scheduled_date),
+        duration_minutes=req.duration_minutes,
+        planned_items=req.planned_items or None,
+        notes=req.notes,
+        status="proposed",
+    )
+    db.add(schedule)
+    db.commit()
+    db.refresh(schedule)
+    return {"status": "success", "schedule_id": schedule.id, "message": "방문 계획을 제안했습니다. 센터장 승인을 기다려 주세요"}
+
+@router.get("/proposals")
+def list_proposals(center_id: int, user_role: str, db: Session = Depends(get_db)):
+    """센터장 승인 대기·반려 계획 목록"""
+    if user_role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 조회할 수 있습니다")
+    rows = db.query(Schedule).filter(
+        Schedule.center_id == center_id,
+        Schedule.status.in_(["proposed", "rejected"]),
+    ).order_by(Schedule.scheduled_date).all()
+    residents = {x.id: x.name for x in db.query(Resident).all()}
+    caregivers = {x.id: x.full_name for x in db.query(User).all()}
+    return {
+        "items": [
+            {
+                "schedule_id": s.id,
+                "status": s.status,
+                "caregiver_id": s.caregiver_id,
+                "caregiver_name": caregivers.get(s.caregiver_id),
+                "resident_id": s.resident_id,
+                "resident_name": residents.get(s.resident_id),
+                "scheduled_date": s.scheduled_date.strftime("%Y-%m-%d %H:%M"),
+                "duration_minutes": s.duration_minutes,
+                "planned_items": _codes(s.planned_items),
+                "review_note": s.review_note,
+            }
+            for s in rows
+        ]
+    }
+
+@router.post("/{schedule_id}/approve")
+def approve_schedule(schedule_id: int, req: ReviewRequest, db: Session = Depends(get_db)):
+    """센터장이 방문 계획 승인 → 요양사 나의일정에 확정"""
+    if req.user_role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 승인할 수 있습니다")
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    if not schedule:
+        raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
+    if schedule.status != "proposed":
+        raise HTTPException(status_code=400, detail="승인 대기 중인 계획만 승인할 수 있습니다")
+    schedule.status = "scheduled"
+    schedule.review_note = None
+    db.commit()
+    return {"status": "success", "schedule_id": schedule.id, "schedule_status": schedule.status}
+
+@router.post("/{schedule_id}/reject")
+def reject_schedule(schedule_id: int, req: ReviewRequest, db: Session = Depends(get_db)):
+    """센터장이 방문 계획 반려 (사유 필수)"""
+    if req.user_role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 반려할 수 있습니다")
+    reason = (req.reason or "").strip()
+    if not reason:
+        raise HTTPException(status_code=400, detail="반려 사유를 입력해 주세요")
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    if not schedule:
+        raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
+    if schedule.status != "proposed":
+        raise HTTPException(status_code=400, detail="승인 대기 중인 계획만 반려할 수 있습니다")
+    schedule.status = "rejected"
+    schedule.review_note = reason
+    db.commit()
+    return {"status": "success", "schedule_id": schedule.id, "schedule_status": schedule.status}
+
+@router.post("/{schedule_id}/resubmit")
+def resubmit_schedule(schedule_id: int, req: ResubmitRequest, db: Session = Depends(get_db)):
+    """요양사가 반려된 계획을 수정해 다시 제안"""
+    if req.user_role != "caregiver":
+        raise HTTPException(status_code=403, detail="요양사만 다시 제안할 수 있습니다")
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    if not schedule:
+        raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
+    _assert_owner(schedule, req.user_id, req.user_role)
+    if schedule.status != "rejected":
+        raise HTTPException(status_code=400, detail="반려된 계획만 다시 제안할 수 있습니다")
+    if req.scheduled_date:
+        schedule.scheduled_date = datetime.fromisoformat(req.scheduled_date)
+    if req.duration_minutes is not None:
+        schedule.duration_minutes = req.duration_minutes
+    if req.planned_items is not None:
+        schedule.planned_items = req.planned_items or None
+    schedule.status = "proposed"
+    schedule.review_note = None
+    db.commit()
+    return {"status": "success", "schedule_id": schedule.id, "schedule_status": schedule.status}
+
 @router.get("/{schedule_id}")
 async def get_schedule(schedule_id: int, db: Session = Depends(get_db)):
     """스케줄 상세 조회"""

@@ -10,7 +10,7 @@ def find_schedule(db, caregiver_id, resident_id, when: datetime):
     return db.query(Schedule).filter(
         Schedule.caregiver_id == caregiver_id,
         Schedule.resident_id == resident_id,
-        Schedule.status != "cancelled",
+        Schedule.status == "scheduled",
         Schedule.scheduled_date >= day_start,
         Schedule.scheduled_date < day_start + timedelta(days=1),
     ).order_by(Schedule.scheduled_date).first()
