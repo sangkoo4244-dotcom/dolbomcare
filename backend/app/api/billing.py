@@ -299,7 +299,7 @@ async def list_billing_records(
             "id": r.id,
             "daily_record_id": r.daily_record_id,
             "resident_id": r.resident_id,
-            "resident_name": r.resident_name or (current.name if current else None),
+            "resident_name": current.name if current else r.resident_name,
             "care_grade": r.care_grade or (current.care_grade if current else None),
             "client_type": r.client_type or (current.client_type if current else None),
             "caregiver_id": r.caregiver_id,

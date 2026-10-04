@@ -743,6 +743,7 @@ def get_monthly_summary(
     approved_count = sum(1 for r in records if r.approval_status == "approved")
     submitted_count = sum(1 for r in records if r.approval_status == "submitted_to_nhis")
     paid_count = sum(1 for r in records if r.approval_status == "reimbursed")
+    resident_names = {rid: name for rid, name in db.query(Resident.id, Resident.name).all()}
 
     return {
         "status": "success",
@@ -761,7 +762,7 @@ def get_monthly_summary(
             {
                 "id": r.id,
                 "resident_id": r.resident_id,
-                "resident_name": r.resident_name,  # 정산 시점의 이용자 이름
+                "resident_name": resident_names.get(r.resident_id, r.resident_name),
                 "care_grade": r.care_grade,  # 정산 시점의 요양등급
                 "client_type": r.client_type,  # 정산 시점의 소득분류
                 "caregiver_id": r.caregiver_id,
