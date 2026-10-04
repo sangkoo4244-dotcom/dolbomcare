@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>돌봄케어 - 로그인</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #10b981 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 왼쪽: 브랜딩 섹션 */
+        .login-brand {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+
+        .brand-logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .brand-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-subtitle {
+            font-size: 14px;
+            opacity: 0.95;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .brand-features {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .brand-feature {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            text-align: left;
+        }
+
+        .brand-feature-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .brand-feature-text {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .brand-feature-text strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        /* 오른쪽: 로그인 섹션 */
+        .login-form-section {
+            background: white;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-header {
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        /* 역할 선택 탭 */
+        .role-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .role-tab {
+            padding: 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .role-tab:hover {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .role-tab.active {
+            border-color: #10b981;
+            background: #10b981;
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        /* 폼 필드 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+            background: #f0fdf4;
+        }
+
+        .form-group input::placeholder {
+            color: #9ca3af;
+        }
+
+        /* 체크박스 */
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            font-size: 13px;
+        }
+
+        .form-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #10b981;
+        }
+
+        .form-check label {
+            cursor: pointer;
+            color: #6b7280;
+            margin: 0;
+        }
+
+        /* 로그인 버튼 */
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .login-button.loading {
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        /* 링크 */
+        .login-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            font-size: 13px;
+        }
+
+        .login-links a {
+            color: #10b981;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .login-links a:hover {
+            color: #059669;
+        }
+
+        /* 구분선 */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 32px 0;
+            color: #d1d5db;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        /* 테스트 계정 */
+        .test-accounts {
+            margin-top: 32px;
+        }
+
+        .test-accounts-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .test-account-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .test-account-btn {
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .test-account-btn:hover {
+            border-color: #10b981;
+            background: #f0fdf4;
+            transform: translateY(-2px);
+        }
+
+        .test-account-role {
+            font-weight: 700;
+            color: #10b981;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .test-account-email {
+            font-size: 11px;
+            color: #374151;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 1px;
+        }
+
+        .test-account-pwd {
+            font-size: 10px;
+            color: #9ca3af;
+            font-family: monospace;
+            display: block;
+        }
+
+        /* 회원가입 링크 */
+        .signup-prompt {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .signup-prompt a {
+            color: #10b981;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .signup-prompt a:hover {
+            text-decoration: underline;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .login-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .login-brand {
+                padding: 40px 30px;
+                display: none;
+            }
+
+            .login-form-section {
+                padding: 40px 30px;
+            }
+
+            .login-header h1 {
+                font-size: 24px;
+            }
+
+            body {
+                background: white;
+            }
+        }
+
+        /* 에러 메시지 */
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* 성공 메시지 */
+        .success-message {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <!-- 왼쪽: 브랜딩 -->
+        <div class="login-brand">
+            <div class="brand-logo">❤️</div>
+            <div class="brand-title">돌봄케어</div>
+            <div class="brand-subtitle">
+                요양사의 독립성을 지키고<br>
+                센터의 효율성을 높이며<br>
+                보호자의 신뢰를 얻다
+            </div>
+
+            <div class="brand-features">
+                <div class="brand-feature">
+                    <div class="brand-feature-icon">🎤</div>
+                    <div class="brand-feature-text">
+                        <strong>음성 기반 기록</strong>
+                        손쓰기 시간 80% 단축
+                    </div>
+                </div>
+                <div class="brand-feature">
+                    <div class="brand-feature-icon">💰</div>
+                    <div class="brand-feature-text">
+                        <strong>스마트 청부 관리</strong>
+                        자동 계산으로 오류 제거
+                    </div>
+                </div>
+                <div class="brand-feature">
+                    <div class="brand-feature-icon">👥</div>
+                    <div class="brand-feature-text">
+                        <strong>투명한 소통</strong>
+                        실시간 현황 공유
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 오른쪽: 로그인 폼 -->
+        <div class="login-form-section">
+            <div class="login-header">
+                <h1>로그인</h1>
+                <p>계정에 접속하세요</p>
+            </div>
+
+            <!-- 에러/성공 메시지 -->
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <!-- 역할 선택 -->
+            <div class="role-tabs">
+                <button class="role-tab active" data-role="caregiver">
+                    요양사
+                </button>
+                <button class="role-tab" data-role="center_manager">
+                    센터장
+                </button>
+            </div>
+
+            <!-- 로그인 폼 -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">이메일</label>
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="your@email.com"
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">비밀번호</label>
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="••••••••"
+                        required
+                    />
+                </div>
+
+                <div class="form-check">
+                    <input type="checkbox" id="rememberMe" />
+                    <label for="rememberMe">로그인 유지</label>
+                </div>
+
+                <button type="submit" class="login-button">로그인</button>
+            </form>
+
+            <div class="login-links">
+                <a href="./signup.html">회원가입</a>
+                <a href="#">비밀번호 찾기</a>
+            </div>
+
+            <!-- 테스트 계정 -->
+            <div class="divider">테스트 계정</div>
+            <div class="test-accounts">
+                <div class="test-accounts-title">요양사 계정</div>
+                <div class="test-account-grid">
+                    <button class="test-account-btn" onclick="loginWithTestAccount('caregiver1@test.com', 'password')">
+                        <span class="test-account-role">요양사</span>
+                        <span class="test-account-email">caregiver1@test.com</span>
+                        <span class="test-account-pwd">password</span>
+                    </button>
+                    <button class="test-account-btn" onclick="loginWithTestAccount('caregiver2@test.com', 'password')">
+                        <span class="test-account-role">요양사</span>
+                        <span class="test-account-email">caregiver2@test.com</span>
+                        <span class="test-account-pwd">password</span>
+                    </button>
+                </div>
+
+                <div class="test-accounts-title" style="margin-top: 16px;">센터장 계정</div>
+                <div class="test-account-grid">
+                    <button class="test-account-btn" onclick="loginWithTestAccount('manager@test.com', 'password')" style="grid-column: 1 / -1;">
+                        <span class="test-account-role">센터장</span>
+                        <span class="test-account-email">manager@test.com</span>
+                        <span class="test-account-pwd">password</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 회원가입 -->
+            <div class="signup-prompt">
+                계정이 없으신가요? <a href="./signup.html">지금 가입하세요</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const rememberMeCheckbox = document.getElementById('rememberMe');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const roleTabs = document.querySelectorAll('.role-tab');
+
+        let selectedRole = 'caregiver';
+
+        // 역할 선택
+        roleTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                roleTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                selectedRole = this.dataset.role;
+            });
+        });
+
+        // 로그인 함수
+        async function handleLogin(email, password) {
+            try {
+                errorMessage.classList.remove('show');
+                successMessage.classList.remove('show');
+
+                const response = await fetch('/api/v1/users/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 토큰 저장
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+
+                    if (rememberMeCheckbox.checked) {
+                        localStorage.setItem('rememberMe', 'true');
+                    }
+
+                    successMessage.textContent = '로그인 되었습니다. 이동 중...';
+                    successMessage.classList.add('show');
+
+                    // 대시보드로 이동
+                    setTimeout(() => {
+                        window.location.href = './dashboard.html';
+                    }, 1000);
+                } else {
+                    errorMessage.textContent = data.detail || '로그인에 실패했습니다.';
+                    errorMessage.classList.add('show');
+                }
+            } catch (error) {
+                errorMessage.textContent = '오류가 발생했습니다: ' + error.message;
+                errorMessage.classList.add('show');
+            }
+        }
+
+        // 폼 제출
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                errorMessage.textContent = '이메일과 비밀번호를 입력하세요.';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            await handleLogin(email, password);
+        });
+
+        // 테스트 계정 로그인
+        async function loginWithTestAccount(email, password) {
+            emailInput.value = email;
+            passwordInput.value = password;
+            await handleLogin(email, password);
+        }
+
+        // 저장된 이메일 복구
+        window.addEventListener('load', () => {
+            if (localStorage.getItem('rememberMe')) {
+                const savedEmail = emailInput.value || localStorage.getItem('savedEmail');
+                if (savedEmail) {
+                    emailInput.value = savedEmail;
+                }
+            }
+        });
+
+        // 이메일 저장
+        rememberMeCheckbox.addEventListener('change', () => {
+            if (rememberMeCheckbox.checked) {
+                localStorage.setItem('savedEmail', emailInput.value);
+            } else {
+                localStorage.removeItem('savedEmail');
+                localStorage.removeItem('rememberMe');
+            }
+        });
+    </script>
+</body>
+</html>

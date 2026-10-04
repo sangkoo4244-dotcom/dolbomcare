@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>돌봄케어 - 음성 기록</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #1a202c;
+        }
+
+        .page-wrapper {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* ==================== 사이드바 ==================== */
+        .sidebar {
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            color: white;
+            padding: 24px 0;
+            overflow-y: auto;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 280px;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 0 24px 32px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-logo {
+            font-size: 32px;
+        }
+
+        .sidebar-brand {
+            flex: 1;
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .sidebar-nav {
+            padding: 0;
+        }
+
+        .nav-group {
+            margin-bottom: 24px;
+            padding: 0 16px;
+        }
+
+        .nav-group-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 0 12px 12px 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 6px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.2);
+            border-left-color: #10b981;
+            color: #10b981;
+        }
+
+        .nav-item.hidden {
+            display: none;
+        }
+
+        /* ==================== 메인 컨텐츠 ==================== */
+        .main-layout {
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 탑바 */
+        .topbar {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .topbar-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a202c;
+            margin: 0;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            border-color: #10b981;
+            color: #10b981;
+            background: #f0fdf4;
+        }
+
+        /* 컨텐츠 */
+        .content {
+            flex: 1;
+            padding: 32px;
+            background: #f5f7fa;
+            overflow-y: auto;
+        }
+
+        /* ==================== 탭 ==================== */
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            background: white;
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e5e7eb;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .tab-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .tab-btn.active {
+            background: #10b981;
+            color: white;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+        }
+
+        /* ==================== 입력 폼 ==================== */
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e5e7eb;
+        }
+
+        .form-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .form-title-icon {
+            font-size: 28px;
+        }
+
+        /* 폼 그리드 */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+            background: #f0fdf4;
+        }
+
+        .form-textarea {
+            grid-column: 1 / -1;
+            min-height: 140px;
+            resize: vertical;
+        }
+
+        /* 청부액 카드 */
+        .billing-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            grid-column: 1 / -1;
+            margin: 24px 0;
+            padding: 24px;
+            background: #f0fdf4;
+            border: 2px solid #d1fae5;
+            border-radius: 12px;
+        }
+
+        .billing-info-item {
+            text-align: center;
+        }
+
+        .billing-info-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #059669;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .billing-info-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .billing-info-detail {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* 버튼 */
+        .form-actions {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 12px;
+            grid-column: 1 / -1;
+        }
+
+        .btn-primary {
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary.loading {
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .btn-secondary {
+            padding: 12px 20px;
+            background: white;
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            border-color: #10b981;
+            color: #10b981;
+            background: #f0fdf4;
+        }
+
+        /* ==================== 기록 목록 ==================== */
+        .records-section {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e5e7eb;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .record-count {
+            background: #f0fdf4;
+            color: #10b981;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* 기록 카드 */
+        .records-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 16px;
+        }
+
+        .record-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .record-card:hover {
+            background: white;
+            border-color: #10b981;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .record-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .record-title {
+            font-weight: 700;
+            color: #1a202c;
+            font-size: 16px;
+        }
+
+        .record-date {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .record-status {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .record-status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .record-status.approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .record-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .record-info-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .record-info-label {
+            color: #6b7280;
+        }
+
+        .record-info-value {
+            color: #1a202c;
+            font-weight: 600;
+        }
+
+        .record-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #10b981;
+            margin-bottom: 16px;
+        }
+
+        .record-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .record-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #6b7280;
+        }
+
+        .record-btn:hover {
+            border-color: #10b981;
+            color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        /* 반응형 */
+        @media (max-width: 1024px) {
+            .page-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .main-layout {
+                margin-left: 0;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .form-card {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .topbar {
+                padding: 16px 20px;
+            }
+
+            .topbar-title h1 {
+                font-size: 22px;
+            }
+
+            .form-card {
+                padding: 16px;
+            }
+
+            .records-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+
+        /* 메시지 */
+        .message {
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .message.success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 사이드바 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">❤️</div>
+            <div class="sidebar-brand">
+                <div class="sidebar-title">돌봄케어</div>
+                <div class="sidebar-subtitle">Care Management</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav" id="navContent"></nav>
+    </aside>
+
+    <!-- 메인 레이아웃 -->
+    <div class="main-layout">
+        <!-- 탑바 -->
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>🎤 음성 기록</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="user-info">
+                    <div class="user-name" id="userName">사용자</div>
+                    <div class="user-role" id="userRole">역할</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <!-- 컨텐츠 -->
+        <div class="content">
+            <!-- 메시지 -->
+            <div class="message" id="message"></div>
+
+            <!-- 탭 -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="today" onclick="switchTab('today')">
+                    📅 오늘 기록 (<span id="todayCount">0</span>)
+                </button>
+                <button class="tab-btn" data-tab="all" onclick="switchTab('all')">
+                    📊 전체 기록 (<span id="allCount">0</span>)
+                </button>
+            </div>
+
+            <!-- 음성 기록 추가 폼 -->
+            <div class="form-card">
+                <div class="form-title">
+                    <div class="form-title-icon">➕</div>
+                    <span>새 음성 기록 추가</span>
+                </div>
+
+                <form id="recordForm">
+                    <div class="form-grid">
+                        <!-- 이용자 선택 -->
+                        <div class="form-group">
+                            <label class="form-label">이용자 선택</label>
+                            <select id="resident" class="form-select" required onchange="calculateBillingAmount()">
+                                <option value="">이용자를 선택하세요</option>
+                            </select>
+                        </div>
+
+                        <!-- 서비스 유형 -->
+                        <div class="form-group">
+                            <label class="form-label">서비스 유형</label>
+                            <select id="serviceType" class="form-select" required onchange="calculateBillingAmount()">
+                                <option value="">유형을 선택하세요</option>
+                                <option value="basic_care">기본 돌봄</option>
+                                <option value="meal_service">식사 서빙</option>
+                                <option value="medical_care">의료 관리</option>
+                                <option value="emergency">응급</option>
+                            </select>
+                        </div>
+
+                        <!-- 기록 내용 -->
+                        <div class="form-group">
+                            <label class="form-label">기록 내용</label>
+                            <textarea id="notes" class="form-textarea" placeholder="음성 기록 내용을 입력하세요..." required></textarea>
+                        </div>
+
+                        <!-- 청부액 정보 -->
+                        <div class="billing-info-grid">
+                            <div class="billing-info-item">
+                                <div class="billing-info-label">예상 청부액</div>
+                                <div class="billing-info-value" id="estimatedAmount">-</div>
+                                <div class="billing-info-detail" id="estimatedDetail">기준액 미정</div>
+                            </div>
+                            <div class="billing-info-item">
+                                <div class="billing-info-label">본인부담금</div>
+                                <div class="billing-info-value" id="patientPayment">-</div>
+                                <div class="billing-info-detail" id="patientDetail">소득분류 미정</div>
+                            </div>
+                        </div>
+
+                        <!-- 버튼 -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">
+                                <span>💾</span>
+                                <span>기록 저장</span>
+                            </button>
+                            <button type="reset" class="btn-secondary">초기화</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 기록 목록 -->
+            <div class="records-section">
+                <div class="section-header">
+                    <div class="section-title">기록 목록</div>
+                    <div class="record-count" id="recordCountBadge">0건</div>
+                </div>
+                <div class="records-grid" id="recordsList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <p>아직 기록이 없습니다</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/v1';
+        let currentUser = null;
+        let residents = [];
+        let records = [];
+
+        // NHIS 상수
+        const CARE_GRADE_LIMITS = {
+            1: 1577500, 2: 1399500, 3: 1193000, 4: 1082500, 5: 235000
+        };
+
+        const PATIENT_PAY_RATE = {
+            "재가급여": {
+                "일반": 0.15, "차상위계층": 0.10, "기초생활보장": 0.00, "의료급여": 0.00
+            }
+        };
+
+        const SERVICE_TYPE_AMOUNTS = {
+            "basic_care": { 1: 78875, 2: 67043, 3: 55211, 4: 55211, 5: 55211 },
+            "meal_service": { 1: 39437, 2: 33521, 3: 27605, 4: 27605, 5: 27605 },
+            "medical_care": { 1: 118312, 2: 100565, 3: 82818, 4: 82818, 5: 82818 },
+            "emergency": { 1: 157750, 2: 134087, 3: 110425, 4: 110425, 5: 110425 }
+        };
+
+        // 인증 확인
+        function checkAuth() {
+            const token = localStorage.getItem('access_token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+            if (!token || !user.id) {
+                window.location.href = './login.html';
+                return false;
+            }
+
+            currentUser = user;
+            document.getElementById('userName').textContent = user.full_name || '사용자';
+            document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
+
+            loadResidents();
+            loadRecords();
+            renderNavigation();
+            return true;
+        }
+
+        // 네비게이션 렌더링
+        function renderNavigation() {
+            const navContent = document.getElementById('navContent');
+            navContent.innerHTML = `
+                <div class="nav-group">
+                    <div class="nav-group-label">주요</div>
+                    <a class="nav-item" href="./dashboard.html">
+                        <span style="font-size: 18px;">📊</span>
+                        <span>대시보드</span>
+                    </a>
+                    <a class="nav-item active" href="./voice_record.html">
+                        <span style="font-size: 18px;">🎤</span>
+                        <span>음성 기록</span>
+                    </a>
+                </div>
+                <div class="nav-group">
+                    <div class="nav-group-label">관리</div>
+                    <a class="nav-item" href="./caregiver_billing.html">
+                        <span style="font-size: 18px;">📋</span>
+                        <span>나의 청부</span>
+                    </a>
+                    <a class="nav-item" href="./my_salary.html">
+                        <span style="font-size: 18px;">💵</span>
+                        <span>나의 급여</span>
+                    </a>
+                    <a class="nav-item" href="./my_schedule.html">
+                        <span style="font-size: 18px;">📅</span>
+                        <span>나의 일정</span>
+                    </a>
+                </div>
+            `;
+        }
+
+        // 이용자 로드
+        async function loadResidents() {
+            try {
+                const response = await fetch(`${API_URL}/residents/`);
+                if (!response.ok) throw new Error('Failed');
+                const data = await response.json();
+                residents = data.residents || [];
+
+                const select = document.getElementById('resident');
+                select.innerHTML = '<option value="">이용자를 선택하세요</option>';
+                residents.forEach(r => {
+                    const option = document.createElement('option');
+                    option.value = r.id;
+                    option.textContent = `${r.name} (${r.care_grade}등급 · ${r.client_type})`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                showMessage('이용자 로드 실패: ' + error.message, 'error');
+            }
+        }
+
+        // 청부액 계산
+        function calculateBillingAmount() {
+            const residentId = document.getElementById('resident').value;
+            const serviceType = document.getElementById('serviceType').value;
+
+            if (!residentId || !serviceType) {
+                document.getElementById('estimatedAmount').textContent = '-';
+                document.getElementById('patientPayment').textContent = '-';
+                document.getElementById('estimatedDetail').textContent = '기준액 미정';
+                document.getElementById('patientDetail').textContent = '소득분류 미정';
+                return;
+            }
+
+            const resident = residents.find(r => r.id == residentId);
+            if (!resident) return;
+
+            const careGrade = resident.care_grade || 1;
+            const clientType = resident.client_type || '일반';
+            const serviceAmounts = SERVICE_TYPE_AMOUNTS[serviceType];
+
+            if (!serviceAmounts) return;
+
+            const baseAmount = serviceAmounts[careGrade] || serviceAmounts[1];
+            const patientRate = PATIENT_PAY_RATE["재가급여"][clientType] || 0.15;
+            const patientPayment = Math.round(baseAmount * patientRate);
+            const billingAmount = baseAmount - patientPayment;
+
+            document.getElementById('estimatedAmount').textContent = `₩${billingAmount.toLocaleString()}`;
+            document.getElementById('estimatedDetail').textContent = `기준액: ₩${baseAmount.toLocaleString()}`;
+            document.getElementById('patientPayment').textContent = `₩${patientPayment.toLocaleString()}`;
+            document.getElementById('patientDetail').textContent = `${clientType}, ${Math.round(patientRate * 100)}%`;
+        }
+
+        // 기록 로드
+        async function loadRecords() {
+            try {
+                const response = await fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`);
+                if (!response.ok) throw new Error('Failed');
+                const data = await response.json();
+                records = data.records || [];
+
+                document.getElementById('allCount').textContent = records.length;
+                document.getElementById('todayCount').textContent = getTodayCount();
+                renderRecords();
+            } catch (error) {
+                showMessage('기록 로드 실패: ' + error.message, 'error');
+            }
+        }
+
+        // 오늘의 기록 수
+        function getTodayCount() {
+            const today = new Date().toDateString();
+            return records.filter(r => new Date(r.recorded_date).toDateString() === today).length;
+        }
+
+        // 기록 렌더링
+        function renderRecords() {
+            const list = document.getElementById('recordsList');
+
+            if (records.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <p>아직 기록이 없습니다</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = records.map((r, i) => `
+                <div class="record-card">
+                    <div class="record-card-header">
+                        <div>
+                            <div class="record-title">${r.resident_name || '미등록'}</div>
+                            <div class="record-date">${new Date(r.recorded_date).toLocaleDateString('ko-KR')}</div>
+                        </div>
+                        <span class="record-status ${r.approval_status === 'approved' ? 'approved' : 'pending'}">
+                            ${r.approval_status === 'approved' ? '✅ 승인' : '⏳ 검토'}
+                        </span>
+                    </div>
+                    <div class="record-info">
+                        <div class="record-info-item">
+                            <span class="record-info-label">서비스 유형</span>
+                            <span class="record-info-value">${getServiceName(r.service_type)}</span>
+                        </div>
+                        <div class="record-info-item">
+                            <span class="record-info-label">등급</span>
+                            <span class="record-info-value">${r.care_grade}등급</span>
+                        </div>
+                    </div>
+                    <div class="record-amount">₩${(r.amount || 0).toLocaleString()}</div>
+                    <div class="record-actions">
+                        <button class="record-btn" onclick="editRecord(${r.id})">수정</button>
+                        <button class="record-btn" onclick="deleteRecord(${r.id})">삭제</button>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('recordCountBadge').textContent = `${records.length}건`;
+        }
+
+        // 서비스 유형명
+        function getServiceName(type) {
+            const names = {
+                'basic_care': '기본 돌봄',
+                'meal_service': '식사 서빙',
+                'medical_care': '의료 관리',
+                'emergency': '응급'
+            };
+            return names[type] || type;
+        }
+
+        // 폼 제출
+        document.getElementById('recordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const residentId = document.getElementById('resident').value;
+            const serviceType = document.getElementById('serviceType').value;
+            const notes = document.getElementById('notes').value;
+
+            if (!residentId || !serviceType || !notes) {
+                showMessage('모든 필드를 입력하세요', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/records/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({
+                        caregiver_id: currentUser.id,
+                        resident_id: parseInt(residentId),
+                        service_type: serviceType,
+                        notes: notes
+                    })
+                });
+
+                if (response.ok) {
+                    showMessage('기록이 저장되었습니다', 'success');
+                    document.getElementById('recordForm').reset();
+                    calculateBillingAmount();
+                    loadRecords();
+                } else {
+                    const error = await response.json();
+                    showMessage('저장 실패: ' + (error.detail || '오류가 발생했습니다'), 'error');
+                }
+            } catch (error) {
+                showMessage('저장 중 오류: ' + error.message, 'error');
+            }
+        });
+
+        // 탭 전환
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // 메시지 표시
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `message ${type} show`;
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 3000);
+        }
+
+        // 수정
+        function editRecord(id) {
+            alert('수정 기능은 추후 구현됩니다');
+        }
+
+        // 삭제
+        function deleteRecord(id) {
+            if (confirm('이 기록을 삭제하시겠습니까?')) {
+                showMessage('삭제 기능은 추후 구현됩니다', 'error');
+            }
+        }
+
+        // 로그아웃
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+        }
+
+        // 페이지 로드
+        window.addEventListener('load', checkAuth);
+    </script>
+</body>
+</html>
