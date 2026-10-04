@@ -341,53 +341,7 @@
             <div class="sidebar-logo">❤️</div>
             <div class="sidebar-title">돌봄케어</div>
         </div>
-        <nav class="sidebar-nav">
-            <!-- 공통 메뉴 -->
-            <a class="nav-item" id="menu-dashboard" onclick="navigateTo('./dashboard.html')">
-                <span>📊</span> 대시보드
-            </a>
-
-            <!-- 역할별 메뉴: menu.js에서 필터링 -->
-            <a class="nav-item hidden" id="menu-residents" onclick="navigateTo('./resident_management.html')">
-                <span>👥</span> 이용자 관리
-            </a>
-            <a class="nav-item hidden" id="menu-voice-records" onclick="navigateTo('./voice_record.html')">
-                <span>🎤</span> 음성 기록
-            </a>
-
-            <!-- 요양사 메뉴 -->
-            <a class="nav-item hidden" id="menu-caregiver-billing" onclick="navigateTo('./caregiver_billing.html')">
-                <span>💳</span> 나의 청부
-            </a>
-            <a class="nav-item hidden" id="menu-my-salary" onclick="navigateTo('./my_salary.html')">
-                <span>💰</span> 나의 급여
-            </a>
-            <a class="nav-item hidden" id="menu-my-schedule" onclick="navigateTo('./my_schedule.html')">
-                <span>📅</span> 나의 일정
-            </a>
-
-            <!-- 센터장 메뉴 -->
-            <a class="nav-item hidden active" id="menu-billing-management" onclick="navigateTo('./billing_management.html')">
-                <span>📋</span> 청부 관리
-            </a>
-            <a class="nav-item hidden" id="menu-monthly-settlement" onclick="navigateTo('./monthly_settlement.html')">
-                <span>📊</span> 월별 정산
-            </a>
-            <a class="nav-item hidden" id="menu-staff" onclick="navigateTo('./staff_management.html')">
-                <span>👔</span> 직원 관리
-            </a>
-            <a class="nav-item hidden" id="menu-profit" onclick="navigateTo('./profit_analysis.html')">
-                <span>📈</span> 수익 분석
-            </a>
-            <a class="nav-item hidden" id="menu-roadmap" onclick="navigateTo('./center-roadmap.html')">
-                <span>🗺️</span> 성과 로드맵
-            </a>
-
-            <!-- 로그아웃 (공통) -->
-            <a class="nav-item" id="menu-logout" style="margin-top: 30px;" onclick="logout()">
-                <span>🚪</span> 로그아웃
-            </a>
-        </nav>
+        <nav class="sidebar-nav"></nav>
     </aside>
 
     <!-- Main Layout -->
@@ -537,8 +491,8 @@
             document.getElementById('userAvatar').textContent = (user.full_name || user.email).charAt(0).toUpperCase();
 
             // 메뉴 필터링
-            if (typeof filterMenuByRole === 'function') {
-                filterMenuByRole();
+            if (typeof renderSidebar === 'function') {
+                renderSidebar();
             }
         }
 

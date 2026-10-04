@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>월별 정산 - 돌봄케어</title>
-    <link rel="stylesheet" href="../design-system.css">
+    <link rel="stylesheet" href="design-system.css">
     <style>
         body { margin: 0; padding: 0; }
 
@@ -417,7 +417,16 @@
         </div>
     </div>
 
+    <script src="menu.js"></script>
     <script>
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+        }
+
         const API_URL = '/api/v1';
         let currentUser = null;
 
@@ -442,8 +451,7 @@
                 currentUser = JSON.parse(userStr);
                 document.getElementById('currentUserName').textContent = `${currentUser.full_name} (${currentUser.role === 'center_manager' ? '센터장' : '요양사'})`;
 
-                // Load sidebar
-                await loadSidebar();
+                renderSidebar();
 
                 // Set default month/year
                 const today = new Date();
@@ -456,32 +464,6 @@
                 console.error('❌ 초기화 오류:', error);
                 showError('초기화 중 오류가 발생했습니다');
             }
-        }
-
-        async function loadSidebar() {
-            const sidebarNav = document.getElementById('sidebarNav');
-            const menuItems = [
-                { icon: '📊', label: '대시보드', href: 'dashboard.html' },
-                { icon: '🎤', label: '음성기록', href: 'voice_record.html', role: 'caregiver' },
-                { icon: '📋', label: '나의청부', href: 'caregiver_billing.html', role: 'caregiver' },
-                { icon: '💰', label: '나의급여', href: 'my_salary.html', role: 'caregiver' },
-                { icon: '📅', label: '나의일정', href: 'my_schedule.html', role: 'caregiver' },
-                { icon: '👥', label: '직원관리', href: 'staff_management.html', role: 'center_manager' },
-                { icon: '🏥', label: '이용자관리', href: 'resident_management.html' },
-                { icon: '💳', label: '청부관리', href: 'billing_management.html', role: 'center_manager' },
-                { icon: '📊', label: '월별정산', href: 'monthly_settlement.html', role: 'center_manager' },
-                { icon: '📈', label: '수익분석', href: 'profit_analysis.html', role: 'center_manager' }
-            ];
-
-            sidebarNav.innerHTML = menuItems
-                .filter(item => !item.role || item.role === currentUser.role)
-                .map(item => `
-                    <a href="${item.href}" class="nav-item ${item.href === 'monthly_settlement.html' ? 'active' : ''}">
-                        <span>${item.icon}</span>
-                        <span>${item.label}</span>
-                    </a>
-                `)
-                .join('');
         }
 
         async function loadSettlementData() {

@@ -1,108 +1,36 @@
-// 📋 역할별 메뉴 필터링 시스템
-
-function filterMenuByRole() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const role = user.role || 'caregiver';
-
-    // 모든 메뉴 항목 숨김
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.add('hidden');
-    });
-
-    // 공통 메뉴
-    const commonMenus = ['menu-dashboard', 'menu-logout'];
-    commonMenus.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.remove('hidden');
-    });
-
-    // 역할별 메뉴
-    if (role === 'caregiver') {
-        // 요양사 메뉴
-        const caregiverMenus = [
-            'menu-residents',      // 이용자 관리 (담당자만)
-            'menu-voice-records',  // 음성 기록 (자신의)
-            'menu-caregiver-billing',  // 나의 청부
-            'menu-my-salary',      // 나의 급여
-            'menu-my-schedule'     // 나의 일정
-        ];
-        caregiverMenus.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.remove('hidden');
-        });
-    } else if (role === 'center_manager') {
-        // 센터장 메뉴 (실제 dashboard.html의 ID와 일치)
-        const managerMenus = [
-            'menu-residents',              // 이용자 관리 (전체)
-            'menu-voice-records',          // 음성 기록 (센터 전체)
-            'menu-billing-management',     // 청부 관리
-            'menu-staff',                  // 직원 관리
-            'menu-profit',                 // 수익 분석
-            'menu-roadmap'                 // 성과 로드맵
-        ];
-        managerMenus.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.remove('hidden');
-        });
-    }
-}
-
-// 역할별 메뉴 ID 매핑
-const MENU_IDS = {
-    dashboard: 'menu-dashboard',
-    residents: 'menu-residents',
-    voice: 'menu-voice-records',
-    caregiverBilling: 'menu-caregiver-billing',
-    mySalary: 'menu-my-salary',
-    mySchedule: 'menu-my-schedule',
-    billingMgmt: 'menu-billing-mgmt',
-    salaryMgmt: 'menu-salary-mgmt',
-    scheduleMgmt: 'menu-schedule-mgmt',
-    logout: 'menu-logout'
+const SIDEBAR_MENUS = {
+    caregiver: [
+        { href: 'dashboard.html', icon: '📊', label: '대시보드' },
+        { href: 'resident_management.html', icon: '👥', label: '이용자관리' },
+        { href: 'voice_record.html', icon: '🎤', label: '음성 기록' },
+        { href: 'caregiver_billing.html', icon: '📋', label: '나의 청부' },
+        { href: 'my_salary.html', icon: '💵', label: '나의 급여' },
+        { href: 'my_schedule.html', icon: '📅', label: '나의 일정' }
+    ],
+    center_manager: [
+        { href: 'dashboard.html', icon: '📊', label: '대시보드' },
+        { href: 'resident_management.html', icon: '👥', label: '이용자관리' },
+        { href: 'billing_management.html', icon: '💰', label: '청부관리' },
+        { href: 'staff_management.html', icon: '👔', label: '직원관리' },
+        { href: 'monthly_settlement.html', icon: '📈', label: '월별정산' },
+        { href: 'profit_analysis.html', icon: '📊', label: '수익분석' }
+    ]
 };
 
-// 현재 사용자의 역할 확인
-function getCurrentUserRole() {
+function renderSidebar() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    return user.role || 'caregiver';
-}
-
-// 현재 사용자의 ID 확인
-function getCurrentUserId() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    return user.id;
-}
-
-// 현재 사용자의 센터 ID 확인
-function getCurrentCenterId() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    return user.center_id;
-}
-
-// 페이지 이동
-function navigateTo(url) {
-    window.location.href = url;
-}
-
-// 로그아웃
-function logout() {
-    if (confirm('로그아웃 하시겠습니까?')) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        window.location.href = './login.html';
-    }
-}
-
-// 메뉴 필터링은 각 페이지에서 checkAuth() 후 호출됨
-// menu.js에서는 호출하지 않음 (중복 방지)
-
-// 메뉴 항목 활성화 상태 설정
-function setActiveMenu(menuId) {
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    const activeMenu = document.getElementById(menuId);
-    if (activeMenu) {
-        activeMenu.classList.add('active');
-    }
+    const items = SIDEBAR_MENUS[user.role === 'caregiver' ? 'caregiver' : 'center_manager'];
+    const current = window.location.pathname.split('/').pop();
+    const nav = document.querySelector('.sidebar-nav');
+    nav.innerHTML = items.map(item => `
+        <a href="./${item.href}" class="nav-item ${item.href === current ? 'active' : ''}">
+            <span>${item.icon}</span>
+            <span>${item.label}</span>
+        </a>
+    `).join('') + `
+        <a class="nav-item" style="margin-top: 30px;" onclick="logout()">
+            <span>🚪</span>
+            <span>로그아웃</span>
+        </a>
+    `;
 }
