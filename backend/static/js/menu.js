@@ -30,6 +30,7 @@ function filterMenuByRole() {
 
         // 센터장 전용 메뉴
         'menu-billing-management': isManager,        // 센터장 - 청부 관리 (전체)
+        'menu-monthly-settlement': isManager,        // 센터장 - 월별 정산
         'menu-staff': isManager,                     // 센터장 - 직원 관리 (전체)
         'menu-schedule': isManager,                  // 센터장 - 스케줄 관리 (전체 근무표)
         'menu-guardian-comm': isManager,             // 센터장 - 보호자 소통 (센터 공지)
