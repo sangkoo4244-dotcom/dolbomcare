@@ -502,6 +502,14 @@
             }
         };
 
+        // NHIS 기준액 (등급별 서비스 유형별 월 인정급여액)
+        const SERVICE_TYPE_AMOUNTS = {
+            "basic_care": { 1: 78875, 2: 67043, 3: 55211, 4: 55211, 5: 55211 },
+            "meal_service": { 1: 39437, 2: 33521, 3: 27605, 4: 27605, 5: 27605 },
+            "medical_care": { 1: 118312, 2: 100565, 3: 82818, 4: 82818, 5: 82818 },
+            "emergency": { 1: 157750, 2: 134087, 3: 110425, 4: 110425, 5: 110425 }
+        };
+
         // 기본 청부액 (등급 미지정 시)
         const BILLING_RATES = {
             "basic_care": 30000, "meal_service": 10000, "medical_care": 50000, "emergency": 100000
@@ -546,31 +554,32 @@
                 return;
             }
 
-            const resident = residents.find(r => r.id == residentId);  // 타입 강제 변환으로 비교
+            const resident = residents.find(r => r.id == residentId);
             if (!resident) {
-                console.warn('Resident not found:', residentId, 'Available:', residents.map(r => r.id));
+                console.warn('Resident not found:', residentId);
                 return;
             }
 
-            // 이용자 등급과 소득분류 기반 청부액 계산
             const careGrade = resident.care_grade || 1;
             const clientType = resident.client_type || '일반';
-            const monthlyLimit = CARE_GRADE_LIMITS[careGrade] || 1577500;
 
-            // 서비스 타입별 청부액
-            const baseRate = BILLING_RATES[serviceType] || 30000;
+            // NHIS 기준액 조회 (등급별)
+            const serviceAmounts = SERVICE_TYPE_AMOUNTS[serviceType];
+            if (!serviceAmounts) {
+                console.warn('Service type not found:', serviceType);
+                return;
+            }
 
-            // 월 인정급여액 기반으로 조정 (월 1회 청구)
-            let billingAmount = Math.min(baseRate, Math.floor(monthlyLimit / 20));
+            const baseAmount = serviceAmounts[careGrade] || serviceAmounts[1];
 
             // 본인부담율 적용
             const patientRate = PATIENT_PAY_RATE["재가급여"][clientType] || 0.15;
-            const patientPayment = Math.round(billingAmount * patientRate);
-            const insuredPayment = billingAmount - patientPayment;
+            const patientPayment = Math.round(baseAmount * patientRate);
+            const billingAmount = baseAmount - patientPayment;
 
             // 화면에 표시
             document.getElementById('estimatedAmount').value =
-                `₩${billingAmount.toLocaleString()} (공단: ₩${insuredPayment.toLocaleString()})`;
+                `₩${billingAmount.toLocaleString()} (공단: ₩${billingAmount.toLocaleString()})`;
             document.getElementById('patientPayment').value =
                 `₩${patientPayment.toLocaleString()} (${clientType}, ${Math.round(patientRate * 100)}%)`;
         }
