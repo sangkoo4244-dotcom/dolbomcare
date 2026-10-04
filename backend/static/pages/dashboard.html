@@ -152,20 +152,57 @@
             loadManagerData();
         }
 
-        function loadCaregiverData() {
-            document.getElementById('todayRecords').textContent = '3';
-            document.getElementById('monthlyBilling').textContent = '₩1,200,000';
-            document.getElementById('pendingBilling').textContent = '2';
-            document.getElementById('residentCount').textContent = '5';
+        const DASH_APPROVED = ['approved', 'submitted_to_nhis', 'reimbursed'];
+
+        async function loadCaregiverData() {
+            try {
+                const [recs, bills] = await Promise.all([
+                    fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`).then(r => r.json()),
+                    fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}`).then(r => r.json())
+                ]);
+                const today = new Date().toDateString();
+                const now = new Date();
+                const todayCount = (recs.records || []).filter(r => new Date(r.recorded_at).toDateString() === today).length;
+                const monthBills = (bills.records || []).filter(b => {
+                    const d = new Date(b.recorded_date);
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                });
+                const monthly = monthBills.filter(b => b.approval_status !== 'rejected').reduce((s, b) => s + (b.amount || 0), 0);
+                const pending = monthBills.filter(b => b.approval_status === 'pending').length;
+                const residents = new Set(monthBills.map(b => b.resident_id)).size;
+                document.getElementById('todayRecords').textContent = todayCount;
+                document.getElementById('monthlyBilling').textContent = `₩${monthly.toLocaleString()}`;
+                document.getElementById('pendingBilling').textContent = pending;
+                document.getElementById('residentCount').textContent = residents;
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+            }
         }
 
-        function loadManagerData() {
-            document.getElementById('totalStaff').textContent = '8';
-            document.getElementById('totalResidents').textContent = '25';
-            document.getElementById('monthlyRevenue').textContent = '₩8,500,000';
-            document.getElementById('pendingApprovals').textContent = '5';
+        async function loadManagerData() {
+            try {
+                const centerId = currentUser.center_id || 1;
+                const [users, residents, bills] = await Promise.all([
+                    fetch(`${API_URL}/users/?center_id=${centerId}`).then(r => r.json()),
+                    fetch(`${API_URL}/residents/?center_id=${centerId}`).then(r => r.json()),
+                    fetch(`${API_URL}/billing/?center_id=${centerId}`).then(r => r.json())
+                ]);
+                const now = new Date();
+                const monthBills = (bills.records || []).filter(b => {
+                    const d = new Date(b.recorded_date);
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                });
+                const revenue = monthBills.filter(b => DASH_APPROVED.includes(b.approval_status)).reduce((s, b) => s + (b.amount || 0), 0);
+                const pending = (bills.records || []).filter(b => b.approval_status === 'pending').length;
+                const staff = (users.users || []).filter(u => u.role === 'caregiver').length;
+                document.getElementById('totalStaff').textContent = staff;
+                document.getElementById('totalResidents').textContent = residents.total_residents ?? (residents.residents || []).length;
+                document.getElementById('monthlyRevenue').textContent = `₩${revenue.toLocaleString()}`;
+                document.getElementById('pendingApprovals').textContent = pending;
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+            }
         }
-
         function logout() {
             if (confirm('로그아웃하시겠습니까?')) {
                 localStorage.removeItem('access_token');

@@ -125,34 +125,63 @@
             renderSidebar();
             loadSalaryData();
         }
-        function loadSalaryData() {
-            const billingAmount = 2660000;
-            const incomeTax = Math.round(billingAmount * 0.033);
-            const pension = Math.round(billingAmount * 0.09);
-            const health = Math.round(billingAmount * 0.0349);
-            const employment = Math.round(billingAmount * 0.0065);
+        const API_URL = '/api/v1';
+        const SALARY_APPROVED = ['approved', 'submitted_to_nhis', 'reimbursed'];
+
+        function calcSalary(amount) {
+            const incomeTax = Math.round(amount * 0.033);
+            const pension = Math.round(amount * 0.09);
+            const health = Math.round(amount * 0.0349);
+            const employment = Math.round(amount * 0.0065);
             const totalTax = incomeTax + pension + health + employment;
-            const netSalary = billingAmount - totalTax;
-            document.getElementById('totalBillingAmount').textContent = `₩${billingAmount.toLocaleString()}`;
-            document.getElementById('taxAmount').textContent = `-₩${totalTax.toLocaleString()}`;
-            document.getElementById('deductionAmount').textContent = `-₩0`;
-            document.getElementById('netSalary').textContent = `₩${netSalary.toLocaleString()}`;
-            document.getElementById('detail_billing').textContent = `₩${billingAmount.toLocaleString()}`;
-            document.getElementById('detail_income_tax').textContent = `-₩${incomeTax.toLocaleString()}`;
-            document.getElementById('detail_pension').textContent = `-₩${pension.toLocaleString()}`;
-            document.getElementById('detail_health').textContent = `-₩${health.toLocaleString()}`;
-            document.getElementById('detail_employment').textContent = `-₩${employment.toLocaleString()}`;
-            document.getElementById('detail_net').textContent = `₩${netSalary.toLocaleString()}`;
-            renderSalaryHistory();
+            return { incomeTax, pension, health, employment, totalTax, net: amount - totalTax };
         }
-        function renderSalaryHistory() {
+
+        function ymOf(dateStr) {
+            const d = new Date(dateStr);
+            return `${d.getFullYear()}년 ${String(d.getMonth() + 1).padStart(2, '0')}월`;
+        }
+
+        async function loadSalaryData() {
+            try {
+                const r = await fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}`);
+                const d = await r.json();
+                const approved = (d.records || []).filter(b => SALARY_APPROVED.includes(b.approval_status));
+                const now = new Date();
+                const thisMonth = approved.filter(b => new Date(b.recorded_date).getMonth() === now.getMonth() && new Date(b.recorded_date).getFullYear() === now.getFullYear());
+                const billingAmount = thisMonth.reduce((s, b) => s + (b.amount || 0), 0);
+                const c = calcSalary(billingAmount);
+                document.getElementById('totalBillingAmount').textContent = `₩${billingAmount.toLocaleString()}`;
+                document.getElementById('taxAmount').textContent = `-₩${c.totalTax.toLocaleString()}`;
+                document.getElementById('deductionAmount').textContent = `-₩0`;
+                document.getElementById('netSalary').textContent = `₩${c.net.toLocaleString()}`;
+                document.getElementById('detail_billing').textContent = `₩${billingAmount.toLocaleString()}`;
+                document.getElementById('detail_income_tax').textContent = `-₩${c.incomeTax.toLocaleString()}`;
+                document.getElementById('detail_pension').textContent = `-₩${c.pension.toLocaleString()}`;
+                document.getElementById('detail_health').textContent = `-₩${c.health.toLocaleString()}`;
+                document.getElementById('detail_employment').textContent = `-₩${c.employment.toLocaleString()}`;
+                document.getElementById('detail_net').textContent = `₩${c.net.toLocaleString()}`;
+                renderSalaryHistory(approved);
+            } catch (e) {
+                document.getElementById('salaryTableBody').innerHTML = '<tr><td colspan="5" class="py-8 text-center text-gray-400">급여 내역을 불러올 수 없습니다</td></tr>';
+            }
+        }
+
+        function renderSalaryHistory(approved) {
             const tbody = document.getElementById('salaryTableBody');
-            const months = [
-                { month: '2026년 10월', billing: 2660000, tax: 289000, net: 2371000, status: '수령예정' },
-                { month: '2026년 09월', billing: 2450000, tax: 267000, net: 2183000, status: '완납' },
-                { month: '2026년 08월', billing: 2200000, tax: 240000, net: 1960000, status: '완납' }
-            ];
-            tbody.innerHTML = months.map(m => `<tr class="border-b border-gray-100 hover:bg-emerald-50 transition"><td class="py-4 px-4 text-gray-900 font-semibold">${m.month}</td><td class="py-4 px-4 text-gray-700">₩${m.billing.toLocaleString()}</td><td class="py-4 px-4 text-red-600">-₩${m.tax.toLocaleString()}</td><td class="py-4 px-4 text-emerald-600 font-bold">₩${m.net.toLocaleString()}</td><td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${m.status === '완납' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}">${m.status}</span></td></tr>`).join('');
+            const byMonth = {};
+            approved.forEach(b => {
+                const key = ymOf(b.recorded_date);
+                byMonth[key] = (byMonth[key] || 0) + (b.amount || 0);
+            });
+            const now = ymOf(new Date());
+            const rows = Object.keys(byMonth).sort().reverse().map(month => {
+                const amount = byMonth[month];
+                const c = calcSalary(amount);
+                const status = month === now ? '수령예정' : '완납';
+                return `<tr class="border-b border-gray-100 hover:bg-emerald-50 transition"><td class="py-4 px-4 text-gray-900 font-semibold">${month}</td><td class="py-4 px-4 text-gray-700">₩${amount.toLocaleString()}</td><td class="py-4 px-4 text-red-600">-₩${c.totalTax.toLocaleString()}</td><td class="py-4 px-4 text-emerald-600 font-bold">₩${c.net.toLocaleString()}</td><td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${status === '완납' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}">${status}</span></td></tr>`;
+            });
+            tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="5" class="py-8 text-center text-gray-400">💵 승인된 청부가 없어 급여 내역이 없습니다</td></tr>';
         }
         function logout() { if (confirm('로그아웃하시겠습니까?')) { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; } }
         window.addEventListener('load', checkAuth);
