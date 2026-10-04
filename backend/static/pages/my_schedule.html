@@ -57,9 +57,8 @@
                                     <th class="text-left py-3 px-4 font-bold text-gray-700">날짜</th>
                                     <th class="text-left py-3 px-4 font-bold text-gray-700">시간</th>
                                     <th class="text-left py-3 px-4 font-bold text-gray-700">이용자</th>
-                                    <th class="text-left py-3 px-4 font-bold text-gray-700">서비스</th>
                                     <th class="text-left py-3 px-4 font-bold text-gray-700">제공 시간</th>
-                                    <th class="text-left py-3 px-4 font-bold text-gray-700">청부액</th>
+                                    <th class="text-left py-3 px-4 font-bold text-gray-700">계획 항목 이행</th>
                                     <th class="text-left py-3 px-4 font-bold text-gray-700">상태</th>
                                 </tr>
                             </thead>
@@ -82,21 +81,32 @@
         let selectedDate = null;
         let items = [];
 
-        const serviceNames = { basic_care: '기본돌봄', meal_service: '식사', medical_care: '의료관리', emergency: '응급' };
+        const CARE_ITEM_LABELS = {
+            meal_assist: '식사 보조', toilet_assist: '배설 보조', bath: '목욕·세면', dressing: '옷 갈아입기', mobility: '이동 보조',
+            medicine: '투약 확인', vitals: '체온·혈압 측정', symptom: '이상 증상 관찰',
+            emotional: '말벗·정서 지원', cognitive: '인지활동',
+            cleaning: '청소·정돈', laundry: '세탁', shopping: '장보기·취사'
+        };
         const stateStyle = {
             '예정': 'bg-blue-100 text-blue-800',
-            '작성중': 'bg-gray-100 text-gray-700',
-            '검토중': 'bg-amber-100 text-amber-800',
-            '승인': 'bg-emerald-100 text-emerald-800',
-            '보완요청': 'bg-red-100 text-red-800',
-            '미기록': 'bg-red-600 text-white'
+            '완료': 'bg-emerald-100 text-emerald-800',
+            '미기록': 'bg-red-600 text-white',
+            '계획 외': 'bg-gray-100 text-gray-700'
         };
 
         function pad(n) { return String(n).padStart(2, '0'); }
         function dateKey(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
         function ymKey(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; }
-        function won(n) { return `₩${(n || 0).toLocaleString()}`; }
         function badge(state) { return `<span class="px-3 py-1 rounded-full text-xs font-bold ${stateStyle[state] || 'bg-gray-100 text-gray-700'}">${state}</span>`; }
+        function labels(codes) { return codes.map(c => CARE_ITEM_LABELS[c] || c).join(', '); }
+        function coverage(it) {
+            if (!it.planned_items.length) return '-';
+            return `${it.done_items.filter(c => it.planned_items.includes(c)).length} / ${it.planned_items.length}`;
+        }
+        function recordLink(it) {
+            if (it.state === '완료' || !it.planned) return '';
+            return `<a href="./voice_record.html?resident_id=${it.resident_id}" class="ml-2 text-xs font-bold text-emerald-700 underline">기록 작성</a>`;
+        }
 
         function checkAuth() {
             const token = localStorage.getItem('access_token');
@@ -128,10 +138,10 @@
 
         function renderSummary(d) {
             const s = d.summary || {};
-            const missed = s['미기록'] || 0;
-            const parts = [`방문 ${d.items.length}건`, `청부 합계 ${won(d.total_amount)}`];
-            if (missed) parts.push(`⚠️ 기록 누락 ${missed}건`);
-            document.getElementById('summaryLine').innerHTML = parts.join(' · ');
+            const parts = [`방문 계획 ${d.items.length}건`, `완료 ${s['완료'] || 0}건`];
+            if (s['미기록']) parts.push(`⚠️ 기록 미작성 ${s['미기록']}건`);
+            if (s['계획 외']) parts.push(`계획 외 ${s['계획 외']}건`);
+            document.getElementById('summaryLine').textContent = parts.join(' · ');
         }
 
         function renderCalendar() {
@@ -156,7 +166,7 @@
                 const cell = document.createElement('div');
                 cell.className = `p-2 border rounded-lg text-center cursor-pointer hover:bg-emerald-50 transition ${key === selectedDate ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'}`;
                 cell.innerHTML = `<div class="font-bold text-gray-900">${day}</div>` +
-                    (dayItems.length ? `<div class="text-xs ${missed ? 'text-red-600 font-bold' : 'text-emerald-600'}">${dayItems.length}건${missed ? ' · 누락' : ''}</div>` : '');
+                    (dayItems.length ? `<div class="text-xs ${missed ? 'text-red-600 font-bold' : 'text-emerald-600'}">${dayItems.length}건${missed ? ' · 미작성' : ''}</div>` : '');
                 cell.onclick = () => { selectedDate = key; renderCalendar(); renderToday(); };
                 cal.appendChild(cell);
             }
@@ -164,30 +174,32 @@
 
         function renderToday() {
             const dayItems = items.filter(it => it.date === selectedDate);
-            const title = selectedDate === dateKey(new Date()) ? '오늘의 일정' : `${selectedDate} 일정`;
-            document.getElementById('todayTitle').textContent = title;
+            document.getElementById('todayTitle').textContent = selectedDate === dateKey(new Date()) ? '오늘의 방문 계획' : `${selectedDate} 방문 계획`;
             const container = document.getElementById('todaySchedule');
             if (dayItems.length === 0) {
-                container.innerHTML = '<div class="text-center py-8 text-gray-400">📅 이 날짜의 일정이 없습니다</div>';
+                container.innerHTML = '<div class="text-center py-8 text-gray-400">📅 이 날짜의 방문 계획이 없습니다</div>';
                 return;
             }
             container.innerHTML = dayItems.map(it => {
-                const note = it.state === '미기록'
-                    ? '<div class="text-sm text-red-600 font-semibold mt-2">기록이 없어 청부가 만들어지지 않았습니다. 음성기록에서 작성해 주세요.</div>'
-                    : it.state === '예정'
-                    ? '<div class="text-sm text-blue-600 mt-2">방문 후 음성기록을 작성하면 청부가 자동으로 만들어집니다.</div>'
+                const plan = it.planned_items.length
+                    ? `<div class="text-sm text-gray-700 mt-2">계획 항목: ${it.planned_items.map(c => `<span class="inline-block mr-1 mb-1 px-2 py-1 rounded ${it.done_items.includes(c) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}">${it.done_items.includes(c) ? '✔ ' : ''}${CARE_ITEM_LABELS[c] || c}</span>`).join('')}</div>`
                     : '';
-                const unplanned = it.planned ? '' : '<span class="ml-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">계획 외 방문</span>';
+                const hint = it.state === '미기록'
+                    ? '<div class="text-sm text-red-600 font-semibold mt-2">방문 시간이 지났지만 기록이 없습니다. 음성기록을 작성해 주세요.</div>'
+                    : it.state === '계획 외'
+                    ? `<div class="text-sm text-gray-600 mt-2">계획에 없던 방문입니다. 제공 항목: ${labels(it.done_items) || '-'}</div>`
+                    : '';
                 return `
                     <div class="border border-gray-200 rounded-lg p-6">
                         <div class="flex justify-between items-start">
                             <div>
-                                <div class="text-lg font-bold text-gray-900">${it.resident_name || '-'}${unplanned}</div>
-                                <div class="text-sm text-gray-600 mt-1">${it.time} · ${serviceNames[it.service_type] || it.service_type}${it.duration_minutes ? ` · ${it.duration_minutes}분` : ''}</div>
+                                <div class="text-lg font-bold text-gray-900">${it.resident_name || '-'}${it.planned ? '' : ' <span class="ml-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">계획 외</span>'}</div>
+                                <div class="text-sm text-gray-600 mt-1">${it.time}${it.duration_minutes ? ` · ${it.duration_minutes}분` : ''}</div>
                             </div>
-                            <div class="text-right">${badge(it.state)}${it.amount != null ? `<div class="text-sm font-bold text-emerald-700 mt-2">${won(it.amount)}</div>` : ''}</div>
+                            <div class="text-right">${badge(it.state)}${recordLink(it)}</div>
                         </div>
-                        ${note}
+                        ${plan}
+                        ${hint}
                     </div>`;
             }).join('');
         }
@@ -195,7 +207,7 @@
         function renderTable() {
             const tbody = document.getElementById('scheduleTableBody');
             if (items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-400">📅 일정이 없습니다</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400">📅 방문 계획이 없습니다</td></tr>';
                 return;
             }
             tbody.innerHTML = items.map(it => `
@@ -203,10 +215,9 @@
                     <td class="py-4 px-4 text-gray-900 font-semibold">${it.date}</td>
                     <td class="py-4 px-4 text-gray-700">${it.time}</td>
                     <td class="py-4 px-4 font-semibold text-gray-900">${it.resident_name || '-'}${it.planned ? '' : ' <span class="text-xs text-gray-500">(계획 외)</span>'}</td>
-                    <td class="py-4 px-4 text-sm text-gray-700">${serviceNames[it.service_type] || it.service_type}</td>
                     <td class="py-4 px-4 text-sm text-gray-700">${it.duration_minutes ? `${it.duration_minutes}분` : '-'}</td>
-                    <td class="py-4 px-4 font-bold text-emerald-700">${it.amount != null ? won(it.amount) : '-'}</td>
-                    <td class="py-4 px-4">${badge(it.state)}</td>
+                    <td class="py-4 px-4 text-sm text-gray-700">${coverage(it)}</td>
+                    <td class="py-4 px-4">${badge(it.state)}${recordLink(it)}</td>
                 </tr>`).join('');
         }
 

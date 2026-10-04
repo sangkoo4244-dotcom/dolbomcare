@@ -1,34 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.models import Schedule, User, Resident, Center, DailyRecord, BillingRecord
+from app.models import Schedule, User, Resident, Center, DailyRecord
 from app.database import get_db
 from datetime import datetime, timedelta
-
-STATE_BY_APPROVAL = {
-    "draft": "작성중",
-    "pending": "검토중",
-    "approved": "승인",
-    "submitted_to_nhis": "승인",
-    "reimbursed": "승인",
-    "rejected": "보완요청",
-}
-
-def _visit_item(record, billing, names, schedule):
-    return {
-        "date": record.recorded_date.date().isoformat(),
-        "time": record.recorded_date.strftime("%H:%M"),
-        "resident_id": record.resident_id,
-        "resident_name": names.get(record.resident_id),
-        "service_type": record.service_type,
-        "duration_minutes": record.duration_minutes,
-        "state": STATE_BY_APPROVAL.get(billing.approval_status, "작성중") if billing else "작성중",
-        "amount": billing.amount if billing else None,
-        "daily_record_id": record.id,
-        "billing_id": billing.id if billing else None,
-        "schedule_id": schedule.id if schedule else None,
-        "planned": schedule is not None,
-    }
 
 class ScheduleCreate(BaseModel):
     caregiver_id: int
@@ -37,12 +12,16 @@ class ScheduleCreate(BaseModel):
     scheduled_date: str  # ISO 형식 (YYYY-MM-DDTHH:mm:ss)
     service_type: str = "basic_care"
     notes: str = None
+    duration_minutes: int = None
+    planned_items: str = None
 
 class ScheduleUpdate(BaseModel):
     scheduled_date: str = None
     service_type: str = None
     status: str = None
     notes: str = None
+    duration_minutes: int = None
+    planned_items: str = None
 
 class ScheduleStatusUpdate(BaseModel):
     status: str  # 'scheduled', 'completed', 'cancelled'
@@ -120,6 +99,8 @@ async def create_schedule(
             scheduled_date=scheduled_datetime,
             service_type=schedule_data.service_type,
             notes=schedule_data.notes,
+            duration_minutes=schedule_data.duration_minutes,
+            planned_items=schedule_data.planned_items or None,
             status="scheduled"
         )
 
@@ -146,16 +127,19 @@ async def create_schedule(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"스케줄 생성 중 오류: {str(e)}")
 
+def _codes(value):
+    return [c for c in (value or "").split(",") if c]
+
 @router.get("/caregiver-view")
 def caregiver_schedule_view(
     caregiver_id: int,
     year_month: str,
     db: Session = Depends(get_db)
 ):
-    """요양사 일정: 계획(Schedule)과 실제 방문 기록·청부 상태를 날짜·이용자 기준으로 맞춘 결과"""
+    """요양사 방문 계획: 계획된 방문과 실제 기록을 날짜·이용자 기준으로 맞추고, 계획 항목 이행 여부를 함께 반환"""
     start = datetime.strptime(f"{year_month}-01", "%Y-%m-%d")
     end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
-    today = datetime.now().date()
+    now = datetime.now()
 
     schedules = db.query(Schedule).filter(
         Schedule.caregiver_id == caregiver_id,
@@ -168,19 +152,12 @@ def caregiver_schedule_view(
         DailyRecord.recorded_date >= start,
         DailyRecord.recorded_date < end,
     ).all()
-    billings = {}
-    if records:
-        billings = {
-            b.daily_record_id: b
-            for b in db.query(BillingRecord).filter(
-                BillingRecord.daily_record_id.in_([r.id for r in records])
-            ).all()
-        }
     names = {rid: name for rid, name in db.query(Resident.id, Resident.name).all()}
 
     used = set()
     items = []
     for s in schedules:
+        planned = _codes(s.planned_items)
         day = s.scheduled_date.date()
         match = next(
             (r for r in records if r.id not in used and r.resident_id == s.resident_id and r.recorded_date.date() == day),
@@ -188,40 +165,52 @@ def caregiver_schedule_view(
         )
         if match:
             used.add(match.id)
-            item = _visit_item(match, billings.get(match.id), names, s)
-            item["time"] = s.scheduled_date.strftime("%H:%M")
-            items.append(item)
+            state = "완료"
+            done = [c for c in _codes(match.care_items) if c in planned]
+            record_id = match.id
+            duration = s.duration_minutes or match.duration_minutes
         else:
-            items.append({
-                "date": day.isoformat(),
-                "time": s.scheduled_date.strftime("%H:%M"),
-                "resident_id": s.resident_id,
-                "resident_name": names.get(s.resident_id),
-                "service_type": s.service_type,
-                "duration_minutes": None,
-                "state": "미기록" if day < today else "예정",
-                "amount": None,
-                "daily_record_id": None,
-                "billing_id": None,
-                "schedule_id": s.id,
-                "planned": True,
-            })
+            state = "미기록" if s.scheduled_date < now else "예정"
+            done = []
+            record_id = None
+            duration = s.duration_minutes
+        items.append({
+            "date": day.isoformat(),
+            "time": s.scheduled_date.strftime("%H:%M"),
+            "resident_id": s.resident_id,
+            "resident_name": names.get(s.resident_id),
+            "duration_minutes": duration,
+            "planned_items": planned,
+            "done_items": done,
+            "state": state,
+            "daily_record_id": record_id,
+            "schedule_id": s.id,
+            "planned": True,
+        })
+
     for r in records:
-        if r.id not in used:
-            items.append(_visit_item(r, billings.get(r.id), names, None))
+        if r.id in used:
+            continue
+        items.append({
+            "date": r.recorded_date.date().isoformat(),
+            "time": r.recorded_date.strftime("%H:%M"),
+            "resident_id": r.resident_id,
+            "resident_name": names.get(r.resident_id),
+            "duration_minutes": r.duration_minutes,
+            "planned_items": [],
+            "done_items": _codes(r.care_items),
+            "state": "계획 외",
+            "daily_record_id": r.id,
+            "schedule_id": None,
+            "planned": False,
+        })
 
     items.sort(key=lambda x: (x["date"], x["time"]))
     summary = {}
     for it in items:
         summary[it["state"]] = summary.get(it["state"], 0) + 1
 
-    return {
-        "year_month": year_month,
-        "items": items,
-        "summary": summary,
-        "total_amount": sum(it["amount"] or 0 for it in items),
-    }
-
+    return {"year_month": year_month, "items": items, "summary": summary}
 @router.get("/{schedule_id}")
 async def get_schedule(schedule_id: int, db: Session = Depends(get_db)):
     """스케줄 상세 조회"""
@@ -265,6 +254,10 @@ async def update_schedule(
             schedule.status = update_data.status
         if update_data.notes is not None:
             schedule.notes = update_data.notes
+        if update_data.duration_minutes is not None:
+            schedule.duration_minutes = update_data.duration_minutes
+        if update_data.planned_items is not None:
+            schedule.planned_items = update_data.planned_items or None
 
         db.commit()
         db.refresh(schedule)

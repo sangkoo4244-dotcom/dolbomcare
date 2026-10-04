@@ -334,6 +334,11 @@
                     opt.text = `${res.name} (${res.care_grade}등급 · ${res.client_type})`;
                     sel.appendChild(opt);
                 });
+                const preselected = new URLSearchParams(window.location.search).get('resident_id');
+                if (preselected) {
+                    sel.value = preselected;
+                    calculateBillingDetails();
+                }
             } catch (e) { showMessage('이용자 로드 실패', 'error'); }
         }
 

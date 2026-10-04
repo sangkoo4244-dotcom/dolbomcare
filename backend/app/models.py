@@ -176,6 +176,8 @@ class Schedule(Base):
     center_id = Column(Integer, ForeignKey("centers.id"), index=True)
 
     scheduled_date = Column(DateTime, index=True)  # 예정 날짜/시간
+    duration_minutes = Column(Integer, nullable=True)  # 계획 제공 시간
+    planned_items = Column(String, nullable=True)  # 계획된 제공 항목 코드 (쉼표 구분)
     service_type = Column(String, default="basic_care")  # 'basic_care', 'meal_service', 'medical_care'
 
     status = Column(String, default="scheduled")  # 'scheduled', 'completed', 'cancelled'
