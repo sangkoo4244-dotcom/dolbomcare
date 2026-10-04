@@ -577,11 +577,20 @@
             const patientPayment = Math.round(baseAmount * patientRate);
             const billingAmount = baseAmount - patientPayment;
 
-            // 화면에 표시
+            // 서비스 유형명
+            const serviceTypeNames = {
+                "basic_care": "기본 돌봄",
+                "meal_service": "식사 서빙",
+                "medical_care": "의료 관리",
+                "emergency": "응급"
+            };
+            const serviceName = serviceTypeNames[serviceType] || serviceType;
+
+            // 화면에 상세 정보 표시
             document.getElementById('estimatedAmount').value =
-                `₩${billingAmount.toLocaleString()} (공단: ₩${billingAmount.toLocaleString()})`;
+                `₩${billingAmount.toLocaleString()} (기준: ₩${baseAmount.toLocaleString()}, ${resident.name} ${careGrade}등급)`;
             document.getElementById('patientPayment').value =
-                `₩${patientPayment.toLocaleString()} (${clientType}, ${Math.round(patientRate * 100)}%)`;
+                `₩${patientPayment.toLocaleString()} / 공단: ₩${billingAmount.toLocaleString()} (소득: ${clientType}, 부담율: ${Math.round(patientRate * 100)}%)`;
         }
 
         async function loadResidents() {
