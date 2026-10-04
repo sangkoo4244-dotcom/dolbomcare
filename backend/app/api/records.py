@@ -122,6 +122,8 @@ class CreateRecordRequest(BaseModel):
     resident_id: int
     service_type: str
     notes: str = ""
+    care_items: str = ""
+    condition: Optional[str] = None
 
 class UpdateRecordRequest(BaseModel):
     service_type: Optional[str] = None
@@ -187,6 +189,8 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
             meal_intake="full" if request.service_type == "meal_service" else "partial",
             medicine_given=request.service_type == "medical_care",
             notes=request.notes,
+            care_items=request.care_items or None,
+            condition=request.condition,
             service_type=request.service_type,
             audio_file_url=None
         )
@@ -420,6 +424,8 @@ async def get_recent_records(
                 "meal_intake": r.meal_intake,
                 "medicine_given": r.medicine_given,
                 "notes": r.notes,
+                "care_items": r.care_items,
+                "condition": r.condition,
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
                 "billing_amount": billing_amount
             })
@@ -489,6 +495,8 @@ async def get_all_records(
                 "meal_intake": r.meal_intake,
                 "medicine_given": r.medicine_given,
                 "notes": r.notes,
+                "care_items": r.care_items,
+                "condition": r.condition,
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
                 "billing_amount": billing_amount
             })
@@ -570,6 +578,8 @@ async def get_today_records(
                 "meal_intake": r.meal_intake,
                 "medicine_given": r.medicine_given,
                 "notes": r.notes,
+                "care_items": r.care_items,
+                "condition": r.condition,
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
                 "billing_amount": billing_amount
             })

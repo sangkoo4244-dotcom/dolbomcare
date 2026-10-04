@@ -31,6 +31,8 @@ ADDITIVE_COLUMNS = [
     ("residents", "recognition_end", "DATE"),
     ("residents", "guardian_name", "VARCHAR"),
     ("residents", "guardian_phone", "VARCHAR"),
+    ("daily_records", "care_items", "VARCHAR"),
+    ("daily_records", "condition", "VARCHAR"),
 ]
 
 def run_migrations():
