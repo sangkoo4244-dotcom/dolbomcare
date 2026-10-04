@@ -413,7 +413,7 @@
         function updateDashboard() {
             const thisMonth = new Date().getMonth();
             const thisMonthRecords = records.filter(r => new Date(r.recorded_date).getMonth() === thisMonth);
-            const pending = thisMonthRecords.filter(r => r.approval_status !== 'approved');
+            const pending = thisMonthRecords.filter(r => r.approval_status === 'pending');
             const approved = thisMonthRecords.filter(r => r.approval_status === 'approved');
             const monthTotal = approved.reduce((sum, r) => sum + (r.amount || 0), 0);
 
@@ -455,7 +455,7 @@
                     <div class="flex justify-between items-start mb-3">
                         <div class="font-bold text-gray-900 text-base">${r.resident_name}</div>
                         <span class="text-xs px-2 py-1 rounded font-semibold ${r.approval_status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                            ${r.approval_status === 'approved' ? '✅ 승인' : '⏳ 검토'}
+                            ${({ draft: '✏️ 작성중', pending: '⏳ 검토중', approved: '✅ 승인', rejected: '❗ 보완 요청' })[r.approval_status] || r.approval_status}
                         </span>
                     </div>
                     <div class="text-xs text-gray-500 mb-2">${new Date(r.recorded_date).toLocaleDateString('ko-KR')}</div>

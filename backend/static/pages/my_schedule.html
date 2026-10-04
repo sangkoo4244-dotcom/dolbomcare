@@ -115,7 +115,10 @@
             if (it.state === '예정') return `<button onclick="markArrived(${it.schedule_id})" class="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700">도착</button>`;
             if (it.state === '방문중') return `<button onclick="markLeft(${it.schedule_id})" class="px-4 py-2 bg-amber-500 text-white text-sm font-bold rounded-lg hover:bg-amber-600">퇴실</button>
                 <a href="${recordUrl(it)}" class="ml-2 px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">기록 작성</a>`;
-            if (it.state === '미기록') return `<a href="${recordUrl(it)}" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">기록 작성</a>`;
+            if (it.state === '미기록') {
+                const arrive = !it.arrived_at ? `<button onclick="markArrived(${it.schedule_id})" class="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 mr-2">도착</button>` : '';
+                return arrive + `<a href="${recordUrl(it)}" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">기록 작성</a>`;
+            }
             return '';
         }
 
