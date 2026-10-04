@@ -222,7 +222,7 @@ async def upload_audio(
             amount=amount,
             total_cost=total_cost,
             recorded_date=datetime.now(),  # 로컬 시간 사용
-            approval_status="pending",  # 센터장 승인 대기
+            approval_status="draft",  # 요양사 제출 전 작성중
             status="draft"  # 아직 미제출 상태
         )
         db.add(billing_record)
@@ -944,7 +944,7 @@ async def create_voice_record(
             amount=billing_amount,
             total_cost=total_cost,
             status="draft",
-            approval_status="pending",
+            approval_status="draft",
             recorded_date=now,
             year_month=get_year_month(now),
             created_at=now

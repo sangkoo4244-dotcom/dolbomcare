@@ -29,8 +29,9 @@
                     <h2 class="text-2xl font-bold text-gray-900 mb-6">📊 이번 달 요약</h2>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
-                            <div class="text-sm text-blue-600 font-bold mb-2">전체 청부</div>
-                            <div class="text-3xl font-bold text-blue-900" id="totalBilling">₩0</div>
+                            <div class="text-sm text-blue-600 font-bold mb-2">작성중</div>
+                            <div class="text-3xl font-bold text-blue-900" id="draftCount">0</div>
+                            <div class="text-xs text-blue-500 mt-2">₩<span id="draftAmount">0</span></div>
                         </div>
                         <div class="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-lg border border-amber-200">
                             <div class="text-sm text-amber-600 font-bold mb-2">검토중</div>
@@ -43,7 +44,7 @@
                             <div class="text-xs text-emerald-500 mt-2">₩<span id="approvedAmount">0</span></div>
                         </div>
                         <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg border border-red-200">
-                            <div class="text-sm text-red-600 font-bold mb-2">거절됨</div>
+                            <div class="text-sm text-red-600 font-bold mb-2">보완 요청</div>
                             <div class="text-3xl font-bold text-red-900" id="rejectedCount">0</div>
                             <div class="text-xs text-red-500 mt-2">₩<span id="rejectedAmount">0</span></div>
                         </div>
@@ -51,9 +52,13 @@
                 </div>
                 <div class="flex gap-3 mb-8 bg-white p-3 rounded-lg border border-gray-200">
                     <button class="filter-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm bg-emerald-500 text-white" data-filter="all" onclick="filterBilling(event)">📋 전체</button>
+                    <button class="filter-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm hover:bg-gray-100" data-filter="draft" onclick="filterBilling(event)">✏️ 작성중</button>
                     <button class="filter-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm hover:bg-gray-100" data-filter="pending" onclick="filterBilling(event)">⏳ 검토중</button>
                     <button class="filter-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm hover:bg-gray-100" data-filter="approved" onclick="filterBilling(event)">✅ 승인</button>
-                    <button class="filter-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm hover:bg-gray-100" data-filter="rejected" onclick="filterBilling(event)">❌ 거절</button>
+                    <button class="filter-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm hover:bg-gray-100" data-filter="rejected" onclick="filterBilling(event)">❗ 보완 요청</button>
+                </div>
+                <div class="flex justify-end mb-4">
+                    <button onclick="submitAllDrafts()" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition">📤 작성중 전체 제출</button>
                 </div>
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
                     <h2 class="text-2xl font-bold text-gray-900 mb-6">📝 청부 목록</h2>
@@ -67,10 +72,11 @@
                                     <th class="text-left py-3 px-4 font-bold text-gray-700">청부액</th>
                                     <th class="text-left py-3 px-4 font-bold text-gray-700">날짜</th>
                                     <th class="text-left py-3 px-4 font-bold text-gray-700">상태</th>
+                                    <th class="text-left py-3 px-4 font-bold text-gray-700">작업</th>
                                 </tr>
                             </thead>
                             <tbody id="billingTableBody">
-                                <tr><td colspan="6" class="py-8 text-center text-gray-400">📝 청부가 없습니다</td></tr>
+                                <tr><td colspan="7" class="py-8 text-center text-gray-400">📝 청부가 없습니다</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -101,7 +107,7 @@
             try {
                 const r = await fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}`);
                 const d = await r.json();
-                billings = d.billing_records || [];
+                billings = d.records || [];
                 updateSummary();
                 renderBillings();
             } catch (e) {
@@ -112,32 +118,61 @@
         function updateSummary() {
             const thisMonth = new Date().getMonth();
             const thisMonthBillings = billings.filter(b => new Date(b.recorded_date).getMonth() === thisMonth);
-            const pending = thisMonthBillings.filter(b => b.approval_status === 'pending');
-            const approved = thisMonthBillings.filter(b => b.approval_status === 'approved');
-            const rejected = thisMonthBillings.filter(b => b.approval_status === 'rejected');
-            const pendingAmount = pending.reduce((sum, b) => sum + (b.amount || 0), 0);
-            const approvedAmount = approved.reduce((sum, b) => sum + (b.amount || 0), 0);
-            const rejectedAmount = rejected.reduce((sum, b) => sum + (b.amount || 0), 0);
-            const totalAmount = pendingAmount + approvedAmount + rejectedAmount;
-            document.getElementById('totalBilling').textContent = `₩${totalAmount.toLocaleString()}`;
-            document.getElementById('pendingCount').textContent = pending.length;
-            document.getElementById('pendingAmount').textContent = pendingAmount.toLocaleString();
-            document.getElementById('approvedCount').textContent = approved.length;
-            document.getElementById('approvedAmount').textContent = approvedAmount.toLocaleString();
-            document.getElementById('rejectedCount').textContent = rejected.length;
-            document.getElementById('rejectedAmount').textContent = rejectedAmount.toLocaleString();
+            const sumOf = list => list.reduce((sum, b) => sum + (b.amount || 0), 0);
+            ['draft', 'pending', 'approved', 'rejected'].forEach(key => {
+                const list = thisMonthBillings.filter(b => b.approval_status === key);
+                document.getElementById(`${key}Count`).textContent = list.length;
+                document.getElementById(`${key}Amount`).textContent = sumOf(list).toLocaleString();
+            });
         }
+
+        const STATUS_BADGE = {
+            draft: ['bg-blue-100 text-blue-800', '✏️ 작성중'],
+            pending: ['bg-amber-100 text-amber-800', '⏳ 검토중'],
+            approved: ['bg-emerald-100 text-emerald-800', '✅ 승인'],
+            rejected: ['bg-red-100 text-red-800', '❗ 보완 요청']
+        };
 
         function renderBillings() {
-            let filtered = billings;
             const thisMonth = new Date().getMonth();
-            filtered = filtered.filter(b => new Date(b.recorded_date).getMonth() === thisMonth);
+            let filtered = billings.filter(b => new Date(b.recorded_date).getMonth() === thisMonth);
             if (currentFilter !== 'all') filtered = filtered.filter(b => b.approval_status === currentFilter);
             const tbody = document.getElementById('billingTableBody');
-            if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400">📝 청부가 없습니다</td></tr>'; return; }
-            tbody.innerHTML = filtered.map(b => `<tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-4 px-4 font-semibold">${b.resident_name || '-'}</td><td class="py-4 px-4">${b.care_grade || '-'}등급</td><td class="py-4 px-4">${getServiceName(b.service_type)}</td><td class="py-4 px-4 font-bold text-emerald-600">₩${(b.amount || 0).toLocaleString()}</td><td class="py-4 px-4 text-gray-500">${new Date(b.recorded_date).toLocaleDateString('ko-KR')}</td><td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${b.approval_status === 'approved' ? 'bg-emerald-100 text-emerald-800' : b.approval_status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}">${b.approval_status === 'approved' ? '✅ 승인' : b.approval_status === 'pending' ? '⏳ 검토' : '❌ 거절'}</span></td></tr>`).join('');
+            if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-400">📝 청부가 없습니다</td></tr>'; return; }
+            tbody.innerHTML = filtered.map(b => {
+                const [cls, label] = STATUS_BADGE[b.approval_status] || ['bg-gray-100 text-gray-700', b.approval_status];
+                const canSubmit = b.approval_status === 'draft' || b.approval_status === 'rejected';
+                const reason = b.approval_status === 'rejected' && b.rejection_reason ? `<div class="text-xs text-red-600 mt-1">사유: ${b.rejection_reason}</div>` : '';
+                const action = canSubmit ? `<button onclick="submitBilling(${b.id})" class="px-3 py-1 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">제출</button>` : '-';
+                return `<tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-4 px-4 font-semibold">${b.resident_name || '-'}</td><td class="py-4 px-4">${b.care_grade || '-'}등급</td><td class="py-4 px-4">${getServiceName(b.service_type)}</td><td class="py-4 px-4 font-bold text-emerald-600">₩${(b.amount || 0).toLocaleString()}</td><td class="py-4 px-4 text-gray-500">${new Date(b.recorded_date).toLocaleDateString('ko-KR')}</td><td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${cls}">${label}</span>${reason}</td><td class="py-4 px-4">${action}</td></tr>`;
+            }).join('');
         }
 
+        async function postSubmit(id) {
+            const r = await fetch(`${API_URL}/billing/${id}/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: currentUser.id, user_role: 'caregiver' })
+            });
+            return r.ok;
+        }
+
+        async function submitBilling(id) {
+            const ok = await postSubmit(id);
+            showMessage(ok ? '청부를 제출했습니다. 센터장 검토를 기다려 주세요.' : '제출에 실패했습니다', ok ? 'success' : 'error');
+            await loadBillings();
+        }
+
+        async function submitAllDrafts() {
+            const thisMonth = new Date().getMonth();
+            const drafts = billings.filter(b => b.approval_status === 'draft' && new Date(b.recorded_date).getMonth() === thisMonth);
+            if (drafts.length === 0) { showMessage('제출할 작성중 청부가 없습니다', 'error'); return; }
+            if (!confirm(`작성중 청부 ${drafts.length}건을 센터장에게 제출할까요?`)) return;
+            let ok = 0;
+            for (const b of drafts) { if (await postSubmit(b.id)) ok++; }
+            showMessage(`${ok}건을 제출했습니다`, 'success');
+            await loadBillings();
+        }
         function filterBilling(e) {
             document.querySelectorAll('.filter-btn').forEach(btn => { btn.classList.remove('bg-emerald-500', 'text-white'); btn.classList.add('hover:bg-gray-100'); });
             e.currentTarget.classList.add('bg-emerald-500', 'text-white');
