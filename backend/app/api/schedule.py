@@ -130,6 +130,10 @@ async def create_schedule(
 def _codes(value):
     return [c for c in (value or "").split(",") if c]
 
+def _assert_owner(schedule, user_id, user_role):
+    if user_role == "caregiver" and schedule.caregiver_id != user_id:
+        raise HTTPException(status_code=403, detail="본인의 일정만 기록할 수 있습니다")
+
 def _visit_state(schedule, matched, now):
     if matched:
         return "완료"
@@ -141,9 +145,13 @@ def _visit_state(schedule, matched, now):
 def caregiver_schedule_view(
     caregiver_id: int,
     year_month: str,
+    user_id: int = None,
+    user_role: str = None,
     db: Session = Depends(get_db)
 ):
     """요양사 방문 계획: 계획된 방문과 실제 기록·도착/퇴실 시각을 날짜·이용자 기준으로 맞춘 결과"""
+    if user_role == "caregiver" and user_id != caregiver_id:
+        raise HTTPException(status_code=403, detail="본인의 일정만 조회할 수 있습니다")
     start = datetime.strptime(f"{year_month}-01", "%Y-%m-%d")
     end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
     now = datetime.now()
@@ -222,22 +230,24 @@ def caregiver_schedule_view(
     return {"year_month": year_month, "items": items, "summary": summary}
 
 @router.post("/{schedule_id}/arrive")
-def mark_arrived(schedule_id: int, db: Session = Depends(get_db)):
+def mark_arrived(schedule_id: int, user_id: int = None, user_role: str = None, db: Session = Depends(get_db)):
     """도착 시각 기록 (이미 도착한 경우 처음 시각 유지)"""
     schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
+    _assert_owner(schedule, user_id, user_role)
     if schedule.arrived_at is None:
         schedule.arrived_at = datetime.now()
         db.commit()
     return {"status": "success", "arrived_at": schedule.arrived_at.isoformat()}
 
 @router.post("/{schedule_id}/depart")
-def mark_left(schedule_id: int, db: Session = Depends(get_db)):
+def mark_left(schedule_id: int, user_id: int = None, user_role: str = None, db: Session = Depends(get_db)):
     """퇴실 시각 기록 (도착 기록 이후에만 가능)"""
     schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
+    _assert_owner(schedule, user_id, user_role)
     if schedule.arrived_at is None:
         raise HTTPException(status_code=400, detail="도착 기록 후 퇴실을 기록할 수 있습니다")
     if schedule.left_at is None:

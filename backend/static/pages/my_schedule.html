@@ -133,7 +133,7 @@
 
         async function loadSchedules() {
             try {
-                const r = await fetch(`${API_URL}/schedule/caregiver-view?caregiver_id=${currentUser.id}&year_month=${ymKey(currentMonth)}`);
+                const r = await fetch(`${API_URL}/schedule/caregiver-view?caregiver_id=${currentUser.id}&year_month=${ymKey(currentMonth)}&user_id=${currentUser.id}&user_role=${currentUser.role}`);
                 const d = await r.json();
                 items = d.items || [];
                 renderSummary(d);
@@ -148,12 +148,12 @@
         }
 
         async function markArrived(id) {
-            await fetch(`${API_URL}/schedule/${id}/arrive`, { method: 'POST' });
+            await fetch(`${API_URL}/schedule/${id}/arrive?user_id=${currentUser.id}&user_role=${currentUser.role}`, { method: 'POST' });
             loadSchedules();
         }
 
         async function markLeft(id) {
-            const r = await fetch(`${API_URL}/schedule/${id}/depart`, { method: 'POST' });
+            const r = await fetch(`${API_URL}/schedule/${id}/depart?user_id=${currentUser.id}&user_role=${currentUser.role}`, { method: 'POST' });
             if (!r.ok) { const e = await r.json().catch(() => ({})); alert(e.detail || '퇴실 기록에 실패했습니다'); return; }
             loadSchedules();
         }
