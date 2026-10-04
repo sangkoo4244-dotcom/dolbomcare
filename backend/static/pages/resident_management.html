@@ -230,6 +230,16 @@
         .table td {
             padding: 16px;
             border-bottom: 1px solid #f3f4f6;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .table th {
+            white-space: nowrap;
+        }
+
+        .table td:first-child {
+            white-space: normal;
         }
 
         .table tbody tr:hover {
@@ -527,10 +537,15 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th style="width: 60%;">이름 (등급/소득분류)</th>
-                            <th style="width: 10%;">연령</th>
-                            <th style="width: 15%;">건강 상태</th>
-                            <th style="width: 15%; text-align: center;">작업</th>
+                            <th>이름</th>
+                            <th>성별 / 연령</th>
+                            <th>요양등급</th>
+                            <th>소득분류</th>
+                            <th>인정번호</th>
+                            <th>인정 기간</th>
+                            <th>보호자</th>
+                            <th>건강 상태</th>
+                            <th style="text-align: center;">작업</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -538,14 +553,22 @@
 
             residents.forEach(r => {
                 const age = calculateAge(new Date(r.birth_date));
+                const period = r.recognition_start || r.recognition_end
+                    ? `${r.recognition_start || '-'} ~ ${r.recognition_end || '-'}`
+                    : '-';
+                const guardian = r.guardian_name ? `${r.guardian_name}${r.guardian_phone ? '<br>' + r.guardian_phone : ''}` : '-';
                 html += `
                     <tr>
-                        <td style="text-align: left;">
+                        <td>
                             <div class="resident-name">${r.name}</div>
-                            <div class="resident-info">등급: ${r.care_grade}등급 | ${r.client_type}</div>
-                            <div class="resident-info">인정번호: ${r.recognition_number || '-'} | 보호자: ${r.guardian_name || '-'}${r.guardian_phone ? ' ' + r.guardian_phone : ''}</div>
+                            <div class="resident-info">${r.address || '주소 미등록'}</div>
                         </td>
-                        <td>${age}세</td>
+                        <td>${r.gender || '-'} / ${age}세</td>
+                        <td>${r.care_grade}등급</td>
+                        <td>${r.client_type}</td>
+                        <td>${r.recognition_number || '-'}</td>
+                        <td>${period}</td>
+                        <td>${guardian}</td>
                         <td><span class="status-badge">${healthLabels[r.health_status] || '-'}</span></td>
                         <td style="text-align: center;">
                             <div class="action-buttons">
