@@ -401,10 +401,67 @@
         </div>
     </div>
 
+    <!-- Add/Edit Modal -->
+    <div id="residentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 32px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
+            <h2 id="modalTitle" style="margin-top: 0; margin-bottom: 24px;">이용자 추가</h2>
+            <form id="residentForm" onsubmit="saveResident(event)">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">이름</label>
+                    <input type="text" id="residentName" required style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">생년월일 (YYYY-MM-DD)</label>
+                    <input type="date" id="residentBirthDate" required style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">요양등급</label>
+                    <select id="careGrade" required style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                        <option value="">선택하세요</option>
+                        <option value="1">1등급 (최중증) - ₩1,577,500</option>
+                        <option value="2">2등급 (중증) - ₩1,399,500</option>
+                        <option value="3">3등급 (중증~중등증) - ₩1,193,000</option>
+                        <option value="4">4등급 (중등증) - ₩1,082,500</option>
+                        <option value="5">5등급 (경증) - ₩235,000</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">소득분류</label>
+                    <select id="clientType" required style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                        <option value="">선택하세요</option>
+                        <option value="일반">일반 (본인부담 15-20%)</option>
+                        <option value="차상위계층">차상위계층 (본인부담 10-15%)</option>
+                        <option value="기초생활보장">기초생활보장 (본인부담 0%)</option>
+                        <option value="의료급여">의료급여 (본인부담 0%)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">건강 상태</label>
+                    <select id="healthStatus" required style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                        <option value="stable">안정</option>
+                        <option value="warning">주의</option>
+                        <option value="critical">위험</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    <button type="submit" style="flex: 1; padding: 10px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">저장</button>
+                    <button type="button" onclick="closeResidentModal()" style="flex: 1; padding: 10px; background: #f3f4f6; color: #6b7280; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">취소</button>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = '/api/v1';
         let currentUser = null;
-        let allResidents = [];
+        let residents = [];
+        let currentResidentId = null;
 
         function navigateTo(url) { window.location.href = url; }
 
@@ -525,16 +582,92 @@
         }
 
         function showAddModal() {
-            alert('이용자 추가 기능은 준비 중입니다');
+            currentResidentId = null;
+            document.getElementById('modalTitle').textContent = '이용자 추가';
+            document.getElementById('residentForm').reset();
+            document.getElementById('residentModal').style.display = 'flex';
         }
 
         function editResident(id) {
-            alert('편집 기능은 준비 중입니다');
+            const resident = residents.find(r => r.id === id);
+            if (!resident) return;
+
+            currentResidentId = id;
+            document.getElementById('modalTitle').textContent = '이용자 편집';
+            document.getElementById('residentName').value = resident.name;
+            document.getElementById('residentBirthDate').value = resident.birth_date;
+            document.getElementById('careGrade').value = resident.care_grade || '';
+            document.getElementById('clientType').value = resident.client_type || '';
+            document.getElementById('healthStatus').value = resident.health_status;
+            document.getElementById('residentModal').style.display = 'flex';
+        }
+
+        function closeResidentModal() {
+            document.getElementById('residentModal').style.display = 'none';
+            document.getElementById('residentForm').reset();
+            currentResidentId = null;
+        }
+
+        async function saveResident(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('residentName').value;
+            const birthDate = document.getElementById('residentBirthDate').value;
+            const careGrade = parseInt(document.getElementById('careGrade').value);
+            const clientType = document.getElementById('clientType').value;
+            const healthStatus = document.getElementById('healthStatus').value;
+
+            try {
+                const method = currentResidentId ? 'PUT' : 'POST';
+                const url = currentResidentId
+                    ? `${API_URL}/residents/${currentResidentId}`
+                    : `${API_URL}/residents`;
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name,
+                        birth_date: birthDate,
+                        age: Math.floor((new Date() - new Date(birthDate)) / (365.25 * 24 * 60 * 60 * 1000)),
+                        care_grade: careGrade,
+                        client_type: clientType,
+                        health_status: healthStatus,
+                        admission_date: new Date().toISOString()
+                    })
+                });
+
+                if (response.ok) {
+                    alert(currentResidentId ? '이용자가 수정되었습니다' : '이용자가 추가되었습니다');
+                    closeResidentModal();
+                    loadResidents();
+                } else {
+                    const error = await response.json();
+                    alert(`오류: ${error.detail || '요청에 실패했습니다'}`);
+                }
+            } catch (error) {
+                console.error('저장 오류:', error);
+                alert('저장 중 오류가 발생했습니다');
+            }
         }
 
         function deleteResident(id) {
             if (confirm('이용자를 삭제하시겠습니까?')) {
-                alert('삭제 기능은 준비 중입니다');
+                fetch(`${API_URL}/residents/${id}`, {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (response.ok) {
+                        alert('이용자가 삭제되었습니다');
+                        loadResidents();
+                    } else {
+                        alert('삭제에 실패했습니다');
+                    }
+                }).catch(error => {
+                    console.error('삭제 오류:', error);
+                    alert('삭제 중 오류가 발생했습니다');
+                });
             }
         }
 
