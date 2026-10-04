@@ -452,6 +452,16 @@
                         <label for="notes">상세 내용</label>
                         <textarea id="notes" placeholder="음성 기록 내용을 입력하세요..." required></textarea>
                     </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="estimatedAmount">예상 청부액</label>
+                            <input id="estimatedAmount" type="text" readonly style="background: #f3f4f6; cursor: default;">
+                        </div>
+                        <div class="form-group">
+                            <label for="patientPayment">본인부담금</label>
+                            <input id="patientPayment" type="text" readonly style="background: #f3f4f6; cursor: default;">
+                        </div>
+                    </div>
                     <button type="submit" class="btn-record">🎤 기록 저장</button>
                 </form>
             </div>
@@ -476,6 +486,26 @@
         let allRecords = [];
         let residents = [];
         let currentTab = 'today';
+
+        // NHIS 기준 등급별 월 인정급여액
+        const CARE_GRADE_LIMITS = {
+            1: 1577500, 2: 1399500, 3: 1193000, 4: 1082500, 5: 235000
+        };
+
+        // 본인부담율 (건강보험공단 기준)
+        const PATIENT_PAY_RATE = {
+            "재가급여": {
+                "일반": 0.15, "차상위계층": 0.10, "기초생활보장": 0.00, "의료급여": 0.00
+            },
+            "시설급여": {
+                "일반": 0.20, "차상위계층": 0.10, "기초생활보장": 0.00, "의료급여": 0.00
+            }
+        };
+
+        // 기본 청부액 (등급 미지정 시)
+        const BILLING_RATES = {
+            "basic_care": 30000, "meal_service": 10000, "medical_care": 50000, "emergency": 100000
+        };
 
         function navigateTo(url) { window.location.href = url; }
 
@@ -504,6 +534,42 @@
 
             filterMenuByRole();
             return true;
+        }
+
+        function calculateBillingAmount() {
+            const residentId = document.getElementById('resident').value;
+            const serviceType = document.getElementById('serviceType').value;
+
+            if (!residentId || !serviceType) {
+                document.getElementById('estimatedAmount').value = '';
+                document.getElementById('patientPayment').value = '';
+                return;
+            }
+
+            const resident = residents.find(r => r.id === parseInt(residentId));
+            if (!resident) return;
+
+            // 이용자 등급과 소득분류 기반 청부액 계산
+            const careGrade = resident.care_grade || 1;
+            const clientType = resident.client_type || '일반';
+            const monthlyLimit = CARE_GRADE_LIMITS[careGrade] || 1577500;
+
+            // 서비스 타입별 청부액
+            const baseRate = BILLING_RATES[serviceType] || 30000;
+
+            // 월 인정급여액 기반으로 조정 (월 1회 청구)
+            let billingAmount = Math.min(baseRate, Math.floor(monthlyLimit / 20));
+
+            // 본인부담율 적용
+            const patientRate = PATIENT_PAY_RATE["재가급여"][clientType] || 0.15;
+            const patientPayment = Math.round(billingAmount * patientRate);
+            const insuredPayment = billingAmount - patientPayment;
+
+            // 화면에 표시
+            document.getElementById('estimatedAmount').value =
+                `₩${billingAmount.toLocaleString()} (공단: ₩${insuredPayment.toLocaleString()})`;
+            document.getElementById('patientPayment').value =
+                `₩${patientPayment.toLocaleString()} (${clientType}, ${Math.round(patientRate * 100)}%)`;
         }
 
         async function loadResidents() {
@@ -627,17 +693,48 @@
             const record = allData.find(r => r.id === id);
             if (!record) return;
 
-            const newNotes = prompt('내용을 수정하세요:', record.notes || '');
-            if (newNotes === null) return;
+            const resident = residents.find(r => r.id === record.resident_id);
+            const currentCareGrade = record.care_grade || (resident?.care_grade || 1);
+            const currentClientType = record.client_type || (resident?.client_type || '일반');
+
+            const editType = prompt(
+                '수정 항목을 선택하세요:\n1. 내용\n2. 요양등급\n3. 소득분류\n4. 모두',
+                '1'
+            );
+            if (editType === null) return;
+
+            const updates = {};
+
+            if (editType === '1' || editType === '4') {
+                const newNotes = prompt('내용을 수정하세요:', record.notes || '');
+                if (newNotes !== null) updates.notes = newNotes;
+            }
+
+            if (editType === '2' || editType === '4') {
+                const newGrade = prompt(`현재 등급: ${currentCareGrade}등급\n새 등급을 입력하세요 (1-5):`, String(currentCareGrade));
+                if (newGrade !== null && newGrade >= 1 && newGrade <= 5) {
+                    updates.care_grade = parseInt(newGrade);
+                }
+            }
+
+            if (editType === '3' || editType === '4') {
+                const clientOptions = '일반\n차상위계층\n기초생활보장\n의료급여';
+                const newClientType = prompt(`현재 소득분류: ${currentClientType}\n새 소득분류를 입력하세요:\n${clientOptions}`, currentClientType);
+                if (newClientType !== null && ['일반', '차상위계층', '기초생활보장', '의료급여'].includes(newClientType)) {
+                    updates.client_type = newClientType;
+                }
+            }
+
+            if (Object.keys(updates).length === 0) return;
 
             try {
-                const response = await fetch(`${API_URL}/records/${id}`, {
+                const response = await fetch(`${API_URL}/records/daily/${id}`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                     },
-                    body: JSON.stringify({ notes: newNotes })
+                    body: JSON.stringify(updates)
                 });
 
                 if (response.ok) {
@@ -656,7 +753,7 @@
             if (!confirm('기록을 삭제하시겠습니까?')) return;
 
             try {
-                const response = await fetch(`${API_URL}/records/${id}`, {
+                const response = await fetch(`${API_URL}/records/daily/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
                 });
@@ -672,6 +769,10 @@
                 alert('삭제 중 오류가 발생했습니다');
             }
         }
+
+        // 이용자 또는 서비스 유형 선택 시 청부액 자동 계산
+        document.getElementById('resident').addEventListener('change', calculateBillingAmount);
+        document.getElementById('serviceType').addEventListener('change', calculateBillingAmount);
 
         document.getElementById('recordForm').addEventListener('submit', async (e) => {
             e.preventDefault();

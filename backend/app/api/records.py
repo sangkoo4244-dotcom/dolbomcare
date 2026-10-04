@@ -126,6 +126,8 @@ class CreateRecordRequest(BaseModel):
 class UpdateRecordRequest(BaseModel):
     service_type: Optional[str] = None
     notes: Optional[str] = None
+    care_grade: Optional[int] = None  # 요양등급 (스냅샷 수정)
+    client_type: Optional[str] = None  # 소득분류 (스냅샷 수정)
 
 class BatchDeleteRequest(BaseModel):
     record_ids: list
@@ -744,14 +746,18 @@ async def update_record(
         db.refresh(record)
 
         # 연관된 청부 기록도 업데이트
-        if request.service_type:
-            billing = db.query(BillingRecord).filter(
-                BillingRecord.daily_record_id == record_id
-            ).first()
-            if billing:
+        billing = db.query(BillingRecord).filter(
+            BillingRecord.daily_record_id == record_id
+        ).first()
+        if billing:
+            if request.service_type:
                 billing.service_type = request.service_type
-                db.commit()
-                db.refresh(billing)
+            if request.care_grade is not None:
+                billing.care_grade = request.care_grade
+            if request.client_type:
+                billing.client_type = request.client_type
+            db.commit()
+            db.refresh(billing)
 
         return {
             "status": "success",
