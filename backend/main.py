@@ -17,13 +17,20 @@ from sqlalchemy import text
 # Base.metadata.create_all(bind=engine)
 
 # 데이터베이스 마이그레이션 (자동)
-SNAPSHOT_COLUMNS = [
+ADDITIVE_COLUMNS = [
     ("voice_records", "resident_name", "VARCHAR"),
     ("voice_records", "care_grade", "INTEGER"),
     ("voice_records", "client_type", "VARCHAR"),
     ("billing_records", "resident_name", "VARCHAR"),
     ("billing_records", "care_grade", "INTEGER"),
     ("billing_records", "client_type", "VARCHAR"),
+    ("residents", "gender", "VARCHAR"),
+    ("residents", "address", "VARCHAR"),
+    ("residents", "recognition_number", "VARCHAR"),
+    ("residents", "recognition_start", "DATE"),
+    ("residents", "recognition_end", "DATE"),
+    ("residents", "guardian_name", "VARCHAR"),
+    ("residents", "guardian_phone", "VARCHAR"),
 ]
 
 def run_migrations():
@@ -73,7 +80,7 @@ def run_migrations():
             except Exception as e:
                 print(f"⚠️  SQLite 마이그레이션 부분 오류: {e}")
 
-        for table, column, col_type in SNAPSHOT_COLUMNS:
+        for table, column, col_type in ADDITIVE_COLUMNS:
             if is_postgres:
                 db.execute(text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {col_type}"))
             else:

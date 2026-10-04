@@ -17,6 +17,13 @@ class ResidentUpdate(BaseModel):
     care_grade: int = None
     client_type: str = None
     health_status: str = None
+    gender: str = None
+    address: str = None
+    recognition_number: str = None
+    recognition_start: str = None
+    recognition_end: str = None
+    guardian_name: str = None
+    guardian_phone: str = None
     user_role: str = "center_manager"
 
 router = APIRouter()
@@ -81,7 +88,14 @@ async def get_residents(
                 "client_type": r.client_type,
                 "health_status": r.health_status,
                 "admission_date": r.admission_date.isoformat() if r.admission_date else None,
-                "created_at": r.created_at.isoformat() if r.created_at else None
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "gender": r.gender,
+                "address": r.address,
+                "recognition_number": r.recognition_number,
+                "recognition_start": r.recognition_start.isoformat() if r.recognition_start else None,
+                "recognition_end": r.recognition_end.isoformat() if r.recognition_end else None,
+                "guardian_name": r.guardian_name,
+                "guardian_phone": r.guardian_phone
             }
             for r in residents
         ]
@@ -132,7 +146,14 @@ async def get_resident(
         "client_type": resident.client_type,
         "health_status": resident.health_status,
         "admission_date": resident.admission_date.isoformat() if resident.admission_date else None,
-        "created_at": resident.created_at.isoformat() if resident.created_at else None
+        "created_at": resident.created_at.isoformat() if resident.created_at else None,
+        "gender": resident.gender,
+        "address": resident.address,
+        "recognition_number": resident.recognition_number,
+        "recognition_start": resident.recognition_start.isoformat() if resident.recognition_start else None,
+        "recognition_end": resident.recognition_end.isoformat() if resident.recognition_end else None,
+        "guardian_name": resident.guardian_name,
+        "guardian_phone": resident.guardian_phone
     }
 
 @router.put("/{resident_id}/update-grade")
@@ -207,7 +228,14 @@ async def create_resident(
             health_status=resident_data.health_status,
             care_grade=resident_data.care_grade,
             client_type=resident_data.client_type,
-            guardian_id=resident_data.guardian_id
+            guardian_id=resident_data.guardian_id,
+            gender=resident_data.gender,
+            address=resident_data.address,
+            recognition_number=resident_data.recognition_number,
+            recognition_start=date.fromisoformat(resident_data.recognition_start) if resident_data.recognition_start else None,
+            recognition_end=date.fromisoformat(resident_data.recognition_end) if resident_data.recognition_end else None,
+            guardian_name=resident_data.guardian_name,
+            guardian_phone=resident_data.guardian_phone
         )
         db.add(new_resident)
         db.commit()
@@ -268,6 +296,20 @@ async def update_resident(
             if update_data.health_status not in ["stable", "warning", "critical"]:
                 raise HTTPException(status_code=400, detail="Invalid health status")
             resident.health_status = update_data.health_status
+        if update_data.gender is not None:
+            resident.gender = update_data.gender
+        if update_data.address is not None:
+            resident.address = update_data.address
+        if update_data.recognition_number is not None:
+            resident.recognition_number = update_data.recognition_number
+        if update_data.recognition_start is not None:
+            resident.recognition_start = date.fromisoformat(update_data.recognition_start)
+        if update_data.recognition_end is not None:
+            resident.recognition_end = date.fromisoformat(update_data.recognition_end)
+        if update_data.guardian_name is not None:
+            resident.guardian_name = update_data.guardian_name
+        if update_data.guardian_phone is not None:
+            resident.guardian_phone = update_data.guardian_phone
 
         db.commit()
         db.refresh(resident)

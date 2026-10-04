@@ -399,6 +399,45 @@
                     </select>
                 </div>
 
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">성별</label>
+                    <select id="residentGender" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                        <option value="">선택하세요</option>
+                        <option value="남">남</option>
+                        <option value="여">여</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">주소</label>
+                    <input type="text" id="residentAddress" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">장기요양인정번호</label>
+                    <input type="text" id="recognitionNumber" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">인정 유효기간 시작일</label>
+                    <input type="date" id="recognitionStart" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">인정 유효기간 종료일</label>
+                    <input type="date" id="recognitionEnd" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">보호자 이름</label>
+                    <input type="text" id="guardianName" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">보호자 연락처</label>
+                    <input type="tel" id="guardianPhone" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                </div>
+
                 <div style="display: flex; gap: 12px; margin-top: 24px;">
                     <button type="submit" style="flex: 1; padding: 10px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">저장</button>
                     <button type="button" onclick="closeResidentModal()" style="flex: 1; padding: 10px; background: #f3f4f6; color: #6b7280; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">취소</button>
@@ -462,8 +501,7 @@
                 if (!response.ok) throw new Error('이용자 정보 조회 실패');
 
                 const data = await response.json();
-                const residents = data.residents || [];
-                allResidents = residents;
+                residents = data.residents || [];
 
                 document.getElementById('totalCount').textContent = residents.length;
                 document.getElementById('activeCount').textContent = residents.filter(r => !r.is_archived).length;
@@ -504,6 +542,7 @@
                         <td>
                             <div class="resident-name">${r.name}</div>
                             <div class="resident-info">등급: ${r.care_grade}등급 | ${r.client_type}</div>
+                            <div class="resident-info">인정번호: ${r.recognition_number || '-'} | 보호자: ${r.guardian_name || '-'}${r.guardian_phone ? ' ' + r.guardian_phone : ''}</div>
                         </td>
                         <td>${age}세</td>
                         <td>${r.health_status || '-'}</td>
@@ -550,6 +589,13 @@
             document.getElementById('careGrade').value = resident.care_grade || '';
             document.getElementById('clientType').value = resident.client_type || '';
             document.getElementById('healthStatus').value = resident.health_status;
+            document.getElementById('residentGender').value = resident.gender || '';
+            document.getElementById('residentAddress').value = resident.address || '';
+            document.getElementById('recognitionNumber').value = resident.recognition_number || '';
+            document.getElementById('recognitionStart').value = resident.recognition_start || '';
+            document.getElementById('recognitionEnd').value = resident.recognition_end || '';
+            document.getElementById('guardianName').value = resident.guardian_name || '';
+            document.getElementById('guardianPhone').value = resident.guardian_phone || '';
             document.getElementById('residentModal').style.display = 'flex';
         }
 
@@ -567,12 +613,19 @@
             const careGrade = parseInt(document.getElementById('careGrade').value);
             const clientType = document.getElementById('clientType').value;
             const healthStatus = document.getElementById('healthStatus').value;
+            const gender = document.getElementById('residentGender').value;
+            const address = document.getElementById('residentAddress').value;
+            const recognitionNumber = document.getElementById('recognitionNumber').value;
+            const recognitionStart = document.getElementById('recognitionStart').value || null;
+            const recognitionEnd = document.getElementById('recognitionEnd').value || null;
+            const guardianName = document.getElementById('guardianName').value;
+            const guardianPhone = document.getElementById('guardianPhone').value;
 
             try {
                 const method = currentResidentId ? 'PUT' : 'POST';
                 const url = currentResidentId
                     ? `${API_URL}/residents/${currentResidentId}`
-                    : `${API_URL}/residents`;
+                    : `${API_URL}/residents/?user_role=${currentUser.role}`;
 
                 const response = await fetch(url, {
                     method: method,
@@ -581,11 +634,19 @@
                     },
                     body: JSON.stringify({
                         name,
+                        center_id: currentUser.center_id,
                         birth_date: birthDate,
                         age: Math.floor((new Date() - new Date(birthDate)) / (365.25 * 24 * 60 * 60 * 1000)),
                         care_grade: careGrade,
                         client_type: clientType,
                         health_status: healthStatus,
+                        gender: gender,
+                        address: address,
+                        recognition_number: recognitionNumber,
+                        recognition_start: recognitionStart,
+                        recognition_end: recognitionEnd,
+                        guardian_name: guardianName,
+                        guardian_phone: guardianPhone,
                         admission_date: new Date().toISOString()
                     })
                 });

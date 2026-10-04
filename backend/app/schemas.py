@@ -56,6 +56,13 @@ class ResidentCreate(ResidentBase):
     guardian_id: Optional[int] = None
     care_grade: int = 1  # 1~5등급, null=인지지원등급
     client_type: str = "일반"  # '일반', '차상위계층', '기초생활보장', '의료급여'
+    gender: Optional[str] = None
+    address: Optional[str] = None
+    recognition_number: Optional[str] = None
+    recognition_start: Optional[str] = None  # YYYY-MM-DD
+    recognition_end: Optional[str] = None  # YYYY-MM-DD
+    guardian_name: Optional[str] = None
+    guardian_phone: Optional[str] = None
 
 class ResidentResponse(ResidentBase):
     id: int

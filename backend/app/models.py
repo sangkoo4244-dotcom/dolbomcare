@@ -45,6 +45,13 @@ class Resident(Base):
     guardian_id = Column(Integer, ForeignKey("users.id"))
     care_grade = Column(Integer, default=1)  # 1~5등급, null=인지지원등급
     client_type = Column(String, default="일반")  # '일반', '차상위계층', '기초생활보장', '의료급여'
+    gender = Column(String, nullable=True)  # '남', '여'
+    address = Column(String, nullable=True)
+    recognition_number = Column(String, nullable=True)  # 장기요양인정번호
+    recognition_start = Column(Date, nullable=True)  # 인정 유효기간 시작
+    recognition_end = Column(Date, nullable=True)  # 인정 유효기간 종료
+    guardian_name = Column(String, nullable=True)
+    guardian_phone = Column(String, nullable=True)
     care_notes = Column(Text, nullable=True)  # 요양사가 편집 가능한 요양 기록
     created_at = Column(DateTime, default=datetime.utcnow)
 
