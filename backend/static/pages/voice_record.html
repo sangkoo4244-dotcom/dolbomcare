@@ -546,8 +546,11 @@
                 return;
             }
 
-            const resident = residents.find(r => r.id === parseInt(residentId));
-            if (!resident) return;
+            const resident = residents.find(r => r.id == residentId);  // 타입 강제 변환으로 비교
+            if (!resident) {
+                console.warn('Resident not found:', residentId, 'Available:', residents.map(r => r.id));
+                return;
+            }
 
             // 이용자 등급과 소득분류 기반 청부액 계산
             const careGrade = resident.care_grade || 1;
