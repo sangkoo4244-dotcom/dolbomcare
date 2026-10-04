@@ -517,7 +517,8 @@
                 residents.forEach(r => {
                     const option = document.createElement('option');
                     option.value = r.id;
-                    option.textContent = r.name;
+                    // 이용자 이름 + 등급 + 소득분류 표시
+                    option.textContent = `${r.name} (${r.care_grade}등급 · ${r.client_type})`;
                     select.appendChild(option);
                 });
             } catch (error) {
@@ -590,11 +591,13 @@
             let html = '';
             records.forEach(r => {
                 const date = new Date(r.recorded_at).toLocaleDateString('ko-KR');
-                const residentName = residents.find(res => res.id === r.resident_id)?.name || '알 수 없음';
+                const resident = residents.find(res => res.id === r.resident_id);
+                const residentName = resident?.name || '알 수 없음';
+                const careInfo = resident ? `${resident.care_grade}등급 · ${resident.client_type}` : '';
                 html += `
                     <div class="record-item">
                         <div class="record-info">
-                            <div class="record-title">${residentName}</div>
+                            <div class="record-title">${residentName} (${careInfo})</div>
                             <div class="record-meta">${r.service_type} • ₩${(r.billing_amount || 0).toLocaleString()}</div>
                             <div class="record-date">${date}</div>
                         </div>
