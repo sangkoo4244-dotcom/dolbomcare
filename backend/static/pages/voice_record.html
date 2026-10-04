@@ -5,64 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>돌봄케어 - 음성 기록</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="design-system.css">
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
     <div class="flex min-h-screen">
         <!-- 사이드바 -->
-        <aside class="sidebar w-72 fixed h-screen left-0 top-0 z-50">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">❤️</div>
-                <div class="sidebar-brand">
-                    <div class="sidebar-title">돌봄케어</div>
-                    <div class="sidebar-subtitle">Care Management</div>
+        <aside class="w-72 bg-gradient-to-b from-gray-800 to-gray-900 text-white fixed h-screen overflow-y-auto">
+            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
+                <div class="text-3xl">❤️</div>
+                <div>
+                    <div class="text-lg font-bold">돌봄케어</div>
+                    <div class="text-xs text-gray-400">Care Management</div>
                 </div>
             </div>
-            <nav class="sidebar-nav" id="navContent"></nav>
+            <nav id="navContent" class="p-4"></nav>
         </aside>
 
         <!-- 메인 컨텐츠 -->
-        <main class="main-layout ml-72 w-full">
+        <main class="ml-72 w-full flex flex-col">
             <!-- 탑바 -->
-            <div class="topbar bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm">
-                <div class="topbar-title">
-                    <h1 class="text-3xl font-bold text-gray-900">🎤 음성 기록</h1>
-                </div>
-                <div class="topbar-right flex items-center gap-6">
-                    <div class="user-info text-right">
-                        <div class="user-name text-sm font-semibold text-gray-900" id="userName">사용자</div>
-                        <div class="user-role text-xs text-gray-500" id="userRole">역할</div>
+            <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
+                <h1 class="text-3xl font-bold text-gray-900">🎤 음성 기록</h1>
+                <div class="flex items-center gap-6">
+                    <div class="text-right">
+                        <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
+                        <div class="text-xs text-gray-500" id="userRole">역할</div>
                     </div>
-                    <button class="logout-btn" onclick="logout()">로그아웃</button>
+                    <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">
+                        로그아웃
+                    </button>
                 </div>
             </div>
 
-            <!-- 컨텐츠 -->
-            <div class="content p-8 bg-gray-100 overflow-y-auto">
+            <!-- 스크롤 컨텐츠 -->
+            <div class="flex-1 overflow-y-auto p-8">
                 <!-- 메시지 -->
-                <div class="message" id="message"></div>
+                <div id="message" class="hidden mb-6 p-4 rounded-lg animate-in fade-in slide-in-from-top-2"></div>
 
                 <!-- 탭 -->
-                <div class="tabs mb-8">
-                    <button class="tab-btn active" onclick="switchTab(event)">📅 오늘 기록 (<span id="todayCount">0</span>)</button>
-                    <button class="tab-btn" onclick="switchTab(event)">📊 전체 기록 (<span id="allCount">0</span>)</button>
+                <div class="flex gap-3 mb-8 bg-white p-3 rounded-lg border border-gray-200">
+                    <button class="tab-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm active:bg-emerald-500 active:text-white" data-tab="today" onclick="switchTab(event)">
+                        📅 오늘 기록 (<span id="todayCount">0</span>)
+                    </button>
+                    <button class="tab-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm hover:bg-gray-100" data-tab="all" onclick="switchTab(event)">
+                        📊 전체 기록 (<span id="allCount">0</span>)
+                    </button>
                 </div>
 
-                <!-- 음성 기록 입력 섹션 -->
-                <div class="card mb-8">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">➕ 새 음성 기록 추가</h2>
+                <!-- 음성 기록 입력 -->
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-8">➕ 새 음성 기록 추가</h2>
                     <form id="recordForm" class="space-y-6">
                         <!-- 기본 정보 -->
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">이용자 선택 *</label>
-                                <select id="resident" class="form-select" required onchange="calculateBillingDetails()">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">이용자 선택 *</label>
+                                <select id="resident" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition" required onchange="calculateBillingDetails()">
                                     <option value="">이용자를 선택하세요</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">서비스 유형 *</label>
-                                <select id="serviceType" class="form-select" required onchange="calculateBillingDetails()">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">서비스 유형 *</label>
+                                <select id="serviceType" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition" required onchange="calculateBillingDetails()">
                                     <option value="">서비스를 선택하세요</option>
                                     <option value="basic_care">기본 돌봄</option>
                                     <option value="meal_service">식사 서빙</option>
@@ -73,123 +76,125 @@
                         </div>
 
                         <!-- 기록 내용 -->
-                        <div class="form-group" style="grid-column: 1/-1;">
-                            <label class="form-label">기록 내용 *</label>
-                            <textarea id="notes" class="form-textarea" placeholder="음성 기록 내용을 입력하세요..." required></textarea>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">기록 내용 *</label>
+                            <textarea id="notes" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition" rows="4" placeholder="음성 기록 내용을 입력하세요..." required></textarea>
                         </div>
 
-                        <!-- 청부액 상세 계산 섹션 -->
-                        <div id="billingDetailsSection" class="hidden">
+                        <!-- 청부액 상세 계산 -->
+                        <div id="billingDetailsSection" class="hidden space-y-6">
                             <!-- 기준액 정보 -->
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+                            <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-6">
                                 <h3 class="text-lg font-bold text-blue-900 mb-4">📊 기준액 정보</h3>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <div class="text-sm text-blue-600 font-semibold">기준액</div>
-                                        <div class="text-2xl font-bold text-blue-900" id="baseAmount">-</div>
+                                        <div class="text-xs text-blue-600 font-semibold uppercase tracking-wide">기준액</div>
+                                        <div class="text-3xl font-bold text-blue-900 mt-1" id="baseAmount">-</div>
                                     </div>
                                     <div>
-                                        <div class="text-sm text-blue-600 font-semibold">등급</div>
-                                        <div class="text-2xl font-bold text-blue-900" id="careGradeDisplay">-</div>
+                                        <div class="text-xs text-blue-600 font-semibold uppercase tracking-wide">등급</div>
+                                        <div class="text-3xl font-bold text-blue-900 mt-1" id="careGradeDisplay">-</div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- 본인부담금 정보 -->
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
-                                <h3 class="text-lg font-bold text-yellow-900 mb-4">💳 본인부담금 정보</h3>
+                            <div class="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-lg p-6">
+                                <h3 class="text-lg font-bold text-amber-900 mb-4">💳 본인부담금 정보</h3>
                                 <div class="grid grid-cols-3 gap-4">
                                     <div>
-                                        <div class="text-sm text-yellow-600 font-semibold">소득분류</div>
-                                        <div class="text-lg font-bold text-yellow-900" id="clientTypeDisplay">-</div>
+                                        <div class="text-xs text-amber-600 font-semibold uppercase tracking-wide">소득분류</div>
+                                        <div class="text-xl font-bold text-amber-900 mt-1" id="clientTypeDisplay">-</div>
                                     </div>
                                     <div>
-                                        <div class="text-sm text-yellow-600 font-semibold">본인부담율</div>
-                                        <div class="text-lg font-bold text-yellow-900" id="patientRateDisplay">-</div>
+                                        <div class="text-xs text-amber-600 font-semibold uppercase tracking-wide">부담율</div>
+                                        <div class="text-xl font-bold text-amber-900 mt-1" id="patientRateDisplay">-</div>
                                     </div>
                                     <div>
-                                        <div class="text-sm text-yellow-600 font-semibold">본인부담금</div>
-                                        <div class="text-2xl font-bold text-yellow-900" id="patientPaymentDisplay">-</div>
+                                        <div class="text-xs text-amber-600 font-semibold uppercase tracking-wide">본인부담금</div>
+                                        <div class="text-2xl font-bold text-amber-900 mt-1" id="patientPaymentDisplay">-</div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- 공단부담 정보 -->
-                            <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
-                                <h3 class="text-lg font-bold text-green-900 mb-4">🏥 공단부담액</h3>
-                                <div class="grid grid-cols-2 gap-4">
+                            <!-- 공단부담액 -->
+                            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-300 rounded-lg p-6 ring-2 ring-emerald-200">
+                                <h3 class="text-lg font-bold text-emerald-900 mb-4">🏥 공단부담액</h3>
+                                <div class="grid grid-cols-2 gap-6">
                                     <div>
-                                        <div class="text-sm text-green-600 font-semibold">공단부담율</div>
-                                        <div class="text-lg font-bold text-green-900" id="insuranceRateDisplay">-</div>
+                                        <div class="text-xs text-emerald-600 font-semibold uppercase tracking-wide">공단부담율</div>
+                                        <div class="text-2xl font-bold text-emerald-900 mt-1" id="insuranceRateDisplay">-</div>
                                     </div>
-                                    <div>
-                                        <div class="text-sm text-green-600 font-semibold">청부액</div>
-                                        <div class="text-3xl font-bold text-green-700" id="billingAmount">-</div>
+                                    <div class="text-right">
+                                        <div class="text-xs text-emerald-600 font-semibold uppercase tracking-wide">청부액</div>
+                                        <div class="text-4xl font-bold text-emerald-700 mt-1" id="billingAmount">-</div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- 월한도 현황 -->
-                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-6 mb-6">
+                            <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-6">
                                 <h3 class="text-lg font-bold text-purple-900 mb-4">📈 월한도 현황</h3>
                                 <div class="grid grid-cols-4 gap-4">
                                     <div>
-                                        <div class="text-sm text-purple-600 font-semibold">월한도액</div>
-                                        <div class="text-xl font-bold text-purple-900" id="monthlyLimitDisplay">-</div>
+                                        <div class="text-xs text-purple-600 font-semibold uppercase tracking-wide">월한도</div>
+                                        <div class="text-lg font-bold text-purple-900 mt-1" id="monthlyLimitDisplay">-</div>
                                     </div>
                                     <div>
-                                        <div class="text-sm text-purple-600 font-semibold">누적청부액</div>
-                                        <div class="text-xl font-bold text-purple-900" id="cumulativeDisplay">-</div>
+                                        <div class="text-xs text-purple-600 font-semibold uppercase tracking-wide">누적액</div>
+                                        <div class="text-lg font-bold text-purple-900 mt-1" id="cumulativeDisplay">-</div>
                                     </div>
                                     <div>
-                                        <div class="text-sm text-purple-600 font-semibold">사용률</div>
-                                        <div class="text-xl font-bold text-purple-900" id="usagePercentDisplay">-</div>
+                                        <div class="text-xs text-purple-600 font-semibold uppercase tracking-wide">사용률</div>
+                                        <div class="text-lg font-bold text-purple-900 mt-1" id="usagePercentDisplay">-</div>
                                     </div>
                                     <div>
-                                        <div class="text-sm text-purple-600 font-semibold">남은한도</div>
-                                        <div class="text-2xl font-bold text-purple-700" id="remainingLimitDisplay">-</div>
+                                        <div class="text-xs text-purple-600 font-semibold uppercase tracking-wide">남은한도</div>
+                                        <div class="text-xl font-bold text-purple-700 mt-1" id="remainingLimitDisplay">-</div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- 초과청부 경고 -->
-                            <div id="overageWarning" class="hidden bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                            <div id="overageWarning" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded">
                                 <div class="text-red-700 font-semibold">⚠️ 경고: 월한도를 초과하면 초과분은 100% 본인부담입니다!</div>
                             </div>
                         </div>
 
-                        <!-- 제출 버튼 -->
-                        <div class="flex gap-3 justify-end">
-                            <button type="submit" class="btn btn-primary">
+                        <!-- 버튼 -->
+                        <div class="flex gap-3 justify-end pt-4">
+                            <button type="submit" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-lg hover:from-emerald-600 hover:to-emerald-700 shadow-lg hover:shadow-xl transition flex items-center gap-2">
                                 <span>💾</span>
                                 <span>기록 저장</span>
                             </button>
-                            <button type="reset" class="btn btn-secondary">초기화</button>
+                            <button type="reset" class="px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition">
+                                초기화
+                            </button>
                         </div>
                     </form>
                 </div>
 
                 <!-- 월별 현황 대시보드 -->
-                <div class="card mb-8">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">📊 월별 현황</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
-                            <div class="text-sm text-blue-600 font-semibold">전체 기록</div>
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">📊 월별 현황</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
+                            <div class="text-sm text-blue-600 font-bold mb-2">전체 기록</div>
                             <div class="text-3xl font-bold text-blue-900" id="totalRecordsCount">0</div>
                             <div class="text-xs text-blue-500 mt-1">건</div>
                         </div>
-                        <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-lg border border-yellow-200">
-                            <div class="text-sm text-yellow-600 font-semibold">검토중</div>
-                            <div class="text-3xl font-bold text-yellow-900" id="pendingCount">0</div>
-                            <div class="text-xs text-yellow-500 mt-1">건</div>
+                        <div class="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-lg border border-amber-200">
+                            <div class="text-sm text-amber-600 font-bold mb-2">검토중</div>
+                            <div class="text-3xl font-bold text-amber-900" id="pendingCount">0</div>
+                            <div class="text-xs text-amber-500 mt-1">건</div>
                         </div>
-                        <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
-                            <div class="text-sm text-green-600 font-semibold">승인완료</div>
-                            <div class="text-3xl font-bold text-green-900" id="approvedCount">0</div>
-                            <div class="text-xs text-green-500 mt-1">건</div>
+                        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-lg border border-emerald-200">
+                            <div class="text-sm text-emerald-600 font-bold mb-2">승인완료</div>
+                            <div class="text-3xl font-bold text-emerald-900" id="approvedCount">0</div>
+                            <div class="text-xs text-emerald-500 mt-1">건</div>
                         </div>
-                        <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 rounded-lg border border-indigo-200">
-                            <div class="text-sm text-indigo-600 font-semibold">월누적청부</div>
+                        <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 p-6 rounded-lg border border-indigo-200">
+                            <div class="text-sm text-indigo-600 font-bold mb-2">월누적청부</div>
                             <div class="text-2xl font-bold text-indigo-900" id="monthTotalBilling">₩0</div>
                         </div>
                     </div>
@@ -197,15 +202,15 @@
 
                 <!-- 상태별 청부 분류 -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <!-- 대기중 -->
-                    <div class="card">
+                    <!-- 검토중 -->
+                    <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
                         <h3 class="text-lg font-bold text-gray-900 mb-4">⏳ 검토중 (Pending)</h3>
                         <div id="pendingRecords" class="space-y-3 max-h-96 overflow-y-auto">
                             <div class="text-center py-8 text-gray-400">기록이 없습니다</div>
                         </div>
                     </div>
                     <!-- 승인 -->
-                    <div class="card">
+                    <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
                         <h3 class="text-lg font-bold text-gray-900 mb-4">✅ 승인완료 (Approved)</h3>
                         <div id="approvedRecords" class="space-y-3 max-h-96 overflow-y-auto">
                             <div class="text-center py-8 text-gray-400">기록이 없습니다</div>
@@ -214,10 +219,10 @@
                 </div>
 
                 <!-- 전체 기록 목록 -->
-                <div class="card">
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-900">📋 전체 기록 목록</h2>
-                        <span class="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-bold" id="recordCountBadge">0건</span>
+                        <h2 class="text-2xl font-bold text-gray-900">📋 전체 기록 목록</h2>
+                        <span class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-bold" id="recordCountBadge">0건</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="recordsList">
                         <div class="col-span-full text-center py-12 text-gray-400">
@@ -236,12 +241,10 @@
         let residents = [];
         let records = [];
 
-        // 월한도액 (2026년 기준)
         const MONTHLY_LIMITS = {
             1: 2512900, 2: 2331200, 3: 1528200, 4: 1409700, 5: 1208900
         };
 
-        // 서비스별 기준액
         const SERVICE_TYPE_AMOUNTS = {
             "basic_care": { 1: 78875, 2: 67043, 3: 55211, 4: 55211, 5: 55211 },
             "meal_service": { 1: 39437, 2: 33521, 3: 27605, 4: 27605, 5: 27605 },
@@ -249,40 +252,38 @@
             "emergency": { 1: 157750, 2: 134087, 3: 110425, 4: 110425, 5: 110425 }
         };
 
-        // 소득분류별 본인부담율
         const PATIENT_PAY_RATE = {
             "일반": 0.15, "차상위계층": 0.10, "기초생활보장": 0.00, "의료급여": 0.00
         };
 
-        function checkAuth() {
-            const token = localStorage.getItem('access_token');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (!token || !user.id) {
-                window.location.href = './login.html';
-                return false;
-            }
-            currentUser = user;
-            document.getElementById('userName').textContent = user.full_name || '사용자';
-            document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
-            loadResidents();
-            loadRecords();
-            renderNavigation();
-            return true;
-        }
-
-        function renderNavigation() {
+        function renderNav() {
             const nav = document.getElementById('navContent');
             nav.innerHTML = `
-                <div class="nav-group">
-                    <div class="nav-group-label">주요</div>
-                    <a class="nav-item" href="./dashboard.html"><span style="font-size:18px">📊</span><span>대시보드</span></a>
-                    <a class="nav-item active" href="./voice_record.html"><span style="font-size:18px">🎤</span><span>음성 기록</span></a>
+                <div class="mb-6">
+                    <div class="text-xs font-bold text-gray-400 uppercase px-4 mb-3 tracking-wide">주요</div>
+                    <a href="./dashboard.html" class="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-700 transition">
+                        <span style="font-size:18px">📊</span>
+                        <span>대시보드</span>
+                    </a>
+                    <a href="./voice_record.html" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-emerald-600 text-white transition">
+                        <span style="font-size:18px">🎤</span>
+                        <span>음성 기록</span>
+                    </a>
                 </div>
-                <div class="nav-group">
-                    <div class="nav-group-label">관리</div>
-                    <a class="nav-item" href="./caregiver_billing.html"><span style="font-size:18px">📋</span><span>나의 청부</span></a>
-                    <a class="nav-item" href="./my_salary.html"><span style="font-size:18px">💵</span><span>나의 급여</span></a>
-                    <a class="nav-item" href="./my_schedule.html"><span style="font-size:18px">📅</span><span>나의 일정</span></a>
+                <div>
+                    <div class="text-xs font-bold text-gray-400 uppercase px-4 mb-3 tracking-wide">관리</div>
+                    <a href="./caregiver_billing.html" class="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-700 transition">
+                        <span style="font-size:18px">📋</span>
+                        <span>나의 청부</span>
+                    </a>
+                    <a href="./my_salary.html" class="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-700 transition">
+                        <span style="font-size:18px">💵</span>
+                        <span>나의 급여</span>
+                    </a>
+                    <a href="./my_schedule.html" class="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-700 transition">
+                        <span style="font-size:18px">📅</span>
+                        <span>나의 일정</span>
+                    </a>
                 </div>
             `;
         }
@@ -329,7 +330,6 @@
             const billingAmount = baseAmount - patientPayment;
             const monthlyLimit = MONTHLY_LIMITS[grade];
 
-            // 누적청부액 계산
             const cumulativeThisMonth = records
                 .filter(r => r.resident_id == resId && new Date(r.recorded_date).getMonth() === new Date().getMonth())
                 .reduce((sum, r) => sum + (r.amount || 0), 0);
@@ -338,7 +338,6 @@
             const remainingLimit = Math.max(0, monthlyLimit - newCumulative);
             const usagePercent = Math.round((newCumulative / monthlyLimit) * 100);
 
-            // UI 업데이트
             document.getElementById('baseAmount').textContent = `₩${baseAmount.toLocaleString()}`;
             document.getElementById('careGradeDisplay').textContent = `${grade}등급`;
             document.getElementById('clientTypeDisplay').textContent = clientType;
@@ -351,7 +350,6 @@
             document.getElementById('usagePercentDisplay').textContent = `${usagePercent}%`;
             document.getElementById('remainingLimitDisplay').textContent = `₩${remainingLimit.toLocaleString()}`;
 
-            // 초과청부 경고
             if (newCumulative > monthlyLimit) {
                 document.getElementById('overageWarning').classList.remove('hidden');
             } else {
@@ -388,7 +386,6 @@
             document.getElementById('approvedCount').textContent = approved.length;
             document.getElementById('monthTotalBilling').textContent = `₩${monthTotal.toLocaleString()}`;
 
-            // 상태별 분류
             renderStatusRecords('pendingRecords', pending);
             renderStatusRecords('approvedRecords', approved);
         }
@@ -400,12 +397,12 @@
                 return;
             }
             el.innerHTML = records.map(r => `
-                <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                    <div class="flex justify-between text-sm">
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition">
+                    <div class="flex justify-between items-start mb-2">
                         <div class="font-semibold text-gray-900">${r.resident_name}</div>
-                        <div class="text-gray-500">${new Date(r.recorded_date).toLocaleDateString('ko-KR')}</div>
+                        <div class="text-xs text-gray-500">${new Date(r.recorded_date).toLocaleDateString('ko-KR')}</div>
                     </div>
-                    <div class="text-lg font-bold text-green-600 mt-1">₩${(r.amount || 0).toLocaleString()}</div>
+                    <div class="text-lg font-bold text-emerald-600">₩${(r.amount || 0).toLocaleString()}</div>
                 </div>
             `).join('');
         }
@@ -418,15 +415,15 @@
             }
 
             list.innerHTML = records.map(r => `
-                <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="font-bold text-gray-900">${r.resident_name}</div>
-                        <span class="text-xs px-2 py-1 rounded ${r.approval_status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-emerald-300 transition">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="font-bold text-gray-900 text-base">${r.resident_name}</div>
+                        <span class="text-xs px-2 py-1 rounded font-semibold ${r.approval_status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
                             ${r.approval_status === 'approved' ? '✅ 승인' : '⏳ 검토'}
                         </span>
                     </div>
-                    <div class="text-sm text-gray-500 mb-2">${new Date(r.recorded_date).toLocaleDateString('ko-KR')}</div>
-                    <div class="text-2xl font-bold text-green-600">₩${(r.amount || 0).toLocaleString()}</div>
+                    <div class="text-xs text-gray-500 mb-2">${new Date(r.recorded_date).toLocaleDateString('ko-KR')}</div>
+                    <div class="text-2xl font-bold text-emerald-600">₩${(r.amount || 0).toLocaleString()}</div>
                 </div>
             `).join('');
 
@@ -474,15 +471,18 @@
         });
 
         function switchTab(e) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-emerald-500', 'text-white'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('hover:bg-gray-100'));
+            e.currentTarget.classList.add('active', 'bg-emerald-500', 'text-white');
+            e.currentTarget.classList.remove('hover:bg-gray-100');
         }
 
         function showMessage(text, type) {
             const msg = document.getElementById('message');
             msg.textContent = text;
-            msg.className = `message ${type} show`;
-            setTimeout(() => msg.classList.remove('show'), 4000);
+            msg.className = `${type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'} mb-6 p-4 rounded-lg`;
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 4000);
         }
 
         function logout() {
@@ -491,6 +491,22 @@
                 localStorage.removeItem('user');
                 window.location.href = './login.html';
             }
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('access_token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (!token || !user.id) {
+                window.location.href = './login.html';
+                return false;
+            }
+            currentUser = user;
+            document.getElementById('userName').textContent = user.full_name || '사용자';
+            document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
+            renderNav();
+            loadResidents();
+            loadRecords();
+            return true;
         }
 
         window.addEventListener('load', checkAuth);
