@@ -1,6 +1,7 @@
-﻿from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, Body
+from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, Body
 from pydantic import BaseModel
-from typing import Optional
+from typing import Literal, Optional
+from app.billing_rules import split_visit, VALID_DURATIONS
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary
@@ -9,108 +10,10 @@ from app.database import get_db
 from datetime import datetime, time
 import os
 
-# 등급별 월 인정급여액
-CARE_GRADE_LIMITS = {
-    1: 1577500,  # 1등급
-    2: 1399500,  # 2등급
-    3: 1193000,  # 3등급
-    4: 1082500,  # 4등급
-    5: 235000,   # 5등급
-}
-
-# 등급별 월 기준 방문 수 (1회당 청구액을 계산하기 위함)
-STANDARD_VISITS_PER_MONTH = 20
-
-# 1회 방문 기본 청구액 (등급별)
-VISIT_AMOUNTS_BY_GRADE = {
-    1: int(1577500 / STANDARD_VISITS_PER_MONTH),  # 약 78,875원
-    2: int(1399500 / STANDARD_VISITS_PER_MONTH),  # 약 69,975원
-    3: int(1193000 / STANDARD_VISITS_PER_MONTH),  # 약 59,650원
-    4: int(1082500 / STANDARD_VISITS_PER_MONTH),  # 약 54,125원
-    5: int(235000 / STANDARD_VISITS_PER_MONTH),   # 약 11,750원
-}
-
-# 서비스 카테고리별 본인부담율 (건강보험공단 기준)
-PATIENT_PAY_RATE = {
-    "재가급여": {  # 방문요양 등
-        "일반": 0.15,              # 본인 15%, 공단 85%
-        "차상위계층": 0.10,        # 본인 10%, 공단 90% (감경: 8~12% 범위)
-        "기초생활보장": 0.00,      # 본인 0%, 공단 100%
-        "의료급여": 0.00,         # 본인 0%, 공단 100%
-    },
-    "시설급여": {  # 요양원 등
-        "일반": 0.20,              # 본인 20%, 공단 80%
-        "차상위계층": 0.10,        # 본인 10%, 공단 90% (감경: 8~12% 범위)
-        "기초생활보장": 0.00,      # 본인 0%, 공단 100%
-        "의료급여": 0.00,         # 본인 0%, 공단 100%
-    }
-}
-
-# 서비스 유형별 1회 청부액 (등급별) - NHIS 건강보험공단 기준
-# 2등급: 1등급 × 85% | 3등급: 1등급 × 70%
-SERVICE_TYPE_AMOUNTS = {
-    "basic_care": {
-        1: 78875,
-        2: 67043,   # 85%
-        3: 55211,   # 70%
-        4: 55211,   # 70% (4등급 = 3등급)
-        5: 55211    # 70% (5등급 = 3등급)
-    },
-    "meal_service": {
-        1: 39437,
-        2: 33521,   # 85%
-        3: 27605,   # 70%
-        4: 27605,
-        5: 27605
-    },
-    "medical_care": {
-        1: 118312,
-        2: 100565,  # 85%
-        3: 82818,   # 70%
-        4: 82818,
-        5: 82818
-    },
-    "emergency": {
-        1: 157750,
-        2: 134087,  # 85%
-        3: 110425,  # 70%
-        4: 110425,
-        5: 110425
-    }
-}
-
 router = APIRouter()
 
-# 음성 파일 저장 디렉토리
 UPLOAD_DIR = "uploads/audio"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-# 건강보험공단 기준 청부액 계산 함수
-def calculate_billing_amount(base_amount: int, client_type: str, service_category: str = "재가급여") -> int:
-    """
-    건강보험공단 기준으로 실제 청부액 계산
-
-    청부액 = 기준액 × (1 - 본인부담률)
-
-    예시:
-    - 기본요양 1등급 기준액 ₩78,875
-    - 일반인: ₩78,875 × 85% = ₩67,043
-    - 차상위: ₩78,875 × 90% = ₩70,988
-    - 기초/의료: ₩78,875 × 100% = ₩78,875
-    """
-    # client_type 정규화
-    if client_type is None:
-        client_type = "일반"
-
-    # 본인부담률 조회
-    category_rates = PATIENT_PAY_RATE.get(service_category, PATIENT_PAY_RATE["재가급여"])
-    patient_rate = category_rates.get(client_type, category_rates.get("일반", 0.15))
-
-    # 청부액 = 기준액 × (1 - 본인부담률)
-    insurance_rate = 1 - patient_rate
-    actual_amount = int(base_amount * insurance_rate)
-
-    return actual_amount
 
 def get_year_month(date: datetime) -> str:
     """날짜로부터 YYYY-MM 형식의 정산월 추출"""
@@ -124,6 +27,7 @@ class CreateRecordRequest(BaseModel):
     notes: str = ""
     care_items: str = ""
     condition: Optional[str] = None
+    duration_minutes: Literal[30, 60, 90, 120, 180, 240] = 60
 
 class UpdateRecordRequest(BaseModel):
     service_type: Optional[str] = None
@@ -163,19 +67,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Resident not found")
         print(f"[DEBUG] 이용자 찾음: {resident.id}, center_id={resident.center_id}")
 
-        # NHIS 기준 청부 계산: 서비스 유형 + 요양 등급 + client_type별 보험료
-        with open("/tmp/debug.log", "a") as f:
-            f.write(f"  Calculating billing (NHIS standard)...\n")
-        care_grade = resident.care_grade or 1
-        service_type = request.service_type or "basic_care"
-        client_type = resident.client_type or "일반"
-
-        # 1. 기준액 조회 (SERVICE_TYPE_AMOUNTS는 NHIS 기준액)
-        service_rates = SERVICE_TYPE_AMOUNTS.get(service_type, SERVICE_TYPE_AMOUNTS["basic_care"])
-        base_amount = service_rates.get(care_grade, service_rates[1])
-
-        # 2. client_type별 보험료 적용하여 실제 청부액 계산
-        amount = calculate_billing_amount(base_amount, client_type, "재가급여")
+        total_cost, _, amount = split_visit(request.duration_minutes, resident.client_type)
 
         # DailyRecord 생성
         with open("/tmp/debug.log", "a") as f:
@@ -191,6 +83,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
             notes=request.notes,
             care_items=request.care_items or None,
             condition=request.condition,
+            duration_minutes=request.duration_minutes,
             service_type=request.service_type,
             audio_file_url=None
         )
@@ -212,6 +105,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
             service_category="재가급여",
             service_type=request.service_type,
             amount=amount,
+            total_cost=total_cost,
             recorded_date=now,
             year_month=get_year_month(now),
             status="draft",
@@ -316,29 +210,17 @@ async def upload_audio(
         db.commit()
         db.refresh(daily_record)
 
-        # 음성 파일로 청구 기록 생성 (1회 방문당 청부)
-        care_grade = resident.care_grade if resident.care_grade else 1
-        client_type = resident.client_type if resident.client_type else "일반"
-
-        service_category = "재가급여"
-        category_rates = PATIENT_PAY_RATE.get(service_category, PATIENT_PAY_RATE["재가급여"])
-        patient_rate = category_rates.get(client_type, 0.15)
-        insurance_rate = 1 - patient_rate
-
-        # 1회 방문당 청부액 (service_type별로 다름)
-        # SERVICE_TYPE_AMOUNTS를 사용하여 service_type에 맞는 금액 적용
-        service_type = request.service_type if hasattr(request, 'service_type') else "basic_care"
-        base_amount = SERVICE_TYPE_AMOUNTS.get(service_type, {}).get(care_grade, 78875)
-        amount = int(base_amount * insurance_rate)
+        total_cost, _, amount = split_visit(60, resident.client_type)
 
         billing_record = BillingRecord(
             daily_record_id=daily_record.id,
             caregiver_id=caregiver_id,
             resident_id=resident_id,
             center_id=resident.center_id,
-            service_category=service_category,
-            service_type=service_type,  # ✅ 사용자가 선택한 service_type 적용
+            service_category="재가급여",
+            service_type="basic_care",
             amount=amount,
+            total_cost=total_cost,
             recorded_date=datetime.now(),  # 로컬 시간 사용
             approval_status="pending",  # 센터장 승인 대기
             status="draft"  # 아직 미제출 상태
@@ -472,10 +354,13 @@ async def get_all_records(
             if b.daily_record_id:
                 billing_map[b.daily_record_id] = {
                     "amount": b.amount,
-                    "service_type": b.service_type
+                    "total_cost": b.total_cost,
+                    "service_type": b.service_type,
+                    "approval_status": b.approval_status
                 }
 
-        # 요양사 기준: submitted_to_nhis 제외
+        resident_names = {rid: name for rid, name in db.query(Resident.id, Resident.name).all()}
+
         caregiver = db.query(User).filter(User.id == caregiver_id).first()
 
         response_records = []
@@ -484,12 +369,12 @@ async def get_all_records(
             billing_info = billing_map.get(r.id, {})
             billing_amount = billing_info.get("amount", 0)
 
-            # 요양사도 모든 자신의 기록을 조회할 수 있어야 함 (submitted_to_nhis 포함)
             billing_total += billing_amount
             response_records.append({
                 "id": r.id,
                 "caregiver_id": r.caregiver_id,
                 "resident_id": r.resident_id,
+                "resident_name": resident_names.get(r.resident_id),
                 "service_type": r.service_type or "basic_care",
                 "morning_care": r.morning_care,
                 "meal_intake": r.meal_intake,
@@ -497,8 +382,13 @@ async def get_all_records(
                 "notes": r.notes,
                 "care_items": r.care_items,
                 "condition": r.condition,
+                "duration_minutes": r.duration_minutes,
+                "recorded_date": r.recorded_date.isoformat() if r.recorded_date else None,
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
-                "billing_amount": billing_amount
+                "amount": billing_amount,
+                "billing_amount": billing_amount,
+                "total_cost": billing_info.get("total_cost") or billing_amount,
+                "approval_status": billing_info.get("approval_status") or "pending"
             })
 
         return {
@@ -998,13 +888,13 @@ async def delete_record(
 
 
 # ===== VoiceRecord 자동 청부 생성 =====
-# SERVICE_TYPE_AMOUNTS는 파일 상단에 정의됨 (create_record와 공유)
 
 @router.post("/voice/create")
 async def create_voice_record(
     caregiver_id: int,
     resident_id: int,
     service_type: str = "basic_care",
+    duration_minutes: int = 60,
     transcription: str = "",
     db: Session = Depends(get_db)
 ):
@@ -1014,8 +904,10 @@ async def create_voice_record(
         if not resident:
             raise HTTPException(status_code=404, detail="Resident not found")
         
-        if service_type not in SERVICE_TYPE_AMOUNTS:
+        if service_type not in ("basic_care", "meal_service", "medical_care", "emergency"):
             raise HTTPException(status_code=400, detail="Invalid service_type")
+        if duration_minutes not in VALID_DURATIONS:
+            raise HTTPException(status_code=400, detail="Invalid duration_minutes")
         
         now = datetime.now()
 
@@ -1038,12 +930,7 @@ async def create_voice_record(
         db.add(voice_record)
         db.flush()
 
-        # NHIS 기준: 서비스 유형 + 요양 등급 + client_type별 보험료
-        service_rates = SERVICE_TYPE_AMOUNTS.get(service_type, SERVICE_TYPE_AMOUNTS["basic_care"])
-        base_amount = service_rates.get(care_grade, service_rates[1])
-
-        # client_type별 보험료 적용하여 실제 청부액 계산
-        billing_amount = calculate_billing_amount(base_amount, client_type, "재가급여")
+        total_cost, _, billing_amount = split_visit(duration_minutes, client_type)
 
         billing_record = BillingRecord(
             caregiver_id=caregiver_id,
@@ -1055,6 +942,7 @@ async def create_voice_record(
             service_category="재가급여",
             service_type=service_type,
             amount=billing_amount,
+            total_cost=total_cost,
             status="draft",
             approval_status="pending",
             recorded_date=now,
@@ -1066,7 +954,7 @@ async def create_voice_record(
 
         voice_record.billing_record_id = billing_record.id
         db.commit()
-        
+
         return {
             "status": "success",
             "voice_record_id": voice_record.id,

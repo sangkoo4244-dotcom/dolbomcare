@@ -56,7 +56,7 @@
                     <h2 class="text-2xl font-bold text-gray-900 mb-8">➕ 새 음성 기록 추가</h2>
                     <form id="recordForm" class="space-y-6">
                         <!-- 기본 정보 -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">이용자 선택 *</label>
                                 <select id="resident" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition" required onchange="calculateBillingDetails()">
@@ -71,6 +71,17 @@
                                     <option value="meal_service">식사 서빙</option>
                                     <option value="medical_care">의료 관리</option>
                                     <option value="emergency">응급</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">제공 시간 *</label>
+                                <select id="durationMinutes" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition" required onchange="calculateBillingDetails()">
+                                    <option value="30">30분</option>
+                                    <option value="60" selected>60분</option>
+                                    <option value="90">90분</option>
+                                    <option value="120">120분</option>
+                                    <option value="180">180분</option>
+                                    <option value="240">240분</option>
                                 </select>
                             </div>
                         </div>
@@ -130,7 +141,7 @@
                                 <h3 class="text-lg font-bold text-blue-900 mb-4">📊 기준액 정보</h3>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <div class="text-xs text-blue-600 font-semibold uppercase tracking-wide">기준액</div>
+                                        <div class="text-xs text-blue-600 font-semibold uppercase tracking-wide">1회 급여비용 (수가)</div>
                                         <div class="text-3xl font-bold text-blue-900 mt-1" id="baseAmount">-</div>
                                     </div>
                                     <div>
@@ -296,16 +307,18 @@
             1: 2512900, 2: 2331200, 3: 1528200, 4: 1409700, 5: 1208900
         };
 
-        const SERVICE_TYPE_AMOUNTS = {
-            "basic_care": { 1: 78875, 2: 67043, 3: 55211, 4: 55211, 5: 55211 },
-            "meal_service": { 1: 39437, 2: 33521, 3: 27605, 4: 27605, 5: 27605 },
-            "medical_care": { 1: 118312, 2: 100565, 3: 82818, 4: 82818, 5: 82818 },
-            "emergency": { 1: 157750, 2: 134087, 3: 110425, 4: 110425, 5: 110425 }
-        };
+        const VISIT_FEES = { 30: 17450, 60: 25320, 90: 34120, 120: 43430, 180: 57020, 240: 70080 };
 
         const PATIENT_PAY_RATE = {
-            "일반": 0.15, "차상위계층": 0.10, "기초생활보장": 0.00, "의료급여": 0.00
+            "일반": 0.15, "차상위계층": 0.06, "기초생활보장": 0.00, "의료급여": 0.00
         };
+
+        function splitVisit(minutes, clientType) {
+            const total = VISIT_FEES[minutes];
+            const rate = PATIENT_PAY_RATE[clientType] ?? PATIENT_PAY_RATE["일반"];
+            const patient = Math.floor(total * rate / 10) * 10;
+            return { total, patient, insurance: total - patient };
+        }
 
 
         async function loadResidents() {
@@ -340,31 +353,27 @@
 
             const grade = res.care_grade || 1;
             const clientType = res.client_type || '일반';
-            const amounts = SERVICE_TYPE_AMOUNTS[svcType];
-            if (!amounts) return;
-
-            const baseAmount = amounts[grade];
-            const patientRate = PATIENT_PAY_RATE[clientType] || 0.15;
+            const minutes = parseInt(document.getElementById('durationMinutes').value);
+            const { total, patient, insurance } = splitVisit(minutes, clientType);
+            const patientRate = PATIENT_PAY_RATE[clientType] ?? PATIENT_PAY_RATE["일반"];
             const insuranceRate = 1 - patientRate;
-            const patientPayment = Math.round(baseAmount * patientRate);
-            const billingAmount = baseAmount - patientPayment;
             const monthlyLimit = MONTHLY_LIMITS[grade];
 
             const cumulativeThisMonth = records
                 .filter(r => r.resident_id == resId && new Date(r.recorded_date).getMonth() === new Date().getMonth())
-                .reduce((sum, r) => sum + (r.amount || 0), 0);
+                .reduce((sum, r) => sum + (r.total_cost || 0), 0);
 
-            const newCumulative = cumulativeThisMonth + billingAmount;
+            const newCumulative = cumulativeThisMonth + total;
             const remainingLimit = Math.max(0, monthlyLimit - newCumulative);
             const usagePercent = Math.round((newCumulative / monthlyLimit) * 100);
 
-            document.getElementById('baseAmount').textContent = `₩${baseAmount.toLocaleString()}`;
+            document.getElementById('baseAmount').textContent = `₩${total.toLocaleString()}`;
             document.getElementById('careGradeDisplay').textContent = `${grade}등급`;
             document.getElementById('clientTypeDisplay').textContent = clientType;
             document.getElementById('patientRateDisplay').textContent = `${Math.round(patientRate * 100)}%`;
-            document.getElementById('patientPaymentDisplay').textContent = `₩${patientPayment.toLocaleString()}`;
+            document.getElementById('patientPaymentDisplay').textContent = `₩${patient.toLocaleString()}`;
             document.getElementById('insuranceRateDisplay').textContent = `${Math.round(insuranceRate * 100)}%`;
-            document.getElementById('billingAmount').textContent = `₩${billingAmount.toLocaleString()}`;
+            document.getElementById('billingAmount').textContent = `₩${insurance.toLocaleString()}`;
             document.getElementById('monthlyLimitDisplay').textContent = `₩${monthlyLimit.toLocaleString()}`;
             document.getElementById('cumulativeDisplay').textContent = `₩${newCumulative.toLocaleString()}`;
             document.getElementById('usagePercentDisplay').textContent = `${usagePercent}%`;
@@ -478,7 +487,8 @@
                         service_type: st,
                         notes: notes,
                         care_items: careItems,
-                        condition: condition || null
+                        condition: condition || null,
+                        duration_minutes: parseInt(document.getElementById('durationMinutes').value)
                     })
                 });
 
