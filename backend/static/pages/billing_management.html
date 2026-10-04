@@ -589,7 +589,8 @@
                 const residents = residentsData.residents || [];
                 const residentMap = {};
                 residents.forEach(r => {
-                    residentMap[r.id] = r.name;
+                    // 이용자 정보: 이름 (등급 · 소득분류) 형식으로 저장
+                    residentMap[r.id] = `${r.name} (${r.care_grade}등급 · ${r.client_type})`;
                 });
 
                 renderBillingTable(allBillings, residentMap);
@@ -695,7 +696,8 @@
                 const residents = residentsData.residents || [];
                 const residentMap = {};
                 residents.forEach(r => {
-                    residentMap[r.id] = r.name;
+                    // 이용자 정보: 이름 (등급 · 소득분류) 형식으로 저장
+                    residentMap[r.id] = `${r.name} (${r.care_grade}등급 · ${r.client_type})`;
                 });
                 renderBillingTable(filtered, residentMap);
             } catch (error) {
@@ -940,7 +942,8 @@
                 const residents = residentsData.residents || [];
                 const residentMap = {};
                 residents.forEach(r => {
-                    residentMap[r.id] = r.name;
+                    // 이용자 정보: 이름 (등급 · 소득분류) 형식으로 저장
+                    residentMap[r.id] = `${r.name} (${r.care_grade}등급 · ${r.client_type})`;
                 });
 
                 renderBillingTable(filtered, residentMap);
