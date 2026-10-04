@@ -37,6 +37,8 @@ ADDITIVE_COLUMNS = [
     ("billing_records", "total_cost", "INTEGER"),
     ("schedules", "duration_minutes", "INTEGER"),
     ("schedules", "planned_items", "VARCHAR"),
+    ("schedules", "arrived_at", "TIMESTAMP"),
+    ("schedules", "left_at", "TIMESTAMP"),
 ]
 
 def run_migrations():

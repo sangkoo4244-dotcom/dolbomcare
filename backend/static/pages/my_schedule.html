@@ -89,23 +89,34 @@
         };
         const stateStyle = {
             '예정': 'bg-blue-100 text-blue-800',
+            '방문중': 'bg-amber-100 text-amber-800',
             '완료': 'bg-emerald-100 text-emerald-800',
             '미기록': 'bg-red-600 text-white',
             '계획 외': 'bg-gray-100 text-gray-700'
         };
+        const OPEN_STATES = ['예정', '방문중', '미기록'];
 
         function pad(n) { return String(n).padStart(2, '0'); }
         function dateKey(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
         function ymKey(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; }
+        function hm(iso) { return iso ? new Date(iso).toTimeString().slice(0, 5) : null; }
         function badge(state) { return `<span class="px-3 py-1 rounded-full text-xs font-bold ${stateStyle[state] || 'bg-gray-100 text-gray-700'}">${state}</span>`; }
         function labels(codes) { return codes.map(c => CARE_ITEM_LABELS[c] || c).join(', '); }
         function coverage(it) {
             if (!it.planned_items.length) return '-';
-            return `${it.done_items.filter(c => it.planned_items.includes(c)).length} / ${it.planned_items.length}`;
+            return `${it.done_items.length} / ${it.planned_items.length}`;
         }
-        function recordLink(it) {
-            if (it.state === '완료' || !it.planned) return '';
-            return `<a href="./voice_record.html?resident_id=${it.resident_id}" class="ml-2 text-xs font-bold text-emerald-700 underline">기록 작성</a>`;
+        function recordUrl(it) {
+            const planned = it.planned_items.length ? `&planned=${it.planned_items.join(',')}` : '';
+            return `./voice_record.html?resident_id=${it.resident_id}${planned}`;
+        }
+        function actions(it) {
+            if (!it.planned) return `<a href="${recordUrl(it)}" class="text-xs font-bold text-emerald-700 underline">기록 보기</a>`;
+            if (it.state === '예정') return `<button onclick="markArrived(${it.schedule_id})" class="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700">도착</button>`;
+            if (it.state === '방문중') return `<button onclick="markLeft(${it.schedule_id})" class="px-4 py-2 bg-amber-500 text-white text-sm font-bold rounded-lg hover:bg-amber-600">퇴실</button>
+                <a href="${recordUrl(it)}" class="ml-2 px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">기록 작성</a>`;
+            if (it.state === '미기록') return `<a href="${recordUrl(it)}" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">기록 작성</a>`;
+            return '';
         }
 
         function checkAuth() {
@@ -136,9 +147,20 @@
             renderTable();
         }
 
+        async function markArrived(id) {
+            await fetch(`${API_URL}/schedule/${id}/arrive`, { method: 'POST' });
+            loadSchedules();
+        }
+
+        async function markLeft(id) {
+            const r = await fetch(`${API_URL}/schedule/${id}/depart`, { method: 'POST' });
+            if (!r.ok) { const e = await r.json().catch(() => ({})); alert(e.detail || '퇴실 기록에 실패했습니다'); return; }
+            loadSchedules();
+        }
+
         function renderSummary(d) {
             const s = d.summary || {};
-            const parts = [`방문 계획 ${d.items.length}건`, `완료 ${s['완료'] || 0}건`];
+            const parts = [`방문 계획 ${d.items.filter(it => it.planned).length}건`, `완료 ${s['완료'] || 0}건`];
             if (s['미기록']) parts.push(`⚠️ 기록 미작성 ${s['미기록']}건`);
             if (s['계획 외']) parts.push(`계획 외 ${s['계획 외']}건`);
             document.getElementById('summaryLine').textContent = parts.join(' · ');
@@ -174,29 +196,43 @@
 
         function renderToday() {
             const dayItems = items.filter(it => it.date === selectedDate);
-            document.getElementById('todayTitle').textContent = selectedDate === dateKey(new Date()) ? '오늘의 방문 계획' : `${selectedDate} 방문 계획`;
+            const isToday = selectedDate === dateKey(new Date());
+            document.getElementById('todayTitle').textContent = isToday ? '오늘의 방문 계획' : `${selectedDate} 방문 계획`;
             const container = document.getElementById('todaySchedule');
             if (dayItems.length === 0) {
                 container.innerHTML = '<div class="text-center py-8 text-gray-400">📅 이 날짜의 방문 계획이 없습니다</div>';
                 return;
             }
-            container.innerHTML = dayItems.map(it => {
+            const nextIdx = dayItems.findIndex(it => it.planned && (it.state === '예정' || it.state === '방문중'));
+            container.innerHTML = dayItems.map((it, idx) => {
+                const next = idx === nextIdx && isToday
+                    ? '<span class="ml-2 text-xs px-2 py-1 rounded bg-emerald-600 text-white font-bold">다음 방문</span>' : '';
+                const unplanned = it.planned ? '' : '<span class="ml-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">계획 외</span>';
                 const plan = it.planned_items.length
-                    ? `<div class="text-sm text-gray-700 mt-2">계획 항목: ${it.planned_items.map(c => `<span class="inline-block mr-1 mb-1 px-2 py-1 rounded ${it.done_items.includes(c) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}">${it.done_items.includes(c) ? '✔ ' : ''}${CARE_ITEM_LABELS[c] || c}</span>`).join('')}</div>`
+                    ? `<div class="text-sm text-gray-700 mt-3">계획 항목: ${it.planned_items.map(c => `<span class="inline-block mr-1 mb-1 px-2 py-1 rounded ${it.done_items.includes(c) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}">${it.done_items.includes(c) ? '✔ ' : ''}${CARE_ITEM_LABELS[c] || c}</span>`).join('')}</div>`
                     : '';
+                const time = [
+                    `예정 ${it.time}`,
+                    it.arrived_at ? `도착 ${hm(it.arrived_at)}` : null,
+                    it.left_at ? `퇴실 ${hm(it.left_at)}` : null,
+                    it.duration_minutes ? `${it.duration_minutes}분` : null
+                ].filter(Boolean).join(' · ');
+                const address = it.address ? `<div class="text-sm text-gray-700 mt-2">📍 ${it.address}</div>` : '';
+                const notes = it.care_notes ? `<div class="text-sm text-gray-600 mt-1">📝 ${it.care_notes.slice(0, 80)}</div>` : '';
                 const hint = it.state === '미기록'
-                    ? '<div class="text-sm text-red-600 font-semibold mt-2">방문 시간이 지났지만 기록이 없습니다. 음성기록을 작성해 주세요.</div>'
-                    : it.state === '계획 외'
-                    ? `<div class="text-sm text-gray-600 mt-2">계획에 없던 방문입니다. 제공 항목: ${labels(it.done_items) || '-'}</div>`
-                    : '';
+                    ? '<div class="text-sm text-red-600 font-semibold mt-2">방문 후 기록이 없습니다. 기록을 작성해 주세요.</div>' : '';
                 return `
-                    <div class="border border-gray-200 rounded-lg p-6">
-                        <div class="flex justify-between items-start">
+                    <div class="border ${idx === nextIdx && isToday ? 'border-emerald-500' : 'border-gray-200'} rounded-lg p-6">
+                        <div class="flex justify-between items-start gap-4">
                             <div>
-                                <div class="text-lg font-bold text-gray-900">${it.resident_name || '-'}${it.planned ? '' : ' <span class="ml-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">계획 외</span>'}</div>
-                                <div class="text-sm text-gray-600 mt-1">${it.time}${it.duration_minutes ? ` · ${it.duration_minutes}분` : ''}</div>
+                                <div class="text-lg font-bold text-gray-900">${it.resident_name || '-'}${next}${unplanned}</div>
+                                <div class="text-sm text-gray-600 mt-1">${time}</div>
+                                ${address}${notes}
                             </div>
-                            <div class="text-right">${badge(it.state)}${recordLink(it)}</div>
+                            <div class="text-right">
+                                <div class="mb-3">${badge(it.state)}</div>
+                                <div>${actions(it)}</div>
+                            </div>
                         </div>
                         ${plan}
                         ${hint}
@@ -213,11 +249,11 @@
             tbody.innerHTML = items.map(it => `
                 <tr class="border-b border-gray-100 hover:bg-gray-50">
                     <td class="py-4 px-4 text-gray-900 font-semibold">${it.date}</td>
-                    <td class="py-4 px-4 text-gray-700">${it.time}</td>
+                    <td class="py-4 px-4 text-gray-700">${it.time}${it.arrived_at ? `<div class="text-xs text-gray-500">도착 ${hm(it.arrived_at)}</div>` : ''}</td>
                     <td class="py-4 px-4 font-semibold text-gray-900">${it.resident_name || '-'}${it.planned ? '' : ' <span class="text-xs text-gray-500">(계획 외)</span>'}</td>
                     <td class="py-4 px-4 text-sm text-gray-700">${it.duration_minutes ? `${it.duration_minutes}분` : '-'}</td>
                     <td class="py-4 px-4 text-sm text-gray-700">${coverage(it)}</td>
-                    <td class="py-4 px-4">${badge(it.state)}${recordLink(it)}</td>
+                    <td class="py-4 px-4">${badge(it.state)}</td>
                 </tr>`).join('');
         }
 

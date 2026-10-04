@@ -334,11 +334,13 @@
                     opt.text = `${res.name} (${res.care_grade}등급 · ${res.client_type})`;
                     sel.appendChild(opt);
                 });
-                const preselected = new URLSearchParams(window.location.search).get('resident_id');
-                if (preselected) {
-                    sel.value = preselected;
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('resident_id')) {
+                    sel.value = params.get('resident_id');
                     calculateBillingDetails();
                 }
+                const planned = (params.get('planned') || '').split(',').filter(Boolean);
+                document.querySelectorAll('input[name="careItem"]').forEach(cb => { cb.checked = planned.includes(cb.value); });
             } catch (e) { showMessage('이용자 로드 실패', 'error'); }
         }
 

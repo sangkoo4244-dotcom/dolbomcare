@@ -130,13 +130,20 @@ async def create_schedule(
 def _codes(value):
     return [c for c in (value or "").split(",") if c]
 
+def _visit_state(schedule, matched, now):
+    if matched:
+        return "완료"
+    if schedule.arrived_at:
+        return "미기록" if schedule.left_at else "방문중"
+    return "미기록" if schedule.scheduled_date < now else "예정"
+
 @router.get("/caregiver-view")
 def caregiver_schedule_view(
     caregiver_id: int,
     year_month: str,
     db: Session = Depends(get_db)
 ):
-    """요양사 방문 계획: 계획된 방문과 실제 기록을 날짜·이용자 기준으로 맞추고, 계획 항목 이행 여부를 함께 반환"""
+    """요양사 방문 계획: 계획된 방문과 실제 기록·도착/퇴실 시각을 날짜·이용자 기준으로 맞춘 결과"""
     start = datetime.strptime(f"{year_month}-01", "%Y-%m-%d")
     end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
     now = datetime.now()
@@ -152,7 +159,7 @@ def caregiver_schedule_view(
         DailyRecord.recorded_date >= start,
         DailyRecord.recorded_date < end,
     ).all()
-    names = {rid: name for rid, name in db.query(Resident.id, Resident.name).all()}
+    residents = {x.id: x for x in db.query(Resident).all()}
 
     used = set()
     items = []
@@ -165,43 +172,45 @@ def caregiver_schedule_view(
         )
         if match:
             used.add(match.id)
-            state = "완료"
-            done = [c for c in _codes(match.care_items) if c in planned]
-            record_id = match.id
-            duration = s.duration_minutes or match.duration_minutes
-        else:
-            state = "미기록" if s.scheduled_date < now else "예정"
-            done = []
-            record_id = None
-            duration = s.duration_minutes
+        state = _visit_state(s, match, now)
+        resident = residents.get(s.resident_id)
         items.append({
             "date": day.isoformat(),
             "time": s.scheduled_date.strftime("%H:%M"),
             "resident_id": s.resident_id,
-            "resident_name": names.get(s.resident_id),
-            "duration_minutes": duration,
+            "resident_name": resident.name if resident else None,
+            "address": resident.address if resident else None,
+            "care_notes": resident.care_notes if resident else None,
+            "duration_minutes": s.duration_minutes or (match.duration_minutes if match else None),
             "planned_items": planned,
-            "done_items": done,
+            "done_items": [c for c in _codes(match.care_items) if c in planned] if match else [],
             "state": state,
-            "daily_record_id": record_id,
+            "daily_record_id": match.id if match else None,
             "schedule_id": s.id,
+            "arrived_at": s.arrived_at.isoformat() if s.arrived_at else None,
+            "left_at": s.left_at.isoformat() if s.left_at else None,
             "planned": True,
         })
 
     for r in records:
         if r.id in used:
             continue
+        resident = residents.get(r.resident_id)
         items.append({
             "date": r.recorded_date.date().isoformat(),
             "time": r.recorded_date.strftime("%H:%M"),
             "resident_id": r.resident_id,
-            "resident_name": names.get(r.resident_id),
+            "resident_name": resident.name if resident else None,
+            "address": resident.address if resident else None,
+            "care_notes": resident.care_notes if resident else None,
             "duration_minutes": r.duration_minutes,
             "planned_items": [],
             "done_items": _codes(r.care_items),
             "state": "계획 외",
             "daily_record_id": r.id,
             "schedule_id": None,
+            "arrived_at": None,
+            "left_at": None,
             "planned": False,
         })
 
@@ -211,6 +220,30 @@ def caregiver_schedule_view(
         summary[it["state"]] = summary.get(it["state"], 0) + 1
 
     return {"year_month": year_month, "items": items, "summary": summary}
+
+@router.post("/{schedule_id}/arrive")
+def mark_arrived(schedule_id: int, db: Session = Depends(get_db)):
+    """도착 시각 기록 (이미 도착한 경우 처음 시각 유지)"""
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    if not schedule:
+        raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
+    if schedule.arrived_at is None:
+        schedule.arrived_at = datetime.now()
+        db.commit()
+    return {"status": "success", "arrived_at": schedule.arrived_at.isoformat()}
+
+@router.post("/{schedule_id}/depart")
+def mark_left(schedule_id: int, db: Session = Depends(get_db)):
+    """퇴실 시각 기록 (도착 기록 이후에만 가능)"""
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    if not schedule:
+        raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
+    if schedule.arrived_at is None:
+        raise HTTPException(status_code=400, detail="도착 기록 후 퇴실을 기록할 수 있습니다")
+    if schedule.left_at is None:
+        schedule.left_at = datetime.now()
+        db.commit()
+    return {"status": "success", "left_at": schedule.left_at.isoformat()}
 @router.get("/{schedule_id}")
 async def get_schedule(schedule_id: int, db: Session = Depends(get_db)):
     """스케줄 상세 조회"""
