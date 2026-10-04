@@ -17,19 +17,38 @@ const SIDEBAR_MENUS = {
     ]
 };
 
+const SIDEBAR_STYLE = `
+.side-brand { padding: 24px; border-bottom: 1px solid #374151; display: flex; align-items: center; gap: 12px; }
+.side-logo { font-size: 30px; }
+.side-title { font-size: 18px; font-weight: 700; }
+.side-sub { font-size: 12px; color: #9ca3af; }
+.side-item { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-radius: 8px; color: #d1d5db; font-size: 14px; text-decoration: none; cursor: pointer; transition: background 0.15s; }
+.side-item:hover { background: #374151; color: #fff; }
+.side-item.active { background: #059669; color: #fff; }
+.side-icon { font-size: 16px; }
+`;
+
 function renderSidebar() {
+    if (!document.getElementById('sideMenuStyle')) {
+        const style = document.createElement('style');
+        style.id = 'sideMenuStyle';
+        style.textContent = SIDEBAR_STYLE;
+        document.head.appendChild(style);
+    }
+
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const items = SIDEBAR_MENUS[user.role === 'caregiver' ? 'caregiver' : 'center_manager'];
     const current = window.location.pathname.split('/').pop();
-    const nav = document.querySelector('.sidebar-nav');
+    const nav = document.querySelector('#navContent, .sidebar-nav');
+    nav.style.padding = '16px';
     nav.innerHTML = items.map(item => `
-        <a href="./${item.href}" class="nav-item ${item.href === current ? 'active' : ''}">
-            <span>${item.icon}</span>
+        <a href="./${item.href}" class="side-item ${item.href === current ? 'active' : ''}">
+            <span class="side-icon">${item.icon}</span>
             <span>${item.label}</span>
         </a>
     `).join('') + `
-        <a class="nav-item" style="margin-top: 30px;" onclick="logout()">
-            <span>🚪</span>
+        <a class="side-item" style="margin-top: 32px;" onclick="logout()">
+            <span class="side-icon">🚪</span>
             <span>로그아웃</span>
         </a>
     `;
