@@ -536,10 +536,10 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>이름</th>
+                            <th>이름 (등급/소득분류)</th>
                             <th>연령</th>
-                            <th>담당 요양사</th>
-                            <th>상태</th>
+                            <th>건강 상태</th>
+                            <th>현황</th>
                             <th style="text-align: center;">작업</th>
                         </tr>
                     </thead>
@@ -547,16 +547,16 @@
             `;
 
             residents.forEach(r => {
-                const age = calculateAge(new Date(r.date_of_birth));
+                const age = calculateAge(new Date(r.birth_date));
                 html += `
                     <tr>
                         <td>
                             <div class="resident-name">${r.name}</div>
-                            <div class="resident-info">${r.phone || '전화번호 없음'}</div>
+                            <div class="resident-info">등급: ${r.care_grade}등급 | ${r.client_type}</div>
                         </td>
                         <td>${age}세</td>
-                        <td>${r.caregiver_name || '-'}</td>
-                        <td><span class="status-badge">${r.is_archived ? '아카이브' : '활성'}</span></td>
+                        <td>${r.health_status || '-'}</td>
+                        <td><span class="status-badge">${r.health_status === 'stable' ? '안정' : r.health_status === 'warning' ? '주의' : '위험'}</span></td>
                         <td style="text-align: center;">
                             <div class="action-buttons">
                                 <button class="btn-sm" onclick="editResident(${r.id})">편집</button>
