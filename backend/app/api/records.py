@@ -34,6 +34,10 @@ class UpdateRecordRequest(BaseModel):
     notes: Optional[str] = None
     care_grade: Optional[int] = None  # 요양등급 (스냅샷 수정)
     client_type: Optional[str] = None  # 소득분류 (스냅샷 수정)
+    duration_minutes: Optional[Literal[30, 60, 90, 120, 180, 240]] = None
+    care_items: Optional[str] = None
+    condition: Optional[str] = None
+    user_id: Optional[int] = None
 
 class BatchDeleteRequest(BaseModel):
     record_ids: list
@@ -639,19 +643,29 @@ async def update_record(
         if not record:
             raise HTTPException(status_code=404, detail="기록을 찾을 수 없습니다")
 
-        # 필드 업데이트
+        billing = db.query(BillingRecord).filter(
+            BillingRecord.daily_record_id == record_id
+        ).first()
+
+        if request.user_id is not None and record.caregiver_id != request.user_id:
+            raise HTTPException(status_code=403, detail="본인의 기록만 수정할 수 있습니다")
+        if billing and billing.approval_status not in ("draft", "rejected"):
+            raise HTTPException(status_code=400, detail="작성중 또는 보완 요청 상태의 청부만 수정할 수 있습니다")
+
         if request.service_type:
             record.service_type = request.service_type
         if request.notes is not None:
             record.notes = request.notes
+        if request.duration_minutes is not None:
+            record.duration_minutes = request.duration_minutes
+        if request.care_items is not None:
+            record.care_items = request.care_items or None
+        if request.condition is not None:
+            record.condition = request.condition or None
 
         db.commit()
         db.refresh(record)
 
-        # 연관된 청부 기록도 업데이트
-        billing = db.query(BillingRecord).filter(
-            BillingRecord.daily_record_id == record_id
-        ).first()
         if billing:
             if request.service_type:
                 billing.service_type = request.service_type
@@ -659,6 +673,12 @@ async def update_record(
                 billing.care_grade = request.care_grade
             if request.client_type:
                 billing.client_type = request.client_type
+            total_cost, _, insurance_amount = split_visit(record.duration_minutes or 60, billing.client_type)
+            billing.total_cost = total_cost
+            billing.amount = insurance_amount
+            if billing.approval_status == "rejected":
+                billing.approval_status = "draft"
+            billing.rejection_reason = None
             db.commit()
             db.refresh(billing)
 
@@ -675,6 +695,8 @@ async def update_record(
                 "recorded_date": record.recorded_date.isoformat() if record.recorded_date else None
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         error_trace = traceback.format_exc()

@@ -143,9 +143,112 @@
                 const [cls, label] = STATUS_BADGE[b.approval_status] || ['bg-gray-100 text-gray-700', b.approval_status];
                 const canSubmit = b.approval_status === 'draft' || b.approval_status === 'rejected';
                 const reason = b.approval_status === 'rejected' && b.rejection_reason ? `<div class="text-xs text-red-600 mt-1">사유: ${b.rejection_reason}</div>` : '';
-                const action = canSubmit ? `<button onclick="submitBilling(${b.id})" class="px-3 py-1 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">제출</button>` : '-';
+                const editable = b.approval_status === 'draft' || b.approval_status === 'rejected';
+                const editBtn = editable ? `<button onclick="openEdit(${b.id})" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50 mr-2">수정</button>` : '';
+                const submitBtn = canSubmit ? `<button onclick="submitBilling(${b.id})" class="px-3 py-1 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">제출</button>` : '';
+                const action = editBtn + submitBtn || '-';
                 return `<tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-4 px-4 font-semibold">${b.resident_name || '-'}</td><td class="py-4 px-4">${b.care_grade || '-'}등급</td><td class="py-4 px-4">${getServiceName(b.service_type)}</td><td class="py-4 px-4 font-bold text-emerald-600">₩${(b.amount || 0).toLocaleString()}</td><td class="py-4 px-4 text-gray-500">${new Date(b.recorded_date).toLocaleDateString('ko-KR')}</td><td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${cls}">${label}</span>${reason}</td><td class="py-4 px-4">${action}</td></tr>`;
             }).join('');
+        }
+
+        const SERVICE_NAMES_EDIT = { basic_care: '기본 돌봄', meal_service: '식사 서빙', medical_care: '의료 관리', emergency: '응급' };
+        const CARE_ITEMS_EDIT = [
+            ['meal_assist', '식사 보조'], ['toilet_assist', '배설 보조'], ['bath', '목욕·세면'], ['dressing', '옷 갈아입기'], ['mobility', '이동 보조'],
+            ['medicine', '투약 확인'], ['vitals', '체온·혈압 측정'], ['symptom', '이상 증상 관찰'],
+            ['emotional', '말벗·정서 지원'], ['cognitive', '인지활동'],
+            ['cleaning', '청소·정돈'], ['laundry', '세탁'], ['shopping', '장보기·취사']
+        ];
+        let editingBillingId = null;
+        let editingDailyId = null;
+
+        function ensureEditModal() {
+            if (document.getElementById('editModal')) return;
+            const wrap = document.createElement('div');
+            wrap.id = 'editModal';
+            wrap.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;';
+            wrap.innerHTML = `
+                <div class="bg-white rounded-xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                    <h2 class="text-xl font-bold mb-2">청부 수정</h2>
+                    <div id="editReason" class="text-sm text-red-600 mb-4"></div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold mb-1">서비스 유형</label>
+                            <select id="editService" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${Object.entries(SERVICE_NAMES_EDIT).map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">제공 시간</label>
+                            <select id="editDuration" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${[30, 60, 90, 120, 180, 240].map(m => `<option value="${m}">${m}분</option>`).join('')}</select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">제공 항목</label>
+                            <div class="grid grid-cols-2 gap-2 text-sm">${CARE_ITEMS_EDIT.map(([v, l]) => `<label class="flex items-center gap-2"><input type="checkbox" name="editItem" value="${v}"> ${l}</label>`).join('')}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">컨디션</label>
+                            <select id="editCondition" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="">선택하세요</option><option value="good">좋음</option><option value="normal">보통</option><option value="poor">나쁨</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">기록 내용</label>
+                            <textarea id="editNotes" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="saveEdit()" class="flex-1 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700">저장</button>
+                        <button onclick="closeEdit()" class="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200">취소</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(wrap);
+        }
+
+        async function openEdit(billingId) {
+            const billing = billings.find(b => b.id === billingId);
+            if (!billing || !billing.daily_record_id) { showMessage('수정할 기록 정보를 찾을 수 없습니다', 'error'); return; }
+            const d = await (await fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`)).json();
+            const rec = (d.records || []).find(r => r.id === billing.daily_record_id);
+            if (!rec) { showMessage('기록을 찾을 수 없습니다', 'error'); return; }
+
+            ensureEditModal();
+            editingBillingId = billingId;
+            editingDailyId = billing.daily_record_id;
+            document.getElementById('editReason').textContent = billing.approval_status === 'rejected' && billing.rejection_reason
+                ? `센터장 보완 요청 사유: ${billing.rejection_reason}` : '';
+            document.getElementById('editService').value = rec.service_type || 'basic_care';
+            document.getElementById('editDuration').value = rec.duration_minutes || 60;
+            const items = (rec.care_items || '').split(',');
+            document.querySelectorAll('input[name="editItem"]').forEach(cb => { cb.checked = items.includes(cb.value); });
+            document.getElementById('editCondition').value = rec.condition || '';
+            document.getElementById('editNotes').value = rec.notes || '';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEdit() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        async function saveEdit() {
+            const careItems = Array.from(document.querySelectorAll('input[name="editItem"]:checked')).map(cb => cb.value).join(',');
+            const r = await fetch(`${API_URL}/records/daily/${editingDailyId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: currentUser.id,
+                    service_type: document.getElementById('editService').value,
+                    duration_minutes: parseInt(document.getElementById('editDuration').value),
+                    care_items: careItems,
+                    condition: document.getElementById('editCondition').value,
+                    notes: document.getElementById('editNotes').value
+                })
+            });
+            if (!r.ok) {
+                const e = await r.json().catch(() => ({}));
+                showMessage(`수정 실패: ${e.detail || '오류'}`, 'error');
+                return;
+            }
+            closeEdit();
+            showMessage('수정했습니다. 확인 후 다시 제출해 주세요.', 'success');
+            await loadBillings();
         }
 
         async function postSubmit(id) {
