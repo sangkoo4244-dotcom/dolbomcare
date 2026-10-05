@@ -644,6 +644,15 @@
             const guardianName = document.getElementById('guardianName').value;
             const guardianPhone = document.getElementById('guardianPhone').value;
 
+            if (recognitionStart && recognitionEnd && recognitionEnd < recognitionStart) {
+                alert('인정 종료일이 시작일보다 빠를 수 없습니다. 인정서의 날짜를 다시 확인해 주세요.');
+                return;
+            }
+            const today = new Date().toISOString().slice(0, 10);
+            if (recognitionEnd && recognitionEnd < today && !confirm('인정 유효기간이 지났습니다. 그래도 저장할까요? (갱신 여부를 확인하세요)')) {
+                return;
+            }
+
             try {
                 const method = currentResidentId ? 'PUT' : 'POST';
                 const url = currentResidentId

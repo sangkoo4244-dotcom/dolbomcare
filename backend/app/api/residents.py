@@ -195,6 +195,17 @@ async def update_resident_grade(
         }
     }
 
+
+def parse_recognition_dates(start: str | None, end: str | None):
+    try:
+        start_date = date.fromisoformat(start) if start else None
+        end_date = date.fromisoformat(end) if end else None
+    except ValueError:
+        raise HTTPException(status_code=400, detail="인정 기간은 YYYY-MM-DD 형식으로 입력해 주세요")
+    if start_date and end_date and end_date < start_date:
+        raise HTTPException(status_code=400, detail="인정 종료일이 시작일보다 빠를 수 없습니다")
+    return start_date, end_date
+
 @router.post("/")
 async def create_resident(
     resident_data: ResidentCreate,
@@ -218,9 +229,11 @@ async def create_resident(
     ).first()
     if existing:
         raise HTTPException(status_code=400, detail="동일한 이용자가 이미 등록되어 있습니다")
+    recognition_start, recognition_end = parse_recognition_dates(resident_data.recognition_start, resident_data.recognition_end)
 
     try:
         birth_date = date.fromisoformat(resident_data.birth_date) if resident_data.birth_date else None
+
 
         new_resident = Resident(
             center_id=resident_data.center_id,
@@ -235,8 +248,8 @@ async def create_resident(
             gender=resident_data.gender,
             address=resident_data.address,
             recognition_number=resident_data.recognition_number,
-            recognition_start=date.fromisoformat(resident_data.recognition_start) if resident_data.recognition_start else None,
-            recognition_end=date.fromisoformat(resident_data.recognition_end) if resident_data.recognition_end else None,
+            recognition_start=recognition_start,
+            recognition_end=recognition_end,
             guardian_name=resident_data.guardian_name,
             guardian_phone=resident_data.guardian_phone
         )
@@ -306,10 +319,12 @@ async def update_resident(
             resident.address = update_data.address
         if update_data.recognition_number is not None:
             resident.recognition_number = update_data.recognition_number
-        if update_data.recognition_start is not None:
-            resident.recognition_start = date.fromisoformat(update_data.recognition_start)
-        if update_data.recognition_end is not None:
-            resident.recognition_end = date.fromisoformat(update_data.recognition_end)
+        new_start, new_end = parse_recognition_dates(
+            update_data.recognition_start if update_data.recognition_start is not None else (resident.recognition_start.isoformat() if resident.recognition_start else None),
+            update_data.recognition_end if update_data.recognition_end is not None else (resident.recognition_end.isoformat() if resident.recognition_end else None),
+        )
+        resident.recognition_start = new_start
+        resident.recognition_end = new_end
         if update_data.guardian_name is not None:
             resident.guardian_name = update_data.guardian_name
         if update_data.guardian_phone is not None:
