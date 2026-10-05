@@ -31,10 +31,12 @@ const SIDEBAR_MENUS = {
         { href: 'caregiver_billing.html', icon: '📋', label: '나의 청부' },
         { href: 'my_salary.html', icon: '💵', label: '나의 급여' },
         { href: 'my_schedule.html', icon: '📅', label: '나의 일정' },
-        { href: 'notifications.html', icon: '🔔', label: '알림' }
+        { href: 'notifications.html', icon: '🔔', label: '알림' },
+        { href: 'messages.html', icon: '💬', label: '보호자 소통' }
     ],
     guardian: [
-        { href: 'guardian_home.html', icon: '🏠', label: '이용자 방문 기록' }
+        { href: 'guardian_home.html', icon: '🏠', label: '이용자 방문 기록' },
+        { href: 'messages.html', icon: '💬', label: '센터와 메시지' }
     ],
     center_manager: [
         { href: 'dashboard.html', icon: '📊', label: '대시보드' },
@@ -45,7 +47,8 @@ const SIDEBAR_MENUS = {
         { href: 'staff_management.html', icon: '👔', label: '직원관리' },
         { href: 'monthly_settlement.html', icon: '📈', label: '월별정산' },
         { href: 'profit_analysis.html', icon: '📊', label: '수익분석' },
-        { href: 'guardian_management.html', icon: '🤝', label: '보호자 관리' }
+        { href: 'guardian_management.html', icon: '🤝', label: '보호자 관리' },
+        { href: 'messages.html', icon: '💬', label: '보호자 소통' }
     ]
 };
 

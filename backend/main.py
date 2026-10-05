@@ -13,6 +13,7 @@ from app.api import salary
 from app.api import schedule
 from app.api import notifications
 from app.api import guardian
+from app.api import messages
 from app.database import Base, engine, SessionLocal
 import os
 from pathlib import Path
@@ -150,6 +151,7 @@ app.include_router(salary.router, prefix="/api/v1/salary", tags=["salary"], depe
 app.include_router(schedule.router, prefix="/api/v1/schedule", tags=["schedule"], dependencies=[Depends(get_current_user)])
 app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"], dependencies=[Depends(get_current_user)])
 app.include_router(guardian.router, prefix="/api/v1/guardian", tags=["guardian"])
+app.include_router(messages.router, prefix="/api/v1/messages", tags=["messages"], dependencies=[Depends(get_current_user)])
 
 @app.middleware("http")
 async def revalidate_pages(request, call_next):

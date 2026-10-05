@@ -227,3 +227,15 @@ class GuardianInvite(Base):
     guardian_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     expires_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class ResidentMessage(Base):
+    __tablename__ = "resident_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    sender_id = Column(Integer, ForeignKey("users.id"))
+    sender_role = Column(String)  # 'guardian', 'caregiver', 'center_manager'
+    body = Column(Text)
+    is_deleted = Column(Boolean, default=False)  # 센터장만 삭제 가능, 행은 감사를 위해 남긴다
+    created_at = Column(DateTime, default=datetime.utcnow)

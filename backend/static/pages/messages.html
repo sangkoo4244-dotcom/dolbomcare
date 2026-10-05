@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>돌봄케어 - 보호자 소통</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex min-h-screen">
+        <aside class="w-72 bg-gradient-to-b from-gray-800 to-gray-900 text-white fixed h-screen overflow-y-auto">
+            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
+                <div class="text-3xl">❤️</div>
+                <div><div class="text-lg font-bold">돌봄케어</div><div class="text-xs text-gray-400">Care Management</div></div>
+            </div>
+            <nav id="navContent" class="p-4"></nav>
+        </aside>
+        <main class="ml-72 w-full flex flex-col">
+            <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
+                <h1 class="text-3xl font-bold text-gray-900">💬 보호자 소통</h1>
+                <div class="flex items-center gap-6">
+                    <div class="text-right"><div class="text-sm font-semibold text-gray-900" id="userName">사용자</div><div class="text-xs text-gray-500" id="userRole">역할</div></div>
+                    <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-8 space-y-6">
+                <div class="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 text-sm">
+                    ⚠️ 응급 상황이나 건강이 급하게 나빠졌을 때는 메시지 대신 센터 전화를 이용해 주세요. 메시지는 확인까지 시간이 걸릴 수 있습니다. 모든 대화는 센터에 기록됩니다.
+                </div>
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 flex items-center gap-3">
+                    <label class="text-sm font-semibold text-gray-700">이용자</label>
+                    <select id="residentSelect" onchange="loadMessages()" class="border border-gray-300 rounded-lg px-3 py-2 min-w-64"></select>
+                </div>
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                    <ul id="messageList" class="space-y-4 max-h-[480px] overflow-y-auto mb-6"></ul>
+                    <form id="sendForm" class="space-y-3">
+                        <textarea id="body" rows="3" maxlength="1000" required placeholder="메시지를 입력하세요" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
+                        <div class="flex justify-between items-center">
+                            <div id="message" class="text-sm"></div>
+                            <button type="submit" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700">보내기</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="menu.js"></script>
+    <script>
+        let currentUser = null;
+        const API_URL = '/api/v1';
+        const ROLE_CLASS = { guardian: 'bg-amber-50 border-amber-200', caregiver: 'bg-emerald-50 border-emerald-200', center_manager: 'bg-blue-50 border-blue-200' };
+
+        function checkAuth() {
+            const token = localStorage.getItem('access_token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (!token || !user.id) { window.location.href = './login.html'; return; }
+            currentUser = user;
+            document.getElementById('userName').textContent = user.full_name || '사용자';
+            document.getElementById('userRole').textContent = { guardian: '보호자', caregiver: '요양사', center_manager: '센터장' }[user.role] || '';
+            renderSidebar();
+            loadResidents();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text ?? '';
+            return div.innerHTML;
+        }
+
+        async function loadResidents() {
+            let residents = [];
+            if (currentUser.role === 'guardian') {
+                residents = (await (await fetch(`${API_URL}/guardian/my-residents`)).json()).residents || [];
+            } else {
+                residents = (await (await fetch(`${API_URL}/residents/?center_id=${currentUser.center_id}`)).json()).residents || [];
+            }
+            document.getElementById('residentSelect').innerHTML = residents
+                .map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
+            if (residents.length) loadMessages();
+            else document.getElementById('messageList').innerHTML = '<li class="text-center text-gray-400 py-8">연결된 이용자가 없습니다</li>';
+        }
+
+        async function loadMessages() {
+            const id = document.getElementById('residentSelect').value;
+            if (!id) return;
+            const r = await fetch(`${API_URL}/messages/residents/${id}`);
+            const list = document.getElementById('messageList');
+            if (!r.ok) { list.innerHTML = '<li class="text-center text-gray-400 py-8">메시지를 불러올 수 없습니다</li>'; return; }
+            const d = await r.json();
+            if (!d.messages.length) { list.innerHTML = '<li class="text-center text-gray-400 py-8">아직 메시지가 없습니다</li>'; return; }
+            list.innerHTML = d.messages.map(m => `
+                <li class="border rounded-lg p-4 ${ROLE_CLASS[m.sender_role] || 'bg-gray-50 border-gray-200'}">
+                    <div class="flex justify-between items-center mb-1 text-sm">
+                        <span class="font-semibold text-gray-900">${escapeHtml(m.sender_name)} <span class="text-gray-500">(${escapeHtml(m.sender_role_label)})</span></span>
+                        <span class="flex items-center gap-3 text-gray-500">${escapeHtml((m.created_at || '').replace('T', ' ').slice(0, 16))}
+                            ${currentUser.role === 'center_manager' ? `<button onclick="deleteMessage(${m.id})" class="text-red-600 hover:underline">삭제</button>` : ''}
+                        </span>
+                    </div>
+                    <div class="text-gray-800 whitespace-pre-wrap">${escapeHtml(m.body)}</div>
+                </li>`).join('');
+            list.scrollTop = list.scrollHeight;
+        }
+
+        function showMessage(text, ok) {
+            const el = document.getElementById('message');
+            el.textContent = text;
+            el.className = `text-sm ${ok ? 'text-emerald-700' : 'text-red-600'}`;
+        }
+
+        document.getElementById('sendForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('residentSelect').value;
+            const body = document.getElementById('body').value;
+            const r = await fetch(`${API_URL}/messages/residents/${id}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body }),
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { showMessage(d.detail || '보내지 못했습니다', false); return; }
+            document.getElementById('body').value = '';
+            showMessage('보냈습니다', true);
+            loadMessages();
+        });
+
+        async function deleteMessage(id) {
+            if (!confirm('이 메시지를 삭제할까요? 삭제해도 센터 기록에는 남습니다.')) return;
+            const r = await fetch(`${API_URL}/messages/${id}`, { method: 'DELETE' });
+            if (!r.ok) { const d = await r.json().catch(() => ({})); showMessage(d.detail || '삭제하지 못했습니다', false); return; }
+            loadMessages();
+        }
+
+        function logout() { if (confirm('로그아웃하시겠습니까?')) { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; } }
+        window.addEventListener('load', checkAuth);
+    </script>
+</body>
+</html>
