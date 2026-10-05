@@ -97,8 +97,10 @@
                         </span>
                     </div>
                     <div class="text-gray-800 whitespace-pre-wrap">${escapeHtml(m.body)}</div>
+                    ${m.read_by.length ? `<div class="text-xs text-emerald-700 mt-2">✓ ${m.read_by.map(escapeHtml).join(', ')} 확인</div>` : ''}
                 </li>`).join('');
             list.scrollTop = list.scrollHeight;
+            await fetch(`${API_URL}/messages/residents/${id}/read`, { method: 'POST' });
         }
 
         function showMessage(text, ok) {

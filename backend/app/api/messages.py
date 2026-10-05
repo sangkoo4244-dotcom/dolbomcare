@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.notifications import notify
 from app.auth import get_current_user, require_manager
 from app.database import get_db
-from app.models import DailyRecord, Resident, ResidentMessage, Schedule, User
+from app.models import DailyRecord, Resident, ResidentMessage, ResidentThreadRead, Schedule, User
 
 router = APIRouter()
 
@@ -53,7 +53,30 @@ def _staff_recipients(db: Session, resident: Resident, sender_id: int) -> set:
     return (caregiver_ids | manager_ids) - {sender_id, None}
 
 
-def _to_dict(m: ResidentMessage, names: dict) -> dict:
+def _accessible_residents(db: Session, user: User) -> list:
+    if user.role == "guardian":
+        return db.query(Resident).filter(Resident.guardian_id == user.id).all()
+    return db.query(Resident).filter(Resident.center_id == user.center_id).all()
+
+
+def _last_read_map(db: Session, user_id: int, resident_id: int) -> dict:
+    row = db.query(ResidentThreadRead).filter(
+        ResidentThreadRead.user_id == user_id, ResidentThreadRead.resident_id == resident_id
+    ).first()
+    return row.last_read_message_id if row else 0
+
+
+def _unread_for(db: Session, user: User, resident_id: int) -> int:
+    last_read = _last_read_map(db, user.id, resident_id)
+    return db.query(ResidentMessage).filter(
+        ResidentMessage.resident_id == resident_id,
+        ResidentMessage.id > last_read,
+        ResidentMessage.sender_id != user.id,
+        ResidentMessage.is_deleted == False,  # noqa: E712
+    ).count()
+
+
+def _to_dict(m: ResidentMessage, names: dict, read_by: list) -> dict:
     return {
         "id": m.id,
         "sender_name": names.get(m.sender_id),
@@ -61,6 +84,7 @@ def _to_dict(m: ResidentMessage, names: dict) -> dict:
         "sender_role_label": ROLE_LABELS.get(m.sender_role, m.sender_role),
         "body": m.body,
         "created_at": m.created_at.isoformat() if m.created_at else None,
+        "read_by": read_by,
     }
 
 
@@ -72,7 +96,41 @@ def list_messages(resident_id: int, db: Session = Depends(get_db), user: User = 
         ResidentMessage.resident_id == resident_id, ResidentMessage.is_deleted == False  # noqa: E712
     ).order_by(ResidentMessage.created_at, ResidentMessage.id).all()
     names = {u.id: u.full_name for u in db.query(User).all()}
-    return {"resident_name": resident.name, "messages": [_to_dict(m, names) for m in rows]}
+    readers = db.query(ResidentThreadRead).filter(ResidentThreadRead.resident_id == resident_id).all()
+    out = []
+    for m in rows:
+        read_by = sorted(
+            names[r.user_id] for r in readers
+            if r.user_id != m.sender_id and r.user_id in names and r.last_read_message_id >= m.id
+        )
+        out.append(_to_dict(m, names, read_by))
+    return {"resident_name": resident.name, "messages": out}
+
+
+@router.get("/unread-count")
+def unread_count(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    by_resident = {}
+    for resident in _accessible_residents(db, user):
+        count = _unread_for(db, user, resident.id)
+        if count:
+            by_resident[resident.id] = count
+    return {"unread_count": sum(by_resident.values()), "by_resident": by_resident}
+
+
+@router.post("/residents/{resident_id}/read")
+def mark_read(resident_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    resident = _resident_or_404(db, resident_id)
+    _check_access(resident, user)
+    latest = db.query(ResidentMessage.id).filter(ResidentMessage.resident_id == resident_id).order_by(ResidentMessage.id.desc()).first()
+    row = db.query(ResidentThreadRead).filter(
+        ResidentThreadRead.user_id == user.id, ResidentThreadRead.resident_id == resident_id
+    ).first()
+    if not row:
+        row = ResidentThreadRead(user_id=user.id, resident_id=resident_id, last_read_message_id=0)
+        db.add(row)
+    row.last_read_message_id = max(row.last_read_message_id or 0, latest[0] if latest else 0)
+    db.commit()
+    return {"status": "success"}
 
 
 @router.post("/residents/{resident_id}")

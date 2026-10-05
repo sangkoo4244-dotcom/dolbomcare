@@ -88,4 +88,23 @@ function renderSidebar() {
             <span>로그아웃</span>
         </a>
     `;
+    showUnreadMessageBadge();
+}
+
+// 보호자 소통 메뉴에 안 읽은 메시지 개수를 표시한다 (실패해도 메뉴는 그대로 둔다)
+async function showUnreadMessageBadge() {
+    try {
+        const r = await fetch('/api/v1/messages/unread-count');
+        if (!r.ok) return;
+        const { unread_count } = await r.json();
+        if (!unread_count) return;
+        document.querySelectorAll('a[href$="messages.html"] .side-icon').forEach(icon => {
+            const badge = document.createElement('span');
+            badge.textContent = unread_count;
+            badge.style.cssText = 'margin-left:auto;background:#dc2626;color:#fff;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700;';
+            icon.parentElement.appendChild(badge);
+        });
+    } catch (e) {
+        // 배지는 부가 기능이므로 실패해도 무시한다
+    }
 }

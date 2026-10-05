@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, Boolean, Text, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, DateTime, Float, Boolean, Text, ForeignKey, Date, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -239,3 +239,12 @@ class ResidentMessage(Base):
     body = Column(Text)
     is_deleted = Column(Boolean, default=False)  # 센터장만 삭제 가능, 행은 감사를 위해 남긴다
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class ResidentThreadRead(Base):
+    __tablename__ = "resident_thread_reads"
+    __table_args__ = (UniqueConstraint("user_id", "resident_id", name="uq_thread_read"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    last_read_message_id = Column(Integer, default=0)

@@ -109,3 +109,24 @@ def test_deleted_message_row_is_kept_for_audit(setup):
     row = db.query(models.ResidentMessage).filter(models.ResidentMessage.id == message_id).first()
     assert row is not None and row.is_deleted is True
     db.close()
+
+
+def test_unread_count_excludes_own_messages_and_clears_after_reading(setup):
+    send(setup, "질문드립니다", GUARDIAN)
+    assert setup.get("/api/v1/messages/unread-count", headers=CAREGIVER).json()["unread_count"] == 1
+    assert setup.get("/api/v1/messages/unread-count", headers=GUARDIAN).json()["unread_count"] == 0
+    assert setup.post("/api/v1/messages/residents/1/read", headers=CAREGIVER).status_code == 200
+    assert setup.get("/api/v1/messages/unread-count", headers=CAREGIVER).json()["unread_count"] == 0
+
+
+def test_guardian_message_shows_who_has_read_it(setup):
+    send(setup, "확인해 주세요", GUARDIAN)
+    setup.post("/api/v1/messages/residents/1/read", headers=CAREGIVER)
+    body = setup.get("/api/v1/messages/residents/1", headers=GUARDIAN).json()
+    assert body["messages"][0]["read_by"] == ["요양사1"]
+
+
+def test_unread_count_only_covers_residents_the_user_can_see(setup):
+    send(setup, "질문드립니다", GUARDIAN)
+    assert setup.get("/api/v1/messages/unread-count", headers=OUTSIDER).json()["unread_count"] == 0
+    assert setup.get("/api/v1/messages/unread-count", headers=OTHER_MANAGER).json()["unread_count"] == 0
