@@ -3,6 +3,7 @@ services:
     name: dolbomcare
     env: docker
     plan: free
+    autoDeploy: false
     healthCheckPath: /api/v1/health
     envVars:
       - key: DEBUG

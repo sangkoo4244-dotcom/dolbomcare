@@ -585,7 +585,7 @@
                             <div class="action-buttons">
                                 <button class="action-btn success" onclick="approveBilling(${record.id})">승인</button>
                                 <button class="action-btn danger" onclick="rejectBilling(${record.id})">거절</button>
-                                ${(record.review_flags || []).length ? `<div class="text-xs text-red-600 font-semibold mt-1">⚠️ ${record.review_flags.join(', ')}${record.review_note ? '' : ' · 확인 사유 필요'}</div>` : ''}
+                                ${(record.review_flags || []).length ? `<div class="text-xs text-red-600 font-semibold mt-1">⚠️ ${record.review_flags.join(', ')}</div>` : ''}
                             </div>
                         `;
                     } else if (record.approval_status === 'approved') {
@@ -662,27 +662,14 @@
             if (!confirm('이 청부를 승인하시겠습니까?')) return;
 
             try {
-                const post = reason => fetch(`${API_URL}/billing/${recordId}/approve`, {
+                const response = await fetch(`${API_URL}/billing/${recordId}/approve`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         user_id: currentUser.id,
-                        user_role: currentUser.role,
-                        reason: reason
+                        user_role: currentUser.role
                     })
                 });
-
-                let response = await post('');
-                if (response.status === 400) {
-                    const err = await response.json();
-                    if (err.detail && err.detail.startsWith('확인 사유')) {
-                        const reason = prompt(`${err.detail}\n확인 사유를 입력하세요:`);
-                        if (!reason) return;
-                        response = await post(reason);
-                    } else {
-                        throw new Error(err.detail || '승인 실패');
-                    }
-                }
 
                 if (!response.ok) {
                     throw new Error('승인 실패');
@@ -699,6 +686,10 @@
         async function rejectBilling(recordId) {
             const reason = prompt('거절 사유를 입력하세요:');
             if (reason === null) return;
+            if (!reason.trim()) {
+                alert('거절 사유를 입력해 주세요');
+                return;
+            }
 
             try {
                 const response = await fetch(`${API_URL}/billing/${recordId}/reject`, {

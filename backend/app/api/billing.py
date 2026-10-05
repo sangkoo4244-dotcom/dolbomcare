@@ -199,13 +199,6 @@ async def approve_billing_record(
     if record.approval_status != "pending":
         raise HTTPException(status_code=400, detail="대기 중인 청부만 승인 가능합니다")
 
-    daily = db.query(DailyRecord).filter(DailyRecord.id == record.daily_record_id).first() if record.daily_record_id else None
-    flags = review_flags(db, record, daily)
-    note = (request.reason or "").strip()
-    if flags and not note:
-        raise HTTPException(status_code=400, detail=f"확인 사유를 입력해 주세요: {', '.join(flags)}")
-    record.review_note = note or None
-
     record.approval_status = "approved"
     record.approved_by = request.user_id
     record.approved_at = datetime.utcnow()
