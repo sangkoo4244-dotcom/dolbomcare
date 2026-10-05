@@ -599,9 +599,9 @@
                     successMessage.textContent = '로그인 되었습니다. 이동 중...';
                     successMessage.classList.add('show');
 
-                    // 대시보드로 이동
+                    // 역할별 시작 화면으로 이동 (보호자는 방문 기록 화면)
                     setTimeout(() => {
-                        window.location.href = './dashboard.html';
+                        window.location.href = data.user.role === 'guardian' ? './guardian_home.html' : './dashboard.html';
                     }, 1000);
                 } else {
                     errorMessage.textContent = data.detail || '로그인에 실패했습니다.';

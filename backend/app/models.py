@@ -215,3 +215,15 @@ class Notification(Base):
     message = Column(String)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class GuardianInvite(Base):
+    __tablename__ = "guardian_invites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String, unique=True, index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    status = Column(String, default="issued")  # issued, submitted, approved, rejected
+    guardian_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    expires_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)

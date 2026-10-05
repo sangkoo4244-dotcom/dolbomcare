@@ -33,6 +33,9 @@ const SIDEBAR_MENUS = {
         { href: 'my_schedule.html', icon: '📅', label: '나의 일정' },
         { href: 'notifications.html', icon: '🔔', label: '알림' }
     ],
+    guardian: [
+        { href: 'guardian_home.html', icon: '🏠', label: '이용자 방문 기록' }
+    ],
     center_manager: [
         { href: 'dashboard.html', icon: '📊', label: '대시보드' },
         { href: 'resident_management.html', icon: '👥', label: '이용자관리' },
@@ -41,7 +44,8 @@ const SIDEBAR_MENUS = {
         { href: 'billing_management.html', icon: '💰', label: '청부관리' },
         { href: 'staff_management.html', icon: '👔', label: '직원관리' },
         { href: 'monthly_settlement.html', icon: '📈', label: '월별정산' },
-        { href: 'profit_analysis.html', icon: '📊', label: '수익분석' }
+        { href: 'profit_analysis.html', icon: '📊', label: '수익분석' },
+        { href: 'guardian_management.html', icon: '🤝', label: '보호자 관리' }
     ]
 };
 
@@ -65,7 +69,8 @@ function renderSidebar() {
     }
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const items = SIDEBAR_MENUS[user.role === 'caregiver' ? 'caregiver' : 'center_manager'];
+    const roleMenu = { caregiver: 'caregiver', guardian: 'guardian' }[user.role] || 'center_manager';
+    const items = SIDEBAR_MENUS[roleMenu];
     const current = window.location.pathname.split('/').pop();
     const nav = document.querySelector('#navContent, .sidebar-nav');
     nav.style.padding = '16px';
