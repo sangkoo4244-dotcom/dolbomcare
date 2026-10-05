@@ -201,6 +201,24 @@
         <!-- Content -->
         <div class="content">
             <div class="table-wrapper">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-bottom: 16px; padding: 16px; background: #f9fafb; border-radius: 8px;">
+                    <label style="display: flex; flex-direction: column; font-size: 12px; gap: 4px;">이름
+                        <input id="newStaffName" type="text" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 140px;">
+                    </label>
+                    <label style="display: flex; flex-direction: column; font-size: 12px; gap: 4px;">이메일(로그인 아이디)
+                        <input id="newStaffEmail" type="email" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 220px;">
+                    </label>
+                    <label style="display: flex; flex-direction: column; font-size: 12px; gap: 4px;">초기 비밀번호(8자 이상)
+                        <input id="newStaffPassword" type="password" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 180px;">
+                    </label>
+                    <label style="display: flex; flex-direction: column; font-size: 12px; gap: 4px;">역할
+                        <select id="newStaffRole" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                            <option value="caregiver">요양사</option>
+                            <option value="center_manager">센터장</option>
+                        </select>
+                    </label>
+                    <button onclick="addStaff()" style="padding: 9px 16px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">직원 추가</button>
+                </div>
                 <table class="table">
                     <thead>
                         <tr>
@@ -290,6 +308,38 @@
             } catch (error) {
                 console.error('❌ 직원 정보 로드 실패:', error);
                 document.getElementById('staffTableBody').innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--text-secondary);">직원 정보를 불러올 수 없습니다</td></tr>';
+            }
+        }
+
+        async function addStaff() {
+            const name = document.getElementById('newStaffName').value.trim();
+            const email = document.getElementById('newStaffEmail').value.trim();
+            const password = document.getElementById('newStaffPassword').value;
+            const role = document.getElementById('newStaffRole').value;
+            if (!name || !email || !password) {
+                alert('이름, 이메일, 초기 비밀번호를 모두 입력해 주세요');
+                return;
+            }
+            if (password.length < 8) {
+                alert('비밀번호는 8자 이상이어야 합니다');
+                return;
+            }
+            try {
+                const response = await fetch(`${API_URL}/users/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, full_name: name, role })
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    const message = Array.isArray(err.detail) ? err.detail.map(d => d.msg).join(', ') : err.detail;
+                    throw new Error(message || '직원 추가 실패');
+                }
+                alert(`${name}님의 계정을 만들었습니다. 이메일: ${email}`);
+                ['newStaffName', 'newStaffEmail', 'newStaffPassword'].forEach(id => document.getElementById(id).value = '');
+                loadStaffData();
+            } catch (error) {
+                alert('직원 추가 중 오류가 발생했습니다: ' + error.message);
             }
         }
 

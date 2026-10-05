@@ -45,17 +45,24 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     return encoded_jwt
 
 @router.post("/register", response_model=UserResponse)
-async def register(user_create: UserCreate, db: Session = Depends(get_db), _: User = Depends(require_manager)):
+async def register(user_create: UserCreate, db: Session = Depends(get_db), manager: User = Depends(require_manager)):
+    """센터장이 같은 센터에 직원 계정을 만든다"""
+    if user_create.role not in ("caregiver", "center_manager"):
+        raise HTTPException(status_code=400, detail="역할은 요양사 또는 센터장만 가능합니다")
+    if len(user_create.password) < 8:
+        raise HTTPException(status_code=400, detail="비밀번호는 8자 이상이어야 합니다")
     db_user = db.query(User).filter(User.email == user_create.email).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="이미 등록된 이메일입니다")
 
     hashed_password = get_password_hash(user_create.password)
     db_user = User(
         email=user_create.email,
         hashed_password=hashed_password,
         full_name=user_create.full_name,
-        role=user_create.role
+        role=user_create.role,
+        center_id=manager.center_id,
+        is_active=True
     )
     db.add(db_user)
     db.commit()

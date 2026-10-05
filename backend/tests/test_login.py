@@ -111,3 +111,29 @@ def test_caregiver_cannot_reset_passwords(tmp_path):
     token = create_access_token({"sub": "caregiver1@test.com", "uid": 2, "role": "caregiver"}, timedelta(hours=1))
     response = client.post("/api/v1/users/2/password", json={"new_password": "brand-new-1234"}, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 403
+
+
+def test_manager_creates_caregiver_in_own_center_and_it_can_log_in(tmp_path):
+    client = make_staff_client(tmp_path)
+    body = {"email": "new1@test.com", "password": "first-pass-1234", "full_name": "신규요양사", "role": "caregiver"}
+    created = client.post("/api/v1/users/register", json=body, headers=manager_token())
+    assert created.status_code == 200
+    assert created.json()["center_id"] == 1
+    assert client.post("/api/v1/users/login", json={"email": "new1@test.com", "password": "first-pass-1234"}).status_code == 200
+
+
+def test_caregiver_cannot_create_staff(tmp_path):
+    from datetime import timedelta
+    from app.api.users import create_access_token
+    client = make_staff_client(tmp_path)
+    token = create_access_token({"sub": "caregiver1@test.com", "uid": 2, "role": "caregiver"}, timedelta(hours=1))
+    body = {"email": "new2@test.com", "password": "first-pass-1234", "full_name": "x", "role": "caregiver"}
+    assert client.post("/api/v1/users/register", json=body, headers={"Authorization": f"Bearer {token}"}).status_code == 403
+
+
+def test_create_rejects_short_password_and_unknown_role(tmp_path):
+    client = make_staff_client(tmp_path)
+    short = {"email": "new3@test.com", "password": "short", "full_name": "x", "role": "caregiver"}
+    assert client.post("/api/v1/users/register", json=short, headers=manager_token()).status_code == 400
+    bad_role = {"email": "new4@test.com", "password": "first-pass-1234", "full_name": "x", "role": "guardian"}
+    assert client.post("/api/v1/users/register", json=bad_role, headers=manager_token()).status_code == 400
