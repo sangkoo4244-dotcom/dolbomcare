@@ -248,3 +248,22 @@ class ResidentThreadRead(Base):
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
     last_read_message_id = Column(Integer, default=0)
+
+
+class SalaryStatement(Base):
+    __tablename__ = "salary_statements"
+    __table_args__ = (UniqueConstraint("caregiver_id", "year_month", name="uq_statement_month"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    caregiver_id = Column(Integer, ForeignKey("users.id"), index=True)
+    year_month = Column(String)
+    billing_total = Column(Integer)
+    income_tax = Column(Integer)
+    pension = Column(Integer)
+    health = Column(Integer)
+    employment = Column(Integer)
+    total_deduction = Column(Integer)
+    net = Column(Integer)
+    confirmed_by = Column(Integer, ForeignKey("users.id"))
+    confirmed_at = Column(DateTime, default=datetime.utcnow)

@@ -48,6 +48,7 @@ const SIDEBAR_MENUS = {
         { href: 'monthly_settlement.html', icon: '📈', label: '월별정산' },
         { href: 'profit_analysis.html', icon: '📊', label: '수익분석' },
         { href: 'guardian_management.html', icon: '🤝', label: '보호자 관리' },
+        { href: 'statement_confirm.html', icon: '🧾', label: '급여 확정' },
         { href: 'messages.html', icon: '💬', label: '보호자 소통' }
     ]
 };
