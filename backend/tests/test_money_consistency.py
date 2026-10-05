@@ -115,3 +115,11 @@ def test_no_duplicate_routes_in_billing_router():
 def auth(uid, role, email):
     token = create_access_token({"sub": email, "uid": uid, "role": role}, timedelta(hours=1))
     return {"Authorization": f"Bearer {token}"}
+
+
+def test_grade_limits_use_one_2026_table():
+    from app.api.billing import CARE_GRADE_LIMITS
+    from app.billing_rules import MONTHLY_LIMITS
+    assert CARE_GRADE_LIMITS is MONTHLY_LIMITS
+    assert MONTHLY_LIMITS[1] == 2512900
+    assert MONTHLY_LIMITS[5] == 1208900

@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.models import BillingRecord, User, Resident, Center, DailyRecord
 from app.review import review_flags
+from app.billing_rules import MONTHLY_LIMITS
 from app.billing_rules import REVENUE_STATUSES
 from app.schemas import BillingRecordCreate, BillingRecordResponse, BillingMonthlySummary
 from app.database import get_db
@@ -25,13 +26,7 @@ class RejectionRequest(BaseModel):
     reason: str = ""
 
 # 등급별 월 인정급여액
-CARE_GRADE_LIMITS = {
-    1: 1577500,  # 1등급 (최중증)
-    2: 1399500,  # 2등급 (중증)
-    3: 1193000,  # 3등급 (중중증)
-    4: 1082500,  # 4등급 (중등증)
-    5: 235000,   # 5등급 (경증)
-}
+CARE_GRADE_LIMITS = MONTHLY_LIMITS  # 2026년 등급별 월 한도 (billing_rules 한 곳에서 관리)
 
 # 서비스 카테고리별 본인부담율 (건강보험공단 기준)
 PATIENT_PAY_RATE = {
@@ -77,7 +72,7 @@ async def create_billing_record(
     client_type = resident.client_type if resident.client_type else "일반"
 
     # 월 인정급여액을 기준으로 청부액 계산 (공단 기준: 월 1회 청구)
-    monthly_limit = CARE_GRADE_LIMITS.get(care_grade, 1577500)
+    monthly_limit = CARE_GRADE_LIMITS.get(care_grade, CARE_GRADE_LIMITS[1])
 
     # 서비스 카테고리별 본인부담율 적용
     category_rates = PATIENT_PAY_RATE.get(service_category, PATIENT_PAY_RATE["재가급여"])
