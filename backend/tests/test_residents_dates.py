@@ -20,6 +20,7 @@ def client(tmp_path):
     db = Session()
     db.add(models.Center(id=1, name="센터A"))
     db.add(models.User(id=1, email="manager@example.com", hashed_password="x", full_name="센터장", role="center_manager", center_id=1))
+    db.add(models.User(id=2, email="caregiver@example.com", hashed_password="x", full_name="요양사", role="caregiver", center_id=1))
     db.commit()
     db.close()
 
@@ -66,3 +67,15 @@ def test_update_rejects_end_before_existing_start(client):
     resident_id = created["data"]["id"]
     response = client.put(f"/api/v1/residents/{resident_id}", json={"recognition_end": "2025-12-31"})
     assert response.status_code == 400
+
+
+def test_caregiver_can_only_change_health_status(client):
+    from datetime import timedelta
+    from app.api.users import create_access_token
+    created = client.post("/api/v1/residents/", json=body(recognition_start="2026-01-01", recognition_end="2027-12-31")).json()
+    resident_id = created["data"]["id"]
+    caregiver = {"Authorization": "Bearer " + create_access_token({"sub": "caregiver@example.com", "uid": 2, "role": "caregiver"}, timedelta(hours=1))}
+    assert client.put(f"/api/v1/residents/{resident_id}", json={"health_status": "warning"}, headers=caregiver).status_code == 200
+    assert client.put(f"/api/v1/residents/{resident_id}", json={"care_grade": 5}, headers=caregiver).status_code == 403
+    assert client.put(f"/api/v1/residents/{resident_id}", json={"client_type": "기초생활보장"}, headers=caregiver).status_code == 403
+    assert client.put(f"/api/v1/residents/{resident_id}", json={"recognition_end": "2030-01-01"}, headers=caregiver).status_code == 403

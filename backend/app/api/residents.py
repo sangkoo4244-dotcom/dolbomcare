@@ -282,17 +282,22 @@ async def update_resident(
     actor: User = Depends(get_current_user)
 ):
     """이용자 정보 수정 (JSON Body)
-    - 센터장: 모든 필드 수정 가능 (이름, 생년월일 포함)
-    - 요양사: 나이, 요양등급, 클라이언트 타입, 건강상태만 수정 가능
+    - 센터장: 모든 필드 수정 가능
+    - 요양사: 건강상태만 수정 가능 (등급·소득분류·인정 정보는 청구 금액에 영향을 주므로 센터장만)
     """
     resident = db.query(Resident).filter(Resident.id == resident_id).first()
     if not resident:
         raise HTTPException(status_code=404, detail="Resident not found")
 
     try:
-        # 요양사는 이름/생년월일 수정 불가
-        if actor.role == "caregiver" and (update_data.name is not None or update_data.birth_date is not None):
-            raise HTTPException(status_code=403, detail="요양사는 이용자의 기본정보(이름, 생년월일)를 수정할 수 없습니다")
+        # 요양사는 건강상태 외에는 수정할 수 없다 (청구 금액에 영향을 주는 정보 보호)
+        caregiver_locked = [
+            name for name in ("name", "birth_date", "age", "care_grade", "client_type", "gender", "address",
+                              "recognition_number", "recognition_start", "recognition_end", "guardian_name", "guardian_phone")
+            if getattr(update_data, name) is not None
+        ]
+        if actor.role == "caregiver" and caregiver_locked:
+            raise HTTPException(status_code=403, detail="요양사는 건강상태만 수정할 수 있습니다. 나머지 정보는 센터장에게 요청하세요")
 
         # 선택적 업데이트
         if update_data.name is not None:

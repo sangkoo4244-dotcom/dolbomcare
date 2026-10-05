@@ -619,12 +619,38 @@
             document.getElementById('recognitionEnd').value = resident.recognition_end || '';
             document.getElementById('guardianName').value = resident.guardian_name || '';
             document.getElementById('guardianPhone').value = resident.guardian_phone || '';
+            lockFieldsForCaregiver();
             document.getElementById('residentModal').style.display = 'flex';
+        }
+
+        function lockFieldsForCaregiver() {
+            const isCaregiver = currentUser && currentUser.role === 'caregiver';
+            const modal = document.getElementById('residentModal');
+            modal.querySelectorAll('input, select, textarea').forEach(el => {
+                const editable = el.id === 'healthStatus';
+                el.disabled = isCaregiver && !editable;
+                el.style.background = isCaregiver && !editable ? '#f3f4f6' : '';
+                el.style.color = isCaregiver && !editable ? '#6b7280' : '';
+            });
+            let note = document.getElementById('caregiverLockNote');
+            if (isCaregiver && !note) {
+                note = document.createElement('p');
+                note.id = 'caregiverLockNote';
+                note.style.cssText = 'font-size: 12px; color: #6b7280; margin: 8px 0;';
+                note.textContent = '요양사는 건강상태만 수정할 수 있습니다. 나머지 정보는 센터장에게 요청하세요.';
+                modal.querySelector('form').prepend(note);
+            }
+            if (note) note.style.display = isCaregiver ? 'block' : 'none';
         }
 
         function closeResidentModal() {
             document.getElementById('residentModal').style.display = 'none';
             document.getElementById('residentForm').reset();
+            document.querySelectorAll('#residentModal input, #residentModal select, #residentModal textarea').forEach(el => {
+                el.disabled = false;
+                el.style.background = '';
+                el.style.color = '';
+            });
             currentResidentId = null;
         }
 
@@ -659,12 +685,7 @@
                     ? `${API_URL}/residents/${currentResidentId}`
                     : `${API_URL}/residents/?user_role=${currentUser.role}`;
 
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
+                const fullBody = {
                         name,
                         center_id: currentUser.center_id,
                         birth_date: birthDate,
@@ -680,7 +701,17 @@
                         guardian_name: guardianName,
                         guardian_phone: guardianPhone,
                         admission_date: new Date().toISOString()
-                    })
+                };
+                // 요양사는 기존 이용자의 건강상태만 수정할 수 있다
+                const isCaregiverEdit = currentResidentId && currentUser.role === 'caregiver';
+                const payload = isCaregiverEdit ? { health_status: healthStatus } : fullBody;
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
