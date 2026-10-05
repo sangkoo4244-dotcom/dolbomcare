@@ -28,6 +28,9 @@
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
                     <h2 class="text-2xl font-bold text-gray-900 mb-2">승인 대기 계획</h2>
                     <p class="text-sm text-gray-600 mb-6">요양사가 제안한 방문 계획입니다. 승인하면 요양사의 나의 일정에 확정됩니다. 반려하면 사유가 요양사에게 전달됩니다.</p>
+                    <div class="flex justify-end mb-4">
+                        <button onclick="approveAllPlans()" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">승인 대기 계획 모두 승인</button>
+                    </div>
                     <div id="proposalList" class="space-y-4">
                         <div class="text-center py-8 text-gray-400">불러오는 중...</div>
                     </div>
@@ -97,6 +100,23 @@
                         </div>
                     </div>`;
             }).join('');
+        }
+
+        async function approveAllPlans() {
+            const listed = await fetch(`${API_URL}/schedule/proposals?center_id=${currentUser.center_id || 1}&user_role=center_manager`);
+            const items = ((await listed.json()).items || []).filter(p => p.status === 'proposed');
+            if (items.length === 0) { showMessage('승인 대기 중인 방문 계획이 없습니다', 'error'); return; }
+            if (!confirm(`승인 대기 계획 ${items.length}건을 모두 승인하시겠습니까?`)) return;
+            let approved = 0;
+            for (const p of items) {
+                const r = await fetch(`${API_URL}/schedule/${p.schedule_id}/approve`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: 'center_manager', reason: '' })
+                });
+                if (r.ok) approved++;
+            }
+            showMessage(`방문 계획 ${approved}건을 승인했습니다`, 'success');
+            loadProposals();
         }
 
         async function approve(scheduleId) {

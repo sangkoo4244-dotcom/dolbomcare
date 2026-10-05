@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse
 from app.api import health
+from app.api import resident_changes
 from app.api import users
 from app.api import billing
 from app.api import records
@@ -141,6 +142,7 @@ app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(users.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(billing.router, prefix="/api/v1/billing", tags=["billing"], dependencies=[Depends(get_current_user)])
 app.include_router(records.router, prefix="/api/v1/records", tags=["records"], dependencies=[Depends(get_current_user)])
+app.include_router(resident_changes.router, prefix="/api/v1/residents", tags=["residents"], dependencies=[Depends(get_current_user)])
 app.include_router(residents.router, prefix="/api/v1/residents", tags=["residents"], dependencies=[Depends(get_current_user)])
 app.include_router(salary.router, prefix="/api/v1/salary", tags=["salary"], dependencies=[Depends(get_current_user)])
 app.include_router(schedule.router, prefix="/api/v1/schedule", tags=["schedule"], dependencies=[Depends(get_current_user)])

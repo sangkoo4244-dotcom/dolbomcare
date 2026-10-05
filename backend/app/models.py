@@ -190,3 +190,18 @@ class Schedule(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class ResidentChangeRequest(Base):
+    __tablename__ = "resident_change_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    requested_by = Column(Integer, ForeignKey("users.id"))
+    field = Column(String)  # 바꾸려는 항목 이름
+    new_value = Column(String, nullable=True)  # 요청한 새 값 (문자열로 저장)
+    status = Column(String, default="pending")  # pending, approved, rejected
+    reason = Column(String, nullable=True)  # 반려 사유
+    decided_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    decided_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

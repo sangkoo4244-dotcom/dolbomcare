@@ -346,6 +346,12 @@
                 </div>
             </div>
 
+            <!-- 센터장: 요양사의 변경 요청 -->
+            <div id="changeRequestPanel" style="display: none; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 8px;">📝 변경 요청 <span id="changeRequestCount"></span></h3>
+                <div id="changeRequestList" style="font-size: 14px;"></div>
+            </div>
+
             <!-- Header -->
             <div class="header-action">
                 <h2 style="font-size: 18px; font-weight: 700;">이용자 목록</h2>
@@ -365,6 +371,22 @@
     <!-- Add/Edit Modal -->
     <div id="residentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
         <div style="background: white; border-radius: 12px; padding: 32px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
+            <div id="caregiverRequestBox" style="display: none; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 13px;">
+                <div style="font-weight: 700; margin-bottom: 6px;">센터장 확인이 필요한 정보 변경 요청</div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                    <select id="changeField" style="padding: 6px; border: 1px solid #d1d5db; border-radius: 6px;">
+                        <option value="care_grade">요양등급 (1~5)</option>
+                        <option value="client_type">소득분류</option>
+                        <option value="recognition_number">인정번호</option>
+                        <option value="recognition_start">인정 시작일</option>
+                        <option value="recognition_end">인정 종료일</option>
+                        <option value="name">이름</option>
+                        <option value="birth_date">생년월일</option>
+                    </select>
+                    <input id="changeValue" placeholder="새 값" style="padding: 6px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 150px;">
+                    <button type="button" onclick="submitChangeRequest()" style="padding: 6px 12px; background: #0284c7; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">요청 보내기</button>
+                </div>
+            </div>
             <h2 id="modalTitle" style="margin-top: 0; margin-bottom: 24px;">이용자 추가</h2>
             <form id="residentForm" onsubmit="saveResident(event)">
                 <div style="margin-bottom: 16px;">
@@ -495,6 +517,7 @@
         }
 
         async function loadResidents() {
+            loadChangeRequests();
             try {
                 const tableDiv = document.getElementById('residentsTable');
                 tableDiv.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div>로드 중...</div></div>';
@@ -641,6 +664,67 @@
                 modal.querySelector('form').prepend(note);
             }
             if (note) note.style.display = isCaregiver ? 'block' : 'none';
+            const box = document.getElementById('caregiverRequestBox');
+            if (box) box.style.display = isCaregiver && currentResidentId ? 'block' : 'none';
+        }
+
+        async function submitChangeRequest() {
+            const field = document.getElementById('changeField').value;
+            const value = document.getElementById('changeValue').value.trim();
+            if (!value) { alert('새 값을 입력해 주세요'); return; }
+            const response = await fetch(`${API_URL}/residents/${currentResidentId}/change-requests`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ field, value })
+            });
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                alert(`요청 실패: ${err.detail || '오류'}`);
+                return;
+            }
+            alert('센터장에게 변경을 요청했습니다. 승인되면 반영됩니다.');
+            document.getElementById('changeValue').value = '';
+        }
+
+        async function loadChangeRequests() {
+            if (!currentUser || currentUser.role !== 'center_manager') return;
+            const response = await fetch(`${API_URL}/residents/change-requests?status=pending`);
+            if (!response.ok) return;
+            const data = await response.json();
+            const panel = document.getElementById('changeRequestPanel');
+            const list = document.getElementById('changeRequestList');
+            const labels = { care_grade: '요양등급', client_type: '소득분류', recognition_number: '인정번호', recognition_start: '인정 시작일', recognition_end: '인정 종료일', name: '이름', birth_date: '생년월일' };
+            panel.style.display = data.requests.length ? 'block' : 'none';
+            document.getElementById('changeRequestCount').textContent = `(${data.requests.length}건)`;
+            list.innerHTML = data.requests.map(r => `
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid #fde68a;">
+                    <span><b>${r.resident_name}</b> · ${labels[r.field] || r.field} → <b>${r.new_value}</b> <span style="color:#6b7280;">(요청: ${r.requested_by})</span></span>
+                    <span>
+                        <button onclick="decideChangeRequest(${r.id}, 'approve')" style="padding: 4px 10px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer;">승인</button>
+                        <button onclick="decideChangeRequest(${r.id}, 'reject')" style="padding: 4px 10px; background: white; border: 1px solid #fca5a5; color: #b91c1c; border-radius: 6px; cursor: pointer;">반려</button>
+                    </span>
+                </div>`).join('');
+        }
+
+        async function decideChangeRequest(id, action) {
+            let body = undefined;
+            if (action === 'reject') {
+                const reason = prompt('반려 사유를 입력해 주세요');
+                if (!reason || !reason.trim()) return;
+                body = JSON.stringify({ reason: reason.trim() });
+            }
+            const response = await fetch(`${API_URL}/residents/change-requests/${id}/${action}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body
+            });
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                alert(`처리 실패: ${err.detail || '오류'}`);
+                return;
+            }
+            loadChangeRequests();
+            loadResidents();
         }
 
         function closeResidentModal() {
@@ -651,6 +735,8 @@
                 el.style.background = '';
                 el.style.color = '';
             });
+            const box = document.getElementById('caregiverRequestBox');
+            if (box) box.style.display = 'none';
             currentResidentId = null;
         }
 

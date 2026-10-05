@@ -406,6 +406,7 @@
                 <button class="filter-btn" onclick="filterByStatus('submitted_to_nhis')">📤 공단청구</button>
                 <button class="filter-btn" onclick="filterByStatus('reimbursed')">💰 정산</button>
                 <button class="filter-btn" onclick="filterByStatus('rejected')">❌ 반려</button>
+                <button class="filter-btn" onclick="approveCleanBilling()" style="background: #10b981; color: white;">✅ 정상 건 일괄 승인</button>
             </div>
 
             <!-- Table -->
@@ -656,6 +657,29 @@
                 console.error('❌ 주민 정보 로드 실패:', error);
                 renderBillingTable(filtered, {});
             }
+        }
+
+        async function approveCleanBilling() {
+            const response = await fetch(`${API_URL}/billing/?center_id=${currentUser?.center_id || 1}`);
+            const records = (await response.json()).records || [];
+            const pending = records.filter(r => r.approval_status === 'pending');
+            const clean = pending.filter(r => !(r.review_flags || []).length);
+            const flagged = pending.length - clean.length;
+            if (clean.length === 0) {
+                alert(`일괄 승인할 정상 건이 없습니다. 확인 필요 ${flagged}건은 개별로 확인해 주세요.`);
+                return;
+            }
+            if (!confirm(`정상 건 ${clean.length}건을 승인합니다. 확인 필요 ${flagged}건은 제외됩니다. 계속할까요?`)) return;
+            let approved = 0;
+            for (const r of clean) {
+                const result = await fetch(`${API_URL}/billing/${r.id}/approve`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: 'center_manager', reason: '' })
+                });
+                if (result.ok) approved++;
+            }
+            alert(`${approved}건을 승인했습니다. 확인 필요 ${flagged}건은 개별로 처리해 주세요.`);
+            loadBillingRecords();
         }
 
         async function approveBilling(recordId) {
