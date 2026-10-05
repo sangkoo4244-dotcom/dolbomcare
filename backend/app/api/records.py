@@ -728,7 +728,8 @@ def get_monthly_summary(
 
     query = db.query(BillingRecord).filter(
         BillingRecord.center_id == center_id,
-        BillingRecord.year_month == year_month
+        BillingRecord.year_month == year_month,
+        BillingRecord.approval_status != "rejected"
     )
 
     if caregiver_id:
@@ -797,7 +798,8 @@ def get_monthly_statistics(
     # 센터 전체 청부 조회
     records = db.query(BillingRecord).filter(
         BillingRecord.center_id == center_id,
-        BillingRecord.year_month == year_month
+        BillingRecord.year_month == year_month,
+        BillingRecord.approval_status != "rejected"
     ).all()
 
     # 요양사별 통계

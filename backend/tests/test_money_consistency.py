@@ -77,6 +77,17 @@ def test_monthly_summary_matches_statistics(client):
     assert body["summary"]["total_amount"] == REVENUE_TOTAL
 
 
+def test_rejected_claims_are_not_counted_in_monthly_totals(client):
+    stats = client.get("/api/v1/records/monthly-statistics", params={"center_id": 1, "year": 2026, "month": 10}).json()
+    assert stats["total_summary"]["total_records"] == len(SEED) - 1
+    assert stats["by_caregiver"][0]["total_records"] == len(SEED) - 1
+    assert stats["by_service"][0]["total_records"] == len(SEED) - 1
+
+    summary = client.get("/api/v1/records/monthly-summary", params={"center_id": 1, "year_month": YM}).json()
+    assert summary["summary"]["total_records"] == len(SEED) - 1
+    assert summary["summary"]["pending_count"] == 2
+
+
 def test_archived_reimbursed_claim_stays_in_money_but_not_in_worklist(client):
     worklist = client.get("/api/v1/billing/", params={"center_id": 1}).json()["records"]
     assert all(r["approval_status"] != "reimbursed" for r in worklist)
