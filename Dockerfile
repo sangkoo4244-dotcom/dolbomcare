@@ -13,4 +13,4 @@ COPY . .
 WORKDIR /app/backend
 
 # 실행 (PORT 환경 변수 사용)
-CMD sh -c "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
+CMD sh -c "python init_db.py && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"

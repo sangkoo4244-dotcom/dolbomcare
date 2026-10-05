@@ -280,7 +280,7 @@
                             <td>${s.role === 'caregiver' ? '요양사' : '센터장'}</td>
                             <td>활성</td>
                             <td>
-                                <button style="padding: 6px 12px; background: #e5e7eb; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">수정</button>
+                                <button style="padding: 6px 12px; background: #e5e7eb; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="resetPassword(${s.id}, '${(s.full_name || s.email).replace(/'/g, '')}')">비밀번호 재설정</button>
                             </td>
                         </tr>
                     `;
@@ -290,6 +290,29 @@
             } catch (error) {
                 console.error('❌ 직원 정보 로드 실패:', error);
                 document.getElementById('staffTableBody').innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--text-secondary);">직원 정보를 불러올 수 없습니다</td></tr>';
+            }
+        }
+
+        async function resetPassword(userId, name) {
+            const newPassword = prompt(`${name}님의 새 비밀번호를 입력하세요 (8자 이상)`);
+            if (newPassword === null) return;
+            if (newPassword.length < 8) {
+                alert('비밀번호는 8자 이상이어야 합니다');
+                return;
+            }
+            try {
+                const response = await fetch(`${API_URL}/users/${userId}/password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_password: newPassword })
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.detail || '재설정 실패');
+                }
+                alert(`${name}님의 비밀번호가 재설정되었습니다`);
+            } catch (error) {
+                alert('비밀번호 재설정 중 오류가 발생했습니다: ' + error.message);
             }
         }
 

@@ -51,3 +51,63 @@ def test_unauthenticated_billing_state_routes_are_gone(tmp_path):
     client = make_client(tmp_path, "caregiver1@test.com", users.get_password_hash("p"))
     assert client.put("/api/v1/billing/1/submit").status_code in (404, 405)
     assert client.put("/api/v1/billing/1/pay").status_code in (404, 405)
+
+
+def make_staff_client(tmp_path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'staff.db'}")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine)
+    db = Session()
+    db.add(models.Center(id=1, name="센터A"))
+    db.add(models.Center(id=2, name="센터B"))
+    db.add(models.User(id=1, email="manager@test.com", hashed_password=users.get_password_hash("manager-pass-1"), full_name="센터장", role="center_manager", center_id=1))
+    db.add(models.User(id=2, email="caregiver1@test.com", hashed_password=users.get_password_hash("old-pass-1234"), full_name="요양사1", role="caregiver", center_id=1))
+    db.add(models.User(id=3, email="other@test.com", hashed_password=users.get_password_hash("other-pass-1"), full_name="타센터", role="caregiver", center_id=2))
+    db.commit()
+    db.close()
+    app = FastAPI()
+    app.include_router(users.router, prefix="/api/v1/users")
+
+    def override_get_db():
+        session = Session()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    return TestClient(app)
+
+
+def manager_token():
+    from datetime import timedelta
+    from app.api.users import create_access_token
+    token = create_access_token({"sub": "manager@test.com", "uid": 1, "role": "center_manager"}, timedelta(hours=1))
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_manager_resets_staff_password_and_staff_can_log_in(tmp_path):
+    client = make_staff_client(tmp_path)
+    reset = client.post("/api/v1/users/2/password", json={"new_password": "brand-new-1234"}, headers=manager_token())
+    assert reset.status_code == 200
+    assert client.post("/api/v1/users/login", json={"email": "caregiver1@test.com", "password": "old-pass-1234"}).status_code == 401
+    assert client.post("/api/v1/users/login", json={"email": "caregiver1@test.com", "password": "brand-new-1234"}).status_code == 200
+
+
+def test_reset_rejects_short_password(tmp_path):
+    client = make_staff_client(tmp_path)
+    assert client.post("/api/v1/users/2/password", json={"new_password": "short"}, headers=manager_token()).status_code == 400
+
+
+def test_reset_rejects_staff_from_another_center(tmp_path):
+    client = make_staff_client(tmp_path)
+    assert client.post("/api/v1/users/3/password", json={"new_password": "brand-new-1234"}, headers=manager_token()).status_code == 403
+
+
+def test_caregiver_cannot_reset_passwords(tmp_path):
+    from datetime import timedelta
+    from app.api.users import create_access_token
+    client = make_staff_client(tmp_path)
+    token = create_access_token({"sub": "caregiver1@test.com", "uid": 2, "role": "caregiver"}, timedelta(hours=1))
+    response = client.post("/api/v1/users/2/password", json={"new_password": "brand-new-1234"}, headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 403

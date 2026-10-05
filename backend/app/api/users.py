@@ -174,6 +174,28 @@ async def update_user(
         "is_active": user.is_active
     }
 
+class PasswordReset(BaseModel):
+    new_password: str
+
+@router.post("/{user_id}/password")
+async def reset_password(
+    user_id: int,
+    body: PasswordReset,
+    db: Session = Depends(get_db),
+    manager: User = Depends(require_manager)
+):
+    """센터장이 같은 센터 직원의 비밀번호를 재설정"""
+    if len(body.new_password) < 8:
+        raise HTTPException(status_code=400, detail="비밀번호는 8자 이상이어야 합니다")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="직원을 찾을 수 없습니다")
+    if user.center_id != manager.center_id:
+        raise HTTPException(status_code=403, detail="같은 센터 직원만 재설정할 수 있습니다")
+    user.hashed_password = get_password_hash(body.new_password)
+    db.commit()
+    return {"status": "success", "message": "비밀번호가 재설정되었습니다"}
+
 @router.delete("/{user_id}")
 async def delete_user(user_id: int, db: Session = Depends(get_db), _: User = Depends(require_manager)):
     """사용자 삭제"""
