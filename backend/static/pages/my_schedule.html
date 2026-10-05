@@ -94,6 +94,7 @@
             '예정': 'bg-blue-100 text-blue-800',
             '방문중': 'bg-amber-100 text-amber-800',
             '완료': 'bg-emerald-100 text-emerald-800',
+            '방문완료': 'bg-violet-100 text-violet-800',
             '미기록': 'bg-red-600 text-white',
             '계획 외': 'bg-gray-100 text-gray-700',
             '승인 대기': 'bg-amber-100 text-amber-800',
@@ -122,6 +123,7 @@
             if (it.state === '예정') return `<button onclick="markArrived(${it.schedule_id})" class="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700">도착</button>`;
             if (it.state === '방문중') return `<button onclick="markLeft(${it.schedule_id})" class="px-4 py-2 bg-amber-500 text-white text-sm font-bold rounded-lg hover:bg-amber-600">퇴실</button>
                 <a href="${recordUrl(it)}" class="ml-2 px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">기록 작성</a>`;
+            if (it.state === '방문완료') return `<a href="${recordUrl(it)}" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">기록 작성</a>`;
             if (it.state === '미기록') {
                 const arrive = !it.arrived_at ? `<button onclick="markArrived(${it.schedule_id})" class="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 mr-2">도착</button>` : '';
                 return arrive + `<a href="${recordUrl(it)}" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">기록 작성</a>`;
@@ -171,7 +173,8 @@
         function renderSummary(d) {
             const s = d.summary || {};
             const parts = [`방문 계획 ${d.items.filter(it => it.planned).length}건`, `완료 ${s['완료'] || 0}건`];
-            if (s['미기록']) parts.push(`⚠️ 기록 미작성 ${s['미기록']}건`);
+            const needRecord = (s['방문완료'] || 0) + (s['미기록'] || 0);
+            if (needRecord) parts.push(`⚠️ 기록 필요 ${needRecord}건`);
             const unplanned = d.items.filter(it => !it.planned).length;
             if (unplanned) parts.push(`계획 외 ${unplanned}건`);
             document.getElementById('summaryLine').textContent = parts.join(' · ');
@@ -195,7 +198,7 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const key = `${year}-${pad(month + 1)}-${pad(day)}`;
                 const dayItems = items.filter(it => it.date === key);
-                const missed = dayItems.some(it => it.state === '미기록');
+                const missed = dayItems.some(it => it.state === '방문완료' || it.state === '미기록');
                 const cell = document.createElement('div');
                 cell.className = `p-2 border rounded-lg text-center cursor-pointer hover:bg-emerald-50 transition ${key === selectedDate ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'}`;
                 cell.innerHTML = `<div class="font-bold text-gray-900">${day}</div>` +
@@ -232,7 +235,9 @@
                 const notes = it.care_notes ? `<div class="text-sm text-gray-600 mt-1">📝 ${it.care_notes.slice(0, 80)}</div>` : '';
                 const rejected = it.state === '반려' && it.review_note
                     ? `<div class="text-sm text-red-600 font-semibold mt-2">반려 사유: ${it.review_note}</div>` : '';
-                const hint = it.state === '미기록'
+                const hint = it.state === '방문완료'
+                    ? '<div class="text-sm text-violet-700 font-semibold mt-2">퇴실했습니다. 방문 기록을 작성해 주세요.</div>'
+                    : it.state === '미기록'
                     ? '<div class="text-sm text-red-600 font-semibold mt-2">방문 후 기록이 없습니다. 기록을 작성해 주세요.</div>' : '';
                 return `
                     <div class="border ${idx === nextIdx && isToday ? 'border-emerald-500' : 'border-gray-200'} rounded-lg p-6">

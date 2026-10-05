@@ -142,7 +142,7 @@ def _visit_state(schedule, matched, now):
     if matched:
         return "완료"
     if schedule.arrived_at:
-        return "미기록" if schedule.left_at else "방문중"
+        return "방문완료" if schedule.left_at else "방문중"
     return "미기록" if schedule.scheduled_date < now else "예정"
 
 @router.get("/caregiver-view")
