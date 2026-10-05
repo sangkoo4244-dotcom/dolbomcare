@@ -6,6 +6,7 @@ from app.review import review_flags
 from app.billing_rules import MONTHLY_LIMITS
 from app.billing_rules import REVENUE_STATUSES
 from app.schemas import BillingRecordCreate, BillingRecordResponse, BillingMonthlySummary
+from app.api.notifications import notify
 from app.database import get_db
 from app.auth import get_current_user, require_manager, assert_self_or_manager
 from datetime import datetime, timedelta, time
@@ -205,6 +206,8 @@ async def reject_billing_record(
 
     record.approval_status = "rejected"
     record.rejection_reason = request.reason
+    reason = (request.reason or "").strip()
+    notify(db, record.caregiver_id, "claim_rejected", f"청구가 반려되었습니다: {reason}" if reason else "청구가 반려되었습니다")
     db.commit()
     db.refresh(record)
 
