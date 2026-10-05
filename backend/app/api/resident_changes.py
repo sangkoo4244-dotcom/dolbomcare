@@ -90,6 +90,37 @@ def create_change_request(
     return {"status": "success", "message": "센터장에게 변경을 요청했습니다", "data": {"id": request.id}}
 
 
+@router.get("/change-requests/mine")
+def my_change_requests(
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """요양사가 올린 변경 요청과 처리 결과 (최근 순)"""
+    rows = (
+        db.query(ResidentChangeRequest, Resident)
+        .join(Resident, Resident.id == ResidentChangeRequest.resident_id)
+        .filter(ResidentChangeRequest.requested_by == actor.id)
+        .order_by(ResidentChangeRequest.created_at.desc())
+        .limit(20)
+        .all()
+    )
+    return {
+        "requests": [
+            {
+                "id": r.id,
+                "resident_name": res.name,
+                "field": r.field,
+                "new_value": r.new_value,
+                "status": r.status,
+                "reason": r.reason,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "decided_at": r.decided_at.isoformat() if r.decided_at else None,
+            }
+            for r, res in rows
+        ]
+    }
+
+
 @router.get("/change-requests")
 def list_change_requests(
     status: str = "pending",

@@ -346,6 +346,12 @@
                 </div>
             </div>
 
+            <!-- 요양사: 내가 올린 변경 요청과 처리 결과 -->
+            <div id="myRequestPanel" style="display: none; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 8px;">📨 내 변경 요청</h3>
+                <div id="myRequestList" style="font-size: 14px;"></div>
+            </div>
+
             <!-- 센터장: 요양사의 변경 요청 -->
             <div id="changeRequestPanel" style="display: none; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
                 <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 8px;">📝 변경 요청 <span id="changeRequestCount"></span></h3>
@@ -689,7 +695,29 @@
             document.getElementById('changeValue').value = '';
         }
 
+        const CHANGE_LABELS = { care_grade: '요양등급', client_type: '소득분류', recognition_number: '인정번호', recognition_start: '인정 시작일', recognition_end: '인정 종료일', name: '이름', birth_date: '생년월일' };
+        const CHANGE_STATUS = {
+            pending: '<span style="color:#b45309; font-weight:700;">센터장 확인 대기</span>',
+            approved: '<span style="color:#047857; font-weight:700;">승인되어 반영됨</span>',
+            rejected: '<span style="color:#b91c1c; font-weight:700;">반려됨</span>'
+        };
+
+        async function loadMyChangeRequests() {
+            if (!currentUser || currentUser.role !== 'caregiver') return;
+            const response = await fetch(`${API_URL}/residents/change-requests/mine`);
+            if (!response.ok) return;
+            const data = await response.json();
+            const panel = document.getElementById('myRequestPanel');
+            panel.style.display = data.requests.length ? 'block' : 'none';
+            document.getElementById('myRequestList').innerHTML = data.requests.map(r => `
+                <div style="padding: 8px 0; border-top: 1px solid #bae6fd;">
+                    <div><b>${r.resident_name}</b> · ${CHANGE_LABELS[r.field] || r.field} → <b>${r.new_value}</b> ${CHANGE_STATUS[r.status] || r.status}</div>
+                    ${r.status === 'rejected' && r.reason ? `<div style="color:#b91c1c; font-size: 13px; margin-top: 4px;">반려 사유: ${r.reason}</div>` : ''}
+                </div>`).join('');
+        }
+
         async function loadChangeRequests() {
+            loadMyChangeRequests();
             if (!currentUser || currentUser.role !== 'center_manager') return;
             const response = await fetch(`${API_URL}/residents/change-requests?status=pending`);
             if (!response.ok) return;

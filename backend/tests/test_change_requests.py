@@ -89,3 +89,21 @@ def test_invalid_value_is_refused_before_saving(client):
 def test_caregiver_cannot_approve_requests(client):
     request_id = client.post("/api/v1/residents/1/change-requests", json={"field": "care_grade", "value": "2"}, headers=CAREGIVER).json()["data"]["id"]
     assert client.post(f"/api/v1/residents/change-requests/{request_id}/approve", headers=CAREGIVER).status_code == 403
+
+
+def test_caregiver_sees_own_requests_with_outcome_and_reason(client):
+    approved = client.post("/api/v1/residents/1/change-requests", json={"field": "care_grade", "value": "2"}, headers=CAREGIVER).json()["data"]["id"]
+    rejected = client.post("/api/v1/residents/1/change-requests", json={"field": "client_type", "value": "의료급여"}, headers=CAREGIVER).json()["data"]["id"]
+    client.post(f"/api/v1/residents/change-requests/{approved}/approve", headers=MANAGER)
+    client.post(f"/api/v1/residents/change-requests/{rejected}/reject", json={"reason": "서류 확인 필요"}, headers=MANAGER)
+
+    mine = client.get("/api/v1/residents/change-requests/mine", headers=CAREGIVER).json()["requests"]
+    by_id = {r["id"]: r for r in mine}
+    assert by_id[approved]["status"] == "approved"
+    assert by_id[rejected]["status"] == "rejected"
+    assert by_id[rejected]["reason"] == "서류 확인 필요"
+
+
+def test_manager_list_for_caregiver_mine_is_empty_for_manager(client):
+    client.post("/api/v1/residents/1/change-requests", json={"field": "care_grade", "value": "2"}, headers=CAREGIVER)
+    assert client.get("/api/v1/residents/change-requests/mine", headers=MANAGER).json()["requests"] == []
