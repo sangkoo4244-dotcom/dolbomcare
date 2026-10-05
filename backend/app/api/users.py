@@ -26,7 +26,10 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except (ValueError, TypeError):
+        return False
 
 def get_password_hash(password):
     return pwd_context.hash(password)
@@ -66,11 +69,8 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # 테스트 계정: @test.com, @dolbomcare.com은 비밀번호 검증 스킵
-    if not (user.email.endswith("@test.com") or user.email.endswith("@dolbomcare.com")):
-        # 실제 계정: 비밀번호 검증
-        if not verify_password(request.password, user.hashed_password):
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+    if not verify_password(request.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(

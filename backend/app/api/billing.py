@@ -162,28 +162,6 @@ async def get_today_billing(db: Session = Depends(get_db)):
         }
     }
 
-@router.put("/{record_id}/submit")
-async def submit_billing_record(
-    record_id: int,
-    db: Session = Depends(get_db)
-):
-    """청구 기록을 공단에 제출"""
-    record = db.query(BillingRecord).filter(BillingRecord.id == record_id).first()
-    if not record:
-        raise HTTPException(status_code=404, detail="Billing record not found")
-
-    record.status = "submitted"
-    record.submitted_date = datetime.utcnow()
-    db.commit()
-    db.refresh(record)
-
-    return {
-        "status": "success",
-        "record_id": record_id,
-        "submitted_date": record.submitted_date,
-        "message": "청구가 공단에 제출되었습니다"
-    }
-
 @router.post("/{record_id}/approve")
 async def approve_billing_record(
     record_id: int,
@@ -237,26 +215,6 @@ async def reject_billing_record(
         "record_id": record_id,
         "approval_status": record.approval_status,
         "message": "청구 기록이 거절되었습니다"
-    }
-
-@router.put("/{record_id}/pay")
-async def pay_billing_record(
-    record_id: int,
-    db: Session = Depends(get_db)
-):
-    """청구 기록을 지급 완료"""
-    record = db.query(BillingRecord).filter(BillingRecord.id == record_id).first()
-    if not record:
-        raise HTTPException(status_code=404, detail="Billing record not found")
-
-    record.status = "paid"
-    db.commit()
-    db.refresh(record)
-
-    return {
-        "status": "success",
-        "record_id": record_id,
-        "message": "청구가 지급 완료되었습니다"
     }
 
 @router.get("/")
