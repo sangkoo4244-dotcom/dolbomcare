@@ -59,7 +59,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">이용자 선택 *</label>
-                                <select id="resident" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition" required onchange="calculateBillingDetails()">
+                                <select id="resident" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition" required onchange="onResidentChange()">
                                     <option value="">이용자를 선택하세요</option>
                                 </select>
                             </div>
@@ -339,9 +339,23 @@
                     sel.value = params.get('resident_id');
                     calculateBillingDetails();
                 }
-                const planned = (params.get('planned') || '').split(',').filter(Boolean);
-                document.querySelectorAll('input[name="careItem"]').forEach(cb => { cb.checked = planned.includes(cb.value); });
+                applyPlannedItems();
             } catch (e) { showMessage('이용자 로드 실패', 'error'); }
+        }
+
+        // 계획 항목은 계획이 잡힌 이용자(URL의 resident_id)에 대해서만 체크한다.
+        // 다른 이용자를 고르면 이전 이용자의 항목이 남지 않도록 모두 해제한다.
+        function applyPlannedItems() {
+            const params = new URLSearchParams(window.location.search);
+            const sel = document.getElementById('resident');
+            const plannedFor = params.get('resident_id');
+            const planned = plannedFor && sel.value === plannedFor ? (params.get('planned') || '').split(',').filter(Boolean) : [];
+            document.querySelectorAll('input[name="careItem"]').forEach(cb => { cb.checked = planned.includes(cb.value); });
+        }
+
+        function onResidentChange() {
+            applyPlannedItems();
+            calculateBillingDetails();
         }
 
         function calculateBillingDetails() {
