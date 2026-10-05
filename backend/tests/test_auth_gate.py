@@ -97,3 +97,25 @@ def test_record_is_created_for_the_signed_in_caregiver(setup):
     record_id = response.json()["data"]["record_id"]
     stored = setup.get(f"/api/v1/records/daily/{record_id}", headers=MANAGER).json()
     assert stored["caregiver_id"] == 2
+
+
+def test_caregiver_cannot_read_another_caregivers_record(setup):
+    created = setup.post(
+        "/api/v1/records/create",
+        json={"caregiver_id": 2, "resident_id": 1, "service_type": "basic_care", "care_items": "", "duration_minutes": 60},
+        headers=CAREGIVER1,
+    )
+    record_id = created.json()["data"]["record_id"]
+    response = setup.get(f"/api/v1/records/daily/{record_id}", headers=CAREGIVER2)
+    assert response.status_code == 403
+
+
+def test_caregiver_can_read_own_record(setup):
+    created = setup.post(
+        "/api/v1/records/create",
+        json={"caregiver_id": 2, "resident_id": 1, "service_type": "basic_care", "care_items": "", "duration_minutes": 60},
+        headers=CAREGIVER1,
+    )
+    record_id = created.json()["data"]["record_id"]
+    response = setup.get(f"/api/v1/records/daily/{record_id}", headers=CAREGIVER1)
+    assert response.status_code == 200

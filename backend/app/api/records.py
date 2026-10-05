@@ -585,14 +585,21 @@ async def get_today_center_records(
 @router.get("/daily/{record_id}")
 async def get_record(
     record_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     기록 상세 조회
+    - 센터장: 모든 기록 조회 가능
+    - 요양사: 자신의 기록만 조회 가능
     """
     record = db.query(DailyRecord).filter(DailyRecord.id == record_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")
+
+    is_manager = actor.role == "center_manager"
+    if not (is_manager or record.caregiver_id == actor.id):
+        raise HTTPException(status_code=403, detail="조회 권한이 없습니다 (자신의 기록만 조회 가능)")
 
     # 관련 청구 기록 조회
     billings = db.query(BillingRecord).filter(
