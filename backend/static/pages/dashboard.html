@@ -158,7 +158,7 @@
             try {
                 const [recs, bills] = await Promise.all([
                     fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`).then(r => r.json()),
-                    fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}`).then(r => r.json())
+                    fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}&include_archived=true`).then(r => r.json())
                 ]);
                 const today = new Date().toDateString();
                 const now = new Date();
@@ -185,7 +185,7 @@
                 const [users, residents, bills] = await Promise.all([
                     fetch(`${API_URL}/users/?center_id=${centerId}`).then(r => r.json()),
                     fetch(`${API_URL}/residents/?center_id=${centerId}`).then(r => r.json()),
-                    fetch(`${API_URL}/billing/?center_id=${centerId}`).then(r => r.json())
+                    fetch(`${API_URL}/billing/?center_id=${centerId}&include_archived=true`).then(r => r.json())
                 ]);
                 const now = new Date();
                 const monthBills = (bills.records || []).filter(b => {

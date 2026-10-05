@@ -366,15 +366,15 @@
         async function loadProfitData() {
             try {
                 const centerId = currentUser?.center_id || 1;
-                const response = await fetch(`${API_URL}/billing/?center_id=${centerId}`);
+                const response = await fetch(`${API_URL}/billing/?center_id=${centerId}&include_archived=true`);
 
                 if (!response.ok) throw new Error('데이터 조회 실패');
 
                 const data = await response.json();
                 const records = data.records || [];
 
-                // 월 수익 (상태: reimbursed, submitted_to_nhis)
-                const paidRecords = records.filter(r => r.approval_status === 'reimbursed' || r.approval_status === 'submitted_to_nhis');
+                // 월 수익 (승인 이후 상태: approved, submitted_to_nhis, reimbursed — 대시보드·정산과 동일)
+                const paidRecords = records.filter(r => ['approved', 'submitted_to_nhis', 'reimbursed'].includes(r.approval_status));
                 const monthlyRevenue = paidRecords.reduce((sum, r) => sum + (r.amount || 0), 0);
 
                 // 주민별 평균

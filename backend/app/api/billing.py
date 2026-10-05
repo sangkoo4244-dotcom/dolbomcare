@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.models import BillingRecord, User, Resident, Center, DailyRecord
 from app.review import review_flags
+from app.billing_rules import REVENUE_STATUSES
 from app.schemas import BillingRecordCreate, BillingRecordResponse, BillingMonthlySummary
 from app.database import get_db
 from datetime import datetime, timedelta, time
@@ -117,7 +118,7 @@ async def get_monthly_billing(
     total_amount = sum(r.amount for r in records)
     # approval_status: pending(승인 대기), approved(승인됨), rejected(거절)
     # status: draft(미제출), submitted(제출됨), paid(완료)
-    approved_amount = sum(r.amount for r in records if r.approval_status == "approved")
+    approved_amount = sum(r.amount for r in records if r.approval_status in REVENUE_STATUSES)
     submitted_count = len([r for r in records if r.status == "submitted"])
     paid_count = len([r for r in records if r.status == "paid"])
     pending_count = len([r for r in records if r.approval_status == "pending"])
@@ -332,77 +333,6 @@ async def list_billing_records(
 
 # ===== 상태별 처리 API =====
 
-@router.post("/{billing_id}/approve")
-async def approve_billing(
-    billing_id: int,
-    request: ApprovalRequest,
-    db: Session = Depends(get_db)
-):
-    """청부 승인 (센터장만 가능)"""
-    # 권한 확인
-    if request.user_role != "center_manager":
-        raise HTTPException(status_code=403, detail="센터장만 승인 가능합니다")
-
-    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
-    if not billing:
-        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
-
-    if billing.approval_status != "pending":
-        raise HTTPException(status_code=400, detail="대기 중인 청부만 승인 가능합니다")
-
-    # 승인 처리
-    billing.approval_status = "approved"
-    billing.approved_by = request.user_id
-    billing.approved_at = datetime.now()
-    db.commit()
-    db.refresh(billing)
-
-    return {
-        "status": "success",
-        "message": "청부가 승인되었습니다",
-        "data": {
-            "id": billing.id,
-            "approval_status": billing.approval_status,
-            "approved_at": billing.approved_at.isoformat() if billing.approved_at else None
-        }
-    }
-
-@router.post("/{billing_id}/reject")
-async def reject_billing(
-    billing_id: int,
-    request: RejectionRequest,
-    db: Session = Depends(get_db)
-):
-    """청부 반려 (센터장만 가능)"""
-    # 권한 확인
-    if request.user_role != "center_manager":
-        raise HTTPException(status_code=403, detail="센터장만 반려 가능합니다")
-
-    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
-    if not billing:
-        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
-
-    if billing.approval_status != "pending":
-        raise HTTPException(status_code=400, detail="대기 중인 청부만 반려 가능합니다")
-
-    # 반려 처리
-    billing.approval_status = "rejected"
-    billing.rejection_reason = request.reason
-    billing.approved_by = request.user_id
-    billing.approved_at = datetime.now()
-    db.commit()
-    db.refresh(billing)
-
-    return {
-        "status": "success",
-        "message": "청부가 반려되었습니다",
-        "data": {
-            "id": billing.id,
-            "approval_status": billing.approval_status,
-            "rejection_reason": billing.rejection_reason
-        }
-    }
-
 @router.post("/{billing_id}/submit-to-nhis")
 async def submit_billing_to_nhis(
     billing_id: int,
@@ -539,6 +469,8 @@ async def submit_billing_for_approval(
 
 class BillingStatusUpdate(BaseModel):
     approval_status: str
+    user_id: int
+    user_role: str
 
 @router.patch("/{billing_id}")
 async def update_billing_status(
@@ -546,16 +478,19 @@ async def update_billing_status(
     status_update: BillingStatusUpdate,
     db: Session = Depends(get_db)
 ):
-    """청부 상태 업데이트 (pending → draft로 취소)"""
+    """청부 상태 되돌리기 (센터장만: approved → pending, pending → draft)"""
+    if status_update.user_role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 상태를 변경할 수 있습니다")
+
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
     if not billing:
         raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
 
-    # pending → draft로만 업데이트 허용
-    if billing.approval_status != "pending" or status_update.approval_status != "draft":
+    allowed = {("approved", "pending"), ("pending", "draft")}
+    if (billing.approval_status, status_update.approval_status) not in allowed:
         raise HTTPException(
             status_code=400,
-            detail="pending 상태의 청부만 draft로 되돌릴 수 있습니다"
+            detail="승인됨 상태는 대기로, 대기 상태는 작성 중으로만 되돌릴 수 있습니다"
         )
 
     billing.approval_status = status_update.approval_status
@@ -564,46 +499,11 @@ async def update_billing_status(
 
     return {
         "status": "success",
-        "message": "청부가 draft 상태로 복원되었습니다",
+        "message": "청부 상태가 변경되었습니다",
         "data": {
             "id": billing.id,
             "approval_status": billing.approval_status,
             "status": billing.status
-        }
-    }
-
-@router.patch("/{billing_id}")
-async def update_billing_status(
-    billing_id: int,
-    approval_status: str = Query(...),
-    user_id: int = Query(...),
-    user_role: str = Query(...),
-    db: Session = Depends(get_db)
-):
-    """청부 상태 변경 (approved → pending)"""
-    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
-    if not billing:
-        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
-
-    # 센터장만 상태 변경 가능
-    if user_role != "center_manager":
-        raise HTTPException(status_code=403, detail="센터장만 상태를 변경할 수 있습니다")
-
-    # 현재 상태에서 approved → pending 변경만 허용
-    if billing.approval_status == "approved" and approval_status == "pending":
-        billing.approval_status = "pending"
-    else:
-        raise HTTPException(status_code=400, detail="승인됨 상태에서만 대기 중으로 변경 가능합니다")
-
-    db.add(billing)
-    db.commit()
-
-    return {
-        "status": "success",
-        "message": "청부 상태가 변경되었습니다",
-        "data": {
-            "id": billing.id,
-            "approval_status": billing.approval_status
         }
     }
 

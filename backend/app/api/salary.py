@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 from app.models import BillingRecord, User
 from app.database import get_db
+from app.billing_rules import REVENUE_STATUSES
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 
@@ -16,12 +17,13 @@ async def get_current_salary(
     """
     현재 월의 급여 조회
     """
-    today = datetime.utcnow().date()
+    today = datetime.now().date()
     year_month = f"{today.year}-{str(today.month).zfill(2)}"
 
     # 이번 달의 청부 기록 조회
     billings = db.query(BillingRecord).filter(
         BillingRecord.caregiver_id == caregiver_id,
+        BillingRecord.approval_status.in_(REVENUE_STATUSES),
         extract('year', BillingRecord.recorded_date) == today.year,
         extract('month', BillingRecord.recorded_date) == today.month
     ).all()
@@ -46,7 +48,7 @@ async def get_salary_history(
     """
     최근 급여 내역 조회 (최대 12개월)
     """
-    today = datetime.utcnow().date()
+    today = datetime.now().date()
     start_date = today - timedelta(days=30 * months)
 
     # 월별 청부 기록 그룹화
@@ -57,6 +59,7 @@ async def get_salary_history(
         func.sum(BillingRecord.amount).label('total_amount')
     ).filter(
         BillingRecord.caregiver_id == caregiver_id,
+        BillingRecord.approval_status.in_(REVENUE_STATUSES),
         BillingRecord.recorded_date >= start_date
     ).group_by(
         extract('year', BillingRecord.recorded_date),
@@ -98,6 +101,7 @@ async def get_monthly_salary(
     # 특정 월의 청부 기록 조회
     billings = db.query(BillingRecord).filter(
         BillingRecord.caregiver_id == caregiver_id,
+        BillingRecord.approval_status.in_(REVENUE_STATUSES),
         extract('year', BillingRecord.recorded_date) == year,
         extract('month', BillingRecord.recorded_date) == month
     ).all()
@@ -126,7 +130,7 @@ async def get_monthly_salary(
             for service_type, data in service_breakdown.items()
         ],
         "payment_date": get_estimated_payment_date(date(year, month, 1)),
-        "status": "paid" if (year_month < datetime.utcnow().date().strftime("%Y-%m")) else "pending",
+        "status": "paid" if (year_month < datetime.now().date().strftime("%Y-%m")) else "pending",
         "records": [
             {
                 "id": b.id,

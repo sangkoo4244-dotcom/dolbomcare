@@ -144,7 +144,7 @@
 
         async function loadSalaryData() {
             try {
-                const r = await fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}`);
+                const r = await fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}&include_archived=true`);
                 const d = await r.json();
                 const approved = (d.records || []).filter(b => SALARY_APPROVED.includes(b.approval_status));
                 const now = new Date();

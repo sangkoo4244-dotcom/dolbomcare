@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, Body
 from pydantic import BaseModel
 from typing import Literal, Optional
-from app.billing_rules import split_visit, VALID_DURATIONS
+from app.billing_rules import split_visit, VALID_DURATIONS, REVENUE_STATUSES
 from app.review import find_schedule
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -53,30 +53,13 @@ def test_endpoint():
 @router.post("/create")
 def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
     """일일 기록 생성 및 청부 자동 계산"""
-    with open("/tmp/debug.log", "a") as f:
-        f.write(f"[{datetime.utcnow()}] START create_record\n")
-        f.write(f"  caregiver_id={request.caregiver_id}, resident_id={request.resident_id}\n")
     try:
-        with open("/tmp/debug.log", "a") as f:
-            f.write(f"  Querying resident {request.resident_id}...\n")
-        resident = db.query(Resident).filter(Resident.id == request.resident_id).first()
-        with open("/tmp/debug.log", "a") as f:
-            f.write(f"  Resident found: {resident is not None}\n")
-        if not resident:
-            raise HTTPException(status_code=404, detail="Resident not found")
-
-        print(f"[DEBUG] 이용자 조회 시작...")
         resident = db.query(Resident).filter(Resident.id == request.resident_id).first()
         if not resident:
-            print(f"[ERROR] 이용자 {request.resident_id} 없음")
             raise HTTPException(status_code=404, detail="Resident not found")
-        print(f"[DEBUG] 이용자 찾음: {resident.id}, center_id={resident.center_id}")
 
         total_cost, _, amount = split_visit(request.duration_minutes, resident.client_type)
 
-        # DailyRecord 생성
-        with open("/tmp/debug.log", "a") as f:
-            f.write(f"  Creating DailyRecord...\n")
         now = datetime.now()  # 로컬 시간 사용 (UTC 대신)
         linked_schedule = find_schedule(db, request.caregiver_id, request.resident_id, now)
         daily_record = DailyRecord(
@@ -99,8 +82,6 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
         daily_id = daily_record.id
 
         # BillingRecord 생성 (draft 상태로 시작 - 요양사가 제출하기 전)
-        with open("/tmp/debug.log", "a") as f:
-            f.write(f"  Creating BillingRecord...\n")
         billing_record = BillingRecord(
             daily_record_id=daily_id,
             caregiver_id=request.caregiver_id,
@@ -120,9 +101,6 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
         )
         db.add(billing_record)
         db.commit()
-
-        with open("/tmp/debug.log", "a") as f:
-            f.write(f"  SUCCESS: daily_id={daily_id}, billing_id={billing_record.id}\n")
 
         return {
             "status": "success",
@@ -731,8 +709,7 @@ def get_monthly_summary(
 
     query = db.query(BillingRecord).filter(
         BillingRecord.center_id == center_id,
-        BillingRecord.year_month == year_month,
-        BillingRecord.is_archived == False
+        BillingRecord.year_month == year_month
     )
 
     if caregiver_id:
@@ -742,7 +719,7 @@ def get_monthly_summary(
 
     # 통계 계산
     total_records = len(records)
-    total_amount = sum(r.amount for r in records) if records else 0
+    total_amount = sum(r.amount for r in records if r.approval_status in REVENUE_STATUSES)
     approved_count = sum(1 for r in records if r.approval_status == "approved")
     submitted_count = sum(1 for r in records if r.approval_status == "submitted_to_nhis")
     paid_count = sum(1 for r in records if r.approval_status == "reimbursed")
@@ -801,8 +778,7 @@ def get_monthly_statistics(
     # 센터 전체 청부 조회
     records = db.query(BillingRecord).filter(
         BillingRecord.center_id == center_id,
-        BillingRecord.year_month == year_month,
-        BillingRecord.is_archived == False
+        BillingRecord.year_month == year_month
     ).all()
 
     # 요양사별 통계
@@ -821,11 +797,10 @@ def get_monthly_statistics(
             }
 
         caregiver_stats[caregiver_id]["total_records"] += 1
-        caregiver_stats[caregiver_id]["total_amount"] += record.amount
-
-        if record.approval_status == "approved":
+        if record.approval_status in REVENUE_STATUSES:
+            caregiver_stats[caregiver_id]["total_amount"] += record.amount
             caregiver_stats[caregiver_id]["approved_count"] += 1
-        else:
+        elif record.approval_status == "pending":
             caregiver_stats[caregiver_id]["pending_count"] += 1
 
     # 서비스 유형별 통계
@@ -840,7 +815,8 @@ def get_monthly_statistics(
             }
 
         service_stats[service_type]["total_records"] += 1
-        service_stats[service_type]["total_amount"] += record.amount
+        if record.approval_status in REVENUE_STATUSES:
+            service_stats[service_type]["total_amount"] += record.amount
 
     return {
         "status": "success",
@@ -848,9 +824,9 @@ def get_monthly_statistics(
         "center_id": center_id,
         "total_summary": {
             "total_records": len(records),
-            "total_amount": sum(r.amount for r in records) if records else 0,
-            "approved_count": sum(1 for r in records if r.approval_status == "approved"),
-            "pending_count": sum(1 for r in records if r.approval_status != "approved")
+            "total_amount": sum(r.amount for r in records if r.approval_status in REVENUE_STATUSES),
+            "approved_count": sum(1 for r in records if r.approval_status in REVENUE_STATUSES),
+            "pending_count": sum(1 for r in records if r.approval_status == "pending")
         },
         "by_caregiver": list(caregiver_stats.values()),
         "by_service": list(service_stats.values())

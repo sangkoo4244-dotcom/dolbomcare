@@ -20,3 +20,6 @@ def split_visit(duration_minutes: int, client_type: str | None) -> tuple[int, in
     rate = PATIENT_RATES.get(client_type or "일반", PATIENT_RATES["일반"])
     patient = int(total * rate) // 10 * 10
     return total, patient, total - patient
+
+# 승인 이후 상태만 청구 금액(월별 정산·급여·대시보드)에 포함한다
+REVENUE_STATUSES = ("approved", "submitted_to_nhis", "reimbursed")
