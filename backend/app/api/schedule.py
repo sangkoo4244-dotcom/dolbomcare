@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.models import Schedule, User, Resident, Center, DailyRecord
+from app.api.notifications import notify
 from app.database import get_db
 from app.auth import get_current_user, require_manager, assert_self_or_manager
 from datetime import datetime, timedelta
@@ -370,6 +371,7 @@ def reject_schedule(schedule_id: int, req: ReviewRequest, db: Session = Depends(
         raise HTTPException(status_code=400, detail="승인 대기 중인 계획만 반려할 수 있습니다")
     schedule.status = "rejected"
     schedule.review_note = reason
+    notify(db, schedule.caregiver_id, "plan_rejected", f"방문 계획이 반려되었습니다: {reason}")
     db.commit()
     return {"status": "success", "schedule_id": schedule.id, "schedule_status": schedule.status}
 

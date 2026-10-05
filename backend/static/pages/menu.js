@@ -30,7 +30,8 @@ const SIDEBAR_MENUS = {
         { href: 'voice_record.html', icon: '🎤', label: '음성 기록' },
         { href: 'caregiver_billing.html', icon: '📋', label: '나의 청부' },
         { href: 'my_salary.html', icon: '💵', label: '나의 급여' },
-        { href: 'my_schedule.html', icon: '📅', label: '나의 일정' }
+        { href: 'my_schedule.html', icon: '📅', label: '나의 일정' },
+        { href: 'notifications.html', icon: '🔔', label: '알림' }
     ],
     center_manager: [
         { href: 'dashboard.html', icon: '📊', label: '대시보드' },
