@@ -121,3 +121,17 @@ def test_caregiver_is_notified_when_claim_is_rejected(setup):
     assert body["unread_count"] == 1
     assert "방문 기록 시간이 맞지 않습니다" in body["notifications"][0]["message"]
     assert body["notifications"][0]["kind"] == "claim_rejected"
+
+
+def test_caregiver_is_notified_when_plan_is_approved(setup):
+    setup.post("/api/v1/schedule/1/approve", json={"user_id": 1, "user_role": "center_manager"}, headers=MANAGER)
+    body = setup.get("/api/v1/notifications/mine", headers=CAREGIVER1).json()
+    assert body["unread_count"] == 1
+    assert body["notifications"][0]["kind"] == "plan_approved"
+
+
+def test_caregiver_is_notified_when_claim_is_approved(setup):
+    setup.post("/api/v1/billing/1/approve", json={"user_id": 1, "user_role": "center_manager"}, headers=MANAGER)
+    body = setup.get("/api/v1/notifications/mine", headers=CAREGIVER1).json()
+    assert body["unread_count"] == 1
+    assert body["notifications"][0]["kind"] == "claim_approved"

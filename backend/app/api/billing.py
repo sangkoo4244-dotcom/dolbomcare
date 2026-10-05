@@ -179,6 +179,7 @@ async def approve_billing_record(
     record.approval_status = "approved"
     record.approved_by = actor.id
     record.approved_at = datetime.utcnow()
+    notify(db, record.caregiver_id, "claim_approved", f"청구가 승인되었습니다 ({record.amount:,}원)")
     db.commit()
     db.refresh(record)
 

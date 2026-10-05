@@ -172,13 +172,14 @@
             const byMonth = {};
             approved.forEach(b => {
                 const key = ymOf(b.recorded_date);
-                byMonth[key] = (byMonth[key] || 0) + (b.amount || 0);
+                if (!byMonth[key]) byMonth[key] = { amount: 0, allReimbursed: true };
+                byMonth[key].amount += b.amount || 0;
+                if (b.approval_status !== 'reimbursed') byMonth[key].allReimbursed = false;
             });
-            const now = ymOf(new Date());
             const rows = Object.keys(byMonth).sort().reverse().map(month => {
-                const amount = byMonth[month];
+                const { amount, allReimbursed } = byMonth[month];
                 const c = calcSalary(amount);
-                const status = month === now ? '수령예정' : '완납';
+                const status = allReimbursed ? '완납' : '수령예정';
                 return `<tr class="border-b border-gray-100 hover:bg-emerald-50 transition"><td class="py-4 px-4 text-gray-900 font-semibold">${month}</td><td class="py-4 px-4 text-gray-700">₩${amount.toLocaleString()}</td><td class="py-4 px-4 text-red-600">-₩${c.totalTax.toLocaleString()}</td><td class="py-4 px-4 text-emerald-600 font-bold">₩${c.net.toLocaleString()}</td><td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${status === '완납' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}">${status}</span></td></tr>`;
             });
             tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="5" class="py-8 text-center text-gray-400">💵 승인된 청부가 없어 급여 내역이 없습니다</td></tr>';

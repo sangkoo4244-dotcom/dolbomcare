@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.models import Schedule, User, Resident, Center, DailyRecord
 from app.api.notifications import notify
+from app.review import record_fits_schedule
 from app.database import get_db
 from app.auth import get_current_user, require_manager, assert_self_or_manager
 from datetime import datetime, timedelta
@@ -142,7 +143,7 @@ def _visit_state(schedule, matched, now):
         return "승인 대기"
     if schedule.status == "rejected":
         return "반려"
-    if matched:
+    if matched and schedule.left_at:
         return "완료"
     if schedule.arrived_at:
         return "방문완료" if schedule.left_at else "방문중"
@@ -183,7 +184,7 @@ def caregiver_schedule_view(
         match = None
         if s.status == "scheduled":
             match = next(
-                (r for r in records if r.id not in used and r.resident_id == s.resident_id and r.recorded_date.date() == day),
+                (r for r in records if r.id not in used and r.resident_id == s.resident_id and record_fits_schedule(s, r.recorded_date)),
                 None,
             )
         if match:
@@ -353,6 +354,7 @@ def approve_schedule(schedule_id: int, req: ReviewRequest, db: Session = Depends
         raise HTTPException(status_code=400, detail="승인 대기 중인 계획만 승인할 수 있습니다")
     schedule.status = "scheduled"
     schedule.review_note = None
+    notify(db, schedule.caregiver_id, "plan_approved", f"방문 계획이 승인되었습니다 ({schedule.scheduled_date:%m/%d %H:%M})")
     db.commit()
     return {"status": "success", "schedule_id": schedule.id, "schedule_status": schedule.status}
 
