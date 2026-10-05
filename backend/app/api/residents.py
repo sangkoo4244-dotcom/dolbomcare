@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.models import Resident, Center
+from app.models import Resident, Center, User
 from app.schemas import ResidentCreate
 from app.database import get_db
+from app.auth import get_current_user, require_manager, assert_self_or_manager
 from datetime import datetime, date
 
 class CareNotesUpdate(BaseModel):
@@ -33,11 +34,12 @@ router = APIRouter()
 async def update_care_notes(
     resident_id: int,
     update_data: CareNotesUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """요양 기록 편집 (요양사, 센터장 가능)"""
     # 권한 검증: caregiver, center_manager 가능
-    if update_data.user_role not in ["caregiver", "center_manager"]:
+    if actor.role not in ["caregiver", "center_manager"]:
         raise HTTPException(status_code=403, detail="요양 기록 편집 권한이 없습니다")
 
     resident = db.query(Resident).filter(Resident.id == resident_id).first()
@@ -161,7 +163,8 @@ async def update_resident_grade(
     resident_id: int,
     care_grade: int,
     client_type: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: User = Depends(require_manager)
 ):
     """이용자 등급 및 클라이언트 타입 수정"""
     resident = db.query(Resident).filter(Resident.id == resident_id).first()
@@ -195,12 +198,12 @@ async def update_resident_grade(
 @router.post("/")
 async def create_resident(
     resident_data: ResidentCreate,
-    user_role: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """이용자 생성 (센터장, 요양사 가능)"""
     # 권한 검증: center_manager, caregiver 가능
-    if user_role not in ["center_manager", "caregiver"]:
+    if actor.role not in ["center_manager", "caregiver"]:
         raise HTTPException(status_code=403, detail="이용자 추가 권한이 없습니다")
 
     # 센터 존재 여부 확인
@@ -262,7 +265,8 @@ async def create_resident(
 async def update_resident(
     resident_id: int,
     update_data: ResidentUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """이용자 정보 수정 (JSON Body)
     - 센터장: 모든 필드 수정 가능 (이름, 생년월일 포함)
@@ -274,7 +278,7 @@ async def update_resident(
 
     try:
         # 요양사는 이름/생년월일 수정 불가
-        if update_data.user_role == "caregiver" and (update_data.name is not None or update_data.birth_date is not None):
+        if actor.role == "caregiver" and (update_data.name is not None or update_data.birth_date is not None):
             raise HTTPException(status_code=403, detail="요양사는 이용자의 기본정보(이름, 생년월일)를 수정할 수 없습니다")
 
         # 선택적 업데이트
@@ -337,7 +341,8 @@ async def update_resident(
 async def delete_resident(
     resident_id: int,
     user_role: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: User = Depends(require_manager)
 ):
     """이용자 삭제 (센터장만 가능)"""
     # 권한 검증

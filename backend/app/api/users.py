@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.schemas import LoginRequest, LoginResponse, UserCreate, UserResponse
 from app.models import User
 from app.database import get_db
+from app.auth import SECRET_KEY, get_current_user, require_manager
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, date
 from jose import jwt
@@ -21,9 +22,8 @@ class UserUpdate(BaseModel):
     employment_status: Optional[str] = None
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = "your-secret-key-change-in-production"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 12
 
 def verify_password(plain_password, hashed_password):
     try:
@@ -45,7 +45,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     return encoded_jwt
 
 @router.post("/register", response_model=UserResponse)
-async def register(user_create: UserCreate, db: Session = Depends(get_db)):
+async def register(user_create: UserCreate, db: Session = Depends(get_db), _: User = Depends(require_manager)):
     db_user = db.query(User).filter(User.email == user_create.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -74,7 +74,7 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
+        data={"sub": user.email, "uid": user.id, "role": user.role}, expires_delta=access_token_expires
     )
 
     return {
@@ -95,7 +95,8 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
 async def list_users(
     role: Optional[str] = Query(None),
     center_id: Optional[int] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user)
 ):
     """사용자 목록 조회 (선택적으로 역할, 센터로 필터링)"""
     query = db.query(User)
@@ -133,7 +134,8 @@ async def list_users(
 async def update_user(
     user_id: int,
     user_update: UserUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: User = Depends(require_manager)
 ):
     """사용자 정보 수정"""
     user = db.query(User).filter(User.id == user_id).first()
@@ -173,7 +175,7 @@ async def update_user(
     }
 
 @router.delete("/{user_id}")
-async def delete_user(user_id: int, db: Session = Depends(get_db)):
+async def delete_user(user_id: int, db: Session = Depends(get_db), _: User = Depends(require_manager)):
     """사용자 삭제"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:

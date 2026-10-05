@@ -8,6 +8,7 @@ from sqlalchemy import func
 from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary
 from app.schemas import DailyRecordResponse
 from app.database import get_db
+from app.auth import get_current_user, require_manager, assert_self_or_manager
 from datetime import datetime, time
 import os
 
@@ -51,8 +52,9 @@ def test_endpoint():
     return {"message": "POST 작동 확인"}
 
 @router.post("/create")
-def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
+def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     """일일 기록 생성 및 청부 자동 계산"""
+    caregiver_id = actor.id if actor.role == "caregiver" else request.caregiver_id
     try:
         resident = db.query(Resident).filter(Resident.id == request.resident_id).first()
         if not resident:
@@ -61,10 +63,10 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
         total_cost, _, amount = split_visit(request.duration_minutes, resident.client_type)
 
         now = datetime.now()  # 로컬 시간 사용 (UTC 대신)
-        linked_schedule = find_schedule(db, request.caregiver_id, request.resident_id, now)
+        linked_schedule = find_schedule(db, caregiver_id, request.resident_id, now)
         daily_record = DailyRecord(
             resident_id=request.resident_id,
-            caregiver_id=request.caregiver_id,
+            caregiver_id=caregiver_id,
             recorded_date=now,
             morning_care=request.service_type == "basic_care",
             meal_intake="full" if request.service_type == "meal_service" else "partial",
@@ -84,7 +86,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
         # BillingRecord 생성 (draft 상태로 시작 - 요양사가 제출하기 전)
         billing_record = BillingRecord(
             daily_record_id=daily_id,
-            caregiver_id=request.caregiver_id,
+            caregiver_id=caregiver_id,
             resident_id=request.resident_id,
             center_id=resident.center_id,
             resident_name=resident.name,
@@ -124,11 +126,12 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db)):
 @router.post("/batch-delete")
 def batch_delete_records(
     request: BatchDeleteRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """여러 기록 일괄 삭제 (자신의 기록 또는 센터장만)"""
     try:
-        is_manager = request.user_role == "center_manager"
+        is_manager = actor.role == "center_manager"
         deleted = 0
 
         for record_id in request.record_ids:
@@ -136,7 +139,7 @@ def batch_delete_records(
             if not record:
                 continue
 
-            is_own_record = record.caregiver_id == request.user_id
+            is_own_record = record.caregiver_id == actor.id
             if not (is_manager or is_own_record):
                 continue
 
@@ -230,12 +233,14 @@ async def get_recent_records(
     caregiver_id: int,
     days: int = 7,
     resident_id: int = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     지난 N일간의 기록 조회 (기본: 7일)
     resident_id가 주어지면 해당 이용자의 기록만 조회
     """
+    assert_self_or_manager(actor, caregiver_id)
     try:
         from datetime import date, datetime as dt, time as time_cls, timedelta
 
@@ -313,12 +318,14 @@ async def get_recent_records(
 async def get_all_records(
     caregiver_id: int,
     resident_id: int = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     모든 기록 조회
     resident_id가 주어지면 해당 이용자의 기록만 조회
     """
+    assert_self_or_manager(actor, caregiver_id)
     try:
         query = db.query(DailyRecord).filter(
             DailyRecord.caregiver_id == caregiver_id
@@ -391,12 +398,14 @@ async def get_all_records(
 async def get_today_records(
     caregiver_id: int,
     resident_id: int = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     오늘의 기록 조회 + 청부액
     resident_id가 주어지면 해당 이용자의 기록만 조회
     """
+    assert_self_or_manager(actor, caregiver_id)
     try:
         from datetime import date, datetime as dt, time as time_cls
 
@@ -474,7 +483,8 @@ async def get_today_records(
 @router.get("/all/center")
 async def get_all_center_records(
     center_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: User = Depends(require_manager)
 ):
     """
     센터 전체의 모든 기록 조회 (센터장용)
@@ -519,7 +529,8 @@ async def get_all_center_records(
 @router.get("/today/center")
 async def get_today_center_records(
     center_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: User = Depends(require_manager)
 ):
     """
     센터 전체의 오늘 기록 조회 (센터장용)
@@ -614,7 +625,8 @@ async def get_record(
 async def update_record(
     record_id: int,
     request: UpdateRecordRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     음성기록 수정 (메모/서비스 유형 변경)
@@ -628,7 +640,7 @@ async def update_record(
             BillingRecord.daily_record_id == record_id
         ).first()
 
-        if request.user_id is not None and record.caregiver_id != request.user_id:
+        if actor.id is not None and record.caregiver_id != actor.id:
             raise HTTPException(status_code=403, detail="본인의 기록만 수정할 수 있습니다")
         if billing and billing.approval_status not in ("draft", "rejected"):
             raise HTTPException(status_code=400, detail="작성중 또는 보완 요청 상태의 청부만 수정할 수 있습니다")
@@ -836,9 +848,8 @@ def get_monthly_statistics(
 @router.delete("/daily/{record_id}")
 async def delete_record(
     record_id: int,
-    user_id: int = Query(None),
-    user_role: str = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     기록 삭제
@@ -846,8 +857,7 @@ async def delete_record(
     - 요양사: 자신의 기록만 삭제 가능
 
     Query Parameters:
-    - user_id: 요청자의 사용자 ID
-    - user_role: 요청자의 역할 (center_manager 또는 caregiver)
+    - 요청자는 로그인 토큰으로 확인합니다 (본인 기록 또는 센터장)
     """
 
     # 기록 조회
@@ -855,12 +865,8 @@ async def delete_record(
     if not record:
         raise HTTPException(status_code=404, detail="기록을 찾을 수 없습니다")
 
-    # 권한 검증
-    if user_id is None or user_role is None:
-        raise HTTPException(status_code=401, detail="user_id와 user_role이 필요합니다")
-
-    is_manager = user_role == "center_manager"
-    is_own_record = record.caregiver_id == user_id
+    is_manager = actor.role == "center_manager"
+    is_own_record = record.caregiver_id == actor.id
 
     if not (is_manager or is_own_record):
         raise HTTPException(status_code=403, detail="삭제 권한이 없습니다 (자신의 기록만 삭제 가능)")
@@ -893,14 +899,15 @@ async def delete_record(
 
 @router.post("/voice/create")
 async def create_voice_record(
-    caregiver_id: int,
     resident_id: int,
     service_type: str = "basic_care",
     duration_minutes: int = 60,
     transcription: str = "",
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """Create voice record + auto-generate billing"""
+    caregiver_id = actor.id
     try:
         resident = db.query(Resident).filter(Resident.id == resident_id).first()
         if not resident:

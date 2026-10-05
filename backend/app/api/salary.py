@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 from app.models import BillingRecord, User
 from app.database import get_db
+from app.auth import get_current_user, require_manager, assert_self_or_manager
 from app.billing_rules import REVENUE_STATUSES
 from datetime import datetime, date, timedelta
 from decimal import Decimal
@@ -12,11 +13,13 @@ router = APIRouter()
 @router.get("/current")
 async def get_current_salary(
     caregiver_id: int = Query(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     현재 월의 급여 조회
     """
+    assert_self_or_manager(actor, caregiver_id)
     today = datetime.now().date()
     year_month = f"{today.year}-{str(today.month).zfill(2)}"
 
@@ -43,11 +46,13 @@ async def get_current_salary(
 async def get_salary_history(
     caregiver_id: int = Query(...),
     months: int = Query(12),  # 조회할 개월 수 (기본 12개월)
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     최근 급여 내역 조회 (최대 12개월)
     """
+    assert_self_or_manager(actor, caregiver_id)
     today = datetime.now().date()
     start_date = today - timedelta(days=30 * months)
 
@@ -88,11 +93,13 @@ async def get_salary_history(
 async def get_monthly_salary(
     year_month: str,  # YYYY-MM 형식
     caregiver_id: int = Query(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     특정 월의 상세 급여 정보
     """
+    assert_self_or_manager(actor, caregiver_id)
     try:
         year, month = map(int, year_month.split('-'))
     except:

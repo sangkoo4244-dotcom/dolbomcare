@@ -1,3 +1,28 @@
+// 모든 API 요청에 로그인 토큰을 붙이고, 세션이 만료되면 로그인 화면으로 보낸다
+(function () {
+    const originalFetch = window.fetch.bind(window);
+    const isApi = (url) => typeof url === 'string' && url.includes('/api/v1/');
+    const isLogin = (url) => url.includes('/users/login') || url.includes('/auth/login');
+
+    window.fetch = function (input, init = {}) {
+        const url = typeof input === 'string' ? input : input.url;
+        if (!isApi(url) || isLogin(url)) return originalFetch(input, init);
+
+        const headers = new Headers(init.headers || {});
+        const token = localStorage.getItem('access_token');
+        if (token) headers.set('Authorization', 'Bearer ' + token);
+
+        return originalFetch(input, { ...init, headers }).then((response) => {
+            if (response.status === 401) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+            return response;
+        });
+    };
+})();
+
 const SIDEBAR_MENUS = {
     caregiver: [
         { href: 'dashboard.html', icon: '📊', label: '대시보드' },

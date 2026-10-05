@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 from fastapi import FastAPI
@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app import models
 from app.api import billing, records, salary
 from app.database import Base, get_db
+from app.api.users import create_access_token
 
 YM = "2026-10"
 SEED = [
@@ -58,7 +59,9 @@ def client(tmp_path):
             session.close()
 
     app.dependency_overrides[get_db] = override_get_db
-    return TestClient(app)
+    client = TestClient(app)
+    client.headers.update(auth(1, "center_manager", "manager@test.com"))
+    return client
 
 
 def test_monthly_statistics_counts_only_post_approval_money(client):
@@ -94,7 +97,7 @@ def test_manager_can_return_approved_claim_to_pending(client):
 
 
 def test_caregiver_cannot_return_claim(client):
-    response = client.patch("/api/v1/billing/1", json={"approval_status": "pending", "user_id": 2, "user_role": "caregiver"})
+    response = client.patch("/api/v1/billing/1", json={"approval_status": "pending", "user_id": 2, "user_role": "caregiver"}, headers=auth(2, "caregiver", "caregiver1@test.com"))
     assert response.status_code == 403
 
 
@@ -107,3 +110,8 @@ def test_no_duplicate_routes_in_billing_router():
                 seen[key] = seen.get(key, 0) + 1
     duplicates = {k: v for k, v in seen.items() if v > 1}
     assert duplicates == {}
+
+
+def auth(uid, role, email):
+    token = create_access_token({"sub": email, "uid": uid, "role": role}, timedelta(hours=1))
+    return {"Authorization": f"Bearer {token}"}

@@ -6,6 +6,7 @@ from app.review import review_flags
 from app.billing_rules import REVENUE_STATUSES
 from app.schemas import BillingRecordCreate, BillingRecordResponse, BillingMonthlySummary
 from app.database import get_db
+from app.auth import get_current_user, require_manager, assert_self_or_manager
 from datetime import datetime, timedelta, time
 import asyncio
 import random
@@ -166,10 +167,11 @@ async def get_today_billing(db: Session = Depends(get_db)):
 async def approve_billing_record(
     record_id: int,
     request: ApprovalRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """청구 기록을 승인 (센터장만 가능)"""
-    if request.user_role != "center_manager":
+    if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 승인 가능합니다")
 
     record = db.query(BillingRecord).filter(BillingRecord.id == record_id).first()
@@ -179,7 +181,7 @@ async def approve_billing_record(
         raise HTTPException(status_code=400, detail="대기 중인 청부만 승인 가능합니다")
 
     record.approval_status = "approved"
-    record.approved_by = request.user_id
+    record.approved_by = actor.id
     record.approved_at = datetime.utcnow()
     db.commit()
     db.refresh(record)
@@ -195,10 +197,11 @@ async def approve_billing_record(
 async def reject_billing_record(
     record_id: int,
     request: RejectionRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """청구 기록을 거절 (센터장만 가능)"""
-    if request.user_role != "center_manager":
+    if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 거절 가능합니다")
 
     record = db.query(BillingRecord).filter(BillingRecord.id == record_id).first()
@@ -223,9 +226,12 @@ async def list_billing_records(
     caregiver_id: int = None,
     status: str = None,
     include_archived: bool = False,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """청구 기록 목록 조회 (기본: 활성 청부만, include_archived=true면 아카이브도 포함)"""
+    if actor.role == "caregiver":
+        caregiver_id = actor.id
     query = db.query(BillingRecord)
 
     if center_id:
@@ -295,10 +301,11 @@ async def list_billing_records(
 async def submit_billing_to_nhis(
     billing_id: int,
     request: ApprovalRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """청부를 건강보험공단에 청구 제출 (센터장만 가능, 수동 처리)"""
-    if request.user_role != "center_manager":
+    if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 건보 청구 가능합니다")
 
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
@@ -328,10 +335,11 @@ async def submit_billing_to_nhis(
 async def confirm_reimbursement(
     billing_id: int,
     request: ApprovalRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """건보 환급 확인 (센터장만 가능, 완료된 청부는 자동 아카이브)"""
-    if request.user_role != "center_manager":
+    if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 환급 확인 가능합니다")
 
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
@@ -361,10 +369,11 @@ async def confirm_reimbursement(
 async def cancel_nhis_submission(
     billing_id: int,
     request: ApprovalRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """건보 청구 취소 (센터장만 가능, submitted_to_nhis → approved)"""
-    if request.user_role != "center_manager":
+    if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 건보 청구 취소 가능합니다")
 
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
@@ -392,17 +401,18 @@ async def cancel_nhis_submission(
 async def submit_billing_for_approval(
     billing_id: int,
     request: ApprovalRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """청부를 센터장 승인을 위해 제출 (요양사만 가능)"""
-    if request.user_role != "caregiver":
+    if actor.role != "caregiver":
         raise HTTPException(status_code=403, detail="요양사만 제출 가능합니다")
 
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
     if not billing:
         raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
 
-    if billing.caregiver_id != request.user_id:
+    if billing.caregiver_id != actor.id:
         raise HTTPException(status_code=403, detail="자신의 청부만 제출 가능합니다")
 
     # draft 또는 rejected 상태의 청부만 제출 가능
@@ -434,10 +444,11 @@ class BillingStatusUpdate(BaseModel):
 async def update_billing_status(
     billing_id: int,
     status_update: BillingStatusUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """청부 상태 되돌리기 (센터장만: approved → pending, pending → draft)"""
-    if status_update.user_role != "center_manager":
+    if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 상태를 변경할 수 있습니다")
 
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
@@ -468,9 +479,8 @@ async def update_billing_status(
 @router.delete("/{billing_id}")
 async def delete_billing(
     billing_id: int,
-    user_id: int,
-    user_role: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """청부 삭제 (요양사: draft 상태만, 센터장: 자신 것만)"""
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
@@ -478,10 +488,10 @@ async def delete_billing(
         raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
 
     # 권한 확인
-    is_owner = billing.caregiver_id == user_id
-    is_manager = user_role == "center_manager"
+    is_owner = billing.caregiver_id == actor.id
+    is_manager = actor.role == "center_manager"
 
-    if user_role == "caregiver":
+    if actor.role == "caregiver":
         # 요양사: draft 또는 rejected 상태의 자신 것만 삭제 가능
         if not is_owner:
             raise HTTPException(status_code=403, detail="자신의 청부만 삭제 가능합니다")
