@@ -253,6 +253,7 @@ async def list_billing_records(
         caregiver = db.query(User).filter(User.id == caregiver_id).first()
 
     residents = {x.id: x for x in db.query(Resident).all()}
+    caregiver_names = {u.id: u.full_name for u in db.query(User).all()}
     daily_ids = [r.daily_record_id for r in records if r.daily_record_id]
     dailies = {d.id: d for d in db.query(DailyRecord).filter(DailyRecord.id.in_(daily_ids)).all()} if daily_ids else {}
 
@@ -274,6 +275,7 @@ async def list_billing_records(
             "care_grade": r.care_grade or (current.care_grade if current else None),
             "client_type": r.client_type or (current.client_type if current else None),
             "caregiver_id": r.caregiver_id,
+            "caregiver_name": caregiver_names.get(r.caregiver_id),
             "center_id": r.center_id,
             "service_type": r.service_type,
             "amount": r.amount,

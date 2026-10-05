@@ -88,6 +88,11 @@ def test_rejected_claims_are_not_counted_in_monthly_totals(client):
     assert summary["summary"]["pending_count"] == 2
 
 
+def test_claim_list_shows_caregiver_name(client):
+    records = client.get("/api/v1/billing/", params={"center_id": 1}).json()["records"]
+    assert records and all(r["caregiver_name"] == "요양사1" for r in records)
+
+
 def test_archived_reimbursed_claim_stays_in_money_but_not_in_worklist(client):
     worklist = client.get("/api/v1/billing/", params={"center_id": 1}).json()["records"]
     assert all(r["approval_status"] != "reimbursed" for r in worklist)
