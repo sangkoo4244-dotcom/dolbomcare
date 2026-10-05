@@ -646,11 +646,14 @@
             document.getElementById('residentModal').style.display = 'flex';
         }
 
+        const CAREGIVER_EDITABLE_IDS = ['healthStatus', 'residentAddress', 'guardianName', 'guardianPhone'];
+
         function lockFieldsForCaregiver() {
             const isCaregiver = currentUser && currentUser.role === 'caregiver';
             const modal = document.getElementById('residentModal');
             modal.querySelectorAll('input, select, textarea').forEach(el => {
-                const editable = el.id === 'healthStatus';
+                if (el.closest('#caregiverRequestBox')) return;  // 변경 요청 입력칸은 잠그지 않는다
+                const editable = CAREGIVER_EDITABLE_IDS.includes(el.id);
                 el.disabled = isCaregiver && !editable;
                 el.style.background = isCaregiver && !editable ? '#f3f4f6' : '';
                 el.style.color = isCaregiver && !editable ? '#6b7280' : '';
@@ -660,7 +663,7 @@
                 note = document.createElement('p');
                 note.id = 'caregiverLockNote';
                 note.style.cssText = 'font-size: 12px; color: #6b7280; margin: 8px 0;';
-                note.textContent = '요양사는 건강상태만 수정할 수 있습니다. 나머지 정보는 센터장에게 요청하세요.';
+                note.textContent = '요양사는 건강상태, 주소, 보호자 정보를 직접 수정할 수 있습니다. 나머지 정보는 변경 요청으로 센터장에게 요청하세요.';
                 modal.querySelector('form').prepend(note);
             }
             if (note) note.style.display = isCaregiver ? 'block' : 'none';
@@ -788,9 +791,11 @@
                         guardian_phone: guardianPhone,
                         admission_date: new Date().toISOString()
                 };
-                // 요양사는 기존 이용자의 건강상태만 수정할 수 있다
+                // 요양사는 기존 이용자의 건강상태·주소·보호자 정보만 직접 수정할 수 있다
                 const isCaregiverEdit = currentResidentId && currentUser.role === 'caregiver';
-                const payload = isCaregiverEdit ? { health_status: healthStatus } : fullBody;
+                const payload = isCaregiverEdit
+                    ? { health_status: healthStatus, address: address, guardian_name: guardianName, guardian_phone: guardianPhone }
+                    : fullBody;
 
                 const response = await fetch(url, {
                     method: method,
