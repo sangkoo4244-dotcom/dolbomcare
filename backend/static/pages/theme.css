@@ -17,6 +17,10 @@
     --rule: #E4EAE1;       /* 일지 줄 (글을 방해하지 않을 만큼 옅게) */
 }
 
+/* 사이드바 아이콘 (도장 테두리 + 사물): 글자색을 따른다 */
+.side-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 24px; width: 24px; height: 24px; }
+.side-icon svg { display: block; }
+
 /* 장면 그림 (art.js): 가로폭에 맞춰 줄어들고, 최대 480px */
 .art-scene { width: 100%; max-width: 480px; height: auto; display: block; }
 
