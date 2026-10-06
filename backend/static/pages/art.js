@@ -82,3 +82,29 @@ ART.homeScene = `<svg class="art-scene" viewBox="0 0 480 200" aria-hidden="true"
     <circle cx="377" cy="92" r="26" fill="#6F8F7E"/>
     <path d="M240 170 V176" stroke="#1E2B26" stroke-width="2.2"/>
 </svg>`;
+
+// 출근 장면: 요양보호사 대시보드 맨 위. 현관문, 가방, 벽시계, 일정 달력, 화분
+ART.caregiverScene = `<svg class="art-scene" viewBox="0 0 480 180" aria-hidden="true" focusable="false">
+    <rect x="0" y="0" width="480" height="180" rx="20" fill="#E8F0EA"/>
+    <path d="M16 150 H464" stroke="#6F8F7E" stroke-width="2.5" stroke-linecap="round"/>
+    <rect x="40" y="26" width="92" height="124" rx="4" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.5"/>
+    <rect x="54" y="40" width="64" height="98" fill="none" stroke="#1E2B26" stroke-width="1.5" opacity="0.45"/>
+    <circle cx="118" cy="98" r="3.5" fill="#B5532F"/>
+    <rect x="150" y="104" width="56" height="46" rx="6" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2"/>
+    <path d="M164 104 Q178 82 192 104" fill="none" stroke="#1E2B26" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M150 124 H206" stroke="#6F8F7E" stroke-width="2"/>
+    <circle cx="296" cy="72" r="28" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.5"/>
+    <path d="M296 72 V56 M296 72 L308 80" stroke="#B5532F" stroke-width="2.5" stroke-linecap="round"/>
+    <rect x="346" y="34" width="100" height="84" rx="6" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2"/>
+    <rect x="346" y="34" width="100" height="18" rx="6" fill="#B5532F"/>
+    <rect x="346" y="46" width="100" height="6" fill="#B5532F"/>
+    <rect x="358" y="62" width="10" height="8" fill="#D9E0DA"/><rect x="376" y="62" width="10" height="8" fill="#D9E0DA"/>
+    <rect x="394" y="62" width="10" height="8" fill="#D9E0DA"/><rect x="412" y="62" width="10" height="8" fill="#B5532F"/>
+    <rect x="358" y="78" width="10" height="8" fill="#D9E0DA"/><rect x="376" y="78" width="10" height="8" fill="#D9E0DA"/>
+    <rect x="394" y="78" width="10" height="8" fill="#B5532F"/><rect x="412" y="78" width="10" height="8" fill="#D9E0DA"/>
+    <rect x="358" y="94" width="10" height="8" fill="#D9E0DA"/><rect x="376" y="94" width="10" height="8" fill="#D9E0DA"/>
+    <rect x="394" y="94" width="10" height="8" fill="#D9E0DA"/><rect x="412" y="94" width="10" height="8" fill="#D9E0DA"/>
+    <path d="M238 124 H264 L260 150 H242 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M251 124 C240 108 238 98 246 90 C250 104 253 114 251 124 Z" fill="#A9C2B3"/>
+    <path d="M251 124 C260 108 268 102 278 102 C276 114 266 122 251 124 Z" fill="#6F8F7E"/>
+</svg>`;

@@ -194,6 +194,7 @@
         function renderCaregiverDashboard() {
             document.getElementById('pageTitle').textContent = '오늘';
             document.getElementById('dashboardContent').innerHTML = `
+                <div id="caregiverArt" class="mb-8"></div>
                 ${summaryRow([
                     ['오늘 방문', 'todayVisits', '계획된 방문'],
                     ['기록 필요', 'needRecord', '방문을 마치고 기록 전'],
@@ -204,6 +205,7 @@
                 <p class="section-sub">시간 순서대로 보여 줍니다. 도착과 퇴실은 나의 일정에서 누릅니다.</p>
                 <div id="timeline"><div class="empty">불러오는 중입니다</div></div>
             `;
+            document.getElementById('caregiverArt').innerHTML = ART.caregiverScene;
             loadCaregiverData();
         }
 
