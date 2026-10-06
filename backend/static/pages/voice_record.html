@@ -6,6 +6,14 @@
     <title>돌봄케어 - 음성 기록</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        /* 배너: 원본 그림의 흰 테두리를 잘라 안쪽 그림만 보인다 */
+        .vr-banner { aspect-ratio: 4.71; overflow: hidden; border-radius: 16px; }
+        .vr-banner-img { display: block; width: 103.7%; max-width: none; height: auto; margin: -6.57% 0 0 -1.92%; }
+        /* 흰 바탕의 그림은 카드 색 위에 자연스럽게 녹인다 */
+        img[src^="assets/user_design/0"]:not(.vr-banner-img),
+        img[src^="assets/user_design/1"]:not([src*="19_sidebar"]) { mix-blend-mode: multiply; }
+    </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
@@ -40,7 +48,7 @@
                 </div>
             </div>
 
-            <div class="px-8 pt-6"><img src="assets/user_design/01_top_banner_full.png" alt="" style="width:100%;height:auto;border-radius:8px;display:block;"></div>
+            <div class="px-8 pt-6"><div class="vr-banner"><img class="vr-banner-img" src="assets/user_design/01_top_banner_full.png" alt=""></div></div>
             <!-- 메인 컨텐츠: 샘플 레이아웃 (위에서 아래로 배너, 탭, 입력, 제공 항목, 청부 금액, 월별 현황, 검토·승인, 전체 목록) -->
             <div class="flex-1 overflow-y-auto p-8 space-y-8">
                 <div id="message" class="hidden p-4 rounded-lg animate-in fade-in slide-in-from-top-2"></div>
@@ -126,7 +134,7 @@
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
                     <h2 class="text-xl font-bold text-gray-900 mb-6">월별 현황</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                        <div class="border-blue-200 border rounded-lg p-5 flex items-center gap-4" style="background:#E8EEF9"><img src="assets/user_design/12_monthly_all_records_icon.png" alt="" style="width:64px;height:auto;object-fit:contain;flex:0 0 auto;"><div><div class="text-sm font-bold text-blue-600">전체 기록</div><div class="text-2xl font-bold text-blue-900 mt-1" id="totalRecordsCount">0</div><div class="text-xs text-blue-600 mt-1">이번 달 누적 기록 수</div></div></div><div class="border-amber-200 border rounded-lg p-5 flex items-center gap-4" style="background:#F7F1E6"><img src="assets/user_design/13_monthly_review_icon.png" alt="" style="width:64px;height:auto;object-fit:contain;flex:0 0 auto;"><div><div class="text-sm font-bold text-amber-600">검토중</div><div class="text-2xl font-bold text-amber-900 mt-1" id="pendingCount">0</div><div class="text-xs text-amber-600 mt-1">검토 대기 중인 기록</div></div></div><div class="border-emerald-200 border rounded-lg p-5 flex items-center gap-4" style="background:#E8F0EA"><img src="assets/user_design/14_monthly_approved_icon.png" alt="" style="width:64px;height:auto;object-fit:contain;flex:0 0 auto;"><div><div class="text-sm font-bold text-emerald-600">승인완료</div><div class="text-2xl font-bold text-emerald-900 mt-1" id="approvedCount">0</div><div class="text-xs text-emerald-600 mt-1">승인된 기록 수</div></div></div><div class="border-indigo-200 border rounded-lg p-5 flex items-center gap-4" style="background:#ECEBF7"><img src="assets/user_design/15_monthly_government_claim_icon.png" alt="" style="width:64px;height:auto;object-fit:contain;flex:0 0 auto;"><div><div class="text-sm font-bold text-indigo-600">월누적청부</div><div class="text-2xl font-bold text-indigo-900 mt-1" id="monthTotalBilling">₩0</div><div class="text-xs text-indigo-600 mt-1">이번 달 청구 금액</div></div></div>
+                        <div class="border-blue-200 border rounded-lg p-5 flex items-center gap-4" style="background:#E8EEF9"><img src="assets/user_design/12_monthly_all_records_icon.png" alt="" style="width:64px;height:auto;object-fit:contain;flex:0 0 auto;clip-path:inset(22% 0 0 0);"><div><div class="text-sm font-bold text-blue-600">전체 기록</div><div class="text-2xl font-bold text-blue-900 mt-1" id="totalRecordsCount">0</div><div class="text-xs text-blue-600 mt-1">이번 달 누적 기록 수</div></div></div><div class="border-amber-200 border rounded-lg p-5 flex items-center gap-4" style="background:#F7F1E6"><img src="assets/user_design/13_monthly_review_icon.png" alt="" style="width:64px;height:auto;object-fit:contain;flex:0 0 auto;"><div><div class="text-sm font-bold text-amber-600">검토중</div><div class="text-2xl font-bold text-amber-900 mt-1" id="pendingCount">0</div><div class="text-xs text-amber-600 mt-1">검토 대기 중인 기록</div></div></div><div class="border-emerald-200 border rounded-lg p-5 flex items-center gap-4" style="background:#E8F0EA"><img src="assets/user_design/14_monthly_approved_icon.png" alt="" style="width:64px;height:auto;object-fit:contain;flex:0 0 auto;"><div><div class="text-sm font-bold text-emerald-600">승인완료</div><div class="text-2xl font-bold text-emerald-900 mt-1" id="approvedCount">0</div><div class="text-xs text-emerald-600 mt-1">승인된 기록 수</div></div></div><div class="border-indigo-200 border rounded-lg p-5 flex items-center gap-4" style="background:#ECEBF7"><img src="assets/user_design/15_monthly_government_claim_icon.png" alt="" style="width:64px;height:auto;object-fit:contain;flex:0 0 auto;"><div><div class="text-sm font-bold text-indigo-600">월누적청부</div><div class="text-2xl font-bold text-indigo-900 mt-1" id="monthTotalBilling">₩0</div><div class="text-xs text-indigo-600 mt-1">이번 달 청구 금액</div></div></div>
                     </div>
                 </div>
 
