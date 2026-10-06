@@ -279,7 +279,7 @@
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-2xl font-bold text-gray-900 flex items-center"><span class="sec-ico" data-ico="ledger"></span>전체 기록 목록</h2>
-                        <span class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-bold" id="recordCountBadge">0건</span>
+                        <div class="flex flex-wrap items-center gap-3"><span class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-bold" id="recordCountBadge">0건</span><input id="recordSearch" type="search" placeholder="기록 내용을 검색하세요 (이용자 이름)" class="px-4 py-2 border-2 border-gray-200 rounded-lg text-sm outline-none focus:border-emerald-500 w-64"><select id="recordSort" class="px-4 py-2 border-2 border-gray-200 rounded-lg text-sm outline-none focus:border-emerald-500"><option value="new">최신순</option><option value="old">오래된순</option></select></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="recordsList">
                         <div class="col-span-full text-center py-12 text-gray-400">
@@ -463,14 +463,23 @@
             `).join('');
         }
 
+        function visibleRecords() {
+            const q = (document.getElementById('recordSearch').value || '').trim();
+            const order = document.getElementById('recordSort').value;
+            return records
+                .filter(r => !q || (r.resident_name || '').includes(q))
+                .sort((a, b) => order === 'old' ? new Date(a.recorded_date) - new Date(b.recorded_date) : new Date(b.recorded_date) - new Date(a.recorded_date));
+        }
+
         function renderRecords() {
             const list = document.getElementById('recordsList');
-            if (records.length === 0) {
+            const rows = visibleRecords();
+            if (rows.length === 0) {
                 list.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400"><img src="assets/user_design/18_empty_all_records_illustration.png" alt="" style="width:200px;height:auto;margin:0 auto 12px;display:block;"><p>기록이 없습니다</p></div>';
                 return;
             }
 
-            list.innerHTML = records.map(r => `
+            list.innerHTML = rows.map(r => `
                 <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-emerald-300 transition">
                     <div class="flex justify-between items-start mb-3">
                         <div class="font-bold text-gray-900 text-base">${r.resident_name}</div>
@@ -485,8 +494,11 @@
                 </div>
             `).join('');
 
-            document.getElementById('recordCountBadge').textContent = `${records.length}건`;
+            document.getElementById('recordCountBadge').textContent = `${rows.length}건`;
         }
+
+        document.getElementById('recordSearch').addEventListener('input', renderRecords);
+        document.getElementById('recordSort').addEventListener('change', renderRecords);
 
         document.getElementById('recordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
