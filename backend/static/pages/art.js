@@ -129,3 +129,45 @@ ART.recordScene = `<svg class="art-scene" viewBox="0 0 480 160" aria-hidden="tru
     <path d="M96 116 Q106 116 106 122 Q106 128 96 128" fill="none" stroke="#1E2B26" stroke-width="2.2" stroke-linecap="round"/>
     <path d="M70 104 C66 98 74 96 70 90 M82 104 C78 98 86 96 82 90" fill="none" stroke="#B5532F" stroke-width="2" stroke-linecap="round"/>
 </svg>`;
+
+// 일정 장면: 나의 일정 맨 위. 달력 한 장, 핀, 벽시계, 화분
+ART.scheduleScene = `<svg class="art-scene" viewBox="0 0 480 160" aria-hidden="true" focusable="false">
+    <rect x="0" y="0" width="480" height="160" rx="20" fill="#E8F0EA"/>
+    <path d="M20 132 H460" stroke="#6F8F7E" stroke-width="2.5" stroke-linecap="round"/>
+    <rect x="150" y="30" width="170" height="104" rx="6" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2"/>
+    <rect x="150" y="30" width="170" height="24" rx="6" fill="#B5532F"/>
+    <rect x="150" y="44" width="170" height="10" fill="#B5532F"/>
+    <path d="M190 22 V38 M280 22 V38" stroke="#1E2B26" stroke-width="2.4" stroke-linecap="round"/>
+    <rect x="168" y="66" width="14" height="10" fill="#D9E0DA"/><rect x="190" y="66" width="14" height="10" fill="#D9E0DA"/>
+    <rect x="212" y="66" width="14" height="10" fill="#D9E0DA"/><rect x="234" y="66" width="14" height="10" fill="#D9E0DA"/>
+    <rect x="256" y="66" width="14" height="10" fill="#D9E0DA"/><rect x="278" y="66" width="14" height="10" fill="#D9E0DA"/>
+    <rect x="168" y="84" width="14" height="10" fill="#D9E0DA"/><rect x="190" y="84" width="14" height="10" fill="#B5532F"/>
+    <rect x="212" y="84" width="14" height="10" fill="#D9E0DA"/><rect x="234" y="84" width="14" height="10" fill="#D9E0DA"/>
+    <rect x="256" y="84" width="14" height="10" fill="#D9E0DA"/><rect x="278" y="84" width="14" height="10" fill="#D9E0DA"/>
+    <rect x="168" y="102" width="14" height="10" fill="#D9E0DA"/><rect x="190" y="102" width="14" height="10" fill="#D9E0DA"/>
+    <rect x="212" y="102" width="14" height="10" fill="#6F8F7E"/><rect x="234" y="102" width="14" height="10" fill="#D9E0DA"/>
+    <circle cx="384" cy="62" r="26" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.5"/>
+    <path d="M384 62 V48 M384 62 L394 68" stroke="#B5532F" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M56 132 V112 H92 V132 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M92 118 Q102 118 102 124 Q102 130 92 130" fill="none" stroke="#1E2B26" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M430 132 V112 H460 V132 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M440 112 C436 104 444 102 440 94 M450 112 C446 104 454 102 450 94" fill="none" stroke="#6F8F7E" stroke-width="2" stroke-linecap="round"/>
+</svg>`;
+
+// 청구 장면: 나의 청부 맨 위. 영수증, 도장, 동전 더미, 펜
+ART.billingScene = `<svg class="art-scene" viewBox="0 0 480 160" aria-hidden="true" focusable="false">
+    <rect x="0" y="0" width="480" height="160" rx="20" fill="#E8F0EA"/>
+    <path d="M20 132 H460" stroke="#6F8F7E" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M176 22 H290 V132 L282 124 L274 132 L266 124 L258 132 L250 124 L242 132 L234 124 L226 132 L218 124 L210 132 L202 124 L194 132 L186 124 L176 132 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M196 44 H270 M196 60 H270 M196 76 H254 M196 92 H270 M196 108 H240" stroke="#D9E0DA" stroke-width="3" stroke-linecap="round"/>
+    <path d="M236 36 H270" stroke="#1E2B26" stroke-width="2" stroke-linecap="round"/>
+    <rect x="236" y="96" width="30" height="30" rx="4" fill="none" stroke="#B5532F" stroke-width="2.4" transform="rotate(-6 251 111)"/>
+    <path d="M244 111 L249 116 L258 104" fill="none" stroke="#B5532F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" transform="rotate(-6 251 111)"/>
+    <ellipse cx="346" cy="124" rx="34" ry="8" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2"/>
+    <ellipse cx="346" cy="112" rx="34" ry="8" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2"/>
+    <ellipse cx="346" cy="100" rx="34" ry="8" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2"/>
+    <ellipse cx="346" cy="88" rx="34" ry="8" fill="#F2D7A8" stroke="#1E2B26" stroke-width="2.2"/>
+    <path d="M400 132 L424 62" stroke="#1E2B26" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M412 104 L430 96" stroke="#B5532F" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M56 132 V122 H92 V132 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2"/>
+</svg>`;
