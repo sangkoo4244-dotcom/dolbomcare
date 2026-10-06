@@ -60,19 +60,13 @@
             color: var(--ink);
             padding-top: 2px;
         }
-        .tl-dot {
-            display: block;
-            width: 11px;
-            height: 11px;
-            border-radius: 50%;
-            background: var(--paper);
-            border: 2px solid var(--sage);
-            margin: 6px 0 0 -6px;
+        .tl-stamp {
             position: relative;
             z-index: 1;
+            margin-left: 9px;
+            margin-top: -2px;
+            transform: rotate(-4deg);
         }
-        .tl-item.done .tl-dot { background: var(--ink); border-color: var(--ink); }
-        .tl-item.now .tl-dot { background: var(--persimmon); border-color: var(--persimmon); }
         .tl-body { padding-left: 4px; }
         .tl-name { font-size: 16px; font-weight: 700; }
         .tl-meta { font-size: 13px; color: var(--ink-soft); margin-top: 3px; line-height: 1.6; }
@@ -226,11 +220,13 @@
             loadManagerData();
         }
 
-        function timelineItem(time, name, meta, state, cls) {
+        // 도장: 완료(완)는 채운 도장, 진행 중(중)은 채운 칸, 예정(예)은 빈 칸
+        function timelineItem(time, name, meta, state, cls, glyph = '예') {
+            const seal = cls === 'done' ? 'filled' : (cls === 'now' ? 'filled' : 'empty');
             return `
                 <li class="tl-item ${cls}">
                     <div class="tl-time">${time}</div>
-                    <div><span class="tl-dot"></span></div>
+                    <div><span class="seal tl-stamp ${seal}">${glyph}</span></div>
                     <div class="tl-body">
                         <div class="tl-name">${escapeHtml(name)}</div>
                         <div class="tl-meta">${escapeHtml(meta)}</div>
@@ -274,7 +270,8 @@
                     const now_ = i.state === '방문중';
                     const cls = done ? 'done' : (now_ ? 'now' : '');
                     const meta = `${i.duration_minutes || 60}분 · 계획 항목 ${i.planned_items.length ? i.planned_items.length : 0}개`;
-                    return timelineItem(i.time, i.resident_name || '이용자', meta, STATE_LABEL[i.state] || i.state, cls);
+                    const glyph = done ? '완' : (now_ ? '중' : '예');
+                    return timelineItem(i.time, i.resident_name || '이용자', meta, STATE_LABEL[i.state] || i.state, cls, glyph);
                 }).join('')}</ul>`;
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
@@ -320,7 +317,7 @@
                     ? `<ul class="timeline">${records.map(r => {
                         const time = r.recorded_at ? r.recorded_at.slice(11, 16) : '--:--';
                         const meta = `${names[r.caregiver_id] || '요양사'} · ${r.service_type || ''} · 청부 ₩${(r.billing_amount || 0).toLocaleString()}`;
-                        return timelineItem(time, residentNames[r.resident_id] || '이용자', meta, '기록 저장됨', 'done');
+                        return timelineItem(time, residentNames[r.resident_id] || '이용자', meta, '기록 저장됨', 'done', '기');
                     }).join('')}</ul>`
                     : '<div class="empty">오늘 저장된 방문 기록이 없습니다.</div>';
 

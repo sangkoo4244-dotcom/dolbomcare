@@ -13,10 +13,34 @@
     --sage: #6F8F7E;       /* 보조 강조 */
     --persimmon: #B5532F;  /* 행동 색 (버튼, 중요 표시) */
     --persimmon-hover: #9A4425;
+    --seal: #A8432A;       /* 도장(인장) 색 */
+    --rule: #E4EAE1;       /* 일지 줄 (글을 방해하지 않을 만큼 옅게) */
 }
 
+/* 도장: 확인과 완료의 표시. 칸 안에 한 글자를 넣는다 */
+.seal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1.5px solid var(--seal);
+    border-radius: 4px;
+    color: var(--seal);
+    font-family: 'Gowun Batang', serif;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    background: #FFF;
+}
+.seal.filled { background: var(--seal); color: #FFF; }
+.seal.empty { border-color: var(--sage); color: var(--sage); background: transparent; }
+
+/* 일지 용지: 옅은 가로줄 (여백과 줄로 읽히는 기록 면) */
 html, body {
-    background: var(--paper) !important;
+    background-color: var(--paper) !important;
+    background-image: repeating-linear-gradient(to bottom, transparent 0 35px, var(--rule) 35px 36px) !important;
+    background-attachment: local;
     color: var(--ink);
     font-family: 'Noto Sans KR', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
