@@ -107,6 +107,18 @@ main [class*="bg-gradient-to"] {
     background-color: var(--sheet) !important;
 }
 .border-blue-200, .border-amber-200, .border-emerald-200, .border-purple-200, .border-red-200 { border-color: var(--line) !important; }
+/* 화면 안에 직접 적힌 초록색(인라인 스타일, 예전 강조색)도 같은 행동색으로 바꾼다 */
+[style*="#10b981"], [style*="#059669"], [style*="#34d399"], [style*="#047857"] {
+    background-color: var(--persimmon) !important;
+    border-color: var(--persimmon) !important;
+}
+[style*="color: #10b981"], [style*="color:#10b981"], [style*="color: #059669"], [style*="color:#059669"] {
+    color: var(--persimmon) !important;
+}
+.bg-emerald-50, .bg-emerald-100 { background-color: #EEF4EF !important; }
+.text-emerald-800, .text-emerald-900, .text-emerald-700 { color: var(--ink) !important; }
+.border-emerald-200, .border-emerald-300, .border-emerald-500 { border-color: var(--line) !important; }
+
 /* 빨간 글자는 오류·경고 표시로 남긴다 */
 .text-blue-900, .text-amber-900, .text-emerald-900, .text-purple-900 { color: var(--ink) !important; }
 .text-blue-600, .text-amber-600, .text-purple-600 { color: var(--ink-soft) !important; }

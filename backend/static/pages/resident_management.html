@@ -15,7 +15,7 @@
 
         .sidebar {
             width: 288px;
-            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            background: linear-gradient(180deg, #1E2B26 0%, #16201C 100%);
             color: white;
             position: fixed;
             left: 0;
@@ -61,8 +61,8 @@
         }
 
         .nav-item.active {
-            color: #10b981;
-            border-left-color: #10b981;
+            color: #B5532F;
+            border-left-color: #B5532F;
             background: rgba(16, 185, 129, 0.1);
         }
 
@@ -106,7 +106,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #B5532F 0%, #9A4425 100%);
             color: white;
             display: flex;
             align-items: center;
@@ -147,7 +147,7 @@
 
         .add-btn {
             padding: 10px 24px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #B5532F 0%, #9A4425 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -196,7 +196,7 @@
         .stat-value {
             font-size: 36px;
             font-weight: 700;
-            color: #10b981;
+            color: #B5532F;
         }
 
         .table-wrapper {
@@ -284,8 +284,8 @@
         }
 
         .btn-sm:hover {
-            border-color: #10b981;
-            color: #10b981;
+            border-color: #B5532F;
+            color: #B5532F;
             background: #f0fdf4;
         }
 
@@ -478,7 +478,7 @@
                 </div>
 
                 <div style="display: flex; gap: 12px; margin-top: 24px;">
-                    <button type="submit" style="flex: 1; padding: 10px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">저장</button>
+                    <button type="submit" style="flex: 1; padding: 10px; background: #B5532F; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">저장</button>
                     <button type="button" onclick="closeResidentModal()" style="flex: 1; padding: 10px; background: #f3f4f6; color: #6b7280; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">취소</button>
                 </div>
             </form>
@@ -732,7 +732,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid #fde68a;">
                     <span><b>${r.resident_name}</b> · ${labels[r.field] || r.field} → <b>${r.new_value}</b> <span style="color:#6b7280;">(요청: ${r.requested_by})</span></span>
                     <span>
-                        <button onclick="decideChangeRequest(${r.id}, 'approve')" style="padding: 4px 10px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer;">승인</button>
+                        <button onclick="decideChangeRequest(${r.id}, 'approve')" style="padding: 4px 10px; background: #B5532F; color: white; border: none; border-radius: 6px; cursor: pointer;">승인</button>
                         <button onclick="decideChangeRequest(${r.id}, 'reject')" style="padding: 4px 10px; background: white; border: 1px solid #fca5a5; color: #b91c1c; border-radius: 6px; cursor: pointer;">반려</button>
                     </span>
                 </div>`).join('');
