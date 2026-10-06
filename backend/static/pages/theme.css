@@ -188,9 +188,15 @@ main [class*="bg-gradient-to"] {
     main h1 { font-size: 24px !important; }
     main > div:nth-child(2), #dashboardContent { padding: 16px !important; }
     body { padding-bottom: 96px; }
-    .md\:grid-cols-4, .md\:grid-cols-3 { grid-template-columns: 1fr 1fr !important; }
+    /* 요약 카드(네 칸)는 두 칸으로, 입력 항목(세 칸)은 한 칸으로 쌓는다 */
+    .md\:grid-cols-4 { grid-template-columns: 1fr 1fr !important; }
+    .md\:grid-cols-3 { grid-template-columns: 1fr !important; }
     table { display: block; overflow-x: auto; }
     th, td { white-space: nowrap; min-width: 88px; }
+    /* 짧은 버튼(이전·다음 등)은 글자가 줄바꿈되지 않게 */
+    button, .btn { white-space: nowrap; }
+    /* 달력처럼 칸이 많은 격자는 칸 사이 여백을 줄인다 */
+    [class*="grid-cols-7"] { gap: 2px !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
