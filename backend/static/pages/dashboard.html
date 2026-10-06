@@ -96,8 +96,8 @@
         .task-main { display: flex; align-items: center; gap: 16px; }
         .task-ico svg { width: 56px; height: 56px; display: block; }
         .metric-art, .illus-art, .metric-img { width: 72px; height: 72px; display: block; }
-        .metric-img { border-radius: 11px; object-fit: cover; }
-        .task-ico img { width: 56px; height: 56px; display: block; border-radius: 11px; object-fit: cover; }
+        .metric-img { object-fit: contain; }
+        .task-ico img { width: 56px; height: 56px; display: block; object-fit: contain; }
 
         /* 한 번만 나타나는 움직임 (동작 줄이기 설정이면 생략) */
         @keyframes tl-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
