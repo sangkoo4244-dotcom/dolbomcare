@@ -92,7 +92,8 @@
         .task-list a:hover { background: #EEF2EE; }
         .task-count { font-variant-numeric: tabular-nums; font-weight: 700; }
         .task-main { display: flex; align-items: center; gap: 12px; }
-        .task-ico svg { width: 36px; height: 36px; display: block; }
+        .task-ico svg { width: 40px; height: 40px; display: block; }
+        .metric-art, .illus-art { width: 48px; height: 48px; display: block; }
 
         /* 한 번만 나타나는 움직임 (동작 줄이기 설정이면 생략) */
         @keyframes tl-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -218,10 +219,10 @@
             document.getElementById('pageTitle').textContent = '오늘';
             document.getElementById('dashboardContent').innerHTML = `
                 ${summaryRow([
-                    ['요양사', 'totalStaff', '명', ART.metricFlat.bag],
-                    ['이용자', 'totalResidents', '명', ART.metricFlat.plant],
-                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 이후 청부 합계', ART.metricFlat.wallet],
-                    ['처리할 일', 'pendingApprovals', '승인·확정이 필요한 항목', ART.metricFlat.clipboard],
+                    ['요양사', 'totalStaff', '명', ART.illus.group],
+                    ['이용자', 'totalResidents', '명', ART.illus.house],
+                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 이후 청부 합계', ART.illus.wallet],
+                    ['처리할 일', 'pendingApprovals', '승인·확정이 필요한 항목', ART.illus.checklist],
                 ])}
                 <h2 class="section-title">오늘 들어온 방문 기록</h2>
                 <p class="section-sub">요양사가 오늘 저장한 기록을 시간 순서로 보여 줍니다.</p>
@@ -336,9 +337,9 @@
                     : emptyState('오늘 저장된 방문 기록이 없습니다.', ART.tabletFlat);
 
                 const tasks = [
-                    ['청부 승인 대기', pendingClaims, './billing_management.html', ART.flat.doc],
-                    ['방문 계획 승인 대기', pendingPlans, './schedule_approval.html', ART.flat.calendar],
-                    ['보호자 가입 요청', pendingGuardians, './guardian_management.html', ART.flat.group],
+                    ['청부 승인 대기', pendingClaims, './billing_management.html', ART.illus.doc],
+                    ['방문 계획 승인 대기', pendingPlans, './schedule_approval.html', ART.illus.calendar],
+                    ['보호자 가입 요청', pendingGuardians, './guardian_management.html', ART.illus.group],
                 ];
                 document.getElementById('taskList').innerHTML = tasks.map(([label, count, href, icon]) => `
                     <li><a href="${href}"><span class="task-main"><span class="task-ico">${icon}</span><span>${label}</span></span><span class="task-count">${count}건</span></a></li>`).join('');
