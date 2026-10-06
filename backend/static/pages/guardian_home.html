@@ -25,6 +25,7 @@
                 </div>
             </div>
             <div class="flex-1 overflow-y-auto p-8">
+                <div id="homeArt" class="mb-4" aria-hidden="true"></div>
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-6">
                     <label class="text-sm font-semibold text-gray-700">이용자 선택
                         <select id="residentSelect" onchange="loadVisits()" class="ml-2 border border-gray-300 rounded-lg px-3 py-2"></select>
@@ -71,6 +72,7 @@
             const residents = d.residents || [];
             document.getElementById('emptyNotice').classList.toggle('hidden', residents.length > 0);
             document.getElementById('emptyArt').innerHTML = ART.home;
+            document.getElementById('homeArt').innerHTML = ART.home;
             select.innerHTML = residents.map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
             if (residents.length) loadVisits();
         }

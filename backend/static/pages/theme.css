@@ -98,6 +98,53 @@ main [class*="bg-gradient-to"] {
     outline-offset: 2px;
 }
 
+/* 휴대폰(900px 이하): 사이드바를 아래쪽 메뉴 줄로 바꾸고, 본문은 전체 폭을 쓴다 */
+@media (max-width: 900px) {
+    aside {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        z-index: 50;
+        border-right: none;
+        border-top: 1px solid #142019;
+    }
+    aside > div:first-child { display: none !important; }
+    aside nav {
+        display: flex;
+        overflow-x: auto;
+        padding: 6px 4px !important;
+        gap: 2px;
+    }
+    .side-item {
+        flex: 0 0 auto;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 64px;
+        padding: 6px 4px !important;
+        font-size: 11px !important;
+        text-align: center;
+        gap: 2px !important;
+    }
+    .side-item .side-icon { font-size: 18px; }
+    .side-item[style*="margin-top"] { margin-top: 0 !important; }
+    main { margin-left: 0 !important; }
+    main > div:first-child {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 16px !important;
+    }
+    main h1 { font-size: 24px !important; }
+    main > div:nth-child(2), #dashboardContent { padding: 16px !important; }
+    body { padding-bottom: 96px; }
+    .grid { grid-template-columns: 1fr 1fr !important; }
+    .md\:grid-cols-4, .md\:grid-cols-3, .md\:grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
+    table { display: block; overflow-x: auto; }
+}
+
 @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
 }
