@@ -99,7 +99,7 @@
                             <label class="block text-sm font-bold text-gray-700 mb-2">제공 항목 (해당하는 것을 선택)</label>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div class="border border-gray-200 rounded-lg p-4">
-                                    <div class="flex items-center gap-2 mb-2"><img src="assets/user_design/04_category_physical_support.png" alt="" style="width:40px;height:auto;object-fit:contain;"><span class="text-sm font-bold text-gray-700">신체활동 지원</span></div>
+                                    <div class="flex items-start gap-3 mb-3"><img src="assets/user_design/04_category_physical_support.png" alt="" style="width:64px;height:auto;object-fit:contain;"><div><div class="text-sm font-bold text-gray-900">신체활동 지원</div><div class="text-xs text-gray-500 mt-1">식사, 이동, 목욕 등 일상 신체활동을 지원합니다.</div></div></div>
                                     <label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="meal_assist"> 식사 보조</label>
                                     <label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="toilet_assist"> 배설 보조</label>
                                     <label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="bath"> 목욕·세면</label>
@@ -107,18 +107,18 @@
                                     <label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="mobility"> 이동 보조</label>
                                 </div>
                                 <div class="border border-gray-200 rounded-lg p-4">
-                                    <div class="flex items-center gap-2 mb-2"><img src="assets/user_design/05_category_health_care.png" alt="" style="width:40px;height:auto;object-fit:contain;"><span class="text-sm font-bold text-gray-700">건강 관리</span></div>
+                                    <div class="flex items-start gap-3 mb-3"><img src="assets/user_design/05_category_health_care.png" alt="" style="width:64px;height:auto;object-fit:contain;"><div><div class="text-sm font-bold text-gray-900">건강 관리</div><div class="text-xs text-gray-500 mt-1">투약, 건강 확인 등 건강 관리를 지원합니다.</div></div></div>
                                     <label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="medicine"> 투약 확인</label>
                                     <label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="vitals"> 체온·혈압 측정</label>
                                     <label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="symptom"> 이상 증상 관찰</label>
                                 </div>
                                 <div class="border border-gray-200 rounded-lg p-4">
-                                    <div class="flex items-center gap-2 mb-2"><img src="assets/user_design/06_category_emotional_cognitive.png" alt="" style="width:40px;height:auto;object-fit:contain;"><span class="text-sm font-bold text-gray-700">정서·인지 지원</span></div>
+                                    <div class="flex items-start gap-3 mb-3"><img src="assets/user_design/06_category_emotional_cognitive.png" alt="" style="width:64px;height:auto;object-fit:contain;"><div><div class="text-sm font-bold text-gray-900">정서·인지 지원</div><div class="text-xs text-gray-500 mt-1">말벗, 정서 지원, 인지활동 등 정신적 안정을 지원합니다.</div></div></div>
                                     <label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="emotional"> 말벗·정서 지원</label>
                                     <label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="cognitive"> 인지활동</label>
                                 </div>
                                 <div class="border border-gray-200 rounded-lg p-4">
-                                    <div class="flex items-center gap-2 mb-2"><img src="assets/user_design/07_category_housework_support.png" alt="" style="width:40px;height:auto;object-fit:contain;"><span class="text-sm font-bold text-gray-700">가사 지원</span></div>
+                                    <div class="flex items-start gap-3 mb-3"><img src="assets/user_design/07_category_housework_support.png" alt="" style="width:64px;height:auto;object-fit:contain;"><div><div class="text-sm font-bold text-gray-900">가사 지원</div><div class="text-xs text-gray-500 mt-1">청소, 세탁, 장보기 등 가사 활동을 지원합니다.</div></div></div>
                                     <label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="cleaning"> 청소·정돈</label>
                                     <label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="laundry"> 세탁</label>
                                     <label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="shopping"> 장보기·취사</label>
@@ -137,10 +137,10 @@
                         </div>
 
                         <!-- 청부액 상세 계산 -->
-                        <div id="billingDetailsSection" class="hidden space-y-6">
+                        <div id="billingDetailsSection" class="hidden grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                             <!-- 기준액 정보 -->
                             <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-6">
-                                <h3 class="text-lg font-bold text-blue-900 mb-4 flex items-center gap-3"><img src="assets/user_design/08_billing_total_icon.png" alt="" style="width:40px;height:auto;object-fit:contain;"><span>기준액 정보</span></h3>
+                                <h3 class="text-lg font-bold text-blue-900 mb-4 flex items-center gap-3"><img src="assets/user_design/08_billing_total_icon.png" alt="" style="width:64px;height:auto;object-fit:contain;"><span>기준액 정보</span></h3>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <div class="text-xs text-blue-600 font-semibold uppercase tracking-wide">1회 급여비용 (수가)</div>
@@ -155,8 +155,8 @@
 
                             <!-- 본인부담금 정보 -->
                             <div class="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-lg p-6">
-                                <h3 class="text-lg font-bold text-amber-900 mb-4 flex items-center gap-3"><img src="assets/user_design/09_copay_icon.png" alt="" style="width:40px;height:auto;object-fit:contain;"><span>본인부담금 정보</span></h3>
-                                <div class="grid grid-cols-3 gap-4">
+                                <h3 class="text-lg font-bold text-amber-900 mb-4 flex items-center gap-3"><img src="assets/user_design/09_copay_icon.png" alt="" style="width:64px;height:auto;object-fit:contain;"><span>본인부담금 정보</span></h3>
+                                <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <div class="text-xs text-amber-600 font-semibold uppercase tracking-wide">소득분류</div>
                                         <div class="text-xl font-bold text-amber-900 mt-1" id="clientTypeDisplay">-</div>
@@ -174,8 +174,8 @@
 
                             <!-- 공단부담액 -->
                             <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-300 rounded-lg p-6 ring-2 ring-emerald-200">
-                                <h3 class="text-lg font-bold text-emerald-900 mb-4 flex items-center gap-3"><img src="assets/user_design/10_public_support_icon.png" alt="" style="width:40px;height:auto;object-fit:contain;"><span>공단부담액</span></h3>
-                                <div class="grid grid-cols-2 gap-6">
+                                <h3 class="text-lg font-bold text-emerald-900 mb-4 flex items-center gap-3"><img src="assets/user_design/10_public_support_icon.png" alt="" style="width:64px;height:auto;object-fit:contain;"><span>공단부담액</span></h3>
+                                <div class="grid grid-cols-1 gap-4">
                                     <div>
                                         <div class="text-xs text-emerald-600 font-semibold uppercase tracking-wide">공단부담율</div>
                                         <div class="text-2xl font-bold text-emerald-900 mt-1" id="insuranceRateDisplay">-</div>
@@ -189,8 +189,8 @@
 
                             <!-- 월한도 현황 -->
                             <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-6">
-                                <h3 class="text-lg font-bold text-purple-900 mb-4 flex items-center gap-3"><img src="assets/user_design/11_monthly_status_icon.png" alt="" style="width:40px;height:auto;object-fit:contain;"><span>월한도 현황</span></h3>
-                                <div class="grid grid-cols-4 gap-4">
+                                <h3 class="text-lg font-bold text-purple-900 mb-4 flex items-center gap-3"><img src="assets/user_design/11_monthly_status_icon.png" alt="" style="width:64px;height:auto;object-fit:contain;"><span>월한도 현황</span></h3>
+                                <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <div class="text-xs text-purple-600 font-semibold uppercase tracking-wide">월한도</div>
                                         <div class="text-lg font-bold text-purple-900 mt-1" id="monthlyLimitDisplay">-</div>
@@ -234,22 +234,22 @@
                     <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center"><span class="sec-ico" data-ico="chart"></span>월별 현황</h2>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
-                            <div class="flex items-center gap-2 mb-2"><img src="assets/user_design/12_monthly_all_records_icon.png" alt="" style="width:36px;height:auto;object-fit:contain;"><span class="text-sm text-blue-600 font-bold">전체 기록</span></div>
+                            <div class="flex items-center gap-2 mb-2"><img src="assets/user_design/12_monthly_all_records_icon.png" alt="" style="width:56px;height:auto;object-fit:contain;"><span class="text-sm text-blue-600 font-bold">전체 기록</span></div>
                             <div class="text-3xl font-bold text-blue-900" id="totalRecordsCount">0</div>
                             <div class="text-xs text-blue-500 mt-1">건</div>
                         </div>
                         <div class="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-lg border border-amber-200">
-                            <div class="flex items-center gap-2 mb-2"><img src="assets/user_design/13_monthly_review_icon.png" alt="" style="width:36px;height:auto;object-fit:contain;"><span class="text-sm text-amber-600 font-bold">검토중</span></div>
+                            <div class="flex items-center gap-2 mb-2"><img src="assets/user_design/13_monthly_review_icon.png" alt="" style="width:56px;height:auto;object-fit:contain;"><span class="text-sm text-amber-600 font-bold">검토중</span></div>
                             <div class="text-3xl font-bold text-amber-900" id="pendingCount">0</div>
                             <div class="text-xs text-amber-500 mt-1">건</div>
                         </div>
                         <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-lg border border-emerald-200">
-                            <div class="flex items-center gap-2 mb-2"><img src="assets/user_design/14_monthly_approved_icon.png" alt="" style="width:36px;height:auto;object-fit:contain;"><span class="text-sm text-emerald-600 font-bold">승인완료</span></div>
+                            <div class="flex items-center gap-2 mb-2"><img src="assets/user_design/14_monthly_approved_icon.png" alt="" style="width:56px;height:auto;object-fit:contain;"><span class="text-sm text-emerald-600 font-bold">승인완료</span></div>
                             <div class="text-3xl font-bold text-emerald-900" id="approvedCount">0</div>
                             <div class="text-xs text-emerald-500 mt-1">건</div>
                         </div>
                         <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 p-6 rounded-lg border border-indigo-200">
-                            <div class="flex items-center gap-2 mb-2"><img src="assets/user_design/15_monthly_government_claim_icon.png" alt="" style="width:36px;height:auto;object-fit:contain;"><span class="text-sm text-indigo-600 font-bold">월누적청부</span></div>
+                            <div class="flex items-center gap-2 mb-2"><img src="assets/user_design/15_monthly_government_claim_icon.png" alt="" style="width:56px;height:auto;object-fit:contain;"><span class="text-sm text-indigo-600 font-bold">월누적청부</span></div>
                             <div class="text-2xl font-bold text-indigo-900" id="monthTotalBilling">₩0</div>
                         </div>
                     </div>
