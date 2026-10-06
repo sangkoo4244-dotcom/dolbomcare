@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="design-system.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* 이 화면은 줄무늬 없이 깨끗한 바탕에 둔다 (시안과 같게) */
+        :root, :root body { background-image: none !important; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: #f5f7fa;
@@ -199,6 +201,17 @@
             color: #B5532F;
         }
 
+        .stat-with-art { display: flex; align-items: center; gap: 18px; background: #E9F7F1; }
+        .stat-art { width: 120px; height: auto; flex: 0 0 auto; mix-blend-mode: multiply; }
+        .section-title-row { display: flex; align-items: center; gap: 12px; }
+        .section-title-row img { width: 40px; height: 40px; object-fit: contain; }
+        .resident-banner-wrap { height: 260px; overflow: hidden; border-radius: 16px; margin-bottom: 24px; }
+        /* 원본 그림의 흰 여백을 잘라 낸다 */
+        .resident-banner { display: block; width: 102.5%; max-width: none; height: auto; margin: -3.75% 0 0 -1.25%; }
+        .top-bell { width: 28px; height: 28px; object-fit: contain; display: block; }
+        .avatar-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .side-icon img { display: block; }
+
         .table-wrapper {
             background: white;
             border-radius: 12px;
@@ -324,11 +337,12 @@
         <div class="topbar">
             <div class="topbar-title"></div>
             <div class="user-menu">
+                <img class="top-bell" src="assets/user_design/28_top_notification_icon.png" alt="">
                 <div class="user-info">
                     <div class="user-name" id="userName">사용자</div>
                     <div class="user-role" id="userRole">요양사</div>
                 </div>
-                <div class="avatar" id="userAvatar">U</div>
+                <img class="avatar-img" id="userAvatar" src="assets/user_design/29_top_profile_icon.png" alt="">
                 <button class="logout-btn" onclick="logout()">로그아웃</button>
             </div>
         </div>
@@ -337,31 +351,37 @@
         <div class="content">
             <!-- Stats -->
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">전체 이용자</div>
-                    <div class="stat-value" id="totalCount">0</div>
+                <div class="stat-card stat-with-art">
+                    <img class="stat-art" src="assets/user_design/resident_metric_total.png" alt="">
+                    <div>
+                        <div class="stat-label">전체 이용자</div>
+                        <div class="stat-value" id="totalCount">0</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">활성 이용자</div>
-                    <div class="stat-value" id="activeCount">0</div>
+                <div class="stat-card stat-with-art">
+                    <img class="stat-art" src="assets/user_design/resident_metric_active.png" alt="">
+                    <div>
+                        <div class="stat-label">활성 이용자</div>
+                        <div class="stat-value" id="activeCount">0</div>
+                    </div>
                 </div>
             </div>
 
             <!-- 요양사: 내가 올린 변경 요청과 처리 결과 -->
             <div id="myRequestPanel" style="display: none; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 8px;"> 내 변경 요청</h3>
+                <h3 class="section-title-row" style="font-size: 15px; font-weight: 700; margin-bottom: 8px;"><img src="assets/user_design/resident_change_request.png" alt="">내 변경 요청</h3>
                 <div id="myRequestList" style="font-size: 14px;"></div>
             </div>
 
             <!-- 센터장: 요양사의 변경 요청 -->
             <div id="changeRequestPanel" style="display: none; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 8px;"> 변경 요청 <span id="changeRequestCount"></span></h3>
+                <h3 class="section-title-row" style="font-size: 15px; font-weight: 700; margin-bottom: 8px;"><img src="assets/user_design/resident_request_approval.png" alt="">변경 요청 <span id="changeRequestCount"></span></h3>
                 <div id="changeRequestList" style="font-size: 14px;"></div>
             </div>
 
             <!-- Header -->
             <div class="header-action">
-                <h2 style="font-size: 18px; font-weight: 700;">이용자 목록</h2>
+                <h2 class="section-title-row" style="font-size: 18px; font-weight: 700;"><img src="assets/user_design/section_resident_list.png" alt="">이용자 목록</h2>
                 <button class="add-btn" onclick="showAddModal()">+ 이용자 추가</button>
             </div>
 
@@ -515,12 +535,31 @@
             currentUser = user;
             document.getElementById('userName').textContent = user.full_name || '사용자';
             document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
-            document.getElementById('userAvatar').textContent = (user.full_name || '사용자').charAt(0).toUpperCase();
 
             // 메뉴 필터링은 menu.js의 renderSidebar() 함수에서 처리
             renderSidebar();
+            applyNavIcons();
 
             return true;
+        }
+
+        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
+        const NAV_ICON_FILES = {
+            '대시보드': '20_nav_dashboard_icon.png',
+            '이용자관리': '21_nav_user_icon.png',
+            '음성 기록': '22_nav_voice_icon.png',
+            '청부관리': '24_nav_billing_icon.png',
+            '나의 청부': '24_nav_billing_icon.png',
+            '수익분석': '25_nav_statistics_icon.png',
+            '알림': '26_nav_notice_icon.png',
+            '설정': '27_nav_settings_icon.png',
+        };
+
+        function applyNavIcons() {
+            document.querySelectorAll('.sidebar-nav .side-item').forEach(item => {
+                const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
+                if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
+            });
         }
 
         async function loadResidents() {
@@ -557,7 +596,7 @@
             const tableDiv = document.getElementById('residentsTable');
 
             if (residents.length === 0) {
-                tableDiv.innerHTML = '<div class="empty-state"><div class="empty-state-icon">😴</div><div>등록된 이용자가 없습니다</div></div>';
+                tableDiv.innerHTML = '<div class="empty-state"><img src="assets/user_design/empty_residents.png" alt="" style="width: 220px; height: auto;"><div>등록된 이용자가 없습니다</div></div>';
                 return;
             }
 
@@ -590,8 +629,13 @@
                 html += `
                     <tr>
                         <td>
-                            <div class="resident-name">${r.name}</div>
-                            <div class="resident-info">${r.address || '주소 미등록'}</div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <img src="assets/user_design/resident_avatar_${r.gender === '여' ? 'female' : 'male'}.png" alt="" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex: 0 0 auto;">
+                                <div>
+                                    <div class="resident-name">${r.name}</div>
+                                    <div class="resident-info">${r.address || '주소 미등록'}</div>
+                                </div>
+                            </div>
                         </td>
                         <td>${r.gender || '-'} / ${age}세</td>
                         <td>${r.care_grade}등급</td>
@@ -876,9 +920,9 @@
     <script>
         // 상단 배너: 디자인 시안 그림 (assets/user_design/)
         const banner = document.createElement('div');
-        banner.className = 'page-scene';
-        banner.innerHTML = '<img src="assets/user_design/resident_banner.png" alt="" style="width:100%;height:300px;object-fit:cover;object-position:center;border-radius:8px;display:block;">';
-        document.querySelector('.main-layout').children[0].after(banner);
+        banner.className = 'resident-banner-wrap';
+        banner.innerHTML = '<img class="resident-banner" src="assets/user_design/resident_banner.png" alt="">';
+        document.querySelector('.content').prepend(banner);
     </script>
 </body>
 </html>
