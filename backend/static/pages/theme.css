@@ -27,6 +27,7 @@
 
 /* 장면 그림 (art.js): 가로폭에 맞춰 줄어들고, 최대 480px */
 .art-scene { width: 100%; max-width: 480px; height: auto; display: block; }
+.page-scene { padding: 24px 24px 0; }
 
 /* 선 그림 (art.js) 공통 크기 */
 .art { width: 96px; height: auto; display: block; margin-bottom: 8px; }

@@ -115,5 +115,7 @@
         function logout() { if (confirm('로그아웃하시겠습니까?')) { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; } }
         window.addEventListener('load', checkAuth);
     </script>
+    <script src="art.js"></script>
+    <script>ART.placeScene('statement');</script>
 </body>
 </html>
