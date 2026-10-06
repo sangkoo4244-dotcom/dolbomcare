@@ -146,6 +146,8 @@
         .empty-box { border: 1px dashed var(--line); border-radius: 8px; padding: 32px 16px; text-align: center; color: var(--ink-soft); background: var(--sheet); }
         .empty-scene { width: min(380px, 100%); height: auto; display: block; margin: 0 auto; }
         .header-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: var(--sheet); border: 1px solid var(--line); }
+        .header-bell { width: 28px; height: 28px; object-fit: contain; display: block; }
+        .side-icon img { display: block; }
 
         /* 한 번만 나타나는 움직임 (동작 줄이기 설정이면 생략) */
         @keyframes tl-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -182,11 +184,12 @@
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center sticky top-0 z-40">
                 <h1 class="text-3xl font-bold text-gray-900" id="pageTitle"></h1>
                 <div class="flex items-center gap-6">
+                    <img class="header-bell" src="assets/user_design/28_top_notification_icon.png" alt="">
                     <div class="text-right">
                         <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
                         <div class="text-xs text-gray-500" id="userRole">역할</div>
                     </div>
-                    <div class="header-avatar" style="display:flex;align-items:center;justify-content:center;color:#9CA3AF;"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></div>
+                    <img class="header-avatar" src="assets/user_design/29_top_profile_icon.png" alt="">
                     <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
                 </div>
             </div>
@@ -228,11 +231,31 @@
             document.getElementById('userName').textContent = user.full_name || '사용자';
             document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
             renderSidebar();
+            applyNavIcons();
             if (user.role === 'caregiver') {
                 renderCaregiverDashboard();
             } else {
                 renderManagerDashboard();
             }
+        }
+
+        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 대시보드 화면의 사이드바에만 적용한다
+        const NAV_ICON_FILES = {
+            '대시보드': '20_nav_dashboard_icon.png',
+            '이용자관리': '21_nav_user_icon.png',
+            '음성 기록': '22_nav_voice_icon.png',
+            '청부관리': '24_nav_billing_icon.png',
+            '나의 청부': '24_nav_billing_icon.png',
+            '수익분석': '25_nav_statistics_icon.png',
+            '알림': '26_nav_notice_icon.png',
+            '설정': '27_nav_settings_icon.png',
+        };
+
+        function applyNavIcons() {
+            document.querySelectorAll('#navContent .side-item').forEach(item => {
+                const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
+                if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
+            });
         }
 
         function emptyState(text, art = ART.sprout) {
