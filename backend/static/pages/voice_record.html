@@ -25,13 +25,15 @@
         <main class="ml-72 w-full flex flex-col">
             <!-- 탑바 -->
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-bold text-gray-900"></h1>
+                <h1 class="text-3xl font-bold text-gray-900">음성 기록</h1>
                 <div class="flex items-center gap-6">
+                    <img src="assets/user_design/28_top_notification_icon.png" alt="" style="width:28px;height:28px;object-fit:contain;">
+                    <span style="width:1px;height:36px;background:#E5E0D8;"></span>
                     <div class="text-right">
                         <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
                         <div class="text-xs text-gray-500" id="userRole">역할</div>
                     </div>
-                    <img src="assets/hd/user_guardian.png" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:#FFFFFF;border:1px solid #D9E0DA;">
+                    <img src="assets/user_design/29_top_profile_icon.png" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;">
                     <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">
                         로그아웃
                     </button>
