@@ -210,3 +210,29 @@ ART.metricFlat = {
     wallet: METRIC_FLAT('#F2D7A8', '<rect x="9" y="12" width="22" height="17" rx="3" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.6"/><rect x="22" y="18" width="9" height="6" rx="2" fill="#B5532F"/><circle cx="25" cy="21" r="1.2" fill="#FFFFFF"/>'),
     clipboard: METRIC_FLAT('#E8F0EA', '<rect x="11" y="9" width="18" height="23" rx="3" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.6"/><rect x="16" y="7" width="8" height="4" rx="1.5" fill="#B5532F"/><path d="M15 19 L18 22 L24 16" fill="none" stroke="#B5532F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 27 H25" stroke="#D9E0DA" stroke-width="2" stroke-linecap="round"/>'),
 };
+
+// 평면 아이콘 세트 (직접 그림, 얼굴 없음). 같은 40px 타일 규칙.
+const FLAT = (tile, inner) => `<svg class="flat-art" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><rect x="0" y="0" width="40" height="40" rx="10" fill="${tile}"/>${inner}</svg>`;
+ART.flat = {
+    calendar: FLAT('#E8F0EA', '<rect x="9" y="11" width="22" height="20" rx="3" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.6"/><rect x="9" y="11" width="22" height="6" rx="3" fill="#B5532F"/><path d="M14 9 V13 M26 9 V13" stroke="#1E2B26" stroke-width="1.6" stroke-linecap="round"/><path d="M15 23 L18 26 L25 19" fill="none" stroke="#6F8F7E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'),
+    clock: FLAT('#F6E4DC', '<circle cx="20" cy="20" r="10" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.6"/><path d="M20 14 V20 L24 23" fill="none" stroke="#B5532F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'),
+    doc: FLAT('#F6E4DC', '<path d="M13 9 H24 L28 13 V31 H13 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.6" stroke-linejoin="round"/><path d="M24 9 V13 H28" fill="none" stroke="#1E2B26" stroke-width="1.6" stroke-linejoin="round"/><path d="M17 19 H24 M17 23 H24 M17 27 H21" stroke="#B5532F" stroke-width="2" stroke-linecap="round"/>'),
+    group: FLAT('#E8F0EA', '<circle cx="15" cy="16" r="4" fill="#6F8F7E"/><path d="M8 29 Q8 22 15 22 Q22 22 22 29 Z" fill="#6F8F7E"/><circle cx="25" cy="18" r="4" fill="#B5532F"/><path d="M18 30 Q18 23 25 23 Q32 23 32 30 Z" fill="#B5532F"/>'),
+    checklist: FLAT('#F6E4DC', '<rect x="11" y="9" width="18" height="23" rx="3" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.6"/><rect x="16" y="7" width="8" height="4" rx="1.5" fill="#B5532F"/><path d="M14 19 L16 21 L20 17 M14 26 L16 28 L20 24" fill="none" stroke="#B5532F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 19 H27 M23 26 H27" stroke="#D9E0DA" stroke-width="2" stroke-linecap="round"/>'),
+};
+// 평면 빈 상태 장면: 태블릿과 체크 (얼굴 없음)
+ART.tabletFlat = `<svg class="art-scene" viewBox="0 0 320 180" aria-hidden="true" focusable="false">
+    <rect x="0" y="0" width="320" height="180" rx="18" fill="#E8F0EA"/>
+    <path d="M24 152 H296" stroke="#6F8F7E" stroke-width="2.5" stroke-linecap="round"/>
+    <rect x="118" y="30" width="84" height="122" rx="12" fill="#1E2B26"/>
+    <rect x="126" y="40" width="68" height="100" rx="5" fill="#FFFFFF"/>
+    <circle cx="160" cy="146" r="3" fill="#6F8F7E"/>
+    <path d="M136 62 L142 68 L154 56" fill="none" stroke="#B5532F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M136 84 L142 90 L154 78" fill="none" stroke="#B5532F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M136 106 L142 112 L154 100" fill="none" stroke="#B5532F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M162 62 H184 M162 84 H184 M162 106 H178" stroke="#D9E0DA" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="246" cy="98" r="22" fill="#FFFFFF" stroke="#B5532F" stroke-width="3"/>
+    <path d="M237 98 L243 104 L256 90" fill="none" stroke="#B5532F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M50 152 V124 H82 V152 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M66 124 C60 110 70 106 66 92 C74 102 76 112 66 124 Z" fill="#6F8F7E"/>
+</svg>`;

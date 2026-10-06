@@ -91,6 +91,8 @@
         }
         .task-list a:hover { background: #EEF2EE; }
         .task-count { font-variant-numeric: tabular-nums; font-weight: 700; }
+        .task-main { display: flex; align-items: center; gap: 12px; }
+        .task-ico svg { width: 36px; height: 36px; display: block; }
 
         /* 한 번만 나타나는 움직임 (동작 줄이기 설정이면 생략) */
         @keyframes tl-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -331,15 +333,15 @@
                         const meta = `${names[r.caregiver_id] || '요양사'} · ${r.service_type || ''} · 청부 ₩${(r.billing_amount || 0).toLocaleString()}`;
                         return timelineItem(time, residentNames[r.resident_id] || '이용자', meta, '기록 저장됨', 'done', '기');
                     }).join('')}</ul>`
-                    : emptyState('오늘 저장된 방문 기록이 없습니다.', ART.tablet);
+                    : emptyState('오늘 저장된 방문 기록이 없습니다.', ART.tabletFlat);
 
                 const tasks = [
-                    ['청부 승인 대기', pendingClaims, './billing_management.html'],
-                    ['방문 계획 승인 대기', pendingPlans, './schedule_approval.html'],
-                    ['보호자 가입 요청', pendingGuardians, './guardian_management.html'],
+                    ['청부 승인 대기', pendingClaims, './billing_management.html', ART.flat.doc],
+                    ['방문 계획 승인 대기', pendingPlans, './schedule_approval.html', ART.flat.calendar],
+                    ['보호자 가입 요청', pendingGuardians, './guardian_management.html', ART.flat.group],
                 ];
-                document.getElementById('taskList').innerHTML = tasks.map(([label, count, href]) => `
-                    <li><a href="${href}"><span>${label}</span><span class="task-count">${count}건</span></a></li>`).join('');
+                document.getElementById('taskList').innerHTML = tasks.map(([label, count, href, icon]) => `
+                    <li><a href="${href}"><span class="task-main"><span class="task-ico">${icon}</span><span>${label}</span></span><span class="task-count">${count}건</span></a></li>`).join('');
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
                 document.getElementById('timeline').innerHTML = '<div class="empty">데이터를 불러오지 못했습니다.</div>';
