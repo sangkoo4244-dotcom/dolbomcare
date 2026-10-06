@@ -27,14 +27,13 @@
 // 메뉴 아이콘: 색 타일 위에 그림 하나 (직접 그림, 얼굴 없음). 글자색과 무관하게 색을 가진다
 const MENU_TILE = (tile, shadow, inner) => `<svg viewBox="0 0 40 40" width="24" height="24" aria-hidden="true" focusable="false"><rect x="0" y="0" width="40" height="40" rx="11" fill="${tile}"/><ellipse cx="20" cy="34" rx="11" ry="2" fill="${shadow}" opacity="0.5"/>${inner}</svg>`;
 const MENU_ICONS = {
-    dashboard: '<img src="assets/user_design/20_nav_dashboard_icon.png" width="24" height="24" alt="">',
-    residents: '<img src="assets/user_design/21_nav_user_icon.png" width="24" height="24" alt="">',
-    voice: '<img src="assets/user_design/22_nav_voice_icon.png" width="24" height="24" alt="">',
-    billing: '<img src="assets/user_design/24_nav_billing_icon.png" width="24" height="24" alt="">',
-    salary: '<img src="assets/user_design/25_nav_statistics_icon.png" width="24" height="24" alt="">',
-    schedule: '<img src="assets/user_design/23_nav_service_plan_icon.png" width="24" height="24" alt="">',
-    notify: '<img src="assets/user_design/26_nav_notice_icon.png" width="24" height="24" alt="">',
-    settings: '<img src="assets/user_design/27_nav_settings_icon.png" width="24" height="24" alt="">',
+    dashboard: '<img src="assets/user_design/icon_menu_dashboard.png" width="24" height="24" alt="">',
+    residents: '<img src="assets/user_design/icon_menu_user.png" width="24" height="24" alt="">',
+    voice: '<img src="assets/user_design/icon_menu_voice.png" width="24" height="24" alt="">',
+    billing: '<img src="assets/user_design/icon_menu_document.png" width="24" height="24" alt="">',
+    salary: '<img src="assets/user_design/icon_menu_payment.png" width="24" height="24" alt="">',
+    schedule: MENU_TILE('#E8F0EA', '#55645D', '<rect x="8" y="10" width="24" height="22" rx="4" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.4"/><path d="M8 17 H32 V14 A4 4 0 0 0 28 10 H12 A4 4 0 0 0 8 14 Z" fill="#B5532F"/><rect x="13" y="7" width="2.6" height="6" rx="1.3" fill="#1E2B26"/><rect x="24" y="7" width="2.6" height="6" rx="1.3" fill="#1E2B26"/><circle cx="20" cy="25" r="3.6" fill="#6F8F7E"/><circle cx="20" cy="25" r="1.4" fill="#FFFFFF"/>'),
+    notify: MENU_TILE('#F6E4DC', '#9A4425', '<path d="M12 26 V19 A8 8 0 0 1 28 19 V26 L30 28 H10 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.4" stroke-linejoin="round"/><path d="M17 31 H23" stroke="#1E2B26" stroke-width="1.6" stroke-linecap="round"/><circle cx="29" cy="11" r="3" fill="#B5532F"/>'),
     messages: MENU_TILE('#E8F0EA', '#55645D', '<path d="M9 11 H24 V20 H16 L12 23 V20 H9 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.3" stroke-linejoin="round"/><path d="M18 17 H31 V26 H29 V29 L26 26 H18 Z" fill="#6F8F7E" stroke="#1E2B26" stroke-width="1.2" stroke-linejoin="round"/>'),
     home: MENU_TILE('#F6E4DC', '#9A4425', '<path d="M8 20 L20 9 L32 20 Z" fill="#B5532F" stroke="#1E2B26" stroke-width="1.3" stroke-linejoin="round"/><path d="M11 19 V31 H29 V19 L20 12 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.3" stroke-linejoin="round"/><rect x="17.5" y="24" width="5" height="7" rx="1" fill="#6F8F7E" stroke="#1E2B26" stroke-width="1"/>'),
     schedule_check: MENU_TILE('#E8F0EA', '#55645D', '<rect x="10" y="8" width="20" height="25" rx="4" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.4"/><rect x="15" y="5.5" width="10" height="5" rx="2" fill="#B5532F" stroke="#1E2B26" stroke-width="1.2"/><path d="M14 20 L17 23 L23 17" fill="none" stroke="#6F8F7E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><rect x="14" y="27" width="12" height="2.2" rx="1.1" fill="#D9E0DA"/>'),
@@ -48,14 +47,13 @@ const MENU_ICONS = {
 const SIDEBAR_MENUS = {
     caregiver: [
         { href: 'dashboard.html', icon: 'dashboard', label: '대시보드' },
-        { href: 'resident_management.html', icon: 'residents', label: '이용자 관리' },
+        { href: 'resident_management.html', icon: 'residents', label: '이용자관리' },
         { href: 'voice_record.html', icon: 'voice', label: '음성 기록' },
-        { href: 'my_schedule.html', icon: 'schedule', label: '서비스 계획' },
-        { href: 'caregiver_billing.html', icon: 'billing', label: '청구 관리' },
-        { href: 'my_salary.html', icon: 'salary', label: '통계 현황' },
-        { href: 'notifications.html', icon: 'notify', label: '공지사항' },
-        { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
-        { href: '#', icon: 'settings', label: '설정' }
+        { href: 'caregiver_billing.html', icon: 'billing', label: '나의 청부' },
+        { href: 'my_salary.html', icon: 'salary', label: '나의 급여' },
+        { href: 'my_schedule.html', icon: 'schedule', label: '나의 일정' },
+        { href: 'notifications.html', icon: 'notify', label: '알림' },
+        { href: 'messages.html', icon: 'messages', label: '보호자 소통' }
     ],
     guardian: [
         { href: 'guardian_home.html', icon: 'home', label: '이용자 방문 기록' },
@@ -113,7 +111,6 @@ function renderSidebar() {
             <span>로그아웃</span>
         </a>
     `;
-    if (roleMenu === 'caregiver') nav.insertAdjacentHTML('beforeend', '<img class="side-land" src="assets/user_design/19_sidebar_bottom_landscape.png" alt="" style="display:block;width:100%;margin-top:24px;pointer-events:none;">');
     showUnreadMessageBadge();
 }
 
