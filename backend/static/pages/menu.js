@@ -107,7 +107,7 @@ function renderSidebar() {
         </a>
     `).join('') + `
         <a class="side-item" style="margin-top: 32px;" onclick="logout()">
-            <span class="side-icon">🚪</span>
+            <span class="side-icon">${MENU_TILE('#E8F0EA', '#55645D', '<rect x="10" y="8" width="18" height="25" rx="2" fill="#8A4A2B" stroke="#1E2B26" stroke-width="1.4"/><circle cx="24" cy="21" r="1.6" fill="#E8B04A"/><path d="M24 20 H33 M30 16 L34 20 L30 24" fill="none" stroke="#B5532F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>')}</span>
             <span>로그아웃</span>
         </a>
     `;
