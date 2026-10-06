@@ -16,26 +16,27 @@
             margin-bottom: 32px;
         }
         .summary-row > div {
-            padding: 24px 26px;
+            padding: 26px 28px;
             border-radius: 16px;
-            min-height: 150px;
+            min-height: 182px;
         }
         .summary-row > div:nth-child(1) { background: #EAF6F0; }
         .summary-row > div:nth-child(2) { background: #FDF1E7; }
         .summary-row > div:nth-child(3) { background: #E8F2FC; }
         .summary-row > div:nth-child(4) { background: #F0ECFB; }
-        .summary-label { font-size: 13px; color: var(--ink-soft); }
+        .summary-label { font-size: 16px; color: var(--ink-soft); }
         .summary-cell { display: flex; align-items: center; gap: 18px; }
         .summary-icon { flex: 0 0 auto; color: var(--ink); }
         .summary-text { min-width: 0; }
         .metric-art { width: 44px; height: 44px; display: block; }
         .summary-value {
-            font-size: 30px;
+            font-size: 44px;
             font-weight: 700;
             margin-top: 6px;
             font-variant-numeric: tabular-nums;
+            line-height: 1.15;
         }
-        .summary-note { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+        .summary-note { font-size: 15px; color: var(--ink-soft); margin-top: 6px; line-height: 1.5; }
 
         .section-title {
             font-family: 'Gowun Batang', serif;
@@ -106,17 +107,21 @@
         .dash-banner-wrap { aspect-ratio: 3.95; overflow: hidden; border-radius: 16px; margin-bottom: 32px; }
         /* 원본 그림에 흰 여백이 있어 그림을 키우고 위·왼쪽으로 밀어서 여백을 잘라 낸다 */
         .dash-banner { display: block; width: 102.5%; max-width: none; height: auto; margin: -4.35% 0 0 -1.25%; }
-        .design-metric { width: 96px; height: auto; display: block; mix-blend-mode: multiply; }
+        .design-metric { width: 130px; height: auto; display: block; mix-blend-mode: multiply; }
         .section-icon { width: 44px; height: 44px; object-fit: contain; flex: 0 0 auto; }
         .task-cards { border-top: none; display: flex; flex-direction: column; gap: 16px; }
         .task-cards li { border-bottom: none; border-radius: 16px; }
         .task-cards li:nth-child(1) { background: #FDF1E7; }
         .task-cards li:nth-child(2) { background: #E8F2FC; }
         .task-cards li:nth-child(3) { background: #EAF6F0; }
-        .task-cards a { padding: 22px 24px; }
+        .task-cards a { padding: 26px 28px; min-height: 130px; }
         .task-cards a:hover { background: transparent; opacity: 0.85; }
-        .task-cards .task-ico img { width: 60px; height: 60px; mix-blend-mode: multiply; }
-        .task-cards .task-count { font-size: 30px; }
+        .task-cards .task-main { gap: 22px; }
+        .task-cards .task-main > span:last-child { font-size: 22px; font-weight: 700; }
+        .task-cards .task-ico img,
+        .task-cards .task-ico svg { width: 100px; height: 100px; mix-blend-mode: multiply; }
+        .task-cards .task-count { font-size: 44px; line-height: 1; }
+        .task-cards .task-chev { font-size: 26px; }
         .task-cards li:nth-child(1) .task-count { color: #E0622B; }
         .task-cards li:nth-child(2) .task-count { color: #2F74C0; }
         .task-cards li:nth-child(3) .task-count { color: #2E7D4F; }
