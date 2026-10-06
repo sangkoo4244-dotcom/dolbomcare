@@ -322,7 +322,7 @@
     <div class="main-layout">
         <!-- Top Bar -->
         <div class="topbar">
-            <div class="topbar-title"><h1>이용자 관리</h1></div>
+            <div class="topbar-title"></div>
             <div class="user-menu">
                 <div class="user-info">
                     <div class="user-name" id="userName">사용자</div>
@@ -877,7 +877,7 @@
         // 상단 배너: 디자인 시안 그림 (assets/user_design/)
         const banner = document.createElement('div');
         banner.className = 'page-scene';
-        banner.innerHTML = '<img src="assets/user_design/resident_banner.png" alt="" style="width:100%;height:auto;border-radius:8px;display:block;">';
+        banner.innerHTML = '<img src="assets/user_design/resident_banner.png" alt="" style="height:280px;width:auto;max-width:100%;border-radius:8px;display:block;">';
         document.querySelector('.main-layout').children[0].after(banner);
     </script>
 </body>
