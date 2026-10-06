@@ -102,6 +102,9 @@
         .metric-img { object-fit: contain; }
         .task-ico img { width: 44px; height: 44px; display: block; object-fit: contain; }
         .task-ico svg { width: 44px; height: 44px; display: block; }
+        .dash-banner { width: 100%; height: auto; display: block; border-radius: 8px; margin-bottom: 32px; }
+        .design-metric { width: 96px; height: auto; display: block; }
+        .panel { background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; padding: 24px 28px; }
         .hero { display: flex; justify-content: space-between; align-items: center; gap: 24px; background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; padding: 28px 32px; margin-bottom: 32px; }
         .hero-kicker { font-size: 14px; color: var(--ink-soft); margin: 0 0 8px; }
         .hero-title { font-family: 'Gowun Batang', serif; font-size: 32px; line-height: 1.3; margin: 0 0 10px; }
@@ -219,6 +222,11 @@
             return `<img class="${cls}" src="assets/hd/${file}" alt="">`;
         }
 
+        // 디자인 시안 그림 (assets/user_design/): 요약 칸에서 더 크게 쓴다
+        function designImg(file) {
+            return `<img class="design-metric" src="assets/user_design/${file}" alt="">`;
+        }
+
         function summaryRow(items) {
             return `<div class="summary-row">${items.map(([label, id, note, icon]) => `
                 <div class="summary-cell">
@@ -271,19 +279,25 @@
         function renderManagerDashboard() {
             document.getElementById('pageTitle').textContent = '오늘';
             document.getElementById('dashboardContent').innerHTML = `
+                <img class="dash-banner" src="assets/user_design/dashboard_banner.png" alt="">
                 ${summaryRow([
-                    ['요양사', 'totalStaff', '명', '<img class="metric-img" src="assets/hd/caregiver.png" alt="">'],
-                    ['이용자', 'totalResidents', '명', imgIcon('user_resident.png')],
-                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 이후 청부 합계', imgIcon('user_wallet.png')],
-                    ['처리할 일', 'pendingApprovals', '승인·확정이 필요한 항목', imgIcon('user_checklist.png')],
+                    ['요양사', 'totalStaff', '명', designImg('icon_metric_caregiver.png')],
+                    ['이용자', 'totalResidents', '명', designImg('icon_metric_user.png')],
+                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 이후 청부 합계', designImg('icon_metric_payment.png')],
+                    ['처리할 일', 'pendingApprovals', '승인·확정이 필요한 항목', designImg('icon_metric_task.png')],
                 ])}
-                <div class="section-head">${imgIcon('user_calendar.png', '')}<h2 class="section-title">오늘 들어온 방문 기록</h2></div>
-                <p class="section-sub">요양사가 오늘 저장한 기록을 시간 순서로 보여 줍니다.</p>
-                <div id="timeline"><div class="empty">불러오는 중입니다</div></div>
-
-                <div class="section-head" style="margin-top: 40px;">${imgIcon('user_clock.png', '')}<h2 class="section-title">처리할 일</h2></div>
-                <p class="section-sub">눌러서 해당 화면으로 이동합니다.</p>
-                <ul class="task-list" id="taskList"></ul>
+                <div class="cg-grid">
+                    <section class="panel">
+                        <div class="section-head">${imgIcon('user_calendar.png', '')}<h2 class="section-title">오늘 들어온 방문 기록</h2></div>
+                        <p class="section-sub">요양사가 오늘 저장한 기록을 시간 순서로 보여 줍니다.</p>
+                        <div id="timeline"><div class="empty">불러오는 중입니다</div></div>
+                    </section>
+                    <section class="panel">
+                        <div class="section-head">${imgIcon('user_clock.png', '')}<h2 class="section-title">처리할 일</h2></div>
+                        <p class="section-sub">눌러서 해당 화면으로 이동합니다.</p>
+                        <ul class="task-list" id="taskList"></ul>
+                    </section>
+                </div>
             `;
             loadManagerData();
         }
