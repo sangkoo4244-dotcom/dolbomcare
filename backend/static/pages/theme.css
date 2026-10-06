@@ -39,6 +39,32 @@
 .seal.filled { background: var(--seal); color: #FFF; }
 .seal.empty { border-color: var(--sage); color: var(--sage); background: transparent; }
 
+/* 자체 스타일(design-system.css)을 쓰는 화면도 같은 색과 글꼴을 쓰도록 변수를 맞춘다 */
+:root {
+    --primary: #B5532F;
+    --primary-dark: #9A4425;
+    --primary-light: #F6E4DC;
+    --secondary: #6F8F7E;
+    --secondary-dark: #55645D;
+    --secondary-light: #E8F0EA;
+    --danger: #A8432A;
+    --danger-light: #FBEDE7;
+    --text-primary: #1E2B26;
+    --text-secondary: #55645D;
+    --text-tertiary: #6F7C75;
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F4F6F2;
+    --bg-tertiary: #EEF2EE;
+    --border: #D9E0DA;
+    --border-dark: #C5CFC8;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+    --shadow-xl: none;
+    --shadow-2xl: none;
+    --font-family: 'Noto Sans KR', system-ui, sans-serif;
+}
+
 /* 일지 용지: 옅은 가로줄 (여백과 줄로 읽히는 기록 면) */
 html, body {
     background-color: var(--paper) !important;
