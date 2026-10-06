@@ -338,7 +338,7 @@
 <body>
     <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="side-brand"><div class="side-logo">❤️</div><div><div class="side-title">돌봄케어</div><div class="side-sub">Care Management</div></div></div>
+        <div class="side-brand"><div class="side-logo"></div><div><div class="side-title">돌봄케어</div><div class="side-sub">Care Management</div></div></div>
         <nav class="sidebar-nav"></nav>
     </aside>
 
@@ -368,23 +368,23 @@
                     <div class="stat-value" id="totalCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">🔍 검토대기</div>
+                    <div class="stat-label"> 검토대기</div>
                     <div class="stat-value" id="pendingCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">✅ 센터장승인</div>
+                    <div class="stat-label"> 센터장승인</div>
                     <div class="stat-value" id="approvedCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">📤 공단청구</div>
+                    <div class="stat-label"> 공단청구</div>
                     <div class="stat-value" id="submittedToNhisCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">💰 정산완료</div>
+                    <div class="stat-label"> 정산완료</div>
                     <div class="stat-value" id="reimbursedCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">❌ 반려</div>
+                    <div class="stat-label"> 반려</div>
                     <div class="stat-value" id="rejectedCount">0</div>
                 </div>
             </div>
@@ -392,22 +392,22 @@
             <!-- Archive Tabs -->
             <div class="archive-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; border-bottom: 2px solid var(--border);">
                 <button class="archive-tab active" onclick="switchTab('current')" style="padding: 12px 20px; font-weight: 600; color: #3b82f6; border-bottom: 3px solid #3b82f6; background: none; border: none; cursor: pointer;">
-                    📋 현재 청부
+                     현재 청부
                 </button>
                 <button class="archive-tab" onclick="switchTab('archived')" style="padding: 12px 20px; font-weight: 600; color: rgba(0,0,0,0.5); border-bottom: 3px solid transparent; background: none; border: none; cursor: pointer;">
-                    📦 아카이브된 청부
+                     아카이브된 청부
                 </button>
             </div>
 
             <!-- Filters -->
             <div class="filter-section">
                 <button class="filter-btn active" onclick="filterByStatus('all')">전체</button>
-                <button class="filter-btn" onclick="filterByStatus('pending')">🔍 검토대기</button>
-                <button class="filter-btn" onclick="filterByStatus('approved')">✅ 승인</button>
-                <button class="filter-btn" onclick="filterByStatus('submitted_to_nhis')">📤 공단청구</button>
-                <button class="filter-btn" onclick="filterByStatus('reimbursed')">💰 정산</button>
-                <button class="filter-btn" onclick="filterByStatus('rejected')">❌ 반려</button>
-                <button class="filter-btn" onclick="approveCleanBilling()" style="background: #B5532F; color: white;">✅ 정상 건 일괄 승인</button>
+                <button class="filter-btn" onclick="filterByStatus('pending')"> 검토대기</button>
+                <button class="filter-btn" onclick="filterByStatus('approved')"> 승인</button>
+                <button class="filter-btn" onclick="filterByStatus('submitted_to_nhis')"> 공단청구</button>
+                <button class="filter-btn" onclick="filterByStatus('reimbursed')"> 정산</button>
+                <button class="filter-btn" onclick="filterByStatus('rejected')"> 반려</button>
+                <button class="filter-btn" onclick="approveCleanBilling()" style="background: #B5532F; color: white;"> 정상 건 일괄 승인</button>
             </div>
 
             <!-- Table -->
