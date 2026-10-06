@@ -97,6 +97,7 @@
         .task-ico svg { width: 56px; height: 56px; display: block; }
         .metric-art, .illus-art, .metric-img { width: 72px; height: 72px; display: block; }
         .metric-img { border-radius: 11px; object-fit: cover; }
+        .task-ico img { width: 56px; height: 56px; display: block; border-radius: 11px; object-fit: cover; }
 
         /* 한 번만 나타나는 움직임 (동작 줄이기 설정이면 생략) */
         @keyframes tl-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -190,6 +191,11 @@
             return `<div class="empty">${art}<p>${text}</p></div>`;
         }
 
+        // 직접 그린 그림 파일 (assets/)을 아이콘 자리에 넣는다
+        function imgIcon(file, cls = 'metric-img') {
+            return `<img class="${cls}" src="assets/${file}" alt="">`;
+        }
+
         function summaryRow(items) {
             return `<div class="summary-row">${items.map(([label, id, note, icon]) => `
                 <div class="summary-cell">
@@ -207,16 +213,16 @@
             document.getElementById('dashboardContent').innerHTML = `
                 <div id="caregiverArt" class="mb-8"></div>
                 ${summaryRow([
-                    ['오늘 방문', 'todayVisits', '계획된 방문'],
-                    ['기록 필요', 'needRecord', '방문을 마치고 기록 전'],
-                    ['이번 달 청부', 'monthlyBilling', '반려 제외 금액'],
-                    ['검토 대기 청부', 'pendingBilling', '센터장 승인 전'],
+                    ['오늘 방문', 'todayVisits', '계획된 방문', imgIcon('user_clock.png')],
+                    ['기록 필요', 'needRecord', '방문을 마치고 기록 전', imgIcon('user_doc_check.png')],
+                    ['이번 달 청부', 'monthlyBilling', '반려 제외 금액', imgIcon('user_wallet.png')],
+                    ['검토 대기 청부', 'pendingBilling', '센터장 승인 전', imgIcon('user_doc.png')],
                 ])}
                 <h2 class="section-title">오늘의 방문 순서</h2>
                 <p class="section-sub">시간 순서대로 보여 줍니다. 도착과 퇴실은 나의 일정에서 누릅니다.</p>
                 <div id="timeline"><div class="empty">불러오는 중입니다</div></div>
             `;
-            document.getElementById('caregiverArt').innerHTML = ART.caregiverScene;
+            document.getElementById('caregiverArt').innerHTML = imgIcon('user_caregiver_scene.png', 'art-scene');
             loadCaregiverData();
         }
 
@@ -225,9 +231,9 @@
             document.getElementById('dashboardContent').innerHTML = `
                 ${summaryRow([
                     ['요양사', 'totalStaff', '명', '<img class="metric-img" src="assets/caregiver.png" alt="">'],
-                    ['이용자', 'totalResidents', '명', ART.illus.house],
-                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 이후 청부 합계', ART.illus.wallet],
-                    ['처리할 일', 'pendingApprovals', '승인·확정이 필요한 항목', ART.illus.checklist],
+                    ['이용자', 'totalResidents', '명', imgIcon('user_resident.png')],
+                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 이후 청부 합계', imgIcon('user_wallet.png')],
+                    ['처리할 일', 'pendingApprovals', '승인·확정이 필요한 항목', imgIcon('user_checklist.png')],
                 ])}
                 <h2 class="section-title">오늘 들어온 방문 기록</h2>
                 <p class="section-sub">요양사가 오늘 저장한 기록을 시간 순서로 보여 줍니다.</p>
@@ -342,9 +348,9 @@
                     : emptyState('오늘 저장된 방문 기록이 없습니다.', ART.tabletFlat);
 
                 const tasks = [
-                    ['청부 승인 대기', pendingClaims, './billing_management.html', ART.illus.doc],
-                    ['방문 계획 승인 대기', pendingPlans, './schedule_approval.html', ART.illus.calendar],
-                    ['보호자 가입 요청', pendingGuardians, './guardian_management.html', ART.illus.group],
+                    ['청부 승인 대기', pendingClaims, './billing_management.html', imgIcon('user_doc.png')],
+                    ['방문 계획 승인 대기', pendingPlans, './schedule_approval.html', imgIcon('user_calendar.png')],
+                    ['보호자 가입 요청', pendingGuardians, './guardian_management.html', imgIcon('user_group.png')],
                 ];
                 document.getElementById('taskList').innerHTML = tasks.map(([label, count, href, icon]) => `
                     <li><a href="${href}"><span class="task-main"><span class="task-ico">${icon}</span><span>${label}</span></span><span class="task-count">${count}건</span></a></li>`).join('');
