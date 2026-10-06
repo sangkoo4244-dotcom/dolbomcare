@@ -142,6 +142,7 @@
     </div>
 
     <script src="menu.js"></script>
+    <script src="art.js"></script>
     <script>
         const API_URL = '/api/v1';
         let currentUser = null;
@@ -177,16 +178,8 @@
             }
         }
 
-        // 빈 상태를 알리는 새싹 그림 (직접 그린 선 그림)
-        const SPROUT_SVG = `<svg class="empty-art" viewBox="0 0 120 96" aria-hidden="true" focusable="false">
-            <path d="M60 90 V50" fill="none" stroke="#6F8F7E" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M60 56 C40 56 30 44 30 28 C46 28 60 38 60 56Z" fill="none" stroke="#6F8F7E" stroke-width="2.2" stroke-linejoin="round"/>
-            <path d="M60 50 C74 50 88 40 90 22 C72 22 60 32 60 50Z" fill="none" stroke="#6F8F7E" stroke-width="2.2" stroke-linejoin="round"/>
-            <path d="M26 90 H94" stroke="#D9E0DA" stroke-width="2"/>
-        </svg>`;
-
-        function emptyState(text) {
-            return `<div class="empty">${SPROUT_SVG}<p>${text}</p></div>`;
+        function emptyState(text, art = ART.sprout) {
+            return `<div class="empty">${art}<p>${text}</p></div>`;
         }
 
         function summaryRow(items) {
@@ -333,7 +326,7 @@
                         const meta = `${names[r.caregiver_id] || '요양사'} · ${r.service_type || ''} · 청부 ₩${(r.billing_amount || 0).toLocaleString()}`;
                         return timelineItem(time, residentNames[r.resident_id] || '이용자', meta, '기록 저장됨', 'done', '기');
                     }).join('')}</ul>`
-                    : emptyState('오늘 저장된 방문 기록이 없습니다.');
+                    : emptyState('오늘 저장된 방문 기록이 없습니다.', ART.ledger);
 
                 const tasks = [
                     ['청부 승인 대기', pendingClaims, './billing_management.html'],

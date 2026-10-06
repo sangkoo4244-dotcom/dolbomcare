@@ -46,6 +46,7 @@
         </main>
     </div>
     <script src="menu.js"></script>
+    <script src="art.js"></script>
     <script>
         let currentUser = null;
         const API_URL = '/api/v1';
@@ -88,7 +89,10 @@
             const list = document.getElementById('messageList');
             if (!r.ok) { list.innerHTML = '<li class="text-center text-gray-400 py-8">메시지를 불러올 수 없습니다</li>'; return; }
             const d = await r.json();
-            if (!d.messages.length) { list.innerHTML = '<li class="text-center text-gray-400 py-8">아직 메시지가 없습니다</li>'; return; }
+            if (!d.messages.length) {
+                list.innerHTML = `<li class="text-center py-8 text-gray-500">${ART.message}<p>아직 메시지가 없습니다. 첫 메시지를 보내 보세요.</p></li>`;
+                return;
+            }
             list.innerHTML = d.messages.map(m => `
                 <li class="border rounded-lg p-4 ${ROLE_CLASS[m.sender_role] || 'bg-gray-50 border-gray-200'}">
                     <div class="flex justify-between items-center mb-1 text-sm">

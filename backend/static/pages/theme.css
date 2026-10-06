@@ -17,6 +17,9 @@
     --rule: #E4EAE1;       /* 일지 줄 (글을 방해하지 않을 만큼 옅게) */
 }
 
+/* 선 그림 (art.js) 공통 크기 */
+.art { width: 96px; height: auto; display: block; margin-bottom: 8px; }
+
 /* 도장: 확인과 완료의 표시. 칸 안에 한 글자를 넣는다 */
 .seal {
     display: inline-flex;
