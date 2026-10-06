@@ -108,3 +108,24 @@ ART.caregiverScene = `<svg class="art-scene" viewBox="0 0 480 180" aria-hidden="
     <path d="M251 124 C240 108 238 98 246 90 C250 104 253 114 251 124 Z" fill="#A9C2B3"/>
     <path d="M251 124 C260 108 268 102 278 102 C276 114 266 122 251 124 Z" fill="#6F8F7E"/>
 </svg>`;
+
+// 기록 장면: 음성 기록 화면 맨 위. 펼친 일지, 펜, 마이크, 도장, 찻잔
+ART.recordScene = `<svg class="art-scene" viewBox="0 0 480 160" aria-hidden="true" focusable="false">
+    <rect x="0" y="0" width="480" height="160" rx="20" fill="#E8F0EA"/>
+    <path d="M20 132 H460" stroke="#6F8F7E" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M150 42 H236 V126 H150 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M236 42 H322 V126 H236 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M236 42 V126" stroke="#1E2B26" stroke-width="2"/>
+    <path d="M168 62 H218 M168 76 H218 M168 90 H204" stroke="#D9E0DA" stroke-width="3" stroke-linecap="round"/>
+    <path d="M254 62 H304 M254 76 H304 M254 90 H290" stroke="#D9E0DA" stroke-width="3" stroke-linecap="round"/>
+    <rect x="266" y="102" width="26" height="18" rx="3" fill="none" stroke="#B5532F" stroke-width="2.2" transform="rotate(-6 279 111)"/>
+    <path d="M282 110 L290 102 L296 108 L288 116 Z" fill="none" stroke="#1E2B26" stroke-width="2" stroke-linejoin="round"/>
+    <rect x="354" y="58" width="16" height="44" rx="8" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2"/>
+    <path d="M346 82 V92 Q346 108 362 108 Q378 108 378 92 V82" fill="none" stroke="#1E2B26" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M362 108 V122 M352 122 H372" stroke="#1E2B26" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M400 124 L410 80" stroke="#1E2B26" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M406 112 L420 104" stroke="#B5532F" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M60 132 V112 H96 V132 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M96 116 Q106 116 106 122 Q106 128 96 128" fill="none" stroke="#1E2B26" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M70 104 C66 98 74 96 70 90 M82 104 C78 98 86 96 82 90" fill="none" stroke="#B5532F" stroke-width="2" stroke-linecap="round"/>
+</svg>`;

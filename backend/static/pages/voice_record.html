@@ -23,6 +23,7 @@
 
         <!-- 메인 컨텐츠 -->
         <main class="ml-72 w-full flex flex-col">
+            <div id="recordArt" class="px-8 pt-6"></div>
             <!-- 탑바 -->
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
                 <h1 class="text-3xl font-bold text-gray-900">음성 기록</h1>
@@ -290,6 +291,8 @@
     </div>
 
     <script src="menu.js"></script>
+    <script src="art.js"></script>
+    <script>document.getElementById('recordArt').innerHTML = ART.recordScene;</script>
     <script>
         const API_URL = '/api/v1';
         let currentUser = null;
