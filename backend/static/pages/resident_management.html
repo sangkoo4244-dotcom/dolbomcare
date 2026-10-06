@@ -212,6 +212,84 @@
         .avatar-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .side-icon img { display: block; }
 
+        /* ===== 시안(원본)에 맞춘 배치: 이 화면만 적용 ===== */
+        :root, :root body { background-image: none !important; background-color: #FAF7F2 !important; }
+        body { font-family: 'Noto Sans KR', system-ui, sans-serif; color: #1F2937; }
+        .sidebar { display: flex; flex-direction: column; background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
+        .sidebar .side-brand { padding: 26px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+        .sidebar .side-title { font-size: 20px; font-weight: 800; }
+        .sidebar .side-sub { font-size: 12px; color: #A7B8AE; }
+        .sidebar .sidebar-nav { padding: 20px 16px; }
+        .sidebar .side-item { color: #E5EDE8; font-size: 15px; padding: 12px 16px; border-radius: 12px; }
+        .sidebar .side-item:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+        .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
+        .sidebar-landscape { display: block; width: 100%; height: auto; margin-top: auto; }
+        .topbar { padding: 22px 36px; background: #FFFFFF; box-shadow: none; border-bottom: 1px solid #ECE7DF; }
+        .page-title { font-size: 30px; font-weight: 800; color: #1F2937; }
+        .user-menu { gap: 22px; }
+        .user-divider { width: 1px; height: 36px; background: #E5E0D8; }
+        .user-name { font-size: 15px; font-weight: 700; }
+        .user-role { font-size: 13px; }
+        .user-menu .avatar-img { width: 48px; height: 48px; }
+        .logout-btn { background: #fff; }
+        .content { padding: 28px 36px; }
+        .resident-banner-wrap { height: 220px; margin-bottom: 28px; }
+        .stats-grid { grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        .stat-card.stat-with-art { min-height: 150px; padding: 22px 28px; border: none; box-shadow: none; border-radius: 16px; background: #EAF6F0; }
+        .stat-card.stat-with-art:nth-child(2) { background: #EAF6F0; }
+        .stat-with-art .stat-art { width: 150px; }
+        .stat-with-art .stat-label { font-size: 17px; font-weight: 700; color: #1F2937; text-transform: none; letter-spacing: 0; margin-bottom: 4px; }
+        .stat-with-art .stat-value { font-size: 52px; font-weight: 800; color: #1F2937; line-height: 1.1; display: inline-block; }
+        .stat-unit { font-size: 24px; font-weight: 700; color: #1F2937; margin-left: 6px; }
+        .stat-deco { margin-left: auto; width: 150px; height: 90px; flex: 0 0 auto; color: #9CCBB3; opacity: 0.55; }
+        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+        .action-card { display: flex; align-items: center; gap: 22px; padding: 22px 28px; border-radius: 16px; background: #FDF6EC; color: #1F2937; text-decoration: none; }
+        .action-card.approve { background: #EAF6F0; }
+        .action-card img { width: 96px; height: 96px; object-fit: contain; flex: 0 0 auto; mix-blend-mode: multiply; }
+        .action-title { font-size: 20px; font-weight: 800; }
+        .action-desc { font-size: 15px; color: #4B5563; margin-top: 6px; line-height: 1.5; }
+        .action-count { font-size: 15px; font-weight: 700; color: #B5532F; margin-top: 6px; }
+        .action-chev { margin-left: auto; font-size: 30px; color: #6B7280; }
+        .list-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
+        .list-title { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+        .list-title img { width: 40px; height: 40px; object-fit: contain; }
+        .list-tools { display: flex; align-items: center; gap: 14px; }
+        .search-box { display: flex; align-items: center; gap: 10px; width: 420px; height: 50px; padding: 0 16px; background: #fff; border: 1px solid #E5E0D8; border-radius: 12px; }
+        .search-box input { flex: 1; border: none; outline: none; font-size: 15px; background: transparent; }
+        .search-box svg { flex: 0 0 auto; color: #6B7280; }
+        .add-btn { padding: 14px 24px; border-radius: 12px; font-size: 15px; font-weight: 700; background: #B5532F; box-shadow: none; }
+        .add-btn:hover { transform: none; box-shadow: none; }
+        .table-wrapper { border-radius: 16px; border: 1px solid #ECE7DF; box-shadow: none; }
+        .table thead { background: #F7F4EE; }
+        .table th { padding: 18px; font-size: 14px; color: #374151; }
+        .table td { padding: 16px 18px; font-size: 15px; color: #1F2937; }
+        .resident-avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
+        .resident-name { font-size: 16px; font-weight: 700; }
+        .resident-info { font-size: 13px; color: #6B7280; margin-top: 2px; }
+        .grade-pill { display: inline-block; min-width: 56px; text-align: center; padding: 6px 12px; border-radius: 10px; font-weight: 700; font-size: 14px; }
+        .grade-1 { background: #FDE8E8; color: #B91C1C; }
+        .grade-2 { background: #E6F4EA; color: #15803D; }
+        .grade-3 { background: #FEF3C7; color: #B45309; }
+        .grade-4 { background: #EDE9FE; color: #6D28D9; }
+        .grade-5 { background: #E0F2FE; color: #0369A1; }
+        .health { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; }
+        .health::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+        .health-stable { color: #15803D; }
+        .health-warning { color: #EA580C; }
+        .health-critical { color: #DC2626; }
+        .btn-detail { padding: 10px 18px; border: 1px solid #D6D0C4; border-radius: 10px; background: #fff; font-size: 14px; font-weight: 600; color: #374151; cursor: pointer; }
+        .btn-detail:hover { border-color: #B5532F; color: #B5532F; background: #fff; }
+        .btn-kebab { width: 36px; height: 36px; border: none; background: transparent; font-size: 22px; color: #6B7280; cursor: pointer; border-radius: 8px; }
+        .btn-kebab:hover { background: #F3F4F6; color: #B91C1C; }
+        .empty-wide { display: flex; align-items: center; gap: 24px; margin: 20px; padding: 24px 32px; border: 1px dashed #D6D0C4; border-radius: 16px; background: #fff; text-align: left; }
+        .empty-wide img { width: 200px; height: auto; flex: 0 0 auto; }
+        .empty-wide-title { font-size: 19px; font-weight: 800; }
+        .empty-wide-desc { font-size: 15px; color: #6B7280; margin: 6px 0 16px; }
+        @media (max-width: 900px) {
+            .action-row, .stats-grid { grid-template-columns: 1fr; }
+            .search-box { width: 100%; }
+        }
+
         .table-wrapper {
             background: white;
             border-radius: 12px;
@@ -329,15 +407,17 @@
     <aside class="sidebar">
         <div class="side-brand"><div class="side-logo"></div><div><div class="side-title">돌봄케어</div><div class="side-sub">Care Management</div></div></div>
         <nav class="sidebar-nav"></nav>
+        <img class="sidebar-landscape" src="assets/user_design/sidebar_care_landscape.png" alt="">
     </aside>
 
     <!-- Main Layout -->
     <div class="main-layout">
         <!-- Top Bar -->
         <div class="topbar">
-            <div class="topbar-title"></div>
+            <div class="topbar-title"><h1 class="page-title">이용자 관리</h1></div>
             <div class="user-menu">
                 <img class="top-bell" src="assets/user_design/28_top_notification_icon.png" alt="">
+                <span class="user-divider"></span>
                 <div class="user-info">
                     <div class="user-name" id="userName">사용자</div>
                     <div class="user-role" id="userRole">요양사</div>
@@ -355,16 +435,49 @@
                     <img class="stat-art" src="assets/user_design/resident_metric_total.png" alt="">
                     <div>
                         <div class="stat-label">전체 이용자</div>
-                        <div class="stat-value" id="totalCount">0</div>
+                        <div><span class="stat-value" id="totalCount">0</span><span class="stat-unit">명</span></div>
                     </div>
+                    <svg class="stat-deco" viewBox="0 0 150 90" fill="currentColor" aria-hidden="true">
+                        <circle cx="40" cy="30" r="14"/><path d="M14 80 Q14 50 40 50 Q66 50 66 80 Z"/>
+                        <circle cx="110" cy="30" r="14"/><path d="M84 80 Q84 50 110 50 Q136 50 136 80 Z"/>
+                        <circle cx="75" cy="36" r="16"/><path d="M48 86 Q48 52 75 52 Q102 52 102 86 Z"/>
+                    </svg>
                 </div>
                 <div class="stat-card stat-with-art">
                     <img class="stat-art" src="assets/user_design/resident_metric_active.png" alt="">
                     <div>
                         <div class="stat-label">활성 이용자</div>
-                        <div class="stat-value" id="activeCount">0</div>
+                        <div><span class="stat-value" id="activeCount">0</span><span class="stat-unit">명</span></div>
                     </div>
+                    <svg class="stat-deco" viewBox="0 0 150 90" fill="currentColor" aria-hidden="true">
+                        <rect x="20" y="52" width="18" height="30" rx="4"/>
+                        <rect x="50" y="36" width="18" height="46" rx="4"/>
+                        <rect x="80" y="20" width="18" height="62" rx="4"/>
+                        <rect x="110" y="6" width="18" height="76" rx="4"/>
+                    </svg>
                 </div>
+            </div>
+
+            <!-- 역할별 바로가기 카드: 요양사는 내 변경 요청, 센터장은 변경 요청 승인 -->
+            <div class="action-row">
+                <a class="action-card" id="cardMyRequest" href="#myRequestPanel" style="display: none;">
+                    <img src="assets/user_design/resident_change_request.png" alt="">
+                    <div>
+                        <div class="action-title">내 변경 요청</div>
+                        <div class="action-desc">수정이 필요한 이용자 정보 변경을 요청할 수 있습니다.</div>
+                        <div class="action-count" id="myRequestCount"></div>
+                    </div>
+                    <span class="action-chev">›</span>
+                </a>
+                <a class="action-card approve" id="cardApproval" href="#changeRequestPanel" style="display: none;">
+                    <img src="assets/user_design/resident_request_approval.png" alt="">
+                    <div>
+                        <div class="action-title">변경 요청 승인</div>
+                        <div class="action-desc">요청된 이용자 정보 변경을 검토하고 승인합니다.</div>
+                        <div class="action-count" id="approvalCount"></div>
+                    </div>
+                    <span class="action-chev">›</span>
+                </a>
             </div>
 
             <!-- 요양사: 내가 올린 변경 요청과 처리 결과 -->
@@ -380,9 +493,15 @@
             </div>
 
             <!-- Header -->
-            <div class="header-action">
-                <h2 class="section-title-row" style="font-size: 18px; font-weight: 700;"><img src="assets/user_design/section_resident_list.png" alt="">이용자 목록</h2>
-                <button class="add-btn" onclick="showAddModal()">+ 이용자 추가</button>
+            <div class="list-head">
+                <h2 class="list-title"><img src="assets/user_design/section_resident_list.png" alt="">이용자 목록</h2>
+                <div class="list-tools">
+                    <label class="search-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                        <input id="residentSearch" type="search" placeholder="이름, 주소, 보호자명 등으로 검색하세요" oninput="filterResidents()">
+                    </label>
+                    <button class="add-btn" onclick="showAddModal()">+ 이용자 추가</button>
+                </div>
             </div>
 
             <!-- Table -->
@@ -535,6 +654,7 @@
             currentUser = user;
             document.getElementById('userName').textContent = user.full_name || '사용자';
             document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
+            document.getElementById(user.role === 'caregiver' ? 'cardMyRequest' : 'cardApproval').style.display = 'flex';
 
             // 메뉴 필터링은 menu.js의 renderSidebar() 함수에서 처리
             renderSidebar();
@@ -585,18 +705,31 @@
                 document.getElementById('totalCount').textContent = residents.length;
                 document.getElementById('activeCount').textContent = residents.filter(r => !r.is_archived).length;
 
-                renderResidentsTable(residents);
+                filterResidents();
             } catch (error) {
                 console.error('❌ 이용자 로드 실패:', error);
                 document.getElementById('residentsTable').innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>이용자 정보를 불러올 수 없습니다</div></div>';
             }
         }
 
-        function renderResidentsTable(residents) {
+        function filterResidents() {
+            const q = document.getElementById('residentSearch').value.trim();
+            const list = q
+                ? residents.filter(r => [r.name, r.address, r.guardian_name].some(v => (v || '').includes(q)))
+                : residents;
+            renderResidentsTable(list, Boolean(q));
+        }
+
+        function renderResidentsTable(residents, isSearching = false) {
             const tableDiv = document.getElementById('residentsTable');
 
             if (residents.length === 0) {
-                tableDiv.innerHTML = '<div class="empty-state"><img src="assets/user_design/empty_residents.png" alt="" style="width: 220px; height: auto;"><div>등록된 이용자가 없습니다</div></div>';
+                tableDiv.innerHTML = isSearching
+                    ? '<div class="empty-state"><div>검색 결과가 없습니다</div></div>'
+                    : `<div class="empty-wide"><img src="assets/user_design/empty_residents.png" alt="">
+                        <div><div class="empty-wide-title">등록된 이용자가 없습니다</div>
+                        <div class="empty-wide-desc">이용자를 추가하면 이곳에서 관리할 수 있습니다.</div>
+                        <button class="add-btn" onclick="showAddModal()">+ 이용자 추가</button></div></div>`;
                 return;
             }
 
@@ -629,8 +762,8 @@
                 html += `
                     <tr>
                         <td>
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <img src="assets/user_design/resident_avatar_${r.gender === '여' ? 'female' : 'male'}.png" alt="" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex: 0 0 auto;">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <img class="resident-avatar" src="assets/user_design/resident_avatar_${r.gender === '여' ? 'female' : 'male'}.png" alt="">
                                 <div>
                                     <div class="resident-name">${r.name}</div>
                                     <div class="resident-info">${r.address || '주소 미등록'}</div>
@@ -638,16 +771,16 @@
                             </div>
                         </td>
                         <td>${r.gender || '-'} / ${age}세</td>
-                        <td>${r.care_grade}등급</td>
+                        <td><span class="grade-pill grade-${r.care_grade}">${r.care_grade}등급</span></td>
                         <td>${r.client_type}</td>
                         <td>${r.recognition_number || '-'}</td>
                         <td>${period}</td>
                         <td>${guardian}</td>
-                        <td><span class="status-badge">${healthLabels[r.health_status] || '-'}</span></td>
+                        <td><span class="health health-${r.health_status}">${healthLabels[r.health_status] || '-'}</span></td>
                         <td style="text-align: center;">
-                            <div class="action-buttons">
-                                <button class="btn-sm" onclick="editResident(${r.id})">편집</button>
-                                <button class="btn-sm" onclick="deleteResident(${r.id})">삭제</button>
+                            <div class="action-buttons" style="justify-content: center; align-items: center;">
+                                <button class="btn-detail" onclick="editResident(${r.id})">상세보기</button>
+                                <button class="btn-kebab" title="삭제" onclick="deleteResident(${r.id})">⋮</button>
                             </div>
                         </td>
                     </tr>
@@ -754,6 +887,7 @@
             const data = await response.json();
             const panel = document.getElementById('myRequestPanel');
             panel.style.display = data.requests.length ? 'block' : 'none';
+            document.getElementById('myRequestCount').textContent = `${data.requests.length}건`;
             document.getElementById('myRequestList').innerHTML = data.requests.map(r => `
                 <div style="padding: 8px 0; border-top: 1px solid #bae6fd;">
                     <div><b>${r.resident_name}</b> · ${CHANGE_LABELS[r.field] || r.field} → <b>${r.new_value}</b> ${CHANGE_STATUS[r.status] || r.status}</div>
@@ -772,6 +906,7 @@
             const labels = { care_grade: '요양등급', client_type: '소득분류', recognition_number: '인정번호', recognition_start: '인정 시작일', recognition_end: '인정 종료일', name: '이름', birth_date: '생년월일' };
             panel.style.display = data.requests.length ? 'block' : 'none';
             document.getElementById('changeRequestCount').textContent = `(${data.requests.length}건)`;
+            document.getElementById('approvalCount').textContent = `승인 대기 ${data.requests.length}건`;
             list.innerHTML = data.requests.map(r => `
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid #fde68a;">
                     <span><b>${r.resident_name}</b> · ${labels[r.field] || r.field} → <b>${r.new_value}</b> <span style="color:#6b7280;">(요청: ${r.requested_by})</span></span>
