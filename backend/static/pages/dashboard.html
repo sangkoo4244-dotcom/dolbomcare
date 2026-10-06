@@ -6,6 +6,109 @@
     <title>돌봄케어 - 대시보드</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            margin-bottom: 40px;
+        }
+        .summary-row > div {
+            padding: 20px 24px;
+        }
+        .summary-row > div + div {
+            border-left: 1px solid var(--line);
+        }
+        .summary-label { font-size: 13px; color: var(--ink-soft); }
+        .summary-value {
+            font-size: 30px;
+            font-weight: 700;
+            margin-top: 6px;
+            font-variant-numeric: tabular-nums;
+        }
+        .summary-note { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+
+        .section-title {
+            font-family: 'Gowun Batang', serif;
+            font-size: 22px;
+            margin: 0 0 4px;
+        }
+        .section-sub { font-size: 14px; color: var(--ink-soft); margin: 0 0 24px; }
+
+        /* 타임라인: 시간, 선, 내용 세 열 */
+        .timeline { position: relative; list-style: none; margin: 0; padding: 0; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 96px;
+            top: 8px;
+            bottom: 8px;
+            width: 1px;
+            background: var(--line);
+        }
+        .tl-item {
+            display: grid;
+            grid-template-columns: 72px 48px 1fr;
+            align-items: start;
+            padding: 14px 0;
+        }
+        .tl-time {
+            font-size: 15px;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+            color: var(--ink);
+            padding-top: 2px;
+        }
+        .tl-dot {
+            display: block;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: var(--paper);
+            border: 2px solid var(--sage);
+            margin: 6px 0 0 -6px;
+            position: relative;
+            z-index: 1;
+        }
+        .tl-item.done .tl-dot { background: var(--ink); border-color: var(--ink); }
+        .tl-item.now .tl-dot { background: var(--persimmon); border-color: var(--persimmon); }
+        .tl-body { padding-left: 4px; }
+        .tl-name { font-size: 16px; font-weight: 700; }
+        .tl-meta { font-size: 13px; color: var(--ink-soft); margin-top: 3px; line-height: 1.6; }
+        .tl-state { font-size: 13px; font-weight: 500; margin-top: 6px; }
+        .tl-item.now .tl-state { color: var(--persimmon); }
+
+        .empty { padding: 32px 0; color: var(--ink-soft); font-size: 15px; }
+
+        .task-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+        .task-list li { border-bottom: 1px solid var(--line); }
+        .task-list a {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 4px;
+            color: var(--ink);
+            text-decoration: none;
+        }
+        .task-list a:hover { background: #EEF2EE; }
+        .task-count { font-variant-numeric: tabular-nums; font-weight: 700; }
+
+        /* 한 번만 나타나는 움직임 (동작 줄이기 설정이면 생략) */
+        @keyframes tl-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .tl-item { animation: tl-in 0.4s ease both; }
+        .tl-item:nth-child(2) { animation-delay: 0.05s; }
+        .tl-item:nth-child(3) { animation-delay: 0.1s; }
+        .tl-item:nth-child(4) { animation-delay: 0.15s; }
+        .tl-item:nth-child(5) { animation-delay: 0.2s; }
+        @media (prefers-reduced-motion: reduce) { .tl-item { animation: none; } }
+
+        @media (max-width: 900px) {
+            .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .summary-row > div:nth-child(3) { border-left: none; }
+            .summary-row > div:nth-child(n+3) { border-top: 1px solid var(--line); }
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
@@ -24,8 +127,8 @@
         <!-- 메인 컨텐츠 -->
         <main class="ml-72 w-full flex flex-col">
             <!-- 탑바 -->
-            <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-bold text-gray-900">📊 대시보드</h1>
+            <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center sticky top-0 z-40">
+                <h1 class="text-3xl font-bold text-gray-900" id="pageTitle">오늘</h1>
                 <div class="flex items-center gap-6">
                     <div class="text-right">
                         <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
@@ -36,7 +139,7 @@
             </div>
 
             <!-- 스크롤 컨텐츠 -->
-            <div class="flex-1 overflow-y-auto p-8" id="dashboardContent">
+            <div class="flex-1 overflow-y-auto px-8 py-8 max-w-5xl w-full" id="dashboardContent">
                 <!-- 동적 생성 -->
             </div>
         </main>
@@ -46,6 +149,19 @@
     <script>
         const API_URL = '/api/v1';
         let currentUser = null;
+        const DASH_APPROVED = ['approved', 'submitted_to_nhis', 'reimbursed'];
+        const STATE_LABEL = { '예정': '예정', '방문중': '방문 중', '방문완료': '기록 작성 필요', '완료': '완료', '미기록': '미기록', '승인 대기': '승인 대기', '반려': '반려' };
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text ?? '';
+            return div.innerHTML;
+        }
+
+        function todayKey() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
 
         function checkAuth() {
             const token = localStorage.getItem('access_token');
@@ -65,145 +181,162 @@
             }
         }
 
+        function summaryRow(items) {
+            return `<div class="summary-row">${items.map(([label, id, note]) => `
+                <div>
+                    <div class="summary-label">${label}</div>
+                    <div class="summary-value" id="${id}">0</div>
+                    <div class="summary-note">${note}</div>
+                </div>`).join('')}</div>`;
+        }
 
         function renderCaregiverDashboard() {
-            const content = document.getElementById('dashboardContent');
-            content.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
-                        <div class="text-sm text-blue-600 font-bold mb-2">오늘 기록</div>
-                        <div class="text-3xl font-bold text-blue-900" id="todayRecords">0</div>
-                        <div class="text-xs text-blue-500 mt-2">건의 음성 기록</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-lg border border-amber-200">
-                        <div class="text-sm text-amber-600 font-bold mb-2">이번 달 청부</div>
-                        <div class="text-3xl font-bold text-amber-900" id="monthlyBilling">₩0</div>
-                        <div class="text-xs text-amber-500 mt-2">예상 청부액</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-lg border border-emerald-200">
-                        <div class="text-sm text-emerald-600 font-bold mb-2">대기 청부</div>
-                        <div class="text-3xl font-bold text-emerald-900" id="pendingBilling">0</div>
-                        <div class="text-xs text-emerald-500 mt-2">승인 대기 중</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg border border-purple-200">
-                        <div class="text-sm text-purple-600 font-bold mb-2">담당 이용자</div>
-                        <div class="text-3xl font-bold text-purple-900" id="residentCount">0</div>
-                        <div class="text-xs text-purple-500 mt-2">명의 이용자</div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">🎤 최근 음성 기록</h2>
-                    <div id="recentRecords" class="space-y-3">
-                        <div class="text-center py-8 text-gray-400">기록이 없습니다</div>
-                    </div>
-                </div>
+            document.getElementById('pageTitle').textContent = '오늘';
+            document.getElementById('dashboardContent').innerHTML = `
+                ${summaryRow([
+                    ['오늘 방문', 'todayVisits', '계획된 방문'],
+                    ['기록 필요', 'needRecord', '방문을 마치고 기록 전'],
+                    ['이번 달 청부', 'monthlyBilling', '반려 제외 금액'],
+                    ['검토 대기 청부', 'pendingBilling', '센터장 승인 전'],
+                ])}
+                <h2 class="section-title">오늘의 방문 순서</h2>
+                <p class="section-sub">시간 순서대로 보여 줍니다. 도착과 퇴실은 나의 일정에서 누릅니다.</p>
+                <div id="timeline"><div class="empty">불러오는 중입니다</div></div>
             `;
             loadCaregiverData();
         }
 
         function renderManagerDashboard() {
-            const content = document.getElementById('dashboardContent');
-            content.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
-                        <div class="text-sm text-blue-600 font-bold mb-2">전체 요양사</div>
-                        <div class="text-3xl font-bold text-blue-900" id="totalStaff">0</div>
-                        <div class="text-xs text-blue-500 mt-2">명</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-lg border border-amber-200">
-                        <div class="text-sm text-amber-600 font-bold mb-2">전체 이용자</div>
-                        <div class="text-3xl font-bold text-amber-900" id="totalResidents">0</div>
-                        <div class="text-xs text-amber-500 mt-2">명</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-lg border border-emerald-200">
-                        <div class="text-sm text-emerald-600 font-bold mb-2">이번 달 수익</div>
-                        <div class="text-3xl font-bold text-emerald-900" id="monthlyRevenue">₩0</div>
-                        <div class="text-xs text-emerald-500 mt-2">센터 수익</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg border border-purple-200">
-                        <div class="text-sm text-purple-600 font-bold mb-2">승인 대기</div>
-                        <div class="text-3xl font-bold text-purple-900" id="pendingApprovals">0</div>
-                        <div class="text-xs text-purple-500 mt-2">건</div>
-                    </div>
-                </div>
+            document.getElementById('pageTitle').textContent = '오늘';
+            document.getElementById('dashboardContent').innerHTML = `
+                ${summaryRow([
+                    ['요양사', 'totalStaff', '명'],
+                    ['이용자', 'totalResidents', '명'],
+                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 이후 청부 합계'],
+                    ['처리할 일', 'pendingApprovals', '승인·확정이 필요한 항목'],
+                ])}
+                <h2 class="section-title">오늘 들어온 방문 기록</h2>
+                <p class="section-sub">요양사가 오늘 저장한 기록을 시간 순서로 보여 줍니다.</p>
+                <div id="timeline"><div class="empty">불러오는 중입니다</div></div>
 
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">⚡ 빠른 액션</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <a href="./resident_management.html" class="p-4 border border-gray-200 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition text-center">
-                            <div class="text-3xl mb-2">👥</div>
-                            <div class="font-semibold text-gray-900">이용자 추가</div>
-                        </a>
-                        <a href="./billing_management.html" class="p-4 border border-gray-200 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition text-center">
-                            <div class="text-3xl mb-2">💰</div>
-                            <div class="font-semibold text-gray-900">청부 관리</div>
-                        </a>
-                        <a href="./staff_management.html" class="p-4 border border-gray-200 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition text-center">
-                            <div class="text-3xl mb-2">👔</div>
-                            <div class="font-semibold text-gray-900">직원 관리</div>
-                        </a>
-                        <a href="./monthly_settlement.html" class="p-4 border border-gray-200 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition text-center">
-                            <div class="text-3xl mb-2">📈</div>
-                            <div class="font-semibold text-gray-900">월별 정산</div>
-                        </a>
-                    </div>
-                </div>
+                <h2 class="section-title" style="margin-top: 40px;">처리할 일</h2>
+                <p class="section-sub">눌러서 해당 화면으로 이동합니다.</p>
+                <ul class="task-list" id="taskList"></ul>
             `;
             loadManagerData();
         }
 
-        const DASH_APPROVED = ['approved', 'submitted_to_nhis', 'reimbursed'];
+        function timelineItem(time, name, meta, state, cls) {
+            return `
+                <li class="tl-item ${cls}">
+                    <div class="tl-time">${time}</div>
+                    <div><span class="tl-dot"></span></div>
+                    <div class="tl-body">
+                        <div class="tl-name">${escapeHtml(name)}</div>
+                        <div class="tl-meta">${escapeHtml(meta)}</div>
+                        <div class="tl-state">${escapeHtml(state)}</div>
+                    </div>
+                </li>`;
+        }
 
         async function loadCaregiverData() {
             try {
-                const [recs, bills] = await Promise.all([
-                    fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`).then(r => r.json()),
-                    fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}&include_archived=true`).then(r => r.json())
-                ]);
-                const today = new Date().toDateString();
                 const now = new Date();
-                const todayCount = (recs.records || []).filter(r => new Date(r.recorded_at).toDateString() === today).length;
+                const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                const [recs, bills, plan] = await Promise.all([
+                    fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`).then(r => r.json()),
+                    fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}&include_archived=true`).then(r => r.json()),
+                    fetch(`${API_URL}/schedule/caregiver-view?caregiver_id=${currentUser.id}&year_month=${ym}&user_id=${currentUser.id}&user_role=${currentUser.role}`).then(r => r.json()),
+                ]);
+
+                const today = todayKey();
+                const todays = (plan.items || []).filter(i => i.date === today && i.schedule_id);
+                const needRecord = todays.filter(i => i.state === '방문완료' || i.state === '미기록').length;
                 const monthBills = (bills.records || []).filter(b => {
                     const d = new Date(b.recorded_date);
                     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
                 });
                 const monthly = monthBills.filter(b => b.approval_status !== 'rejected').reduce((s, b) => s + (b.amount || 0), 0);
                 const pending = monthBills.filter(b => b.approval_status === 'pending').length;
-                const residents = new Set(monthBills.map(b => b.resident_id)).size;
-                document.getElementById('todayRecords').textContent = todayCount;
+
+                document.getElementById('todayVisits').textContent = todays.length;
+                document.getElementById('needRecord').textContent = needRecord;
                 document.getElementById('monthlyBilling').textContent = `₩${monthly.toLocaleString()}`;
                 document.getElementById('pendingBilling').textContent = pending;
-                document.getElementById('residentCount').textContent = residents;
+
+                const list = document.getElementById('timeline');
+                if (!todays.length) {
+                    list.innerHTML = '<div class="empty">오늘 예정된 방문이 없습니다.</div>';
+                    return;
+                }
+                list.innerHTML = `<ul class="timeline">${todays.map(i => {
+                    const done = i.state === '완료' || i.state === '방문완료';
+                    const now_ = i.state === '방문중';
+                    const cls = done ? 'done' : (now_ ? 'now' : '');
+                    const meta = `${i.duration_minutes || 60}분 · 계획 항목 ${i.planned_items.length ? i.planned_items.length : 0}개`;
+                    return timelineItem(i.time, i.resident_name || '이용자', meta, STATE_LABEL[i.state] || i.state, cls);
+                }).join('')}</ul>`;
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
+                document.getElementById('timeline').innerHTML = '<div class="empty">오늘 일정을 불러오지 못했습니다.</div>';
             }
         }
 
         async function loadManagerData() {
             try {
                 const centerId = currentUser.center_id || 1;
-                const [users, residents, bills] = await Promise.all([
+                const [users, residents, bills, today, requests, plans] = await Promise.all([
                     fetch(`${API_URL}/users/?center_id=${centerId}`).then(r => r.json()),
                     fetch(`${API_URL}/residents/?center_id=${centerId}`).then(r => r.json()),
-                    fetch(`${API_URL}/billing/?center_id=${centerId}&include_archived=true`).then(r => r.json())
+                    fetch(`${API_URL}/billing/?center_id=${centerId}&include_archived=true`).then(r => r.json()),
+                    fetch(`${API_URL}/records/today/center?center_id=${centerId}`).then(r => r.json()),
+                    fetch(`${API_URL}/guardian/requests`).then(r => r.json()).catch(() => ({ requests: [] })),
+                    fetch(`${API_URL}/schedule/proposals?center_id=${centerId}`).then(r => r.json()).catch(() => ({})),
                 ]);
+
                 const now = new Date();
                 const monthBills = (bills.records || []).filter(b => {
                     const d = new Date(b.recorded_date);
                     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
                 });
                 const revenue = monthBills.filter(b => DASH_APPROVED.includes(b.approval_status)).reduce((s, b) => s + (b.amount || 0), 0);
-                const pending = (bills.records || []).filter(b => b.approval_status === 'pending').length;
+                const pendingClaims = (bills.records || []).filter(b => b.approval_status === 'pending').length;
+                const pendingPlans = (Array.isArray(plans) ? plans : (plans.proposals || plans.items || [])).length;
+                const pendingGuardians = (requests.requests || []).length;
                 const staff = (users.users || []).filter(u => u.role === 'caregiver').length;
+                const names = {};
+                (users.users || []).forEach(u => names[u.id] = u.full_name);
+                const residentNames = {};
+                (residents.residents || []).forEach(r => residentNames[r.id] = r.name);
+
                 document.getElementById('totalStaff').textContent = staff;
                 document.getElementById('totalResidents').textContent = residents.total_residents ?? (residents.residents || []).length;
                 document.getElementById('monthlyRevenue').textContent = `₩${revenue.toLocaleString()}`;
-                document.getElementById('pendingApprovals').textContent = pending;
+                document.getElementById('pendingApprovals').textContent = pendingClaims + pendingPlans + pendingGuardians;
+
+                const records = today.records || [];
+                const list = document.getElementById('timeline');
+                list.innerHTML = records.length
+                    ? `<ul class="timeline">${records.map(r => {
+                        const time = r.recorded_at ? r.recorded_at.slice(11, 16) : '--:--';
+                        const meta = `${names[r.caregiver_id] || '요양사'} · ${r.service_type || ''} · 청부 ₩${(r.billing_amount || 0).toLocaleString()}`;
+                        return timelineItem(time, residentNames[r.resident_id] || '이용자', meta, '기록 저장됨', 'done');
+                    }).join('')}</ul>`
+                    : '<div class="empty">오늘 저장된 방문 기록이 없습니다.</div>';
+
+                const tasks = [
+                    ['청부 승인 대기', pendingClaims, './billing_management.html'],
+                    ['방문 계획 승인 대기', pendingPlans, './schedule_approval.html'],
+                    ['보호자 가입 요청', pendingGuardians, './guardian_management.html'],
+                ];
+                document.getElementById('taskList').innerHTML = tasks.map(([label, count, href]) => `
+                    <li><a href="${href}"><span>${label}</span><span class="task-count">${count}건</span></a></li>`).join('');
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
+                document.getElementById('timeline').innerHTML = '<div class="empty">데이터를 불러오지 못했습니다.</div>';
             }
         }
+
         function logout() {
             if (confirm('로그아웃하시겠습니까?')) {
                 localStorage.removeItem('access_token');
