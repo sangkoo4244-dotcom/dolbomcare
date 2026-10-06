@@ -22,7 +22,7 @@
         }
         .summary-label { font-size: 13px; color: var(--ink-soft); }
         .summary-icon { color: var(--ink); margin-bottom: 10px; }
-        .metric-art { width: 40px; height: 40px; display: block; }
+        .metric-art { width: 44px; height: 44px; display: block; }
         .summary-value {
             font-size: 30px;
             font-weight: 700;
@@ -216,10 +216,10 @@
             document.getElementById('pageTitle').textContent = '오늘';
             document.getElementById('dashboardContent').innerHTML = `
                 ${summaryRow([
-                    ['요양사', 'totalStaff', '명', ART.metric.bag],
-                    ['이용자', 'totalResidents', '명', ART.metric.plant],
-                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 이후 청부 합계', ART.metric.wallet],
-                    ['처리할 일', 'pendingApprovals', '승인·확정이 필요한 항목', ART.metric.clipboard],
+                    ['요양사', 'totalStaff', '명', ART.metricFlat.bag],
+                    ['이용자', 'totalResidents', '명', ART.metricFlat.plant],
+                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 이후 청부 합계', ART.metricFlat.wallet],
+                    ['처리할 일', 'pendingApprovals', '승인·확정이 필요한 항목', ART.metricFlat.clipboard],
                 ])}
                 <h2 class="section-title">오늘 들어온 방문 기록</h2>
                 <p class="section-sub">요양사가 오늘 저장한 기록을 시간 순서로 보여 줍니다.</p>

@@ -201,3 +201,12 @@ ART.tablet = `<svg class="art-scene" viewBox="0 0 320 180" aria-hidden="true" fo
     <path d="M52 152 V128 H76 V152 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2" stroke-linejoin="round"/>
     <path d="M64 128 C60 118 68 116 64 106 M74 128 C70 118 78 116 74 106" fill="none" stroke="#6F8F7E" stroke-width="2" stroke-linecap="round"/>
 </svg>`;
+
+// 평면 컬러 아이콘 (요약 칸용, 직접 그림): 색 타일 위에 사물 하나. 얼굴 없음.
+const METRIC_FLAT = (tile, inner) => `<svg class="metric-art" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><rect x="0" y="0" width="40" height="40" rx="10" fill="${tile}"/>${inner}</svg>`;
+ART.metricFlat = {
+    bag: METRIC_FLAT('#F6E4DC', '<path d="M15 16 V13 Q15 10 18 10 H22 Q25 10 25 13 V16" fill="none" stroke="#1E2B26" stroke-width="1.8"/><rect x="10" y="16" width="20" height="14" rx="3" fill="#B5532F"/><rect x="10" y="20" width="20" height="2" fill="#9A4425"/>'),
+    plant: METRIC_FLAT('#E8F0EA', '<path d="M14 26 H26 L24 33 H16 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.6" stroke-linejoin="round"/><path d="M20 26 V18" stroke="#1E2B26" stroke-width="1.6" stroke-linecap="round"/><path d="M20 18 C15 15 14 10 17 8 C19 11 20 14 20 18 Z" fill="#6F8F7E"/><path d="M20 18 C25 15 26 10 23 8 C21 11 20 14 20 18 Z" fill="#A9C2B3"/>'),
+    wallet: METRIC_FLAT('#F2D7A8', '<rect x="9" y="12" width="22" height="17" rx="3" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.6"/><rect x="22" y="18" width="9" height="6" rx="2" fill="#B5532F"/><circle cx="25" cy="21" r="1.2" fill="#FFFFFF"/>'),
+    clipboard: METRIC_FLAT('#E8F0EA', '<rect x="11" y="9" width="18" height="23" rx="3" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.6"/><rect x="16" y="7" width="8" height="4" rx="1.5" fill="#B5532F"/><path d="M15 19 L18 22 L24 16" fill="none" stroke="#B5532F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 27 H25" stroke="#D9E0DA" stroke-width="2" stroke-linecap="round"/>'),
+};
