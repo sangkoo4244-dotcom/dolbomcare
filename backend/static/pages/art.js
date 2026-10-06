@@ -40,3 +40,45 @@ const ART = {
         <path d="M52 34 C48 28 56 26 52 20 M66 34 C62 28 70 26 66 20" fill="none" stroke="#B5532F" stroke-width="2" stroke-linecap="round"/>
     </svg>`,
 };
+
+// 장면 그림: 익숙한 사물(창문, 찻잔, 화분, 시계, 집)만 쓴다. 얼굴과 신체는 그리지 않는다.
+ART.visitScene = `<svg class="art-scene" viewBox="0 0 480 320" aria-hidden="true" focusable="false">
+    <rect x="0" y="0" width="480" height="320" rx="24" fill="#E8F0EA"/>
+    <rect x="56" y="48" width="180" height="150" rx="8" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.5"/>
+    <path d="M146 48 V198 M56 123 H236" stroke="#1E2B26" stroke-width="2"/>
+    <circle cx="200" cy="82" r="18" fill="#F2D7A8"/>
+    <path d="M20 232 H460" stroke="#6F8F7E" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="386" cy="84" r="26" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.5"/>
+    <path d="M386 84 V68 M386 84 L398 90" stroke="#B5532F" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M280 150 V206 H316 M284 206 V232 M312 206 V232" fill="none" stroke="#1E2B26" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <ellipse cx="368" cy="206" rx="54" ry="8" fill="none" stroke="#1E2B26" stroke-width="2.5"/>
+    <path d="M368 214 V232" stroke="#1E2B26" stroke-width="2.5"/>
+    <path d="M352 178 H384 V196 Q384 204 376 204 H360 Q352 204 352 196 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M384 184 Q394 184 394 191 Q394 198 384 198" fill="none" stroke="#1E2B26" stroke-width="2.2"/>
+    <path d="M362 170 C358 164 366 162 362 156 M374 170 C370 164 378 162 374 156" fill="none" stroke="#B5532F" stroke-width="2" stroke-linecap="round"/>
+    <path d="M96 190 H140 L134 228 H102 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M118 190 C104 170 100 158 110 146 C120 158 122 172 118 190 Z" fill="#A9C2B3"/>
+    <path d="M118 190 C130 172 140 164 152 166 C146 180 134 190 118 190 Z" fill="#6F8F7E"/>
+    <path d="M118 190 C112 176 116 162 128 154 C130 168 126 182 118 190 Z" fill="#A9C2B3"/>
+    <rect x="404" y="252" width="44" height="44" rx="6" fill="none" stroke="#B5532F" stroke-width="2.5" transform="rotate(-6 426 274)"/>
+    <text x="426" y="282" text-anchor="middle" font-family="Gowun Batang, serif" font-size="22" font-weight="700" fill="#B5532F" transform="rotate(-6 426 274)">완</text>
+</svg>`;
+
+// 집 장면: 보호자 화면 맨 위. 붉은 지붕, 불 켜진 창, 나무, 길
+ART.homeScene = `<svg class="art-scene" viewBox="0 0 480 200" aria-hidden="true" focusable="false">
+    <rect x="0" y="0" width="480" height="200" rx="20" fill="#E8F0EA"/>
+    <circle cx="410" cy="56" r="22" fill="#F2D7A8"/>
+    <path d="M0 170 H480" stroke="#6F8F7E" stroke-width="2.5" stroke-linecap="round"/>
+    <rect x="150" y="78" width="180" height="92" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.5"/>
+    <path d="M136 82 L240 22 L344 82 Z" fill="#B5532F" stroke="#1E2B26" stroke-width="2.5" stroke-linejoin="round"/>
+    <rect x="226" y="118" width="28" height="52" fill="none" stroke="#1E2B26" stroke-width="2.2"/>
+    <rect x="168" y="102" width="44" height="36" fill="#F2D7A8" stroke="#1E2B26" stroke-width="2"/>
+    <path d="M190 102 V138" stroke="#1E2B26" stroke-width="2"/>
+    <rect x="268" y="102" width="44" height="36" fill="#F2D7A8" stroke="#1E2B26" stroke-width="2"/>
+    <path d="M290 102 V138" stroke="#1E2B26" stroke-width="2"/>
+    <rect x="86" y="112" width="10" height="58" fill="#55645D"/>
+    <circle cx="91" cy="96" r="30" fill="#A9C2B3"/>
+    <rect x="372" y="118" width="10" height="52" fill="#55645D"/>
+    <circle cx="377" cy="92" r="26" fill="#6F8F7E"/>
+    <path d="M240 170 V176" stroke="#1E2B26" stroke-width="2.2"/>
+</svg>`;

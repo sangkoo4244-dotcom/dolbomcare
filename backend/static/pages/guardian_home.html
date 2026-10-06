@@ -80,7 +80,7 @@
             const residents = d.residents || [];
             document.getElementById('emptyNotice').classList.toggle('hidden', residents.length > 0);
             document.getElementById('emptyArt').innerHTML = ART.home;
-            document.getElementById('homeArt').innerHTML = ART.home;
+            document.getElementById('homeArt').innerHTML = ART.homeScene;
             select.innerHTML = residents.map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
             if (residents.length) loadVisits();
         }
