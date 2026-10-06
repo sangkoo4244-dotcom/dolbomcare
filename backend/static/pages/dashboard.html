@@ -15,13 +15,15 @@
             margin-bottom: 40px;
         }
         .summary-row > div {
-            padding: 20px 24px;
+            padding: 22px 24px;
         }
         .summary-row > div + div {
             border-left: 1px solid var(--line);
         }
         .summary-label { font-size: 13px; color: var(--ink-soft); }
-        .summary-icon { color: var(--ink); margin-bottom: 10px; }
+        .summary-cell { display: flex; align-items: center; gap: 18px; }
+        .summary-icon { flex: 0 0 auto; color: var(--ink); }
+        .summary-text { min-width: 0; }
         .metric-art { width: 44px; height: 44px; display: block; }
         .summary-value {
             font-size: 30px;
@@ -91,9 +93,9 @@
         }
         .task-list a:hover { background: #EEF2EE; }
         .task-count { font-variant-numeric: tabular-nums; font-weight: 700; }
-        .task-main { display: flex; align-items: center; gap: 12px; }
-        .task-ico svg { width: 40px; height: 40px; display: block; }
-        .metric-art, .illus-art, .metric-img { width: 48px; height: 48px; display: block; }
+        .task-main { display: flex; align-items: center; gap: 16px; }
+        .task-ico svg { width: 56px; height: 56px; display: block; }
+        .metric-art, .illus-art, .metric-img { width: 72px; height: 72px; display: block; }
         .metric-img { border-radius: 11px; object-fit: cover; }
 
         /* 한 번만 나타나는 움직임 (동작 줄이기 설정이면 생략) */
@@ -190,11 +192,13 @@
 
         function summaryRow(items) {
             return `<div class="summary-row">${items.map(([label, id, note, icon]) => `
-                <div>
+                <div class="summary-cell">
                     ${icon ? `<div class="summary-icon">${icon}</div>` : ''}
-                    <div class="summary-label">${label}</div>
-                    <div class="summary-value" id="${id}">0</div>
-                    <div class="summary-note">${note}</div>
+                    <div class="summary-text">
+                        <div class="summary-label">${label}</div>
+                        <div class="summary-value" id="${id}">0</div>
+                        <div class="summary-note">${note}</div>
+                    </div>
                 </div>`).join('')}</div>`;
         }
 
