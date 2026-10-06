@@ -28,10 +28,12 @@
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
                 <h1 class="text-3xl font-bold text-gray-900">음성 기록</h1>
                 <div class="flex items-center gap-6">
+                    <img src="assets/user_design/28_top_notification_icon.png" alt="" style="width:28px;height:auto;">
                     <div class="text-right">
                         <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
                         <div class="text-xs text-gray-500" id="userRole">역할</div>
                     </div>
+                    <img src="assets/user_design/29_top_profile_icon.png" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
                     <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">
                         로그아웃
                     </button>
@@ -462,6 +464,32 @@
         }
 
         window.addEventListener('load', checkAuth);
+    </script>
+    <script>
+        // 샘플 구성: 사이드바 메뉴 아이콘과 아래쪽 풍경 (assets/user_design/)
+        window.addEventListener('load', () => {
+            const map = {
+                '대시보드': '20_nav_dashboard_icon.png', '이용자관리': '21_nav_user_icon.png', '음성 기록': '22_nav_voice_icon.png',
+                '나의 일정': '23_nav_service_plan_icon.png', '방문계획 승인': '23_nav_service_plan_icon.png',
+                '나의 청부': '24_nav_billing_icon.png', '청부관리': '24_nav_billing_icon.png',
+                '통계 현황': '25_nav_statistics_icon.png', '월별정산': '25_nav_statistics_icon.png',
+                '알림': '26_nav_notice_icon.png', '설정': '27_nav_settings_icon.png'
+            };
+            document.querySelectorAll('#navContent a').forEach(a => {
+                const file = map[a.textContent.trim()];
+                const icon = a.querySelector('.side-icon');
+                if (file && icon) icon.innerHTML = `<img src="assets/user_design/${file}" alt="" style="width:24px;height:24px;object-fit:contain;">`;
+            });
+            const nav = document.getElementById('navContent');
+            if (nav && !nav.querySelector('.side-land')) {
+                const land = document.createElement('img');
+                land.className = 'side-land';
+                land.src = 'assets/user_design/19_sidebar_bottom_landscape.png';
+                land.alt = '';
+                land.style.cssText = 'display:block;width:100%;margin-top:24px;pointer-events:none;';
+                nav.appendChild(land);
+            }
+        });
     </script>
 </body>
 </html>
