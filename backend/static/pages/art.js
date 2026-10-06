@@ -171,3 +171,33 @@ ART.billingScene = `<svg class="art-scene" viewBox="0 0 480 160" aria-hidden="tr
     <path d="M412 104 L430 96" stroke="#B5532F" stroke-width="2.6" stroke-linecap="round"/>
     <path d="M56 132 V122 H92 V132 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2"/>
 </svg>`;
+
+// 요약 칸 그림 (40px, 도장 테두리 + 사물 하나). 참고 구성: 요양사·이용자·금액·처리할 일
+const METRIC_FRAME = (inner) => `<svg class="metric-art" viewBox="0 0 40 40" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="36" height="36" rx="9"/>${inner}</svg>`;
+ART.metric = {
+    bag: METRIC_FRAME('<rect x="11" y="15" width="18" height="14" rx="2"/><path d="M16 15 V12 Q16 10 18 10 H22 Q24 10 24 12 V15"/>'),
+    plant: METRIC_FRAME('<path d="M14 26 H26 L24 33 H16 Z"/><path d="M20 26 V18 M20 18 C16 15 15 11 17 9 C19 11 20 14 20 18 Z M20 18 C24 15 25 11 23 9 C21 11 20 14 20 18 Z"/>'),
+    wallet: METRIC_FRAME('<rect x="10" y="13" width="20" height="16" rx="3"/><path d="M10 18 H30 M26 23 H28"/>'),
+    clipboard: METRIC_FRAME('<rect x="11" y="10" width="18" height="22" rx="2"/><path d="M16 8 H24 V12 H16 Z M15 19 L18 22 L24 16"/>'),
+};
+
+// 빈 상태 장면: 태블릿, 체크리스트, 달력, 화분 (사람 없음)
+ART.tablet = `<svg class="art-scene" viewBox="0 0 320 180" aria-hidden="true" focusable="false">
+    <rect x="0" y="0" width="320" height="180" rx="18" fill="#E8F0EA"/>
+    <path d="M24 152 H296" stroke="#6F8F7E" stroke-width="2.5" stroke-linecap="round"/>
+    <rect x="112" y="38" width="96" height="116" rx="10" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.4"/>
+    <rect x="122" y="50" width="76" height="92" rx="3" fill="none" stroke="#D9E0DA" stroke-width="2"/>
+    <path d="M132 70 L138 76 L150 64 M132 96 L138 102 L150 90 M132 122 L138 128 L150 116" fill="none" stroke="#B5532F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M160 70 H184 M160 96 H184 M160 122 H178" stroke="#1E2B26" stroke-width="2.2" stroke-linecap="round"/>
+    <rect x="206" y="44" width="80" height="66" rx="6" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2"/>
+    <rect x="206" y="44" width="80" height="14" rx="6" fill="#B5532F"/>
+    <rect x="206" y="52" width="80" height="6" fill="#B5532F"/>
+    <rect x="216" y="66" width="10" height="8" fill="#D9E0DA"/><rect x="232" y="66" width="10" height="8" fill="#D9E0DA"/>
+    <rect x="248" y="66" width="10" height="8" fill="#B5532F"/><rect x="264" y="66" width="10" height="8" fill="#D9E0DA"/>
+    <rect x="216" y="82" width="10" height="8" fill="#D9E0DA"/><rect x="232" y="82" width="10" height="8" fill="#6F8F7E"/>
+    <rect x="248" y="82" width="10" height="8" fill="#D9E0DA"/><rect x="264" y="82" width="10" height="8" fill="#D9E0DA"/>
+    <circle cx="282" cy="124" r="16" fill="#FFFFFF" stroke="#B5532F" stroke-width="2.4"/>
+    <path d="M274 124 L280 130 L291 118" fill="none" stroke="#B5532F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M52 152 V128 H76 V152 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M64 128 C60 118 68 116 64 106 M74 128 C70 118 78 116 74 106" fill="none" stroke="#6F8F7E" stroke-width="2" stroke-linecap="round"/>
+</svg>`;

@@ -21,6 +21,8 @@
             border-left: 1px solid var(--line);
         }
         .summary-label { font-size: 13px; color: var(--ink-soft); }
+        .summary-icon { color: var(--ink); margin-bottom: 10px; }
+        .metric-art { width: 40px; height: 40px; display: block; }
         .summary-value {
             font-size: 30px;
             font-weight: 700;
@@ -183,8 +185,9 @@
         }
 
         function summaryRow(items) {
-            return `<div class="summary-row">${items.map(([label, id, note]) => `
+            return `<div class="summary-row">${items.map(([label, id, note, icon]) => `
                 <div>
+                    ${icon ? `<div class="summary-icon">${icon}</div>` : ''}
                     <div class="summary-label">${label}</div>
                     <div class="summary-value" id="${id}">0</div>
                     <div class="summary-note">${note}</div>
@@ -213,10 +216,10 @@
             document.getElementById('pageTitle').textContent = '오늘';
             document.getElementById('dashboardContent').innerHTML = `
                 ${summaryRow([
-                    ['요양사', 'totalStaff', '명'],
-                    ['이용자', 'totalResidents', '명'],
-                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 이후 청부 합계'],
-                    ['처리할 일', 'pendingApprovals', '승인·확정이 필요한 항목'],
+                    ['요양사', 'totalStaff', '명', ART.metric.bag],
+                    ['이용자', 'totalResidents', '명', ART.metric.plant],
+                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 이후 청부 합계', ART.metric.wallet],
+                    ['처리할 일', 'pendingApprovals', '승인·확정이 필요한 항목', ART.metric.clipboard],
                 ])}
                 <h2 class="section-title">오늘 들어온 방문 기록</h2>
                 <p class="section-sub">요양사가 오늘 저장한 기록을 시간 순서로 보여 줍니다.</p>
@@ -328,7 +331,7 @@
                         const meta = `${names[r.caregiver_id] || '요양사'} · ${r.service_type || ''} · 청부 ₩${(r.billing_amount || 0).toLocaleString()}`;
                         return timelineItem(time, residentNames[r.resident_id] || '이용자', meta, '기록 저장됨', 'done', '기');
                     }).join('')}</ul>`
-                    : emptyState('오늘 저장된 방문 기록이 없습니다.', ART.ledger);
+                    : emptyState('오늘 저장된 방문 기록이 없습니다.', ART.tablet);
 
                 const tasks = [
                     ['청부 승인 대기', pendingClaims, './billing_management.html'],
