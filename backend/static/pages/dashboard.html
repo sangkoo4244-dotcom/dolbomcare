@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
+        /* 대시보드는 일지 줄무늬 없이 깨끗한 바탕에 둔다 (줄이 제목과 그림을 가로지르는 문제) */
+        html, body { background-image: none !important; }
         .summary-row {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
