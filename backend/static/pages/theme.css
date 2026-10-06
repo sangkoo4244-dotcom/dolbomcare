@@ -27,7 +27,9 @@
 
 /* 장면 그림 (art.js): 가로폭에 맞춰 줄어들고, 최대 480px */
 .art-scene { width: 100%; max-width: 480px; height: auto; display: block; }
-.page-scene { padding: 24px 24px 0; }
+.page-scene { margin-bottom: 24px; }
+/* 사이드바 없는 주 영역(main)은 이미 안쪽 여백이 있으므로 장면을 카드와 같은 왼쪽선에 맞춘다 */
+.main-layout > .page-scene { padding: 24px 24px 0; margin-bottom: 0; }
 
 /* 선 그림 (art.js) 공통 크기 */
 .art { width: 96px; height: auto; display: block; margin-bottom: 8px; }
