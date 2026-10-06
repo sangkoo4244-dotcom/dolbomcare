@@ -146,7 +146,7 @@
                         <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
                         <div class="text-xs text-gray-500" id="userRole">역할</div>
                     </div>
-                    <img class="header-avatar" src="assets/user_guardian.png" alt="">
+                    <img class="header-avatar" src="assets/hd/user_guardian.png" alt="">
                     <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
                 </div>
             </div>
@@ -201,7 +201,7 @@
 
         // 직접 그린 그림 파일 (assets/)을 아이콘 자리에 넣는다
         function imgIcon(file, cls = 'metric-img') {
-            return `<img class="${cls}" src="assets/${file}" alt="">`;
+            return `<img class="${cls}" src="assets/hd/${file}" alt="">`;
         }
 
         function summaryRow(items) {
