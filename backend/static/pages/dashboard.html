@@ -12,17 +12,18 @@
         .summary-row {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            background: var(--sheet);
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            margin-bottom: 40px;
+            gap: 16px;
+            margin-bottom: 32px;
         }
         .summary-row > div {
-            padding: 22px 24px;
+            padding: 24px 26px;
+            border-radius: 16px;
+            min-height: 150px;
         }
-        .summary-row > div + div {
-            border-left: 1px solid var(--line);
-        }
+        .summary-row > div:nth-child(1) { background: #EAF6F0; }
+        .summary-row > div:nth-child(2) { background: #FDF1E7; }
+        .summary-row > div:nth-child(3) { background: #E8F2FC; }
+        .summary-row > div:nth-child(4) { background: #F0ECFB; }
         .summary-label { font-size: 13px; color: var(--ink-soft); }
         .summary-cell { display: flex; align-items: center; gap: 18px; }
         .summary-icon { flex: 0 0 auto; color: var(--ink); }
@@ -102,15 +103,32 @@
         .metric-img { object-fit: contain; }
         .task-ico img { width: 44px; height: 44px; display: block; object-fit: contain; }
         .task-ico svg { width: 44px; height: 44px; display: block; }
-        .dash-banner { width: 100%; height: 300px; object-fit: cover; object-position: center; display: block; border-radius: 8px; margin-bottom: 32px; }
-        .design-metric { width: 96px; height: auto; display: block; }
+        .dash-banner-wrap { height: 240px; overflow: hidden; border-radius: 16px; margin-bottom: 32px; }
+        /* 원본 그림에 흰 여백이 있어 그림을 키우고 위·왼쪽으로 밀어서 여백을 잘라 낸다 */
+        .dash-banner { display: block; width: 102.5%; max-width: none; height: auto; margin: -4.35% 0 0 -1.25%; }
+        .design-metric { width: 96px; height: auto; display: block; mix-blend-mode: multiply; }
+        .section-icon { width: 44px; height: 44px; object-fit: contain; flex: 0 0 auto; }
+        .task-cards { border-top: none; display: flex; flex-direction: column; gap: 16px; }
+        .task-cards li { border-bottom: none; border-radius: 16px; }
+        .task-cards li:nth-child(1) { background: #FDF1E7; }
+        .task-cards li:nth-child(2) { background: #E8F2FC; }
+        .task-cards li:nth-child(3) { background: #EAF6F0; }
+        .task-cards a { padding: 22px 24px; }
+        .task-cards a:hover { background: transparent; opacity: 0.85; }
+        .task-cards .task-ico img { width: 60px; height: 60px; mix-blend-mode: multiply; }
+        .task-cards .task-count { font-size: 30px; }
+        .task-cards li:nth-child(1) .task-count { color: #E0622B; }
+        .task-cards li:nth-child(2) .task-count { color: #2F74C0; }
+        .task-cards li:nth-child(3) .task-count { color: #2E7D4F; }
+        .side-bottom { margin-top: auto; padding: 0 0 0; }
+        .side-bottom img { width: 100%; height: auto; display: block; object-fit: contain; }
         .panel { background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; padding: 24px 28px; }
         .hero { display: flex; justify-content: space-between; align-items: center; gap: 24px; background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; padding: 28px 32px; margin-bottom: 32px; }
         .hero-kicker { font-size: 14px; color: var(--ink-soft); margin: 0 0 8px; }
         .hero-title { font-family: 'Gowun Batang', serif; font-size: 32px; line-height: 1.3; margin: 0 0 10px; }
         .hero-sub { font-size: 15px; color: var(--ink-soft); margin: 0; }
         .hero-img { width: 300px; max-width: 42%; height: auto; display: block; }
-        .cg-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 40px; }
+        .cg-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.9fr); gap: 24px; }
         @media (max-width: 900px) {
             .hero { flex-direction: column-reverse; align-items: flex-start; }
             .hero-img { max-width: 100%; width: 100%; }
@@ -135,15 +153,13 @@
 
         @media (max-width: 900px) {
             .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .summary-row > div:nth-child(3) { border-left: none; }
-            .summary-row > div:nth-child(n+3) { border-top: 1px solid var(--line); }
         }
     </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
         <!-- 사이드바 -->
-        <aside class="w-72 bg-gradient-to-b from-gray-800 to-gray-900 text-white fixed h-screen overflow-y-auto">
+        <aside class="w-72 bg-gradient-to-b from-gray-800 to-gray-900 text-white fixed h-screen overflow-y-auto flex flex-col">
             <div class="p-6 border-b border-gray-700 flex items-center gap-3">
                 <div class="text-3xl"></div>
                 <div>
@@ -152,6 +168,7 @@
                 </div>
             </div>
             <nav id="navContent" class="p-4"></nav>
+            <div class="side-bottom"><img src="assets/user_design/sidebar_care_landscape.png" alt=""></div>
         </aside>
 
         <!-- 메인 컨텐츠 -->
@@ -164,7 +181,7 @@
                         <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
                         <div class="text-xs text-gray-500" id="userRole">역할</div>
                     </div>
-                    <img class="header-avatar" src="assets/hd/user_guardian.png" alt="">
+                    <div class="header-avatar" style="display:flex;align-items:center;justify-content:center;color:#9CA3AF;"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></div>
                     <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
                 </div>
             </div>
@@ -240,20 +257,13 @@
         }
 
         function renderCaregiverDashboard() {
-            document.getElementById('pageTitle').textContent = '';
+            document.getElementById('pageTitle').textContent = '대시보드';
             document.getElementById('dashboardContent').innerHTML = `
-                <div class="hero">
-                    <div>
-                        <p class="hero-kicker">${new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}</p>
-                        <h2 class="hero-title">오늘도 따뜻한 돌봄이<br>이어집니다</h2>
-                        <p class="hero-sub">방문 순서를 확인하고, 끝난 방문은 바로 기록해 주세요.</p>
-                    </div>
-                    ${imgIcon('user_caregiver_scene.png', 'hero-img')}
-                </div>
+                <div class="dash-banner-wrap"><img class="dash-banner" src="assets/user_design/dashboard_banner.png" alt=""></div>
                 ${summaryRow([
                     ['오늘 방문', 'todayVisits', '계획된 방문', ART.illus.clock],
                     ['기록 필요', 'needRecord', '방문을 마치고 기록 전', ART.illus.checklist],
-                    ['이번 달 청부', 'monthlyBilling', '반려 제외 금액', imgIcon('user_wallet.png')],
+                    ['이번 달 청부', 'monthlyBilling', '반려 제외 금액', designImg('icon_metric_payment.png')],
                     ['검토 대기 청부', 'pendingBilling', '센터장 승인 전', ART.illus.doc],
                 ])}
                 <div class="cg-grid">
@@ -266,9 +276,9 @@
                         <h2 class="section-title">나의 할 일</h2>
                         <p class="section-sub">눌러서 해당 화면으로 이동합니다.</p>
                         <ul class="task-list">
-                            <li><a href="./voice_record.html"><span class="task-main"><span class="task-ico">${imgIcon('user_checklist.png')}</span><span>기록 작성</span></span><span class="task-count" id="taskRecord">0건<span class="task-chev">›</span></span></a></li>
+                            <li><a href="./voice_record.html"><span class="task-main"><span class="task-ico">${ART.illus.checklist}</span><span>기록 작성</span></span><span class="task-count" id="taskRecord">0건<span class="task-chev">›</span></span></a></li>
                             <li><a href="./caregiver_billing.html"><span class="task-main"><span class="task-ico">${ART.illus.doc}</span><span>청부 확인</span></span><span class="task-count" id="taskBilling">0건<span class="task-chev">›</span></span></a></li>
-                            <li><a href="./my_schedule.html"><span class="task-main"><span class="task-ico">${imgIcon('user_calendar.png')}</span><span>나의 일정</span></span><span class="task-count" id="taskSchedule">0건<span class="task-chev">›</span></span></a></li>
+                            <li><a href="./my_schedule.html"><span class="task-main"><span class="task-ico">${ART.illus.clock}</span><span>나의 일정</span></span><span class="task-count" id="taskSchedule">0건<span class="task-chev">›</span></span></a></li>
                         </ul>
                     </section>
                 </div>
@@ -277,9 +287,9 @@
         }
 
         function renderManagerDashboard() {
-            document.getElementById('pageTitle').textContent = '';
+            document.getElementById('pageTitle').textContent = '대시보드';
             document.getElementById('dashboardContent').innerHTML = `
-                <img class="dash-banner" src="assets/user_design/dashboard_banner.png" alt="">
+                <div class="dash-banner-wrap"><img class="dash-banner" src="assets/user_design/dashboard_banner.png" alt=""></div>
                 ${summaryRow([
                     ['요양사', 'totalStaff', '명', designImg('icon_metric_caregiver.png')],
                     ['이용자', 'totalResidents', '명', designImg('icon_metric_user.png')],
@@ -288,14 +298,14 @@
                 ])}
                 <div class="cg-grid">
                     <section class="panel">
-                        <div class="section-head">${imgIcon('user_calendar.png', '')}<h2 class="section-title">오늘 들어온 방문 기록</h2></div>
+                        <div class="section-head"><img class="section-icon" src="assets/user_design/section_today_records.png" alt=""><h2 class="section-title">오늘 들어온 방문 기록</h2></div>
                         <p class="section-sub">요양사가 오늘 저장한 기록을 시간 순서로 보여 줍니다.</p>
                         <div id="timeline"><div class="empty">불러오는 중입니다</div></div>
                     </section>
                     <section class="panel">
-                        <div class="section-head">${imgIcon('user_clock.png', '')}<h2 class="section-title">처리할 일</h2></div>
+                        <div class="section-head"><h2 class="section-title">처리할 일</h2></div>
                         <p class="section-sub">눌러서 해당 화면으로 이동합니다.</p>
-                        <ul class="task-list" id="taskList"></ul>
+                        <ul class="task-list task-cards" id="taskList"></ul>
                     </section>
                 </div>
             `;
@@ -404,11 +414,11 @@
                         const meta = `${names[r.caregiver_id] || '요양사'} · ${r.service_type || ''} · 청부 ₩${(r.billing_amount || 0).toLocaleString()}`;
                         return timelineItem(time, residentNames[r.resident_id] || '이용자', meta, '기록 저장됨', 'done', '기');
                     }).join('')}</ul>`
-                    : `<div class="empty-box">${imgIcon('user_caregiver_scene.png', 'empty-scene')}<p>오늘 저장된 방문 기록이 없습니다.</p></div>`;
+                    : `<div class="empty-box"><img class="empty-scene" src="assets/user_design/empty_today_records.png" alt=""><p>오늘 저장된 방문 기록이 없습니다.</p></div>`;
 
                 const tasks = [
-                    ['청부 승인 대기', pendingClaims, './billing_management.html', ART.illus.doc],
-                    ['방문 계획 승인 대기', pendingPlans, './schedule_approval.html', imgIcon('user_calendar.png')],
+                    ['청부 승인 대기', pendingClaims, './billing_management.html', '<img src="assets/user_design/task_billing_approval.png" alt="">'],
+                    ['방문 계획 승인 대기', pendingPlans, './schedule_approval.html', ART.illus.clock],
                     ['보호자 가입 요청', pendingGuardians, './guardian_management.html', ART.illus.group],
                 ];
                 document.getElementById('taskList').innerHTML = tasks.map(([label, count, href, icon]) => `
