@@ -27,7 +27,7 @@
             <div class="flex-1 overflow-y-auto p-8">
                 <div id="message" class="hidden mb-6 p-4 rounded-lg animate-in fade-in slide-in-from-top-2"></div>
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8 mb-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-2">이번 달 예상 급여</h2>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2 flex items-center"><span class="sec-ico" data-ico="payslip"></span>이번 달 예상 급여</h2>
                     <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">센터가 이번 달을 확정하기 전의 예상 금액입니다. 실제 지급액과 다를 수 있습니다. 확정된 명세는 아래에서 확인하세요.</p>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
@@ -53,7 +53,7 @@
                     </div>
                 </div>
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8 mb-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">급여 계산 상세</h2>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center"><span class="sec-ico" data-ico="calculator"></span>급여 계산 상세</h2>
                     <div class="space-y-4">
                         <div class="grid grid-cols-3 gap-4 pb-4 border-b border-gray-200">
                             <div><div class="text-xs text-gray-500 font-bold">항목</div></div>
@@ -93,7 +93,7 @@
                     </div>
                 </div>
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">확정 명세</h2>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center"><span class="sec-ico" data-ico="seal"></span>확정 명세</h2>
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
@@ -191,5 +191,6 @@
         function logout() { if (confirm('로그아웃하시겠습니까?')) { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; } }
         window.addEventListener('load', checkAuth);
     </script>
+    <script src="art.js"></script>
 </body>
 </html>
