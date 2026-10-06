@@ -140,9 +140,9 @@ main [class*="bg-gradient-to"] {
     main h1 { font-size: 24px !important; }
     main > div:nth-child(2), #dashboardContent { padding: 16px !important; }
     body { padding-bottom: 96px; }
-    .grid { grid-template-columns: 1fr 1fr !important; }
-    .md\:grid-cols-4, .md\:grid-cols-3, .md\:grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
+    .md\:grid-cols-4, .md\:grid-cols-3 { grid-template-columns: 1fr 1fr !important; }
     table { display: block; overflow-x: auto; }
+    th, td { white-space: nowrap; min-width: 88px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
