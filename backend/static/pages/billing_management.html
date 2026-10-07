@@ -240,6 +240,22 @@
             background: var(--bg-secondary);
         }
 
+        /* 청구 관리 시안 배치 */
+        .cm-banner { height: 220px; border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
+        .cm-banner img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block; }
+        .cm-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .cm-metric { display: flex; align-items: center; gap: 16px; padding: 22px 24px; border-radius: 16px; min-height: 120px; }
+        .cm-metric img { width: 80px; height: 80px; object-fit: contain; flex: 0 0 auto; mix-blend-mode: multiply; }
+        .cm-metric-label { font-size: 15px; font-weight: 700; color: #1F2937; }
+        .cm-metric-value { font-size: 36px; font-weight: 800; color: #1F2937; line-height: 1.2; margin-top: 4px; }
+        .cm-features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+        .cm-feature { display: flex; align-items: center; gap: 14px; padding: 18px 20px; background: white; border: 1px solid var(--border); border-radius: 16px; }
+        .cm-feature img { width: 64px; height: 64px; object-fit: contain; flex: 0 0 auto; }
+        .cm-feature-title { font-size: 15px; font-weight: 700; color: #1F2937; }
+        .cm-feature-desc { font-size: 13px; color: #6B7280; margin-top: 4px; line-height: 1.5; }
+        .side-icon img { display: block; }
+        @media (max-width: 900px) { .cm-metrics, .cm-features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -350,44 +366,31 @@
                 <h1>청부 관리</h1>
             </div>
             <div class="user-menu">
+                <img src="assets/user_design/28_top_notification_icon.png" alt="" style="width:28px;height:28px;object-fit:contain;">
                 <div class="user-info">
                     <div class="user-name" id="userName">센터장</div>
                     <div class="user-role">관리자</div>
                 </div>
-                <div class="avatar" id="userAvatar">M</div>
+                <img id="userAvatar" src="assets/user_design/29_top_profile_icon.png" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
                 <button class="logout-btn" onclick="logout()">로그아웃</button>
             </div>
         </div>
 
         <!-- Content -->
         <div class="content">
+            <!-- Banner -->
+            <div class="cm-banner"><img src="assets/user_design/claim_management_banner.png" alt=""></div>
+
             <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">전체</div>
-                    <div class="stat-value" id="totalCount">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label"> 검토대기</div>
-                    <div class="stat-value" id="pendingCount">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label"> 센터장승인</div>
-                    <div class="stat-value" id="approvedCount">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label"> 공단청구</div>
-                    <div class="stat-value" id="submittedToNhisCount">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label"> 정산완료</div>
-                    <div class="stat-value" id="reimbursedCount">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label"> 반려</div>
-                    <div class="stat-value" id="rejectedCount">0</div>
-                </div>
+            <div class="cm-metrics">
+                <div class="cm-metric" style="background:#EAF1FC;"><img src="assets/user_design/claim_metric_expected.png" alt=""><div><div class="cm-metric-label">이번 달 청구 예정</div><div class="cm-metric-value" id="totalCount">0</div></div></div>
+                <div class="cm-metric" style="background:#EAF6F0;"><img src="assets/user_design/claim_metric_approved.png" alt=""><div><div class="cm-metric-label">승인 완료</div><div class="cm-metric-value" id="approvedCount">0</div></div></div>
+                <div class="cm-metric" style="background:#FDF6EC;"><img src="assets/user_design/claim_metric_reviewing.png" alt=""><div><div class="cm-metric-label">검토 중</div><div class="cm-metric-value" id="pendingCount">0</div></div></div>
+                <div class="cm-metric" style="background:#FBEAEA;"><img src="assets/user_design/claim_metric_rejected.png" alt=""><div><div class="cm-metric-label">반려</div><div class="cm-metric-value" id="rejectedCount">0</div></div></div>
             </div>
+            <!-- 공단청구·정산완료 수치는 아래 목록 필터에서 쓰이므로 화면에는 두지 않고 값만 갱신한다 -->
+            <span id="submittedToNhisCount" hidden>0</span>
+            <span id="reimbursedCount" hidden>0</span>
 
             <!-- Archive Tabs -->
             <div class="archive-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; border-bottom: 2px solid var(--border);">
@@ -432,6 +435,14 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- 기능 안내 -->
+            <div class="cm-features">
+                <div class="cm-feature"><img src="assets/user_design/claim_feature_auto_billing.png" alt=""><div><div class="cm-feature-title">자동 청구 계산</div><div class="cm-feature-desc">방문기록을 기반으로 정확한 청구금액을 자동 계산합니다.</div></div></div>
+                <div class="cm-feature"><img src="assets/user_design/claim_feature_agency_transmission.png" alt=""><div><div class="cm-feature-title">공단 전송</div><div class="cm-feature-desc">승인된 청구서를 국민건강보험공단으로 간편하게 전송합니다.</div></div></div>
+                <div class="cm-feature"><img src="assets/user_design/claim_feature_statistics.png" alt=""><div><div class="cm-feature-title">청구 현황 통계</div><div class="cm-feature-desc">월별·이용자별 청구 현황을 한눈에 확인할 수 있습니다.</div></div></div>
+                <div class="cm-feature"><img src="assets/user_design/claim_feature_security.png" alt=""><div><div class="cm-feature-title">데이터 안전성</div><div class="cm-feature-desc">모든 청구 내역은 안전하게 보관되며 이력을 관리합니다.</div></div></div>
             </div>
         </div>
     </div>
@@ -492,7 +503,28 @@
             // 메뉴 필터링
             if (typeof renderSidebar === 'function') {
                 renderSidebar();
+                applyNavIcons();
             }
+        }
+
+        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
+        const NAV_ICON_FILES = {
+            '대시보드': '20_nav_dashboard_icon.png',
+            '이용자관리': '21_nav_user_icon.png',
+            '음성 기록': '22_nav_voice_icon.png',
+            '방문계획 승인': '23_nav_service_plan_icon.png',
+            '청부관리': '24_nav_billing_icon.png',
+            '나의 청부': '24_nav_billing_icon.png',
+            '수익분석': '25_nav_statistics_icon.png',
+            '알림': '26_nav_notice_icon.png',
+            '설정': '27_nav_settings_icon.png',
+        };
+
+        function applyNavIcons() {
+            document.querySelectorAll('.sidebar-nav .side-item').forEach(item => {
+                const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
+                if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
+            });
         }
 
         async function loadBillingRecords() {
@@ -983,6 +1015,5 @@
         });
     </script>
     <script src="art.js"></script>
-    <script>ART.placeScene('billing');</script>
 </body>
 </html>
