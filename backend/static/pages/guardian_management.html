@@ -6,43 +6,88 @@
     <title>돌봄케어 - 보호자 관리</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        .gm-sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
+        .gm-icon { object-fit: contain; mix-blend-mode: multiply; }
+    </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
-        <aside class="w-72 bg-gradient-to-b from-gray-800 to-gray-900 text-white fixed h-screen overflow-y-auto">
-            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
-                <div class="text-3xl"></div>
-                <div><div class="text-lg font-bold">돌봄케어</div><div class="text-xs text-gray-400">Care Management</div></div>
+        <aside class="gm-sidebar w-72 text-white fixed h-screen overflow-y-auto flex flex-col">
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div class="text-lg font-bold">돌봄케어</div>
+                <div class="text-xs text-white/60 ml-1">Care Management</div>
             </div>
             <nav id="navContent" class="p-4"></nav>
+            <img src="assets/user_design/sidebar_care_landscape.png" alt="" class="w-full h-auto mt-auto">
         </aside>
         <main class="ml-72 w-full flex flex-col">
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-bold text-gray-900">보호자 관리</h1>
+                <h1 class="text-3xl font-extrabold text-[#1E3A5F]">보호자 관리</h1>
                 <div class="flex items-center gap-6">
-                    <div class="text-right"><div class="text-sm font-semibold text-gray-900" id="userName">사용자</div><div class="text-xs text-gray-500">센터장</div></div>
-                    <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
+                    <img src="assets/user_design/28_top_notification_icon.png" alt="" class="w-7 h-7 object-contain">
+                    <div class="flex items-center gap-3">
+                        <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
+                        <span id="userName" class="text-base font-bold text-gray-900">센터장</span>
+                        <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                    <button onclick="logout()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:border-red-500 hover:text-red-600 transition">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+                        로그아웃
+                    </button>
                 </div>
             </div>
-            <div class="flex-1 overflow-y-auto p-8 space-y-8">
-                <div id="message" class="hidden p-4 rounded-lg text-sm"></div>
 
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-2">초대 코드 발급</h2>
-                    <p class="text-sm text-gray-500 mb-6">이용자를 고르고 코드를 발급해 보호자에게 전달합니다. 코드는 7일 동안 한 번만 쓸 수 있습니다.</p>
-                    <div class="flex gap-3 items-center">
-                        <select id="residentSelect" class="border border-gray-300 rounded-lg px-3 py-2 min-w-64"></select>
-                        <button onclick="issueInvite()" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700">코드 발급</button>
+            <div class="flex-1 overflow-y-auto p-8">
+                <div class="rounded-2xl overflow-hidden mb-5">
+                    <img src="assets/user_design/gm_banner.png" alt="" class="w-full h-auto block">
+                </div>
+
+                <div id="message" class="hidden mb-5 p-4 rounded-xl text-base"></div>
+
+                <!-- 초대 코드 발급 -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-7 mb-5">
+                    <div class="flex items-start gap-5 flex-wrap">
+                        <img src="assets/user_design/gm_icon_envelope.png" alt="" class="w-14 h-14 gm-icon shrink-0">
+                        <div class="flex-1 min-w-[260px]">
+                            <h2 class="text-2xl font-extrabold text-gray-900 mb-1">초대 코드 발급</h2>
+                            <p class="text-base text-gray-500 mb-5">이용자를 선택하고 코드를 발급해 보호자에게 전달합니다. 코드는 7일 동안 한 번만 쓸 수 있습니다.</p>
+                            <div class="flex gap-4 items-center flex-wrap">
+                                <label class="text-lg font-bold text-gray-800 flex items-center gap-3">
+                                    <img src="assets/user_design/gm_icon_people.png" alt="" class="w-10 h-10 gm-icon">이용자 선택
+                                    <select id="residentSelect" class="border border-gray-300 rounded-xl px-4 py-3 text-lg min-w-[240px] bg-white"></select>
+                                </label>
+                                <button onclick="issueInvite()" class="inline-flex items-center gap-2 px-6 py-3 bg-[#2E7D4F] text-white font-extrabold rounded-xl text-lg hover:bg-[#256a40]">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3-3.5 3.5z"/></svg>
+                                    코드 발급
+                                </button>
+                            </div>
+                        </div>
+                        <img src="assets/user_design/gm_art_7days.png" alt="" class="hidden lg:block h-28 w-auto gm-icon ml-auto">
                     </div>
-                    <div id="codeBox" class="hidden mt-6 p-4 bg-emerald-50 rounded-lg">
-                        <div class="text-sm text-emerald-800">발급된 코드</div>
-                        <div id="codeValue" class="text-3xl font-bold tracking-widest text-emerald-900 mt-1"></div>
-                        <div id="codeInfo" class="text-sm text-emerald-700 mt-2"></div>
+                    <div id="codeBox" class="hidden mt-6 bg-emerald-50 border border-emerald-100 rounded-xl p-5 flex items-center gap-6 flex-wrap">
+                        <img src="assets/user_design/gm_icon_key.png" alt="" class="w-14 h-14 object-contain rounded-xl bg-white p-1">
+                        <div>
+                            <div class="text-sm font-bold text-emerald-800">발급된 코드</div>
+                            <div id="codeValue" class="text-4xl font-extrabold tracking-widest text-emerald-900 mt-1"></div>
+                        </div>
+                        <div id="codeInfo" class="text-base text-emerald-800 space-y-1"></div>
+                        <button onclick="copyCode()" class="ml-auto inline-flex items-center gap-2 px-5 py-3 bg-white border border-emerald-200 rounded-xl font-bold text-emerald-800 hover:border-emerald-400">
+                            <img src="assets/user_design/gm_icon_copy.png" alt="" class="w-6 h-6 gm-icon">코드 복사
+                        </button>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">가입 승인 대기</h2>
+                <!-- 가입 승인 대기 -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-7">
+                    <div class="flex items-start gap-5 flex-wrap mb-4">
+                        <img src="assets/user_design/gm_icon_people2.png" alt="" class="w-14 h-14 gm-icon shrink-0">
+                        <div class="flex-1 min-w-[260px]">
+                            <h2 class="text-2xl font-extrabold text-gray-900 mb-1">가입 승인 대기</h2>
+                            <p class="text-base text-gray-500">보호자의 가입 신청을 확인하고 승인하거나 반려할 수 있습니다.</p>
+                        </div>
+                        <img src="assets/user_design/gm_art_together.png" alt="" class="hidden lg:block h-20 w-auto gm-icon ml-auto">
+                    </div>
                     <ul id="requestList" class="divide-y divide-gray-100"></ul>
                 </div>
             </div>
@@ -52,6 +97,7 @@
     <script>
         let currentUser = null;
         const API_URL = '/api/v1';
+        let lastCode = '';
 
         function checkAuth() {
             const token = localStorage.getItem('access_token');
@@ -59,7 +105,7 @@
             if (!token || !user.id) { window.location.href = './login.html'; return; }
             if (user.role !== 'center_manager') { window.location.href = './dashboard.html'; return; }
             currentUser = user;
-            document.getElementById('userName').textContent = user.full_name || '센터장';
+            document.getElementById('userName').textContent = `${user.full_name || '센터장'}님`;
             renderSidebar();
             loadResidents();
             loadRequests();
@@ -74,7 +120,7 @@
         function showMessage(text, ok) {
             const el = document.getElementById('message');
             el.textContent = text;
-            el.className = `p-4 rounded-lg text-sm ${ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}`;
+            el.className = `mb-5 p-4 rounded-xl text-base ${ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}`;
         }
 
         async function loadResidents() {
@@ -91,9 +137,22 @@
             });
             const d = await r.json().catch(() => ({}));
             if (!r.ok) { showMessage(d.detail || '코드 발급에 실패했습니다', false); return; }
+            lastCode = d.code;
             document.getElementById('codeBox').classList.remove('hidden');
             document.getElementById('codeValue').textContent = d.code;
-            document.getElementById('codeInfo').textContent = `${d.resident_name} · 만료 ${new Date(d.expires_at).toLocaleDateString('ko-KR')}`;
+            document.getElementById('codeInfo').innerHTML = `
+                <div>이용자: ${escapeHtml(d.resident_name)}</div>
+                <div>만료일: ${new Date(d.expires_at).toLocaleDateString('ko-KR')}</div>`;
+        }
+
+        async function copyCode() {
+            if (!lastCode) return;
+            try {
+                await navigator.clipboard.writeText(lastCode);
+                showMessage('코드를 복사했습니다', true);
+            } catch (e) {
+                showMessage('복사하지 못했습니다. 코드를 직접 선택해 복사해 주세요', false);
+            }
         }
 
         async function loadRequests() {
@@ -101,17 +160,34 @@
             const list = document.getElementById('requestList');
             const items = d.requests || [];
             if (!items.length) { list.innerHTML = '<li class="py-8 text-center text-gray-400">승인을 기다리는 보호자가 없습니다</li>'; return; }
-            list.innerHTML = items.map(q => `
-                <li class="py-4 flex justify-between items-center">
-                    <div>
-                        <div class="font-semibold text-gray-900">${escapeHtml(q.guardian_name)} <span class="text-sm text-gray-500">(${escapeHtml(q.guardian_phone) || '연락처 없음'})</span></div>
-                        <div class="text-sm text-gray-600">이용자: ${escapeHtml(q.resident_name)}</div>
+            list.innerHTML = items.map((q, i) => {
+                const residentAvatar = q.resident_gender === '남' ? 'gm_avatar_resident2.png' : 'gm_avatar_resident1.png';
+                // 보호자 성별 정보가 없어 번갈아 가며 보여 준다 (장식용)
+                const guardianAvatar = i % 2 ? 'gm_avatar_guardian_m.png' : 'gm_avatar_guardian_f.png';
+                const submitted = q.created_at ? new Date(q.created_at).toLocaleDateString('ko-KR') : '-';
+                return `
+                <li class="py-5 flex justify-between items-center gap-4 flex-wrap">
+                    <div class="flex items-center gap-4">
+                        <img src="assets/user_design/${guardianAvatar}" alt="" class="w-14 h-14 rounded-full object-cover">
+                        <div>
+                            <div class="font-extrabold text-gray-900 text-lg">${escapeHtml(q.guardian_name)} <span class="text-base font-normal text-gray-500">보호자</span></div>
+                            <div class="text-base text-gray-600">${escapeHtml(q.guardian_phone) || '연락처 없음'}</div>
+                        </div>
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="decide(${q.id}, 'approve')" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">승인</button>
-                        <button onclick="decide(${q.id}, 'reject')" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50">반려</button>
+                    <div class="flex items-center gap-3 text-base text-gray-700">
+                        <img src="assets/user_design/${residentAvatar}" alt="" class="w-11 h-11 rounded-full object-cover">
+                        <span>이용자: ${escapeHtml(q.resident_name)}</span>
+                        <span class="text-gray-400">|</span>
+                        <span>신청일: ${submitted}</span>
                     </div>
-                </li>`).join('');
+                    <div class="flex gap-3">
+                        <button onclick="decide(${q.id}, 'approve')" class="inline-flex items-center gap-2 px-5 py-2 bg-[#2E7D4F] text-white text-base font-bold rounded-xl hover:bg-[#256a40]">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>승인</button>
+                        <button onclick="decide(${q.id}, 'reject')" class="inline-flex items-center gap-2 px-5 py-2 bg-white border border-gray-300 text-gray-700 text-base font-bold rounded-xl hover:bg-gray-50">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>반려</button>
+                    </div>
+                </li>`;
+            }).join('');
         }
 
         async function decide(id, action) {
@@ -124,7 +200,5 @@
         function logout() { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; }
         window.addEventListener('load', checkAuth);
     </script>
-    <script src="art.js"></script>
-    <script>ART.placeScene('guardian');</script>
 </body>
 </html>

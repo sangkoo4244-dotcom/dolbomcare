@@ -101,15 +101,17 @@ def list_requests(db: Session = Depends(get_db), manager: User = Depends(require
     rows = db.query(GuardianInvite).filter(
         GuardianInvite.center_id == manager.center_id, GuardianInvite.status == "submitted"
     ).all()
-    residents = {r.id: r.name for r in db.query(Resident).filter(Resident.center_id == manager.center_id).all()}
+    residents = {r.id: r for r in db.query(Resident).filter(Resident.center_id == manager.center_id).all()}
     guardians = {u.id: u for u in db.query(User).filter(User.role == "guardian").all()}
     return {"requests": [
         {
             "id": r.id,
             "resident_id": r.resident_id,
-            "resident_name": residents.get(r.resident_id),
+            "resident_name": residents[r.resident_id].name if r.resident_id in residents else None,
+            "resident_gender": residents[r.resident_id].gender if r.resident_id in residents else None,
             "guardian_name": guardians[r.guardian_id].full_name if r.guardian_id in guardians else None,
             "guardian_phone": guardians[r.guardian_id].phone if r.guardian_id in guardians else None,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
         }
         for r in rows
     ]}
