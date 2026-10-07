@@ -8,64 +8,142 @@
     <link rel="stylesheet" href="theme.css">
     <style>
         /* 보호자 화면: 고령 사용자를 위해 글자를 키운다 (스타일 가이드 4장) */
-        main { font-size: 18px; }
+        main { font-size: 17px; }
         main .text-xs { font-size: 15px !important; }
-        main .text-sm { font-size: 17px !important; }
-        main h1 { font-size: 32px !important; }
-        main h2 { font-size: 24px !important; }
+        main .text-sm { font-size: 16px !important; }
+        .m-sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
+        .m-icon { object-fit: contain; mix-blend-mode: multiply; }
+        .m-quick { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; border: 1px solid #e5e7eb; background: #fff; width: 100%; text-align: left; font-weight: 700; color: #1F2937; }
+        .m-quick:disabled { opacity: 0.6; cursor: not-allowed; }
+        .m-quick img { width: 36px; height: 36px; object-fit: contain; mix-blend-mode: multiply; }
     </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
-        <aside class="w-72 bg-gradient-to-b from-gray-800 to-gray-900 text-white fixed h-screen overflow-y-auto">
-            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
-                <div class="text-3xl"></div>
-                <div><div class="text-lg font-bold">돌봄케어</div><div class="text-xs text-gray-400">Care Management</div></div>
+        <aside class="m-sidebar w-72 text-white fixed h-screen overflow-y-auto flex flex-col">
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div class="text-lg font-bold">돌봄케어</div>
+                <div class="text-xs text-white/60 ml-1">Care Management</div>
             </div>
             <nav id="navContent" class="p-4"></nav>
+            <img src="assets/user_design/sidebar_care_landscape.png" alt="" class="w-full h-auto mt-auto">
         </aside>
         <main class="ml-72 w-full flex flex-col">
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-bold text-gray-900">보호자 소통</h1>
+                <h1 class="text-3xl font-bold text-[#1E3A5F]">보호자 소통</h1>
                 <div class="flex items-center gap-6">
-                    <div class="text-right"><div class="text-sm font-semibold text-gray-900" id="userName">사용자</div><div class="text-xs text-gray-500" id="userRole">역할</div></div>
-                    <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
+                    <img src="assets/user_design/28_top_notification_icon.png" alt="" class="w-7 h-7 object-contain">
+                    <div class="flex items-center gap-3">
+                        <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
+                        <div class="text-right">
+                            <div id="userName" class="text-base font-bold text-gray-900">사용자</div>
+                            <div id="userRole" class="text-xs text-gray-500">역할</div>
+                        </div>
+                    </div>
+                    <button onclick="logout()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:border-red-500 hover:text-red-600 transition">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+                        로그아웃
+                    </button>
                 </div>
             </div>
-            <div class="flex-1 overflow-y-auto p-8 space-y-6">
-                <div class="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 text-sm">
-                     응급 상황이나 건강이 급하게 나빠졌을 때는 메시지 대신 센터 전화를 이용해 주세요. 메시지는 확인까지 시간이 걸릴 수 있습니다. 모든 대화는 센터에 기록됩니다.
+
+            <div class="flex-1 overflow-y-auto p-8">
+                <div class="rounded-2xl overflow-hidden mb-5">
+                    <img src="assets/user_design/msg_banner.png" alt="" class="w-full h-auto block">
                 </div>
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 flex items-center gap-3">
-                    <label class="text-sm font-semibold text-gray-700">이용자</label>
-                    <select id="residentSelect" onchange="loadMessages()" class="border border-gray-300 rounded-lg px-3 py-2 min-w-64"></select>
+
+                <!-- 응급 안내 -->
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5 flex items-center gap-4 flex-wrap">
+                    <img src="assets/user_design/msg_notice_megaphone.png" alt="" class="w-14 h-14 m-icon">
+                    <div class="flex-1 min-w-[260px]">
+                        <p class="font-extrabold text-red-600">응급 상황이나 건강이 급하게 나빠졌을 때는 메시지 대신 센터 전화를 이용해 주세요.</p>
+                        <p class="text-gray-700 text-sm mt-1">메시지는 확인까지 시간이 걸릴 수 있습니다. 모든 대화는 센터에 기록됩니다.</p>
+                    </div>
                 </div>
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-                    <ul id="messageList" class="space-y-4 max-h-[480px] overflow-y-auto mb-6"></ul>
-                    <form id="sendForm" class="space-y-3">
-                        <textarea id="body" rows="3" maxlength="1000" required placeholder="메시지를 입력하세요" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
-                        <div class="flex justify-between items-center">
-                            <div id="message" class="text-sm"></div>
-                            <button type="submit" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700">보내기</button>
+
+                <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-5">
+                    <div>
+                        <!-- 이용자 선택 -->
+                        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-5 flex items-center gap-5 flex-wrap">
+                            <img src="assets/user_design/msg_people.png" alt="" class="w-14 h-14 m-icon">
+                            <label class="text-lg font-bold text-gray-800 flex items-center gap-4">이용자 선택
+                                <select id="residentSelect" onchange="loadMessages()" class="border border-gray-300 rounded-xl px-4 py-3 text-lg min-w-[260px] bg-white"></select>
+                            </label>
+                            <div class="ml-auto hidden md:block">
+                                <img src="assets/user_design/msg_family_art.png" alt="" class="h-20 w-auto m-icon">
+                            </div>
                         </div>
-                    </form>
+
+                        <!-- 대화 내용 -->
+                        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                            <div class="flex items-center gap-3 mb-4">
+                                <img src="assets/user_design/msg_chat_title.png" alt="" class="w-10 h-10 m-icon">
+                                <h2 class="text-2xl font-extrabold text-gray-900">대화 내용</h2>
+                            </div>
+                            <ul id="messageList" class="space-y-4 max-h-[480px] overflow-y-auto mb-6"></ul>
+
+                            <!-- 입력 -->
+                            <form id="sendForm" class="space-y-3">
+                                <div class="flex items-start gap-4">
+                                    <div class="flex flex-col gap-3 pt-1">
+                                        <button type="button" disabled title="준비 중인 기능입니다" class="flex flex-col items-center text-xs text-gray-500"><img src="assets/user_design/msg_attach.png" alt="" class="w-9 h-9 m-icon">파일첨부</button>
+                                        <button type="button" disabled title="준비 중인 기능입니다" class="flex flex-col items-center text-xs text-gray-500"><img src="assets/user_design/msg_emoji.png" alt="" class="w-9 h-9 m-icon">이모티콘</button>
+                                        <button type="button" disabled title="준비 중인 기능입니다" class="flex flex-col items-center text-xs text-gray-500"><img src="assets/user_design/msg_voice.png" alt="" class="w-9 h-9 m-icon">음성녹음</button>
+                                    </div>
+                                    <div class="flex-1">
+                                        <textarea id="body" rows="4" maxlength="1000" required placeholder="메시지를 입력하세요. (최대 1,000자)" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-base"></textarea>
+                                        <div class="flex justify-between items-center mt-2">
+                                            <div id="message" class="text-sm"></div>
+                                            <span id="charCount" class="text-sm text-gray-500">0 / 1,000</span>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="self-stretch px-7 bg-[#2E7D4F] text-white font-extrabold rounded-xl text-lg hover:bg-[#256a40] transition flex items-center gap-2">
+                                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+                                        보내기
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- 오른쪽 열 -->
+                    <div class="space-y-5">
+                        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                            <div class="flex items-center gap-3 mb-3">
+                                <img src="assets/user_design/msg_faq.png" alt="" class="w-8 h-8 m-icon">
+                                <h2 class="text-xl font-extrabold text-gray-900">빠른 기능</h2>
+                            </div>
+                            <div class="space-y-3">
+                                <a href="./guardian_home.html" class="m-quick hover:border-emerald-500"><img src="assets/user_design/msg_quick_visit.png" alt="">방문 기록 보기</a>
+                                <button type="button" disabled class="m-quick"><img src="assets/user_design/msg_quick_plan.png" alt="">서비스 계획 보기</button>
+                                <button type="button" disabled class="m-quick"><img src="assets/user_design/msg_quick_call.png" alt="">센터에 전화하기</button>
+                            </div>
+                        </div>
+                        <div class="bg-rose-50 border border-rose-100 rounded-2xl p-5 flex items-start gap-4">
+                            <img src="assets/user_design/msg_contact_headset.png" alt="" class="w-12 h-12 m-icon shrink-0">
+                            <div>
+                                <div class="font-extrabold text-gray-900 mb-1">문의가 필요하신가요?</div>
+                                <div class="text-sm text-gray-700">센터로 직접 문의하시면 더 빠르게 도와드립니다.</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
     <script src="menu.js"></script>
-    <script src="art.js"></script>
     <script>
         let currentUser = null;
         const API_URL = '/api/v1';
         const ROLE_CLASS = { guardian: 'bg-amber-50 border-amber-200', caregiver: 'bg-emerald-50 border-emerald-200', center_manager: 'bg-blue-50 border-blue-200' };
+        const ROLE_AVATAR = { guardian: 'msg_avatar_guardian.png', caregiver: 'msg_avatar_caregiver.png', center_manager: 'msg_avatar_manager.png' };
 
         function checkAuth() {
             const token = localStorage.getItem('access_token');
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (!token || !user.id) { window.location.href = './login.html'; return; }
             currentUser = user;
-            document.getElementById('userName').textContent = user.full_name || '사용자';
+            document.getElementById('userName').textContent = `${user.full_name || '사용자'}${user.role === 'guardian' ? '님' : ''}`;
             document.getElementById('userRole').textContent = { guardian: '보호자', caregiver: '요양사', center_manager: '센터장' }[user.role] || '';
             renderSidebar();
             loadResidents();
@@ -98,19 +176,22 @@
             if (!r.ok) { list.innerHTML = '<li class="text-center text-gray-400 py-8">메시지를 불러올 수 없습니다</li>'; return; }
             const d = await r.json();
             if (!d.messages.length) {
-                list.innerHTML = `<li class="text-center py-8 text-gray-500">${ART.message}<p>아직 메시지가 없습니다. 첫 메시지를 보내 보세요.</p></li>`;
+                list.innerHTML = '<li class="text-center py-8 text-gray-500">아직 메시지가 없습니다. 첫 메시지를 보내 보세요.</li>';
                 return;
             }
             list.innerHTML = d.messages.map(m => `
-                <li class="border rounded-lg p-4 ${ROLE_CLASS[m.sender_role] || 'bg-gray-50 border-gray-200'}">
-                    <div class="flex justify-between items-center mb-1 text-sm">
-                        <span class="font-semibold text-gray-900">${escapeHtml(m.sender_name)} <span class="text-gray-500">(${escapeHtml(m.sender_role_label)})</span></span>
-                        <span class="flex items-center gap-3 text-gray-500">${escapeHtml((m.created_at || '').replace('T', ' ').slice(0, 16))}
-                            ${currentUser.role === 'center_manager' ? `<button onclick="deleteMessage(${m.id})" class="text-red-600 hover:underline">삭제</button>` : ''}
-                        </span>
+                <li class="flex gap-4 items-start">
+                    <img src="assets/user_design/${ROLE_AVATAR[m.sender_role] || 'msg_avatar_guardian.png'}" alt="" class="w-14 h-14 rounded-full object-cover shrink-0">
+                    <div class="flex-1 border rounded-xl p-4 ${ROLE_CLASS[m.sender_role] || 'bg-gray-50 border-gray-200'}">
+                        <div class="flex justify-between items-center mb-1 text-sm">
+                            <span class="font-bold text-gray-900">${escapeHtml(m.sender_name)} <span class="text-gray-500">(${escapeHtml(m.sender_role_label)})</span></span>
+                            <span class="flex items-center gap-3 text-gray-500">${escapeHtml((m.created_at || '').replace('T', ' ').slice(0, 16))}
+                                ${currentUser.role === 'center_manager' ? `<button onclick="deleteMessage(${m.id})" class="text-red-600 hover:underline">삭제</button>` : ''}
+                            </span>
+                        </div>
+                        <div class="text-gray-800 whitespace-pre-wrap text-base">${escapeHtml(m.body)}</div>
+                        ${m.read_by.length ? `<div class="text-sm text-emerald-700 mt-2 text-right">✓ 읽음 ${m.read_by.length}명 (${m.read_by.map(escapeHtml).join(', ')})</div>` : ''}
                     </div>
-                    <div class="text-gray-800 whitespace-pre-wrap">${escapeHtml(m.body)}</div>
-                    ${m.read_by.length ? `<div class="text-xs text-emerald-700 mt-2">✓ ${m.read_by.map(escapeHtml).join(', ')} 확인</div>` : ''}
                 </li>`).join('');
             list.scrollTop = list.scrollHeight;
             await fetch(`${API_URL}/messages/residents/${id}/read`, { method: 'POST' });
@@ -122,6 +203,10 @@
             el.className = `text-sm ${ok ? 'text-emerald-700' : 'text-red-600'}`;
         }
 
+        document.getElementById('body').addEventListener('input', e => {
+            document.getElementById('charCount').textContent = `${e.target.value.length.toLocaleString()} / 1,000`;
+        });
+
         document.getElementById('sendForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('residentSelect').value;
@@ -132,6 +217,7 @@
             const d = await r.json().catch(() => ({}));
             if (!r.ok) { showMessage(d.detail || '보내지 못했습니다', false); return; }
             document.getElementById('body').value = '';
+            document.getElementById('charCount').textContent = '0 / 1,000';
             showMessage('보냈습니다', true);
             loadMessages();
         });
