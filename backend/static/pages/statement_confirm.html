@@ -6,45 +6,101 @@
     <title>돌봄케어 - 급여 확정</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        .s-sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
+        .s-icon { object-fit: contain; mix-blend-mode: multiply; }
+        .s-pill { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 10px; font-size: 14px; font-weight: 700; }
+    </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
-        <aside class="w-72 bg-gradient-to-b from-gray-800 to-gray-900 text-white fixed h-screen overflow-y-auto">
-            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
-                <div class="text-3xl"></div>
-                <div><div class="text-lg font-bold">돌봄케어</div><div class="text-xs text-gray-400">Care Management</div></div>
+        <aside class="s-sidebar w-72 text-white fixed h-screen overflow-y-auto flex flex-col">
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div class="text-lg font-bold">돌봄케어</div>
+                <div class="text-xs text-white/60 ml-1">Care Management</div>
             </div>
             <nav id="navContent" class="p-4"></nav>
+            <img src="assets/user_design/sidebar_care_landscape.png" alt="" class="w-full h-auto mt-auto">
         </aside>
         <main class="ml-72 w-full flex flex-col">
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-bold text-gray-900">급여 확정</h1>
+                <h1 class="text-3xl font-extrabold text-[#1E3A5F]">급여 확정</h1>
                 <div class="flex items-center gap-6">
-                    <div class="text-right"><div class="text-sm font-semibold text-gray-900" id="userName">사용자</div><div class="text-xs text-gray-500">센터장</div></div>
-                    <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
+                    <img src="assets/user_design/28_top_notification_icon.png" alt="" class="w-7 h-7 object-contain">
+                    <div class="flex items-center gap-3">
+                        <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
+                        <span id="userName" class="text-base font-bold text-gray-900">센터장</span>
+                        <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                    <button onclick="logout()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:border-red-500 hover:text-red-600 transition">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+                        로그아웃
+                    </button>
                 </div>
             </div>
-            <div class="flex-1 overflow-y-auto p-8 space-y-6">
-                <div class="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 text-sm">
-                    확정하면 그 시점의 금액이 명세로 저장되고, 요양사에게 보입니다. 확정 후 청구가 바뀌어도 명세는 바뀌지 않습니다. 확정은 되돌릴 수 없습니다.
+
+            <div class="flex-1 overflow-y-auto p-8">
+                <div class="rounded-2xl overflow-hidden mb-5">
+                    <img src="assets/user_design/statement_banner.png" alt="" class="w-full h-auto block">
                 </div>
-                <div id="message" class="hidden p-4 rounded-lg text-sm"></div>
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 flex items-center gap-3">
-                    <label class="text-sm font-semibold text-gray-700">달</label>
-                    <input id="yearMonth" type="month" onchange="loadStatus()" class="border border-gray-300 rounded-lg px-3 py-2">
+
+                <!-- 주의 안내 -->
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5 flex items-center gap-4">
+                    <img src="assets/user_design/statement_notice_megaphone.png" alt="" class="w-14 h-14 s-icon shrink-0">
+                    <div>
+                        <p class="font-extrabold text-red-600">확정하면 그 시점의 금액이 명세로 저장되고, 요양사에게 보입니다.</p>
+                        <p class="text-gray-700 text-sm mt-1">확정 후 청구가 바뀌어도 명세는 바뀌지 않습니다. 확정은 되돌릴 수 없습니다.</p>
+                    </div>
                 </div>
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="border-b-2 border-gray-200">
-                                <th class="text-left py-3 px-4 font-bold text-gray-700">요양사</th>
-                                <th class="text-left py-3 px-4 font-bold text-gray-700">승인 청부액</th>
-                                <th class="text-left py-3 px-4 font-bold text-gray-700">상태</th>
-                                <th class="text-left py-3 px-4 font-bold text-gray-700">관리</th>
+
+                <div id="message" class="hidden mb-5 p-4 rounded-xl text-base"></div>
+
+                <!-- 달 선택 -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-5 flex items-center gap-5 flex-wrap">
+                    <img src="assets/user_design/statement_month_icon.png" alt="" class="w-14 h-14 s-icon">
+                    <label class="text-lg font-extrabold text-gray-900 flex items-center gap-4">급여 대상 월
+                        <input id="yearMonth" type="month" onchange="loadStatus()" class="border border-gray-300 rounded-xl px-4 py-3 text-lg bg-white">
+                    </label>
+                    <div class="flex items-center gap-3 bg-blue-50 rounded-xl px-4 py-3">
+                        <img src="assets/user_design/statement_info_icon.png" alt="" class="w-10 h-10 s-icon">
+                        <div class="text-sm text-gray-700">해당 월의 승인된 청구를<br>확인하고 최종 금액을 확정합니다.</div>
+                    </div>
+                    <img src="assets/user_design/statement_clipboard_art.png" alt="" class="ml-auto hidden lg:block h-24 w-auto s-icon">
+                </div>
+
+                <!-- 요약 카드 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
+                    <div class="rounded-2xl border border-blue-100 bg-blue-50/60 p-5 flex items-center gap-4">
+                        <img src="assets/user_design/statement_metric_total.png" alt="" class="w-16 h-16 s-icon">
+                        <div><div class="text-sm font-bold text-gray-700">전체 요양사</div><div id="metricTotal" class="text-3xl font-extrabold text-gray-900">0명</div></div>
+                    </div>
+                    <div class="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5 flex items-center gap-4">
+                        <img src="assets/user_design/statement_metric_confirmed.png" alt="" class="w-16 h-16 s-icon">
+                        <div><div class="text-sm font-bold text-emerald-700">확정 완료</div><div id="metricConfirmed" class="text-3xl font-extrabold text-emerald-700">0명</div></div>
+                    </div>
+                    <div class="rounded-2xl border border-orange-100 bg-orange-50/60 p-5 flex items-center gap-4">
+                        <img src="assets/user_design/statement_metric_pending.png" alt="" class="w-16 h-16 s-icon">
+                        <div><div class="text-sm font-bold text-red-600">미확정</div><div id="metricPending" class="text-3xl font-extrabold text-red-600">0명</div></div>
+                    </div>
+                    <div class="rounded-2xl border border-purple-100 bg-purple-50/60 p-5 flex items-center gap-4">
+                        <img src="assets/user_design/statement_metric_amount.png" alt="" class="w-16 h-16 s-icon">
+                        <div><div class="text-sm font-bold text-purple-700">총 승인 청구액</div><div id="metricAmount" class="text-3xl font-extrabold text-indigo-900">₩0</div></div>
+                    </div>
+                </div>
+
+                <!-- 요양사별 표 -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                    <table class="w-full text-base">
+                        <thead class="bg-gray-50">
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-4 px-6 font-extrabold text-gray-800">요양사</th>
+                                <th class="text-left py-4 px-6 font-extrabold text-gray-800">승인 청구액</th>
+                                <th class="text-left py-4 px-6 font-extrabold text-gray-800">상태</th>
+                                <th class="text-left py-4 px-6 font-extrabold text-gray-800">관리</th>
                             </tr>
                         </thead>
                         <tbody id="statusBody">
-                            <tr><td colspan="4" class="py-8 text-center text-gray-400">달을 고르세요</td></tr>
+                            <tr><td colspan="4" class="py-10 text-center text-gray-400">달을 고르세요</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -62,7 +118,7 @@
             if (!token || !user.id) { window.location.href = './login.html'; return; }
             if (user.role !== 'center_manager') { window.location.href = './dashboard.html'; return; }
             currentUser = user;
-            document.getElementById('userName').textContent = user.full_name || '센터장';
+            document.getElementById('userName').textContent = `${user.full_name || '센터장'}님`;
             renderSidebar();
             const now = new Date();
             document.getElementById('yearMonth').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -72,7 +128,7 @@
         function showMessage(text, ok) {
             const el = document.getElementById('message');
             el.textContent = text;
-            el.className = `p-4 rounded-lg text-sm ${ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}`;
+            el.className = `mb-5 p-4 rounded-xl text-base ${ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}`;
         }
 
         function escapeHtml(text) {
@@ -81,23 +137,43 @@
             return div.innerHTML;
         }
 
+        function updateMetrics(caregivers) {
+            const confirmed = caregivers.filter(c => c.confirmed).length;
+            const amount = caregivers.reduce((sum, c) => sum + (c.billing_total || 0), 0);
+            document.getElementById('metricTotal').textContent = `${caregivers.length}명`;
+            document.getElementById('metricConfirmed').textContent = `${confirmed}명`;
+            document.getElementById('metricPending').textContent = `${caregivers.length - confirmed}명`;
+            document.getElementById('metricAmount').textContent = `₩${amount.toLocaleString()}`;
+        }
+
         async function loadStatus() {
             const ym = document.getElementById('yearMonth').value;
             if (!ym) return;
             const r = await fetch(`${API_URL}/statements/status?year_month=${ym}`);
             const body = document.getElementById('statusBody');
-            if (!r.ok) { body.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-gray-400">불러올 수 없습니다</td></tr>'; return; }
+            if (!r.ok) {
+                body.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-gray-400">불러올 수 없습니다</td></tr>';
+                updateMetrics([]);
+                return;
+            }
             const d = await r.json();
+            updateMetrics(d.caregivers);
             body.innerHTML = d.caregivers.length ? d.caregivers.map(c => `
-                <tr class="border-b border-gray-100">
-                    <td class="py-4 px-4 font-semibold text-gray-900">${escapeHtml(c.caregiver_name)}</td>
-                    <td class="py-4 px-4 text-gray-700">₩${c.billing_total.toLocaleString()}</td>
-                    <td class="py-4 px-4">${c.confirmed
-                        ? '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">확정됨</span>'
-                        : '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">미확정</span>'}</td>
-                    <td class="py-4 px-4">${c.confirmed || c.billing_total <= 0 ? '' :
-                        `<button onclick="confirmStatement(${c.caregiver_id})" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">확정</button>`}</td>
-                </tr>`).join('') : '<tr><td colspan="4" class="py-8 text-center text-gray-400">요양사가 없습니다</td></tr>';
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-4 px-6">
+                        <div class="flex items-center gap-3">
+                            <img src="assets/user_design/statement_avatar_female.png" alt="" class="w-11 h-11 rounded-full object-cover">
+                            <span class="font-bold text-gray-900">${escapeHtml(c.caregiver_name)} <span class="text-gray-500 font-normal">요양사</span></span>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6 font-bold text-gray-900">₩${c.billing_total.toLocaleString()}</td>
+                    <td class="py-4 px-6">${c.confirmed
+                        ? '<span class="s-pill bg-emerald-100 text-emerald-800">확정됨</span>'
+                        : '<span class="s-pill bg-gray-100 text-gray-700">미확정</span>'}</td>
+                    <td class="py-4 px-6">${c.confirmed || c.billing_total <= 0 ? '<span class="text-gray-400">-</span>' :
+                        `<button onclick="confirmStatement(${c.caregiver_id})" class="inline-flex items-center gap-2 px-5 py-2 bg-[#2E7D4F] text-white text-sm font-bold rounded-lg hover:bg-[#256a40]">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>확정</button>`}</td>
+                </tr>`).join('') : '<tr><td colspan="4" class="py-10 text-center text-gray-400">요양사가 없습니다</td></tr>';
         }
 
         async function confirmStatement(caregiverId) {
@@ -115,7 +191,5 @@
         function logout() { if (confirm('로그아웃하시겠습니까?')) { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; } }
         window.addEventListener('load', checkAuth);
     </script>
-    <script src="art.js"></script>
-    <script>ART.placeScene('statement');</script>
 </body>
 </html>
