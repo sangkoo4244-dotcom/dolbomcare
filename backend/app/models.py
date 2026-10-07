@@ -267,3 +267,14 @@ class SalaryStatement(Base):
     net = Column(Integer)
     confirmed_by = Column(Integer, ForeignKey("users.id"))
     confirmed_at = Column(DateTime, default=datetime.utcnow)
+
+class StaffCertificate(Base):
+    __tablename__ = "staff_certificates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    name = Column(String, nullable=False)  # 자격증 이름 (예: 요양보호사)
+    grade = Column(String, nullable=True)  # 등급 (예: 1급)
+    issued_on = Column(Date, nullable=True)
+    expires_on = Column(Date, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
