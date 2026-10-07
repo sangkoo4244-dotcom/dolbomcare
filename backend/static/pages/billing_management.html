@@ -16,8 +16,10 @@
             left: 0;
             top: 0;
             height: 100vh;
-            overflow-y: auto;
+            overflow: hidden;
             box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-header {
@@ -33,6 +35,8 @@
 
         .sidebar-nav {
             padding: 20px 0;
+            overflow-y: auto;
+            min-height: 0;
         }
 
         .nav-item {

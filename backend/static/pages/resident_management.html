@@ -23,9 +23,11 @@
             left: 0;
             top: 0;
             height: 100vh;
-            overflow-y: auto;
+            overflow: hidden;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             z-index: 1000;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-header {
@@ -41,6 +43,8 @@
 
         .sidebar-nav {
             padding: 24px 0;
+            overflow-y: auto;
+            min-height: 0;
         }
 
         .nav-item {
@@ -223,7 +227,7 @@
         .sidebar .side-item { color: #E5EDE8; font-size: 15px; padding: 12px 16px; border-radius: 12px; }
         .sidebar .side-item:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
         .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
-        .sidebar-landscape { display: block; width: 100%; height: auto; margin-top: auto; }
+        .sidebar-landscape { display: block; width: 100%; height: auto; margin-top: auto; flex-shrink: 0; }
         .topbar { padding: 22px 36px; background: #FFFFFF; box-shadow: none; border-bottom: 1px solid #ECE7DF; }
         .page-title { font-size: 30px; font-weight: 800; color: #1F2937; }
         .user-menu { gap: 22px; }
