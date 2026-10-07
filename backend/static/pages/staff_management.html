@@ -168,6 +168,37 @@
             margin-bottom: 16px;
         }
 
+        /* 직원 관리 시안 배치 */
+        .sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
+        .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
+        .side-icon img { display: block; }
+        .st-banner { height: 220px; border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
+        .st-banner img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block; }
+        .st-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .st-metric { display: flex; align-items: center; gap: 16px; padding: 22px 24px; border-radius: 16px; min-height: 120px; }
+        .st-metric img { width: 80px; height: 80px; object-fit: contain; flex: 0 0 auto; mix-blend-mode: multiply; }
+        .st-metric-label { font-size: 15px; font-weight: 700; color: #1F2937; }
+        .st-metric-value { font-size: 36px; font-weight: 800; color: #1F2937; line-height: 1.2; margin-top: 4px; }
+        .st-metric-sub { font-size: 13px; color: #6B7280; margin-top: 2px; }
+        .st-search { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; }
+        .st-search-box { display: flex; align-items: center; gap: 10px; flex: 1 1 320px; height: 46px; padding: 0 14px; border: 1px solid #D6D0C4; border-radius: 12px; color: #6B7280; }
+        .st-search-box input { flex: 1; border: none; outline: none; font-size: 14px; background: transparent; }
+        .st-field { display: flex; flex-direction: column; gap: 6px; }
+        .st-label { font-size: 12px; font-weight: 700; color: #374151; }
+        .st-field select { height: 42px; padding: 0 10px; border: 1px solid #D6D0C4; border-radius: 10px; font-size: 14px; background: white; min-width: 140px; }
+        .st-search-btn { height: 44px; padding: 0 26px; border: none; border-radius: 12px; background: #2E7D4F; color: white; font-size: 15px; font-weight: 700; cursor: pointer; }
+        .st-add-btn { height: 44px; padding: 0 22px; border: none; border-radius: 12px; background: #B5532F; color: white; font-size: 15px; font-weight: 700; cursor: pointer; }
+        .st-name { display: flex; align-items: center; gap: 10px; font-weight: 700; color: #1F2937; }
+        .st-initial { width: 34px; height: 34px; border-radius: 50%; background: #EAF6F0; color: #15803D; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; }
+        .st-work { display: inline-block; padding: 4px 12px; border-radius: 10px; background: #DCFCE7; color: #15803D; font-size: 12px; font-weight: 700; }
+        .st-pw-btn { padding: 6px 12px; background: #e5e7eb; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .st-features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+        .st-feature { display: flex; align-items: center; gap: 14px; padding: 18px 20px; background: white; border: 1px solid #e5e7eb; border-radius: 16px; }
+        .st-feature img { width: 64px; height: 64px; object-fit: contain; flex: 0 0 auto; }
+        .st-feature-title { font-size: 15px; font-weight: 700; color: #1F2937; }
+        .st-feature-desc { font-size: 13px; color: #6B7280; margin-top: 4px; line-height: 1.5; }
+        @media (max-width: 900px) { .st-metrics, .st-features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
             .main-layout { margin-left: 0; }
@@ -190,17 +221,36 @@
         <div class="topbar">
             <div class="topbar-title"><h1>직원 관리</h1></div>
             <div class="user-menu">
+                <img src="assets/user_design/28_top_notification_icon.png" alt="" style="width:28px;height:28px;object-fit:contain;">
                 <div class="user-info">
                     <div class="user-name" id="userName">사용자</div>
                     <div class="user-role" id="userRole">센터장</div>
                 </div>
-                <div class="avatar" id="userAvatar">U</div>
+                <img id="userAvatar" src="assets/user_design/29_top_profile_icon.png" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
                 <button class="logout-btn" onclick="logout()">로그아웃</button>
             </div>
         </div>
 
         <!-- Content -->
         <div class="content">
+            <div class="st-banner"><img src="assets/user_design/01_staff_banner.png" alt=""></div>
+
+            <div class="st-metrics">
+                <div class="st-metric" style="background:#EEF4FC;"><img src="assets/user_design/02_staff_stat_total_icon.png" alt=""><div><div class="st-metric-label">전체 직원</div><div class="st-metric-value" id="staffTotal">0</div><div class="st-metric-sub">현재 근무 중인 직원 수</div></div></div>
+                <div class="st-metric" style="background:#EAF6F0;"><img src="assets/user_design/03_staff_stat_caregiver_icon.png" alt=""><div><div class="st-metric-label">요양사</div><div class="st-metric-value" id="staffCaregiver">0</div><div class="st-metric-sub">방문 서비스를 제공</div></div></div>
+                <div class="st-metric" style="background:#FBEAEA;"><img src="assets/user_design/04_staff_stat_nurse_icon.png" alt=""><div><div class="st-metric-label">간호(조무)사</div><div class="st-metric-value" id="staffNurse" style="color:#B91C1C;">-</div><div class="st-metric-sub">의료·건강 관리</div></div></div>
+                <div class="st-metric" style="background:#F1EEFB;"><img src="assets/user_design/05_staff_stat_admin_icon.png" alt=""><div><div class="st-metric-label">관리직</div><div class="st-metric-value" id="staffAdmin" style="color:#6D28D9;">0</div><div class="st-metric-sub">센터 운영 관리</div></div></div>
+            </div>
+
+            <div class="st-search">
+                <label class="st-search-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                    <input id="staffSearch" type="search" placeholder="이름, 이메일로 검색하세요" oninput="filterStaff()"></label>
+                <div class="st-field"><span class="st-label">직종</span>
+                    <select id="roleFilter" onchange="filterStaff()"><option value="">전체</option><option value="caregiver">요양사</option><option value="center_manager">센터장</option></select></div>
+                <button class="st-search-btn" onclick="filterStaff()">검색</button>
+                <button class="st-add-btn" onclick="document.getElementById('newStaffName').focus()">+ 직원 등록</button>
+            </div>
+
             <div class="table-wrapper">
                 <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-bottom: 16px; padding: 16px; background: #f9fafb; border-radius: 8px;">
                     <label style="display: flex; flex-direction: column; font-size: 12px; gap: 4px;">이름
@@ -223,20 +273,32 @@
                 <table class="table">
                     <thead>
                         <tr>
+                            <th style="width:40px;"><input type="checkbox" aria-label="전체 선택"></th>
+                            <th>번호</th>
                             <th>이름</th>
-                            <th>역할</th>
-                            <th>상태</th>
+                            <th>직종</th>
+                            <th>연락처</th>
+                            <th>자격증</th>
+                            <th>입사일</th>
+                            <th>근무 상태</th>
                             <th>작업</th>
                         </tr>
                     </thead>
                     <tbody id="staffTableBody">
                         <tr>
-                            <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                            <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-secondary);">
                                 직원 정보를 불러오는 중입니다...
                             </td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div class="st-features">
+                <div class="st-feature"><img src="assets/user_design/06_icon_staff_info.png" alt=""><div><div class="st-feature-title">직원 정보 관리</div><div class="st-feature-desc">기본 정보, 자격증, 경력 등 직원 정보를 한곳에서 관리합니다.</div></div></div>
+                <div class="st-feature"><img src="assets/user_design/15_icon_calendar_action.png" alt=""><div><div class="st-feature-title">근무 일정 관리</div><div class="st-feature-desc">직원의 근무 일정과 방문 일정을 효율적으로 관리합니다.</div></div></div>
+                <div class="st-feature"><img src="assets/user_design/08_icon_certificate.png" alt=""><div><div class="st-feature-title">자격증 만료 알림</div><div class="st-feature-desc">자격증 만료일을 자동으로 알려 지속적인 관리를 지원합니다.</div></div></div>
+                <div class="st-feature"><img src="assets/user_design/09_icon_new_staff.png" alt=""><div><div class="st-feature-title">신규 직원 등록</div><div class="st-feature-desc">새로운 직원을 간편하게 등록하고 바로 업무에 배치할 수 있습니다.</div></div></div>
             </div>
         </div>
     </div>
@@ -269,14 +331,73 @@
             document.getElementById('userName').textContent = user.full_name || '사용자';
             document.getElementById('userAvatar').textContent = (user.full_name || '사용자').charAt(0).toUpperCase();
             renderSidebar();
+            applyNavIcons();
 
             return true;
+        }
+
+        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
+        const NAV_ICON_FILES = {
+            '대시보드': '20_nav_dashboard_icon.png',
+            '이용자관리': '21_nav_user_icon.png',
+            '음성 기록': '22_nav_voice_icon.png',
+            '방문계획 승인': '23_nav_service_plan_icon.png',
+            '청부관리': '24_nav_billing_icon.png',
+            '수익분석': '25_nav_statistics_icon.png',
+            '알림': '26_nav_notice_icon.png',
+            '설정': '27_nav_settings_icon.png',
+        };
+
+        function applyNavIcons() {
+            document.querySelectorAll('.sidebar-nav .side-item').forEach(item => {
+                const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
+                if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
+            });
+        }
+
+        let staffList = [];
+
+        function updateStaffStats(staff) {
+            document.getElementById('staffTotal').textContent = staff.length;
+            document.getElementById('staffCaregiver').textContent = staff.filter(s => s.role === 'caregiver').length;
+            document.getElementById('staffAdmin').textContent = staff.filter(s => s.role === 'center_manager').length;
+        }
+
+        function filterStaff() {
+            const q = document.getElementById('staffSearch').value.trim();
+            const role = document.getElementById('roleFilter').value;
+            renderStaff(staffList.filter(s =>
+                (!q || (s.full_name || '').includes(q) || (s.email || '').includes(q)) &&
+                (!role || s.role === role)));
+        }
+
+        function renderStaff(list) {
+            const tbody = document.getElementById('staffTableBody');
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-secondary);">등록된 직원이 없습니다</td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.map((s, i) => {
+                const name = s.full_name || s.email;
+                return `
+                    <tr>
+                        <td><input type="checkbox" aria-label="${name} 선택"></td>
+                        <td>${i + 1}</td>
+                        <td><div class="st-name"><span class="st-initial">${name.charAt(0)}</span>${name}</div></td>
+                        <td>${s.role === 'caregiver' ? '요양사' : '센터장'}</td>
+                        <td>${s.phone || '-'}</td>
+                        <td>-</td>
+                        <td>${s.hire_date || '-'}</td>
+                        <td><span class="st-work">${s.is_active === false ? '비활성' : '근무 중'}</span></td>
+                        <td><button class="st-pw-btn" onclick="resetPassword(${s.id}, '${name.replace(/'/g, '')}')">비밀번호 재설정</button></td>
+                    </tr>`;
+            }).join('');
         }
 
         async function loadStaffData() {
             try {
                 const tbody = document.getElementById('staffTableBody');
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--text-secondary);">데이터를 불러오는 중입니다...</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-secondary);">데이터를 불러오는 중입니다...</td></tr>';
 
                 const centerId = currentUser?.center_id || 1;
                 const response = await fetch(`${API_URL}/users/?center_id=${centerId}`);
@@ -287,28 +408,17 @@
                 const staff = data.users || [];
 
                 if (staff.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--text-secondary);">등록된 직원이 없습니다</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-secondary);">등록된 직원이 없습니다</td></tr>';
                     return;
                 }
 
-                let html = '';
-                staff.forEach(s => {
-                    html += `
-                        <tr>
-                            <td>${s.full_name || s.email}</td>
-                            <td>${s.role === 'caregiver' ? '요양사' : '센터장'}</td>
-                            <td>활성</td>
-                            <td>
-                                <button style="padding: 6px 12px; background: #e5e7eb; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="resetPassword(${s.id}, '${(s.full_name || s.email).replace(/'/g, '')}')">비밀번호 재설정</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-                tbody.innerHTML = html;
+                staffList = staff;
+                updateStaffStats(staff);
+                renderStaff(staff);
 
             } catch (error) {
                 console.error('❌ 직원 정보 로드 실패:', error);
-                document.getElementById('staffTableBody').innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--text-secondary);">직원 정보를 불러올 수 없습니다</td></tr>';
+                document.getElementById('staffTableBody').innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-secondary);">직원 정보를 불러올 수 없습니다</td></tr>';
             }
         }
 
@@ -374,6 +484,5 @@
         });
     </script>
     <script src="art.js"></script>
-    <script>ART.placeScene('staff');</script>
 </body>
 </html>
