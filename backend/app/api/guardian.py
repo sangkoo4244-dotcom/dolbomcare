@@ -76,6 +76,26 @@ def guardian_signup(body: SignupBody, db: Session = Depends(get_db)):
     return {"status": "success", "message": "가입을 신청했습니다. 센터장이 승인하면 이용할 수 있습니다"}
 
 
+class RedeemBody(BaseModel):
+    invite_code: str
+
+
+@router.post("/redeem-invite")
+def redeem_invite(body: RedeemBody, db: Session = Depends(get_db), guardian: User = Depends(require_guardian)):
+    """로그인한 보호자가 초대 코드를 입력한다. 센터장이 승인하기 전까지는 이용자가 보이지 않는다."""
+    invite = db.query(GuardianInvite).filter(GuardianInvite.code == body.invite_code.strip().upper()).first()
+    if not invite or invite.status != "issued" or invite.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="초대 코드가 올바르지 않거나 만료되었습니다")
+    if guardian.center_id is None:
+        guardian.center_id = invite.center_id
+    elif guardian.center_id != invite.center_id:
+        raise HTTPException(status_code=400, detail="다른 센터의 초대 코드입니다")
+    invite.status = "submitted"
+    invite.guardian_id = guardian.id
+    db.commit()
+    return {"status": "success", "message": "요청을 보냈습니다. 센터장이 승인하면 이용자 기록을 볼 수 있습니다"}
+
+
 @router.get("/requests")
 def list_requests(db: Session = Depends(get_db), manager: User = Depends(require_manager)):
     rows = db.query(GuardianInvite).filter(
