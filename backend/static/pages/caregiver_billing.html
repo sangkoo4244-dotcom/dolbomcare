@@ -6,79 +6,123 @@
     <title>돌봄케어 - 나의 청부</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        .cb-sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
+        .cb-icon { object-fit: contain; mix-blend-mode: multiply; }
+        .cb-filter { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 14px; color: #374151; background: white; }
+        .cb-filter.active { background: #2E7D4F; color: white; }
+    </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
-        <aside class="w-72 bg-gradient-to-b from-gray-800 to-gray-900 text-white fixed h-screen overflow-y-auto">
-            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
-                <div class="text-3xl"></div>
-                <div><div class="text-lg font-bold">돌봄케어</div><div class="text-xs text-gray-400">Care Management</div></div>
+        <aside class="cb-sidebar w-72 text-white fixed h-screen overflow-y-auto flex flex-col">
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div class="text-lg font-bold">돌봄케어</div>
+                <div class="text-xs text-white/60 ml-1">Care Management</div>
             </div>
             <nav id="navContent" class="p-4"></nav>
+            <img src="assets/user_design/sidebar_care_landscape.jpg" alt="" class="w-full h-auto mt-auto">
         </aside>
         <main class="ml-72 w-full flex flex-col">
-            <div id="sceneArt" class="px-8 pt-6"></div>
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-bold text-gray-900">나의 청부</h1>
+                <h1 class="text-3xl font-extrabold text-[#1E3A5F]">나의 청부</h1>
                 <div class="flex items-center gap-6">
-                    <div class="text-right"><div class="text-sm font-semibold text-gray-900" id="userName">사용자</div><div class="text-xs text-gray-500" id="userRole">역할</div></div>
-                    <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
+                    <img src="assets/user_design/28_top_notification_icon.png" alt="" class="w-7 h-7 object-contain">
+                    <div class="flex items-center gap-3">
+                        <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
+                        <span id="userName" class="text-base font-bold text-gray-900">사용자</span>
+                        <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                    <button onclick="logout()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:border-red-500 hover:text-red-600 transition">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+                        로그아웃
+                    </button>
                 </div>
             </div>
+
             <div class="flex-1 overflow-y-auto p-8">
-                <div id="message" class="hidden mb-6 p-4 rounded-lg animate-in fade-in slide-in-from-top-2"></div>
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8 mb-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center"><span class="sec-ico" data-ico="coins"></span>이번 달 요약</h2>
+                <div class="rounded-2xl overflow-hidden mb-5">
+                    <img src="assets/user_design/cb_banner.png" alt="" class="w-full h-auto block">
+                </div>
+
+                <div id="message" class="hidden mb-5 p-4 rounded-xl text-base"></div>
+
+                <!-- 이번 달 요약 -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-7 mb-5">
+                    <div class="flex items-center gap-3 mb-1">
+                        <img src="assets/user_design/cb_title_coins.png" alt="" class="w-9 h-9 cb-icon">
+                        <h2 class="text-2xl font-extrabold text-gray-900">이번 달 요약</h2>
+                    </div>
+                    <p class="text-base text-gray-500 mb-5 ml-12">이번 달 작성한 청구 내역의 상태를 한눈에 확인하세요.</p>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
-                            <div class="text-sm text-blue-600 font-bold mb-2">작성중</div>
-                            <div class="text-3xl font-bold text-blue-900" id="draftCount">0</div>
-                            <div class="text-xs text-blue-500 mt-2">₩<span id="draftAmount">0</span></div>
+                        <div class="bg-blue-50 p-5 rounded-2xl border border-blue-100 flex items-center gap-4">
+                            <img src="assets/user_design/cb_metric_draft.png" alt="" class="w-14 h-14 cb-icon">
+                            <div><div class="text-base font-bold text-blue-700">작성중</div><div class="text-3xl font-extrabold text-blue-900" id="draftCount">0건</div><div class="text-sm text-blue-500 mt-1">₩<span id="draftAmount">0</span></div></div>
                         </div>
-                        <div class="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-lg border border-amber-200">
-                            <div class="text-sm text-amber-600 font-bold mb-2">검토중</div>
-                            <div class="text-3xl font-bold text-amber-900" id="pendingCount">0</div>
-                            <div class="text-xs text-amber-500 mt-2">₩<span id="pendingAmount">0</span></div>
+                        <div class="bg-amber-50 p-5 rounded-2xl border border-amber-100 flex items-center gap-4">
+                            <img src="assets/user_design/cb_metric_pending.png" alt="" class="w-14 h-14 cb-icon">
+                            <div><div class="text-base font-bold text-amber-700">검토중</div><div class="text-3xl font-extrabold text-amber-900" id="pendingCount">0건</div><div class="text-sm text-amber-500 mt-1">₩<span id="pendingAmount">0</span></div></div>
                         </div>
-                        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-lg border border-emerald-200">
-                            <div class="text-sm text-emerald-600 font-bold mb-2">승인완료</div>
-                            <div class="text-3xl font-bold text-emerald-900" id="approvedCount">0</div>
-                            <div class="text-xs text-emerald-500 mt-2">₩<span id="approvedAmount">0</span></div>
+                        <div class="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 flex items-center gap-4">
+                            <img src="assets/user_design/cb_metric_approved.png" alt="" class="w-14 h-14 cb-icon">
+                            <div><div class="text-base font-bold text-emerald-700">승인완료</div><div class="text-3xl font-extrabold text-emerald-900" id="approvedCount">0건</div><div class="text-sm text-emerald-500 mt-1">₩<span id="approvedAmount">0</span></div></div>
                         </div>
-                        <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg border border-red-200">
-                            <div class="text-sm text-red-600 font-bold mb-2">보완 요청</div>
-                            <div class="text-3xl font-bold text-red-900" id="rejectedCount">0</div>
-                            <div class="text-xs text-red-500 mt-2">₩<span id="rejectedAmount">0</span></div>
+                        <div class="bg-red-50 p-5 rounded-2xl border border-red-100 flex items-center gap-4">
+                            <img src="assets/user_design/cb_metric_rejected.png" alt="" class="w-14 h-14 cb-icon">
+                            <div><div class="text-base font-bold text-red-700">보완 요청</div><div class="text-3xl font-extrabold text-red-900" id="rejectedCount">0건</div><div class="text-sm text-red-500 mt-1">₩<span id="rejectedAmount">0</span></div></div>
                         </div>
                     </div>
                 </div>
-                <div class="flex gap-3 mb-8 bg-white p-3 rounded-lg border border-gray-200">
-                    <button class="filter-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm bg-emerald-500 text-white" data-filter="all" onclick="filterBilling(event)"> 전체</button>
-                    <button class="filter-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm hover:bg-gray-100" data-filter="draft" onclick="filterBilling(event)"> 작성중</button>
-                    <button class="filter-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm hover:bg-gray-100" data-filter="pending" onclick="filterBilling(event)"> 검토중</button>
-                    <button class="filter-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm hover:bg-gray-100" data-filter="approved" onclick="filterBilling(event)"> 승인</button>
-                    <button class="filter-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm hover:bg-gray-100" data-filter="rejected" onclick="filterBilling(event)"> 보완 요청</button>
+
+                <!-- 필터 -->
+                <div class="flex gap-3 mb-5 flex-wrap">
+                    <button class="cb-filter active flex-1 justify-center" data-filter="all" onclick="filterBilling(event)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>전체</button>
+                    <button class="cb-filter flex-1 justify-center" data-filter="draft" onclick="filterBilling(event)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>작성중</button>
+                    <button class="cb-filter flex-1 justify-center" data-filter="pending" onclick="filterBilling(event)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>검토중</button>
+                    <button class="cb-filter flex-1 justify-center" data-filter="approved" onclick="filterBilling(event)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 5-5"/></svg>승인완료</button>
+                    <button class="cb-filter flex-1 justify-center" data-filter="rejected" onclick="filterBilling(event)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 20h20z"/><path d="M12 9v4M12 17h.01"/></svg>보완 요청</button>
                 </div>
+
                 <div class="flex justify-end mb-4">
-                    <button onclick="submitAllDrafts()" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition"> 작성중 전체 제출</button>
+                    <button onclick="submitAllDrafts()" class="inline-flex items-center gap-2 px-5 py-2 bg-[#2E7D4F] text-white font-bold rounded-xl hover:bg-[#256a40]">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>작성중 전체 제출</button>
                 </div>
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center"><span class="sec-ico" data-ico="receipt"></span>청부 목록</h2>
+
+                <!-- 청구 내역 -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-7">
+                    <div class="flex items-center justify-between flex-wrap gap-4 mb-5">
+                        <div class="flex items-center gap-3">
+                            <img src="assets/user_design/cb_title_doc.png" alt="" class="w-9 h-9 cb-icon">
+                            <div>
+                                <h2 class="text-2xl font-extrabold text-gray-900">청구 내역</h2>
+                                <p class="text-sm text-gray-500">작성한 청구 내역을 확인하고 상태를 관리하세요.</p>
+                            </div>
+                        </div>
+                        <label class="flex items-center gap-2 border border-gray-300 rounded-xl px-4 py-3">
+                            <img src="assets/user_design/cb_month_calendar.png" alt="" class="w-6 h-6 cb-icon">
+                            <input id="monthSelect" type="month" onchange="renderBillings()" class="text-base font-bold text-gray-800 bg-transparent">
+                        </label>
+                    </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full">
+                        <table class="w-full text-base">
                             <thead>
-                                <tr class="border-b-2 border-gray-200">
-                                    <th class="text-left py-3 px-4 font-bold text-gray-700">이용자</th>
-                                    <th class="text-left py-3 px-4 font-bold text-gray-700">등급</th>
-                                    <th class="text-left py-3 px-4 font-bold text-gray-700">서비스</th>
-                                    <th class="text-left py-3 px-4 font-bold text-gray-700">청부액</th>
-                                    <th class="text-left py-3 px-4 font-bold text-gray-700">날짜</th>
-                                    <th class="text-left py-3 px-4 font-bold text-gray-700">상태</th>
-                                    <th class="text-left py-3 px-4 font-bold text-gray-700">작업</th>
+                                <tr class="border-b border-gray-200 bg-gray-50">
+                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">청구번호</th>
+                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">이용자</th>
+                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">서비스 기간</th>
+                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">총 금액</th>
+                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">상태</th>
+                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">작성일</th>
+                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">관리</th>
                                 </tr>
                             </thead>
                             <tbody id="billingTableBody">
-                                <tr><td colspan="7" class="py-8 text-center text-gray-400"> 청부가 없습니다</td></tr>
+                                <tr><td colspan="7" class="py-10 text-center text-gray-400">청구가 없습니다</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -86,9 +130,19 @@
             </div>
         </main>
     </div>
+
+    <div id="detailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;">
+        <div class="bg-white rounded-2xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-extrabold text-gray-900">청구 상세</h2>
+                <button onclick="closeDetail()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div id="detailBody"></div>
+        </div>
+    </div>
+
     <script src="menu.js"></script>
     <script src="art.js"></script>
-    <script>document.getElementById('sceneArt').innerHTML = ART.billingScene;</script>
     <script>
         const API_URL = '/api/v1';
         let currentUser = null;
@@ -100,12 +154,32 @@
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (!token || !user.id) { window.location.href = './login.html'; return; }
             currentUser = user;
-            document.getElementById('userName').textContent = user.full_name || '사용자';
-            document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
-            loadBillings();
+            document.getElementById('userName').textContent = `${user.full_name || '사용자'}님`;
             renderSidebar();
+            applyNavIcons();
+            const now = new Date();
+            document.getElementById('monthSelect').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            loadBillings();
         }
 
+        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
+        const NAV_ICON_FILES = {
+            '대시보드': '20_nav_dashboard_icon.png',
+            '이용자관리': '21_nav_user_icon.png',
+            '음성 기록': '22_nav_voice_icon.png',
+            '방문계획 승인': '23_nav_service_plan_icon.png',
+            '청부관리': '24_nav_billing_icon.png',
+            '수익분석': '25_nav_statistics_icon.png',
+            '알림': '26_nav_notice_icon.png',
+            '설정': '27_nav_settings_icon.png',
+        };
+
+        function applyNavIcons() {
+            document.querySelectorAll('.sidebar-nav .side-item, #navContent .side-item').forEach(item => {
+                const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
+                if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
+            });
+        }
 
         async function loadBillings() {
             try {
@@ -119,39 +193,66 @@
             }
         }
 
+        // 선택한 달에 해당하는 청구만 추린다
+        function billingsOfMonth(ym) {
+            return billings.filter(b => (b.recorded_date || '').slice(0, 7) === ym);
+        }
+
         function updateSummary() {
-            const thisMonth = new Date().getMonth();
-            const thisMonthBillings = billings.filter(b => new Date(b.recorded_date).getMonth() === thisMonth);
+            const ym = document.getElementById('monthSelect').value;
+            const monthBillings = billingsOfMonth(ym);
             const sumOf = list => list.reduce((sum, b) => sum + (b.amount || 0), 0);
             ['draft', 'pending', 'approved', 'rejected'].forEach(key => {
-                const list = thisMonthBillings.filter(b => b.approval_status === key);
-                document.getElementById(`${key}Count`).textContent = list.length;
+                const list = monthBillings.filter(b => b.approval_status === key);
+                document.getElementById(`${key}Count`).textContent = `${list.length}건`;
                 document.getElementById(`${key}Amount`).textContent = sumOf(list).toLocaleString();
             });
         }
 
         const STATUS_BADGE = {
-            draft: ['bg-blue-100 text-blue-800', '✏️ 작성중'],
-            pending: ['bg-amber-100 text-amber-800', '⏳ 검토중'],
-            approved: ['bg-emerald-100 text-emerald-800', '✅ 승인'],
-            rejected: ['bg-red-100 text-red-800', '❗ 보완 요청']
+            draft: ['bg-blue-100 text-blue-800', '작성중'],
+            pending: ['bg-amber-100 text-amber-800', '검토중'],
+            approved: ['bg-emerald-100 text-emerald-800', '승인완료'],
+            rejected: ['bg-red-100 text-red-800', '보완 요청']
         };
 
+        function claimNumber(b) {
+            const d = new Date(b.recorded_date);
+            return `CLM-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}-${String(b.id).padStart(3, '0')}`;
+        }
+
+        // 서비스 기간: 청구가 속한 달의 1일부터 말일까지
+        function periodLabel(dateStr) {
+            const d = new Date(dateStr);
+            const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            return `${d.getFullYear()}.${m}.01 ~ ${d.getFullYear()}.${m}.${String(last).padStart(2, '0')}`;
+        }
+
+        function avatarOf(b) {
+            return b.resident_gender === '남' ? 'resident_avatar_male.png' : 'resident_avatar_female.png';
+        }
+
         function renderBillings() {
-            const thisMonth = new Date().getMonth();
-            let filtered = billings.filter(b => new Date(b.recorded_date).getMonth() === thisMonth);
+            const ym = document.getElementById('monthSelect').value;
+            updateSummary();
+            let filtered = billingsOfMonth(ym);
             if (currentFilter !== 'all') filtered = filtered.filter(b => b.approval_status === currentFilter);
+            filtered = filtered.slice().sort((a, b) => new Date(b.recorded_date) - new Date(a.recorded_date));
             const tbody = document.getElementById('billingTableBody');
-            if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-400">📝 청부가 없습니다</td></tr>'; return; }
+            if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="py-10 text-center text-gray-400">청구가 없습니다</td></tr>'; return; }
             tbody.innerHTML = filtered.map(b => {
                 const [cls, label] = STATUS_BADGE[b.approval_status] || ['bg-gray-100 text-gray-700', b.approval_status];
-                const canSubmit = b.approval_status === 'draft' || b.approval_status === 'rejected';
-                const reason = b.approval_status === 'rejected' && b.rejection_reason ? `<div class="text-xs text-red-600 mt-1">사유: ${b.rejection_reason}</div>` : '';
-                const editable = b.approval_status === 'draft' || b.approval_status === 'rejected';
-                const editBtn = editable ? `<button onclick="openEdit(${b.id})" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50 mr-2">수정</button>` : '';
-                const submitBtn = canSubmit ? `<button onclick="submitBilling(${b.id})" class="px-3 py-1 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">제출</button>` : '';
-                const action = editBtn + submitBtn || '-';
-                return `<tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-4 px-4 font-semibold">${b.resident_name || '-'}</td><td class="py-4 px-4">${b.care_grade || '-'}등급</td><td class="py-4 px-4">${getServiceName(b.service_type)}</td><td class="py-4 px-4 font-bold text-emerald-600">₩${(b.amount || 0).toLocaleString()}</td><td class="py-4 px-4 text-gray-500">${new Date(b.recorded_date).toLocaleDateString('ko-KR')}</td><td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${cls}">${label}</span>${reason}</td><td class="py-4 px-4">${action}</td></tr>`;
+                return `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-4 px-4 font-semibold text-gray-700">${claimNumber(b)}</td>
+                        <td class="py-4 px-4"><div class="flex items-center gap-2"><img src="assets/user_design/${avatarOf(b)}" alt="" class="w-9 h-9 rounded-full object-cover"><span class="font-bold text-gray-900">${b.resident_name || '-'}</span></div></td>
+                        <td class="py-4 px-4 text-gray-600">${periodLabel(b.recorded_date)}</td>
+                        <td class="py-4 px-4 font-extrabold text-gray-900">₩${(b.amount || 0).toLocaleString()}</td>
+                        <td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${cls}">${label}</span></td>
+                        <td class="py-4 px-4 text-gray-500">${new Date(b.recorded_date).toLocaleDateString('ko-KR')}</td>
+                        <td class="py-4 px-4"><button onclick="openDetail(${b.id})" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-50">상세보기</button></td>
+                    </tr>`;
             }).join('');
         }
 
@@ -165,70 +266,77 @@
         let editingBillingId = null;
         let editingDailyId = null;
 
-        function ensureEditModal() {
-            if (document.getElementById('editModal')) return;
-            const wrap = document.createElement('div');
-            wrap.id = 'editModal';
-            wrap.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;';
-            wrap.innerHTML = `
-                <div class="bg-white rounded-xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                    <h2 class="text-xl font-bold mb-2">청부 수정</h2>
-                    <div id="editReason" class="text-sm text-red-600 mb-4"></div>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-bold mb-1">서비스 유형</label>
-                            <select id="editService" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${Object.entries(SERVICE_NAMES_EDIT).map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold mb-1">제공 시간</label>
-                            <select id="editDuration" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${[30, 60, 90, 120, 180, 240].map(m => `<option value="${m}">${m}분</option>`).join('')}</select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold mb-1">제공 항목</label>
-                            <div class="grid grid-cols-2 gap-2 text-sm">${CARE_ITEMS_EDIT.map(([v, l]) => `<label class="flex items-center gap-2"><input type="checkbox" name="editItem" value="${v}"> ${l}</label>`).join('')}</div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold mb-1">컨디션</label>
-                            <select id="editCondition" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                                <option value="">선택하세요</option><option value="good">좋음</option><option value="normal">보통</option><option value="poor">나쁨</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold mb-1">기록 내용</label>
-                            <textarea id="editNotes" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
-                        </div>
-                    </div>
-                    <div class="flex gap-3 mt-6">
-                        <button onclick="saveEdit()" class="flex-1 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700">저장</button>
-                        <button onclick="closeEdit()" class="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200">취소</button>
-                    </div>
-                </div>`;
-            document.body.appendChild(wrap);
-        }
-
-        async function openEdit(billingId) {
+        // 상세보기: 보기 전용 정보 + (작성중·보완 요청일 때만) 수정 가능한 항목
+        async function openDetail(billingId) {
             const billing = billings.find(b => b.id === billingId);
-            if (!billing || !billing.daily_record_id) { showMessage('수정할 기록 정보를 찾을 수 없습니다', 'error'); return; }
-            const d = await (await fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`)).json();
-            const rec = (d.records || []).find(r => r.id === billing.daily_record_id);
-            if (!rec) { showMessage('기록을 찾을 수 없습니다', 'error'); return; }
-
-            ensureEditModal();
+            if (!billing) return;
             editingBillingId = billingId;
             editingDailyId = billing.daily_record_id;
-            document.getElementById('editReason').textContent = billing.approval_status === 'rejected' && billing.rejection_reason
-                ? `센터장 보완 요청 사유: ${billing.rejection_reason}` : '';
-            document.getElementById('editService').value = rec.service_type || 'basic_care';
-            document.getElementById('editDuration').value = rec.duration_minutes || 60;
+            const [cls, label] = STATUS_BADGE[billing.approval_status] || ['bg-gray-100 text-gray-700', billing.approval_status];
+            const editable = (billing.approval_status === 'draft' || billing.approval_status === 'rejected') && billing.daily_record_id;
+
+            let rec = null;
+            if (editable) {
+                const d = await (await fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`)).json();
+                rec = (d.records || []).find(r => r.id === billing.daily_record_id);
+            }
+
+            const summary = `
+                <div class="space-y-2 text-base mb-5">
+                    <div class="flex justify-between"><span class="text-gray-500">청구번호</span><span class="font-bold text-gray-900">${claimNumber(billing)}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">이용자</span><span class="font-bold text-gray-900">${billing.resident_name || '-'}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">서비스 기간</span><span class="font-bold text-gray-900">${periodLabel(billing.recorded_date)}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">총 금액</span><span class="font-bold text-gray-900">₩${(billing.amount || 0).toLocaleString()}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">상태</span><span class="px-3 py-1 rounded-full text-xs font-bold ${cls}">${label}</span></div>
+                    ${billing.approval_status === 'rejected' && billing.rejection_reason ? `<div class="text-red-600 text-sm bg-red-50 rounded-lg p-3">보완 요청 사유: ${billing.rejection_reason}</div>` : ''}
+                </div>`;
+
+            if (!editable || !rec) {
+                document.getElementById('detailBody').innerHTML = summary + `
+                    <div class="flex justify-end"><button onclick="closeDetail()" class="px-5 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200">닫기</button></div>`;
+                document.getElementById('detailModal').style.display = 'flex';
+                return;
+            }
+
             const items = (rec.care_items || '').split(',');
-            document.querySelectorAll('input[name="editItem"]').forEach(cb => { cb.checked = items.includes(cb.value); });
-            document.getElementById('editCondition').value = rec.condition || '';
-            document.getElementById('editNotes').value = rec.notes || '';
-            document.getElementById('editModal').style.display = 'flex';
+            document.getElementById('detailBody').innerHTML = summary + `
+                <div class="space-y-4 border-t border-gray-100 pt-4">
+                    <div>
+                        <label class="block text-sm font-bold mb-1">서비스 유형</label>
+                        <select id="editService" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${Object.entries(SERVICE_NAMES_EDIT).map(([v, l]) => `<option value="${v}" ${rec.service_type === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">제공 시간</label>
+                        <select id="editDuration" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${[30, 60, 90, 120, 180, 240].map(m => `<option value="${m}" ${rec.duration_minutes === m ? 'selected' : ''}>${m}분</option>`).join('')}</select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">제공 항목</label>
+                        <div class="grid grid-cols-2 gap-2 text-sm">${CARE_ITEMS_EDIT.map(([v, l]) => `<label class="flex items-center gap-2"><input type="checkbox" name="editItem" value="${v}" ${items.includes(v) ? 'checked' : ''}> ${l}</label>`).join('')}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">컨디션</label>
+                        <select id="editCondition" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="" ${!rec.condition ? 'selected' : ''}>선택하세요</option>
+                            <option value="good" ${rec.condition === 'good' ? 'selected' : ''}>좋음</option>
+                            <option value="normal" ${rec.condition === 'normal' ? 'selected' : ''}>보통</option>
+                            <option value="poor" ${rec.condition === 'poor' ? 'selected' : ''}>나쁨</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">기록 내용</label>
+                        <textarea id="editNotes" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${rec.notes || ''}</textarea>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="saveEdit()" class="flex-1 py-2 bg-[#2E7D4F] text-white font-bold rounded-xl hover:bg-[#256a40]">저장</button>
+                    <button onclick="submitBilling(${billing.id})" class="flex-1 py-2 bg-white border border-[#2E7D4F] text-[#2E7D4F] font-bold rounded-xl hover:bg-emerald-50">제출</button>
+                    <button onclick="closeDetail()" class="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200">닫기</button>
+                </div>`;
+            document.getElementById('detailModal').style.display = 'flex';
         }
 
-        function closeEdit() {
-            document.getElementById('editModal').style.display = 'none';
+        function closeDetail() {
+            document.getElementById('detailModal').style.display = 'none';
         }
 
         async function saveEdit() {
@@ -250,7 +358,7 @@
                 showMessage(`수정 실패: ${e.detail || '오류'}`, 'error');
                 return;
             }
-            closeEdit();
+            closeDetail();
             showMessage('수정했습니다. 확인 후 다시 제출해 주세요.', 'success');
             await loadBillings();
         }
@@ -266,37 +374,33 @@
 
         async function submitBilling(id) {
             const ok = await postSubmit(id);
+            closeDetail();
             showMessage(ok ? '청부를 제출했습니다. 센터장 검토를 기다려 주세요.' : '제출에 실패했습니다', ok ? 'success' : 'error');
             await loadBillings();
         }
 
         async function submitAllDrafts() {
-            const thisMonth = new Date().getMonth();
-            const drafts = billings.filter(b => b.approval_status === 'draft' && new Date(b.recorded_date).getMonth() === thisMonth);
-            if (drafts.length === 0) { showMessage('제출할 작성중 청부가 없습니다', 'error'); return; }
-            if (!confirm(`작성중 청부 ${drafts.length}건을 센터장에게 제출할까요?`)) return;
+            const ym = document.getElementById('monthSelect').value;
+            const drafts = billingsOfMonth(ym).filter(b => b.approval_status === 'draft');
+            if (drafts.length === 0) { showMessage('제출할 작성중 청구가 없습니다', 'error'); return; }
+            if (!confirm(`작성중 청구 ${drafts.length}건을 센터장에게 제출할까요?`)) return;
             let ok = 0;
             for (const b of drafts) { if (await postSubmit(b.id)) ok++; }
             showMessage(`${ok}건을 제출했습니다`, 'success');
             await loadBillings();
         }
+
         function filterBilling(e) {
-            document.querySelectorAll('.filter-btn').forEach(btn => { btn.classList.remove('bg-emerald-500', 'text-white'); btn.classList.add('hover:bg-gray-100'); });
-            e.currentTarget.classList.add('bg-emerald-500', 'text-white');
-            e.currentTarget.classList.remove('hover:bg-gray-100');
+            document.querySelectorAll('.cb-filter').forEach(btn => btn.classList.remove('active'));
+            e.currentTarget.classList.add('active');
             currentFilter = e.currentTarget.dataset.filter;
             renderBillings();
-        }
-
-        function getServiceName(type) {
-            const names = {'basic_care': '기본 돌봄', 'meal_service': '식사 서빙', 'medical_care': '의료 관리', 'emergency': '응급'};
-            return names[type] || type;
         }
 
         function showMessage(text, type) {
             const msg = document.getElementById('message');
             msg.textContent = text;
-            msg.className = `${type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'} mb-6 p-4 rounded-lg`;
+            msg.className = `mb-5 p-4 rounded-xl text-base ${type === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-800'}`;
             msg.classList.remove('hidden');
             setTimeout(() => msg.classList.add('hidden'), 4000);
         }
