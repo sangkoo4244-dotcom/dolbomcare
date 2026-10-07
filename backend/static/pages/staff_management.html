@@ -173,7 +173,9 @@
         .sidebar-landscape { display: block; width: 100%; height: auto; margin-top: auto; }
         .st-act { padding: 8px 14px; border: 1px solid #D6D0C4; border-radius: 10px; background: white; color: #374151; font-size: 13px; font-weight: 600; cursor: pointer; margin-right: 6px; }
         .st-act:hover { border-color: #B5532F; color: #B5532F; }
-        .st-cal { width: 36px; height: 36px; border: 1px solid #F3C9A9; border-radius: 10px; background: #FFF7F0; cursor: not-allowed; vertical-align: middle; }
+        .st-cal { width: 36px; height: 36px; border: 1px solid #F3C9A9; border-radius: 10px; background: #FFF7F0; cursor: pointer; vertical-align: middle; }
+        .st-sch-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 15px; }
+        .st-sch-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px; }
         .st-cal img { width: 22px; height: 22px; object-fit: contain; display: block; margin: 0 auto; }
         .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
         .side-icon img { display: block; }
@@ -490,6 +492,72 @@
             document.getElementById('staffModal').hidden = true;
         }
 
+        // 근무 일정: 센터장이 직원의 월별 방문 일정을 읽기만 한다 (수정·등록은 하지 않는다)
+        const SCHED_LABELS = {
+            meal_assist: '식사 보조', toilet_assist: '배설 보조', bath: '목욕·세면', dressing: '옷 갈아입기', mobility: '이동 보조',
+            medicine: '투약 확인', vitals: '체온·혈압 측정', symptom: '이상 증상 관찰',
+            emotional: '말벗·정서 지원', cognitive: '인지활동',
+            cleaning: '청소·정돈', laundry: '세탁', shopping: '장보기·취사'
+        };
+        let scheduleStaffId = null;
+        let scheduleYm = null;
+
+        function ymOf(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        }
+
+        function openScheduleModal(id) {
+            scheduleStaffId = id;
+            scheduleYm = ymOf(new Date());
+            loadSchedule();
+        }
+
+        function shiftSchedule(delta) {
+            const [y, m] = scheduleYm.split('-').map(Number);
+            scheduleYm = ymOf(new Date(y, m - 1 + delta, 1));
+            loadSchedule();
+        }
+
+        async function loadSchedule() {
+            const s = staffList.find(x => x.id === scheduleStaffId);
+            if (!s) return;
+            document.getElementById('staffModalTitle').textContent = `${s.full_name || s.email} · 근무 일정`;
+            document.getElementById('staffModalBody').innerHTML = `
+                <div class="st-sch-nav">
+                    <button class="st-act" onclick="shiftSchedule(-1)">이전 달</button>
+                    <strong>${scheduleYm}</strong>
+                    <button class="st-act" onclick="shiftSchedule(1)">다음 달</button>
+                </div>
+                <div id="stSchList" class="st-muted">불러오는 중입니다...</div>
+                <div class="st-form-actions"><button class="st-act" onclick="closeStaffModal()">닫기</button></div>`;
+            document.getElementById('staffModal').hidden = false;
+
+            try {
+                const r = await fetch(`${API_URL}/schedule/caregiver-view?caregiver_id=${scheduleStaffId}&year_month=${scheduleYm}&user_id=${currentUser.id}&user_role=center_manager`);
+                if (!r.ok) {
+                    const e = await r.json().catch(() => ({}));
+                    throw new Error(e.detail || '조회 실패');
+                }
+                const data = await r.json();
+                const items = (data.items || []).slice().sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+                const list = document.getElementById('stSchList');
+                if (items.length === 0) {
+                    list.textContent = '이 달에 등록된 일정이 없습니다';
+                    return;
+                }
+                list.innerHTML = items.map(i => `
+                    <div class="st-sch-row">
+                        <div>
+                            <strong>${escapeAttr(i.date)} ${escapeAttr(i.time)}</strong> · ${escapeAttr(i.resident_name || '이용자')}
+                            <div class="st-muted">${i.duration_minutes || '-'}분 · ${(i.planned_items || []).map(c => SCHED_LABELS[c] || c).join(', ') || '계획 항목 없음'}</div>
+                        </div>
+                        <span class="st-work">${escapeAttr(i.state)}</span>
+                    </div>`).join('');
+            } catch (e) {
+                document.getElementById('stSchList').textContent = '일정을 불러오지 못했습니다: ' + e.message;
+            }
+        }
+
         // 자격증: 센터 전체 목록을 한 번 받아 직원별로 나눠 쓴다
         let certMap = {};
 
@@ -597,7 +665,7 @@
                         <td>${s.hire_date || '-'}</td>
                         <td><span class="st-work st-${statusOf(s)}">${STATUS_LABEL[statusOf(s)] || statusOf(s)}</span></td>
                         <td>
-                            <button class="st-act" onclick="openEditModal(${s.id})">수정</button><button class="st-act" onclick="openDetailModal(${s.id})">상세보기</button><button class="st-cal" disabled title="근무 일정은 아직 준비 중입니다"><img src="assets/user_design/15_icon_calendar_action.png" alt=""></button>
+                            <button class="st-act" onclick="openEditModal(${s.id})">수정</button><button class="st-act" onclick="openDetailModal(${s.id})">상세보기</button><button class="st-cal" onclick="openScheduleModal(${s.id})" title="근무 일정 보기"><img src="assets/user_design/15_icon_calendar_action.png" alt=""></button>
                             <button class="st-pw-btn" onclick="resetPassword(${s.id}, '${name.replace(/'/g, '')}')">비밀번호 재설정</button>
                         </td>
                     </tr>`;
