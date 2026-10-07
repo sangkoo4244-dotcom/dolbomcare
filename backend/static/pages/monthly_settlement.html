@@ -6,379 +6,205 @@
     <title>월별 정산 - 돌봄케어</title>
     <link rel="stylesheet" href="design-system.css">
     <style>
-        body { margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-family); background: #f5f7fa; color: var(--text-primary); }
 
-        .sidebar {
-            width: 288px;
-            background: linear-gradient(180deg, #1E2B26 0%, #16201C 100%);
-            color: white;
-            position: fixed;
-            left: 0;
-            top: 0;
-            height: 100vh;
-            overflow-y: auto;
-            box-shadow: var(--shadow-lg);
-        }
+        /* 사이드바: 직원 관리 시안과 동일 */
+        .sidebar { width: 288px; background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow-y: auto; box-shadow: var(--shadow-lg); z-index: 1000; display: flex; flex-direction: column; }
+        .sidebar-landscape { display: block; width: 100%; height: auto; margin-top: auto; }
+        .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
+        .side-icon img { display: block; }
 
-        .sidebar-header {
-            padding: 24px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid #e5e7eb; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+        .topbar-title h1 { margin: 0; font-size: 24px; font-weight: 700; color: var(--text-primary); }
+        .topbar-sub { font-size: 13px; color: #6B7280; margin-top: 4px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; color: var(--text-primary); font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #6b7280; transition: all 0.2s; }
+        .logout-btn:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
 
-        .sidebar-logo { font-size: 24px; }
-        .sidebar-title { font-size: 16px; font-weight: 700; }
+        .content { flex: 1; padding: 32px; }
 
-        .sidebar-nav {
-            padding: 20px 0;
-        }
+        .ms-banner { height: 290px; border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
+        .ms-banner img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block; }
 
-        .nav-item {
-            padding: 12px 20px;
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            border-left: 3px solid transparent;
-            font-size: 14px;
-            font-weight: 500;
-        }
+        .ms-controls { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; }
+        .ms-field { display: flex; flex-direction: column; gap: 6px; }
+        .ms-label { font-size: 12px; font-weight: 700; color: #374151; }
+        .ms-field input, .ms-field select { height: 42px; padding: 0 10px; border: 1px solid #D6D0C4; border-radius: 10px; font-size: 14px; background: white; min-width: 130px; }
+        .ms-month { display: flex; gap: 6px; }
+        .ms-month input { width: 100px; }
+        .ms-spacer { flex: 1; }
+        .ms-btn { height: 44px; padding: 0 24px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; color: white; }
+        .ms-btn-search { background: #2E7D4F; }
+        .ms-btn-excel { height: 44px; padding: 0 18px; border: 1px solid #D6D0C4; border-radius: 12px; background: white; color: #374151; font-size: 14px; font-weight: 700; cursor: pointer; }
+        .ms-btn-excel:hover { border-color: #B5532F; color: #B5532F; }
 
-        .nav-item:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.05);
-        }
+        .ms-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .ms-metric { display: flex; align-items: center; gap: 16px; padding: 22px 24px; border-radius: 16px; min-height: 120px; }
+        .ms-metric img { width: 72px; height: 72px; object-fit: contain; flex: 0 0 auto; mix-blend-mode: multiply; }
+        .ms-metric-label { font-size: 15px; font-weight: 700; color: #1F2937; }
+        .ms-metric-value { font-size: 30px; font-weight: 800; color: #1F2937; line-height: 1.2; margin-top: 4px; }
+        .ms-metric-sub { font-size: 13px; color: #6B7280; margin-top: 2px; }
 
-        .nav-item.active {
-            color: #1E2B26;
-            border-left-color: #1E2B26;
-            background: rgba(59, 130, 246, 0.1);
-        }
+        .ms-panel { background: white; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
+        .ms-panel-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
+        .ms-tabs { display: flex; }
+        .ms-tab { padding: 12px 18px; border: none; border-bottom: 3px solid transparent; background: none; font-size: 14px; font-weight: 600; color: #6B7280; cursor: pointer; }
+        .ms-tab.active { color: #B5532F; border-bottom-color: #B5532F; }
+        .ms-search-box { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid #D6D0C4; border-radius: 10px; color: #6B7280; min-width: 300px; }
+        .ms-search-box input { flex: 1; border: none; outline: none; font-size: 14px; background: transparent; }
 
-        .main-layout {
-            margin-left: 288px;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { padding: 14px 16px; text-align: left; background: #f9fafb; border-bottom: 2px solid #e5e7eb; font-weight: 700; color: var(--text-secondary); font-size: 13px; }
+        td { padding: 14px 16px; border-bottom: 1px solid #f3f4f6; }
+        tr:hover { background: #f9fafb; }
+        .ms-num { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .ms-pill { display: inline-block; padding: 4px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+        .ms-pill.done { background: #DCFCE7; color: #15803D; }
+        .ms-pill.pending { background: #FEF3C7; color: #B45309; }
+        .ms-pill.suspended { background: #FBEAEA; color: #B91C1C; }
+        .ms-muted { color: #9CA3AF; }
 
-        .topbar {
-            background: white;
-            border-bottom: 1px solid var(--border);
-            padding: 16px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--shadow-sm);
-        }
+        .ms-section-title { font-size: 15px; font-weight: 800; color: #1F2937; padding: 16px 16px 0; }
 
-        .topbar-title h1 {
-            margin: 0;
-            font-size: 24px;
-        }
+        .ms-features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+        .ms-feature { display: flex; align-items: center; gap: 14px; padding: 18px 20px; background: white; border: 1px solid #e5e7eb; border-radius: 16px; }
+        .ms-feature img { width: 64px; height: 64px; object-fit: contain; flex: 0 0 auto; }
+        .ms-feature-title { font-size: 15px; font-weight: 700; color: #1F2937; }
+        .ms-feature-desc { font-size: 13px; color: #6B7280; margin-top: 4px; line-height: 1.5; }
 
-        .content {
-            flex: 1;
-            padding: 30px;
-            background: var(--bg-light);
-        }
+        .error { background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
 
-        .controls {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            gap: 15px;
-            align-items: flex-end;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .control-group label {
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .control-group input,
-        .control-group select {
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            background: #B5532F;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all var(--transition-fast);
-        }
-
-        .btn:hover {
-            background: #9A4425;
-        }
-
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .summary-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: var(--shadow-sm);
-            border-left: 4px solid #1E2B26;
-        }
-
-        .summary-card.success {
-            border-left-color: #B5532F;
-        }
-
-        .summary-card.warning {
-            border-left-color: #55645D;
-        }
-
-        .summary-card.info {
-            border-left-color: #6F8F7E;
-        }
-
-        .card-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .card-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
-
-        .card-meta {
-            font-size: 12px;
-            color: var(--text-tertiary);
-        }
-
-        .table-container {
-            background: white;
-            border-radius: 8px;
-            box-shadow: var(--shadow-sm);
-            overflow: hidden;
-        }
-
-        .table-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-
-        th {
-            padding: 12px 20px;
-            text-align: left;
-            background: var(--bg-light);
-            border-bottom: 2px solid var(--border);
-            font-weight: 600;
-            color: var(--text-secondary);
-        }
-
-        td {
-            padding: 12px 20px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        tr:hover {
-            background: var(--bg-light);
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .badge.pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .badge.approved {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .badge.submitted {
-            background: #bfdbfe;
-            color: #1e40af;
-        }
-
-        .badge.paid {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-
-        .amount {
-            text-align: right;
-            font-weight: 600;
-            font-family: 'Courier New', monospace;
-        }
-
-        .amount::before {
-            content: '₩';
-        }
-
-        .empty-state {
-            padding: 60px 20px;
-            text-align: center;
-            color: var(--text-secondary);
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-secondary);
-        }
-
-        .error {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-
+        @media (max-width: 900px) { .ms-metrics, .ms-features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 768px) {
-            .sidebar {
-                width: 0;
-                overflow: hidden;
-            }
-
-            .main-layout {
-                margin-left: 0;
-            }
-
-            .content {
-                padding: 15px;
-            }
-
-            .controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .summary-cards {
-                grid-template-columns: 1fr;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-            th, td {
-                padding: 8px 12px;
-            }
+            .sidebar { transform: translateX(-100%); }
+            .main-layout { margin-left: 0; }
+            .content { padding: 16px; }
+            .ms-metrics, .ms-features { grid-template-columns: 1fr; }
         }
     </style>
+    <script src="menu.js"></script>
     <link rel="stylesheet" href="theme.css">
 </head>
 <body>
     <!-- Sidebar -->
-    <div class="sidebar">
+    <aside class="sidebar">
         <div class="side-brand"><div class="side-logo"></div><div><div class="side-title">돌봄케어</div><div class="side-sub">Care Management</div></div></div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-    </div>
+        <img class="sidebar-landscape" src="assets/user_design/sidebar_care_landscape.png" alt="">
+    </aside>
 
     <!-- Main Layout -->
     <div class="main-layout">
-        <!-- Topbar -->
+        <!-- Top Bar -->
         <div class="topbar">
             <div class="topbar-title">
                 <h1>월별 정산</h1>
+                <div class="topbar-sub">서비스 제공 내역을 기반으로 월별 정산을 관리합니다.</div>
             </div>
-            <div class="user-info">
-                <span id="currentUserName"></span>
+            <div class="user-menu">
+                <img src="assets/user_design/28_top_notification_icon.png" alt="" style="width:28px;height:28px;object-fit:contain;">
+                <div class="user-info">
+                    <div class="user-name" id="currentUserName">사용자</div>
+                    <div class="user-role" id="currentUserRole">센터장</div>
+                </div>
+                <img id="userAvatar" src="assets/user_design/29_top_profile_icon.png" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
             </div>
         </div>
 
         <!-- Content -->
         <div class="content">
+            <div class="ms-banner"><img src="assets/user_design/01_settlement_banner.png" alt=""></div>
+
             <!-- Error Message -->
             <div id="errorContainer"></div>
 
             <!-- Controls -->
-            <div class="controls">
-                <div class="control-group">
-                    <label>연도</label>
-                    <input type="number" id="yearSelect" min="2020" max="2099">
+            <div class="ms-controls">
+                <div class="ms-field">
+                    <span class="ms-label">정산년월</span>
+                    <div class="ms-month">
+                        <input type="number" id="yearSelect" min="2020" max="2099" aria-label="연도">
+                        <select id="monthSelect" aria-label="월">
+                            <option value="1">1월</option>
+                            <option value="2">2월</option>
+                            <option value="3">3월</option>
+                            <option value="4">4월</option>
+                            <option value="5">5월</option>
+                            <option value="6">6월</option>
+                            <option value="7">7월</option>
+                            <option value="8">8월</option>
+                            <option value="9">9월</option>
+                            <option value="10">10월</option>
+                            <option value="11">11월</option>
+                            <option value="12">12월</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="control-group">
-                    <label>월</label>
-                    <select id="monthSelect">
-                        <option value="1">1월</option>
-                        <option value="2">2월</option>
-                        <option value="3">3월</option>
-                        <option value="4">4월</option>
-                        <option value="5">5월</option>
-                        <option value="6">6월</option>
-                        <option value="7">7월</option>
-                        <option value="8">8월</option>
-                        <option value="9">9월</option>
-                        <option value="10">10월</option>
-                        <option value="11">11월</option>
-                        <option value="12">12월</option>
+                <div class="ms-field">
+                    <span class="ms-label">직원</span>
+                    <select id="staffFilter" onchange="renderRecords()"><option value="">전체</option></select>
+                </div>
+                <div class="ms-field">
+                    <span class="ms-label">이용자</span>
+                    <select id="residentFilter" onchange="renderRecords()"><option value="">전체</option></select>
+                </div>
+                <div class="ms-field">
+                    <span class="ms-label">정산 상태</span>
+                    <select id="statusFilter" onchange="setTab(this.value)">
+                        <option value="all">전체</option>
+                        <option value="done">정산 완료</option>
+                        <option value="pending">정산 대기</option>
+                        <option value="suspended">정산 중단</option>
                     </select>
                 </div>
-                <button class="btn" onclick="loadSettlementData()">조회</button>
+                <div class="ms-spacer"></div>
+                <button class="ms-btn ms-btn-search" onclick="loadSettlementData()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                    조회하기
+                </button>
             </div>
 
             <!-- Summary Cards -->
-            <div class="summary-cards" id="summaryCards"></div>
+            <div class="ms-metrics" id="summaryCards"></div>
+
+            <!-- Record List -->
+            <div class="ms-panel">
+                <div class="ms-panel-bar">
+                    <div class="ms-tabs" id="statusTabs"></div>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <label class="ms-search-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                            <input id="recordSearch" type="search" placeholder="이용자명 또는 직원명으로 검색하세요" oninput="renderRecords()"></label>
+                        <button class="ms-btn-excel" onclick="exportCsv()">엑셀 다운로드</button>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:70px;">번호</th>
+                            <th>정산년월</th>
+                            <th>이용자명</th>
+                            <th>직원명</th>
+                            <th>서비스</th>
+                            <th style="text-align:right;">총 금액</th>
+                            <th style="text-align:center;">정산 상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordBody">
+                        <tr><td colspan="7" class="ms-muted" style="text-align:center; padding:40px;">데이터를 조회해주세요.</td></tr>
+                    </tbody>
+                </table>
+            </div>
 
             <!-- Caregiver Stats Table -->
-            <div class="table-container">
-                <div class="table-header">
-                    <h3>요양사별 실적</h3>
-                </div>
-                <table id="caregiverStatsTable">
+            <div class="ms-panel">
+                <div class="ms-section-title">요양사별 실적</div>
+                <table id="caregiverStatsTable" style="margin-top:12px;">
                     <thead>
                         <tr>
                             <th>요양사</th>
@@ -389,17 +215,15 @@
                         </tr>
                     </thead>
                     <tbody id="caregiverStatsBody">
-                        <tr><td colspan="5" class="empty-state">데이터를 조회해주세요.</td></tr>
+                        <tr><td colspan="5" class="ms-muted" style="text-align:center; padding:30px;">데이터를 조회해주세요.</td></tr>
                     </tbody>
                 </table>
             </div>
 
             <!-- Service Stats Table -->
-            <div class="table-container" style="margin-top: 20px;">
-                <div class="table-header">
-                    <h3>서비스별 수익</h3>
-                </div>
-                <table id="serviceStatsTable">
+            <div class="ms-panel">
+                <div class="ms-section-title">서비스별 수익</div>
+                <table id="serviceStatsTable" style="margin-top:12px;">
                     <thead>
                         <tr>
                             <th>서비스</th>
@@ -408,14 +232,21 @@
                         </tr>
                     </thead>
                     <tbody id="serviceStatsBody">
-                        <tr><td colspan="3" class="empty-state">데이터를 조회해주세요.</td></tr>
+                        <tr><td colspan="3" class="ms-muted" style="text-align:center; padding:30px;">데이터를 조회해주세요.</td></tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Feature Cards -->
+            <div class="ms-features">
+                <div class="ms-feature"><img src="assets/user_design/06_icon_auto_calculation.png" alt=""><div><div class="ms-feature-title">자동 정산 계산</div><div class="ms-feature-desc">서비스 제공 내역을 기반으로 정산 금액을 자동으로 계산합니다.</div></div></div>
+                <div class="ms-feature"><img src="assets/user_design/07_icon_statement_output.png" alt=""><div><div class="ms-feature-title">정산서 출력</div><div class="ms-feature-desc">월별 정산서를 간편하게 생성하고 출력할 수 있습니다.</div></div></div>
+                <div class="ms-feature"><img src="assets/user_design/08_icon_statistics.png" alt=""><div><div class="ms-feature-title">정산 통계 조회</div><div class="ms-feature-desc">월별, 직원별, 이용자별 정산 현황을 한눈에 확인합니다.</div></div></div>
+                <div class="ms-feature"><img src="assets/user_design/09_icon_excel_export.png" alt=""><div><div class="ms-feature-title">엑셀 내보내기</div><div class="ms-feature-desc">정산 내역을 엑셀 파일로 다운로드하여 관리할 수 있습니다.</div></div></div>
             </div>
         </div>
     </div>
 
-    <script src="menu.js"></script>
     <script>
         function logout() {
             if (confirm('로그아웃 하시겠습니까?')) {
@@ -427,6 +258,8 @@
 
         const API_URL = '/api/v1';
         let currentUser = null;
+        let allRecords = [];
+        let currentTab = 'all';
 
         // 한글 서비스명 매핑
         const serviceNameMap = {
@@ -435,6 +268,45 @@
             'medical_care': '의료관리',
             'emergency': '응급'
         };
+
+        const TABS = [
+            { key: 'all', label: '전체' },
+            { key: 'done', label: '정산 완료' },
+            { key: 'pending', label: '정산 대기' },
+            { key: 'suspended', label: '정산 중단' }
+        ];
+
+        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
+        const NAV_ICON_FILES = {
+            '대시보드': '20_nav_dashboard_icon.png',
+            '이용자관리': '21_nav_user_icon.png',
+            '음성 기록': '22_nav_voice_icon.png',
+            '방문계획 승인': '23_nav_service_plan_icon.png',
+            '청부관리': '24_nav_billing_icon.png',
+            '수익분석': '25_nav_statistics_icon.png',
+            '알림': '26_nav_notice_icon.png',
+            '설정': '27_nav_settings_icon.png',
+        };
+
+        function applyNavIcons() {
+            document.querySelectorAll('.sidebar-nav .side-item').forEach(item => {
+                const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
+                if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
+            });
+        }
+
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const won = v => `${Number(v || 0).toLocaleString()}원`;
+
+        // 청구 상태 → 정산 탭 키
+        function tabOf(r) {
+            if (['approved', 'submitted_to_nhis', 'reimbursed'].includes(r.approval_status)) return 'done';
+            if (r.approval_status === 'pending') return 'pending';
+            if (r.approval_status === 'rejected') return 'suspended';
+            return 'other';
+        }
+
+        const TAB_PILL = { done: ['done', '정산 완료'], pending: ['pending', '정산 대기'], suspended: ['suspended', '정산 중단'], other: ['pending', '확인 필요'] };
 
         // Initialize
         async function init() {
@@ -447,14 +319,19 @@
                 }
 
                 currentUser = JSON.parse(userStr);
-                document.getElementById('currentUserName').textContent = `${currentUser.full_name} (${currentUser.role === 'center_manager' ? '센터장' : '요양사'})`;
+                document.getElementById('currentUserName').textContent = currentUser.full_name || '사용자';
+                document.getElementById('currentUserRole').textContent = currentUser.role === 'center_manager' ? '센터장' : '요양사';
+                document.getElementById('userAvatar').alt = currentUser.full_name || '';
 
                 renderSidebar();
+                applyNavIcons();
 
                 // Set default month/year
                 const today = new Date();
                 document.getElementById('yearSelect').value = today.getFullYear();
                 document.getElementById('monthSelect').value = today.getMonth() + 1;
+
+                renderTabs();
 
                 // Load data
                 await loadSettlementData();
@@ -484,8 +361,15 @@
                     throw new Error(data.detail || '조회 실패');
                 }
 
+                allRecords = data.records || [];
+
                 // Update summary cards
-                updateSummaryCards(data.total_summary);
+                updateSummaryCards(data.status_amounts || {});
+
+                // Update record list
+                refreshFilterOptions();
+                renderTabs();
+                renderRecords();
 
                 // Update caregiver stats
                 updateCaregiverStats(data.by_caregiver);
@@ -497,41 +381,114 @@
             } catch (error) {
                 console.error('❌ 정산 데이터 조회 오류:', error);
                 showError(`정산 데이터 조회 중 오류: ${error.message}`);
+                allRecords = [];
                 document.getElementById('summaryCards').innerHTML = '';
-                document.getElementById('caregiverStatsBody').innerHTML = '<tr><td colspan="5" class="empty-state">데이터를 조회할 수 없습니다.</td></tr>';
-                document.getElementById('serviceStatsBody').innerHTML = '<tr><td colspan="3" class="empty-state">데이터를 조회할 수 없습니다.</td></tr>';
+                renderTabs();
+                document.getElementById('recordBody').innerHTML = '<tr><td colspan="7" class="ms-muted" style="text-align:center; padding:40px;">데이터를 조회할 수 없습니다.</td></tr>';
+                document.getElementById('caregiverStatsBody').innerHTML = '<tr><td colspan="5" class="ms-muted" style="text-align:center; padding:30px;">데이터를 조회할 수 없습니다.</td></tr>';
+                document.getElementById('serviceStatsBody').innerHTML = '<tr><td colspan="3" class="ms-muted" style="text-align:center; padding:30px;">데이터를 조회할 수 없습니다.</td></tr>';
             }
         }
 
-        function updateSummaryCards(summary) {
-            const html = `
-                <div class="summary-card">
-                    <div class="card-label">총 청부 건수</div>
-                    <div class="card-value">${summary.total_records}</div>
-                    <div class="card-meta">건</div>
-                </div>
-                <div class="summary-card success">
-                    <div class="card-label">총 청부액</div>
-                    <div class="card-value">₩${(summary.total_amount || 0).toLocaleString()}</div>
-                    <div class="card-meta">원</div>
-                </div>
-                <div class="summary-card info">
-                    <div class="card-label">승인됨</div>
-                    <div class="card-value">${summary.approved_count}</div>
-                    <div class="card-meta">건</div>
-                </div>
-                <div class="summary-card warning">
-                    <div class="card-label">대기 중</div>
-                    <div class="card-value">${summary.pending_count}</div>
-                    <div class="card-meta">건</div>
-                </div>
-            `;
-            document.getElementById('summaryCards').innerHTML = html;
+        function updateSummaryCards(amounts) {
+            const target = amounts.target || 0;
+            const pct = value => target ? `${((value || 0) / target * 100).toFixed(1)}%` : '0.0%';
+            const cards = [
+                { bg: '#EEF4FC', color: '#1D4ED8', icon: '02_icon_total_records.png', label: '정산 대상 금액', value: amounts.target, sub: '서비스 제공 총 금액' },
+                { bg: '#EAF8F0', color: '#15803D', icon: '04_icon_approved.png', label: '정산 완료 금액', value: amounts.completed, sub: `정산 완료 (${pct(amounts.completed)})` },
+                { bg: '#FFF4E8', color: '#DC2626', icon: '05_icon_pending.png', label: '정산 대기 금액', value: amounts.pending, sub: `정산 대기 (${pct(amounts.pending)})` },
+                { bg: '#F3F0FD', color: '#6D28D9', icon: '10_icon_suspended.png', label: '정산 중단 금액', value: amounts.suspended, sub: `중단·보류 (${pct(amounts.suspended)})` }
+            ];
+            document.getElementById('summaryCards').innerHTML = cards.map(c => `
+                <div class="ms-metric" style="background:${c.bg};">
+                    <img src="assets/user_design/${c.icon}" alt="">
+                    <div>
+                        <div class="ms-metric-label" style="color:${c.color};">${c.label}</div>
+                        <div class="ms-metric-value" style="color:${c.color};">${won(c.value)}</div>
+                        <div class="ms-metric-sub">${c.sub}</div>
+                    </div>
+                </div>`).join('');
+        }
+
+        function renderTabs() {
+            const count = key => key === 'all' ? allRecords.length : allRecords.filter(r => tabOf(r) === key).length;
+            document.getElementById('statusTabs').innerHTML = TABS.map(t =>
+                `<button class="ms-tab ${t.key === currentTab ? 'active' : ''}" onclick="setTab('${t.key}')">${t.label} (${count(t.key)})</button>`
+            ).join('');
+        }
+
+        function setTab(key) {
+            currentTab = key;
+            document.getElementById('statusFilter').value = key;
+            renderTabs();
+            renderRecords();
+        }
+
+        // 직원·이용자 선택지는 조회된 기록에서 만든다
+        function refreshFilterOptions() {
+            const fill = (id, names, label) => {
+                const select = document.getElementById(id);
+                const prev = select.value;
+                const unique = [...new Set(names.filter(Boolean))].sort();
+                select.innerHTML = `<option value="">${label}</option>` + unique.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+                select.value = unique.includes(prev) ? prev : '';
+            };
+            fill('staffFilter', allRecords.map(r => r.caregiver_name), '전체');
+            fill('residentFilter', allRecords.map(r => r.resident_name), '전체');
+        }
+
+        function currentRecordView() {
+            const q = document.getElementById('recordSearch').value.trim();
+            const staff = document.getElementById('staffFilter').value;
+            const resident = document.getElementById('residentFilter').value;
+            return allRecords.filter(r =>
+                (currentTab === 'all' || tabOf(r) === currentTab) &&
+                (!staff || r.caregiver_name === staff) &&
+                (!resident || r.resident_name === resident) &&
+                (!q || (r.resident_name || '').includes(q) || (r.caregiver_name || '').includes(q)));
+        }
+
+        function renderRecords() {
+            const rows = currentRecordView();
+            const tbody = document.getElementById('recordBody');
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="ms-muted" style="text-align:center; padding:40px;">조건에 맞는 정산 내역이 없습니다.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map((r, i) => {
+                const [pillClass, pillLabel] = TAB_PILL[tabOf(r)];
+                return `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${esc(r.year_month)}</td>
+                        <td><strong>${esc(r.resident_name || '-')}</strong></td>
+                        <td>${esc(r.caregiver_name || '-')}</td>
+                        <td>${esc(serviceNameMap[r.service_type] || r.service_type)}</td>
+                        <td class="ms-num">${won(r.amount)}</td>
+                        <td style="text-align:center;"><span class="ms-pill ${pillClass}">${pillLabel}</span></td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function exportCsv() {
+            const rows = currentRecordView();
+            if (rows.length === 0) { alert('내려받을 정산 내역이 없습니다'); return; }
+            const header = ['번호', '정산년월', '이용자명', '직원명', '서비스', '총 금액', '정산 상태'];
+            const lines = rows.map((r, i) => [
+                i + 1, r.year_month, r.resident_name || '', r.caregiver_name || '',
+                serviceNameMap[r.service_type] || r.service_type, r.amount || 0, TAB_PILL[tabOf(r)][1]
+            ]);
+            const csv = [header, ...lines].map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `정산내역_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
         }
 
         function updateCaregiverStats(stats) {
             if (!stats || stats.length === 0) {
-                document.getElementById('caregiverStatsBody').innerHTML = '<tr><td colspan="5" class="empty-state">데이터 없음</td></tr>';
+                document.getElementById('caregiverStatsBody').innerHTML = '<tr><td colspan="5" class="ms-muted" style="text-align:center; padding:30px;">데이터 없음</td></tr>';
                 return;
             }
 
@@ -539,9 +496,9 @@
                 <tr>
                     <td><strong>${stat.caregiver_name}</strong></td>
                     <td style="text-align: center;">${stat.total_records}</td>
-                    <td class="amount">${stat.total_amount.toLocaleString()}</td>
-                    <td style="text-align: center;"><span class="badge approved">${stat.approved_count}</span></td>
-                    <td style="text-align: center;"><span class="badge pending">${stat.pending_count}</span></td>
+                    <td class="ms-num">${stat.total_amount.toLocaleString()}</td>
+                    <td style="text-align: center;"><span class="ms-pill done">${stat.approved_count}</span></td>
+                    <td style="text-align: center;"><span class="ms-pill pending">${stat.pending_count}</span></td>
                 </tr>
             `).join('');
 
@@ -550,7 +507,7 @@
 
         function updateServiceStats(stats) {
             if (!stats || stats.length === 0) {
-                document.getElementById('serviceStatsBody').innerHTML = '<tr><td colspan="3" class="empty-state">데이터 없음</td></tr>';
+                document.getElementById('serviceStatsBody').innerHTML = '<tr><td colspan="3" class="ms-muted" style="text-align:center; padding:30px;">데이터 없음</td></tr>';
                 return;
             }
 
@@ -558,7 +515,7 @@
                 <tr>
                     <td><strong>${serviceNameMap[stat.service_type] || stat.service_type}</strong></td>
                     <td style="text-align: center;">${stat.total_records}</td>
-                    <td class="amount">${stat.total_amount.toLocaleString()}</td>
+                    <td class="ms-num">${stat.total_amount.toLocaleString()}</td>
                 </tr>
             `).join('');
 
@@ -578,6 +535,5 @@
         document.addEventListener('DOMContentLoaded', init);
     </script>
     <script src="art.js"></script>
-    <script>ART.placeScene('settlement');</script>
 </body>
 </html>

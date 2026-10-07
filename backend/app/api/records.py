@@ -795,12 +795,35 @@ def get_monthly_statistics(
 
     year_month = f"{year:04d}-{month:02d}"
 
-    # 센터 전체 청부 조회
-    records = db.query(BillingRecord).filter(
+    # 센터 전체 청부 조회 (반려 포함 원본 목록 → 정산 중단 금액·목록에 사용)
+    all_records = db.query(BillingRecord).filter(
         BillingRecord.center_id == center_id,
-        BillingRecord.year_month == year_month,
-        BillingRecord.approval_status != "rejected"
+        BillingRecord.year_month == year_month
     ).all()
+    records = [r for r in all_records if r.approval_status != "rejected"]
+
+    residents = {x.id: x.name for x in db.query(Resident).all()}
+    user_names = {u.id: u.full_name for u in db.query(User).all()}
+    status_amounts = {"target": 0, "completed": 0, "pending": 0, "suspended": 0}
+    record_rows = []
+    for r in all_records:
+        amount = r.amount or 0
+        status_amounts["target"] += amount
+        if r.approval_status in REVENUE_STATUSES:
+            status_amounts["completed"] += amount
+        elif r.approval_status == "pending":
+            status_amounts["pending"] += amount
+        elif r.approval_status == "rejected":
+            status_amounts["suspended"] += amount
+        record_rows.append({
+            "id": r.id,
+            "resident_name": residents.get(r.resident_id) or r.resident_name,
+            "caregiver_name": user_names.get(r.caregiver_id),
+            "service_type": r.service_type,
+            "amount": amount,
+            "approval_status": r.approval_status,
+            "year_month": r.year_month
+        })
 
     # 요양사별 통계
     caregiver_stats = {}
@@ -850,7 +873,9 @@ def get_monthly_statistics(
             "pending_count": sum(1 for r in records if r.approval_status == "pending")
         },
         "by_caregiver": list(caregiver_stats.values()),
-        "by_service": list(service_stats.values())
+        "by_service": list(service_stats.values()),
+        "status_amounts": status_amounts,
+        "records": record_rows
     }
 
 
