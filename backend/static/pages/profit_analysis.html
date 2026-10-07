@@ -31,7 +31,7 @@
 
         .pa-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
         .pa-metric { display: flex; align-items: center; gap: 16px; padding: 20px 24px; border-radius: 16px; min-height: 118px; border: 1px solid #e5e7eb; }
-        .pa-metric img { width: 92px; height: 92px; object-fit: contain; flex: 0 0 auto; mix-blend-mode: multiply; }
+        .pa-metric img { width: 92px; height: 92px; object-fit: contain; flex: 0 0 auto; mix-blend-mode: multiply; border-radius: 50%; }
         .pa-metric-label { font-size: 15px; font-weight: 700; }
         .pa-metric-value { font-size: 28px; font-weight: 800; line-height: 1.2; margin-top: 4px; }
         .pa-delta { font-size: 13px; font-weight: 700; margin-top: 4px; }
@@ -56,7 +56,8 @@
         .pa-donut-center .v { font-size: 16px; font-weight: 800; color: #1F2937; }
         .pa-legend { flex: 1; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
         .pa-legend-row { display: flex; align-items: center; gap: 10px; font-size: 14px; }
-        .pa-dot { width: 14px; height: 14px; border-radius: 4px; flex: 0 0 auto; }
+        .pa-dot { width: 40px; height: 40px; border-radius: 12px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; }
+        .pa-dot::after { content: ''; width: 16px; height: 16px; border-radius: 5px; background: var(--dot); }
         .pa-legend-name { font-weight: 700; color: #1F2937; }
         .pa-legend-amt { font-size: 12px; color: #6B7280; }
         .pa-legend-pct { margin-left: auto; font-weight: 800; color: #1F2937; }
@@ -370,15 +371,15 @@
                 data: {
                     labels,
                     datasets: [
-                        { type: 'bar', label: '정산 완료', data: months.map(m => m.paid), backgroundColor: '#86D7A6', borderRadius: 3, order: 2 },
-                        { type: 'bar', label: '정산 대기', data: months.map(m => m.pending), backgroundColor: '#FB923C', borderRadius: 3, order: 2 },
-                        { type: 'line', label: '총 청구액', data: months.map(m => m.total), borderColor: '#2563EB', backgroundColor: '#2563EB', tension: 0, pointRadius: 4, order: 1 }
+                        { type: 'bar', label: '정산 완료', data: months.map(m => m.paid), backgroundColor: '#86D7A6', borderRadius: 3, order: 2, pointStyle: 'rectRounded' },
+                        { type: 'bar', label: '정산 대기', data: months.map(m => m.pending), backgroundColor: '#FB923C', borderRadius: 3, order: 2, pointStyle: 'rectRounded' },
+                        { type: 'line', label: '총 청구액', data: months.map(m => m.total), borderColor: '#2563EB', backgroundColor: '#2563EB', tension: 0, pointRadius: 4, order: 1, pointStyle: 'circle' }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 10 } } },
+                    plugins: { legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 12, boxHeight: 12, padding: 14 } } },
                     scales: {
                         y: { beginAtZero: true, ticks: { callback: v => manLabel(v) }, grid: { color: '#eef1f5' } },
                         x: { grid: { display: false } }
@@ -389,9 +390,9 @@
 
         function renderDonut(cur, month, year) {
             const parts = [
-                { name: '정산 완료', color: '#22C55E', value: cur.paid },
-                { name: '정산 대기', color: '#F97316', value: cur.pending },
-                { name: '정산 중단', color: '#8B5CF6', value: cur.suspended }
+                { name: '정산 완료', color: '#22C55E', tint: '#DCFCE7', value: cur.paid },
+                { name: '정산 대기', color: '#F97316', tint: '#FFEDD5', value: cur.pending },
+                { name: '정산 중단', color: '#8B5CF6', tint: '#EDE9FE', value: cur.suspended }
             ];
             const sum = parts.reduce((s, p) => s + p.value, 0);
             document.getElementById('donutNote').textContent = `${year}년 ${month}월 기준`;
@@ -404,7 +405,7 @@
             });
             document.getElementById('donutLegend').innerHTML = parts.map(p => `
                 <div class="pa-legend-row">
-                    <span class="pa-dot" style="background:${p.color};"></span>
+                    <span class="pa-dot" style="background:${p.tint};--dot:${p.color};"></span>
                     <div><div class="pa-legend-name">${p.name}</div><div class="pa-legend-amt">${won(p.value)}</div></div>
                     <span class="pa-legend-pct">${sum ? (p.value / sum * 100).toFixed(1) : '0.0'}%</span>
                 </div>`).join('');
