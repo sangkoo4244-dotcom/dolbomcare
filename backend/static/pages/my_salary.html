@@ -9,6 +9,25 @@
     <style>
         .sl-sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
         .sl-icon { object-fit: contain; mix-blend-mode: multiply; }
+
+        /* 급여명세서: 화면/인쇄 공용 서식 */
+        .payslip { font-size: 15px; color: #1F2937; }
+        .payslip h2 { font-size: 20px; font-weight: 800; margin-bottom: 14px; }
+        .payslip .ps-row { display: flex; justify-content: space-between; padding: 4px 0; color: #374151; }
+        .payslip .ps-table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+        .payslip .ps-table th { text-align: left; font-size: 13px; color: #6B7280; border-bottom: 1px solid #E5E7EB; padding: 6px 4px; }
+        .payslip .ps-table td { padding: 6px 4px; border-bottom: 1px solid #F3F4F6; }
+        .payslip .ps-table td:last-child { text-align: right; font-weight: 700; }
+        .payslip .ps-total td { font-weight: 800; border-top: 2px solid #D1D5DB; border-bottom: none; }
+        .payslip .ps-net { margin-top: 16px; padding-top: 12px; border-top: 2px solid #1F2937; display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; }
+        .payslip .ps-note { margin-top: 12px; font-size: 13px; color: #D97706; }
+
+        #printArea { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { display: block; position: absolute; top: 0; left: 0; width: 100%; padding: 24px; }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -169,8 +188,8 @@
                             </div>
                         </div>
                         <div class="flex gap-3">
-                            <button disabled title="준비 중인 기능입니다" class="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 text-white font-bold rounded-xl opacity-60 cursor-not-allowed">명세서 보기</button>
-                            <button disabled title="준비 중인 기능입니다" class="inline-flex items-center gap-2 px-5 py-2 bg-white border border-red-200 text-red-600 font-bold rounded-xl opacity-60 cursor-not-allowed">PDF 저장</button>
+                            <button onclick="openStatement(currentMonthStatement)" class="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700">명세서 보기</button>
+                            <button onclick="printStatement(currentMonthStatement)" class="inline-flex items-center gap-2 px-5 py-2 bg-white border border-red-200 text-red-600 font-bold rounded-xl hover:bg-red-50">PDF 저장</button>
                         </div>
                     </div>
                     <!-- 급여 문의 -->
@@ -211,6 +230,21 @@
             </div>
         </main>
     </div>
+
+    <div id="payslipModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;">
+        <div class="bg-white rounded-2xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-extrabold text-gray-500">급여명세서</h2>
+                <button onclick="closeStatement()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div id="payslipBody"></div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="printStatement(JSON.parse(document.getElementById('payslipModal').dataset.current))" class="px-5 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50">PDF 저장</button>
+                <button onclick="closeStatement()" class="px-5 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200">닫기</button>
+            </div>
+        </div>
+    </div>
+    <div id="printArea"></div>
 
     <div id="detailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;">
         <div class="bg-white rounded-2xl p-8 w-full max-w-md">
@@ -269,12 +303,19 @@
             return { billing_total: amount, income_tax: incomeTax, pension, health, employment, total_deduction: totalTax, net: amount - totalTax };
         }
 
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text ?? '';
+            return div.innerHTML;
+        }
+
         function ymKey(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
         function ymLabel(ym) { const [y, m] = ym.split('-'); return `${y}년 ${parseInt(m)}월`; }
 
         let allBillings = [];
         let allDailyRecords = [];
         let confirmedStatements = [];
+        let currentMonthStatement = null;
 
         async function loadSalaryData() {
             try {
@@ -314,7 +355,10 @@
             document.getElementById('workDays').textContent = `${new Set(monthRecords.map(r => (r.recorded_date || '').slice(0, 10))).size}일`;
             document.getElementById('residentCount').textContent = `${new Set(monthRecords.map(r => r.resident_id)).size}명`;
 
-            const c = confirmed || calcSalary(billingAmountOfMonth(ym));
+            const c = confirmed
+                ? { ...confirmed, state: 'confirmed' }
+                : { ...calcSalary(billingAmountOfMonth(ym)), year_month: ym, state: 'pending' };
+            currentMonthStatement = c;
 
             document.getElementById('noticeTitle').textContent = `${ymLabel(ym)} ${confirmed ? '확정 급여' : '예상 급여'}`;
             const pill = document.getElementById('noticePill');
@@ -330,7 +374,7 @@
             fillAmounts(c);
 
             // 전월 대비
-            const prevYm = ymKey(new Date(now_year(ym), now_month(ym) - 1, 1));
+            const prevYm = ymKey(new Date(now_year(ym), now_month(ym) - 2, 1));
             const prevConfirmed = confirmedStatements.find(s => s.year_month === prevYm);
             const prevAmount = billingAmountOfMonth(prevYm);
             const prev = prevConfirmed || (prevAmount ? calcSalary(prevAmount) : null);
@@ -388,10 +432,55 @@
                         : '<span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">지급완료</span>'}</td>
                     <td class="py-4 px-4 flex gap-2 flex-wrap">
                         <button onclick='openDetail(${JSON.stringify(s)})' class="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50">상세보기</button>
-                        <button disabled title="준비 중인 기능입니다" class="px-3 py-1.5 bg-gray-100 text-gray-400 text-sm font-bold rounded-lg cursor-not-allowed">명세서</button>
-                        <button disabled title="준비 중인 기능입니다" class="px-3 py-1.5 bg-gray-100 text-gray-400 text-sm font-bold rounded-lg cursor-not-allowed">PDF</button>
+                        <button onclick='openStatement(${JSON.stringify(s)})' class="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50">명세서</button>
+                        <button onclick='printStatement(${JSON.stringify(s)})' class="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50">PDF</button>
                     </td>
                 </tr>`).join('');
+        }
+
+        // 급여명세서 서식: 화면 보기와 인쇄(PDF 저장)가 같은 내용을 쓴다
+        function payslipHtml(s) {
+            const confirmedLine = s.state === 'pending'
+                ? '<p class="ps-note">센터가 아직 확정하지 않은 예상 금액입니다. 실제 지급액과 다를 수 있습니다.</p>'
+                : `<p class="ps-note" style="color:#15803D;">확정일: ${s.confirmed_at ? new Date(s.confirmed_at).toLocaleDateString('ko-KR') : '-'}</p>`;
+            return `
+                <div class="payslip">
+                    <h2>${ymLabel(s.year_month)} 급여명세서</h2>
+                    <div class="ps-row"><span>성명</span><span>${escapeHtml(currentUser?.full_name || '')}</span></div>
+                    <div class="ps-row"><span>소속</span><span>돌봄케어</span></div>
+                    <div class="ps-row"><span>대상월</span><span>${ymLabel(s.year_month)}</span></div>
+                    <table class="ps-table">
+                        <tr><th>지급 항목</th><th>금액</th></tr>
+                        <tr><td>청부액</td><td>₩${s.billing_total.toLocaleString()}</td></tr>
+                        <tr class="ps-total"><td>지급 합계</td><td>₩${s.billing_total.toLocaleString()}</td></tr>
+                    </table>
+                    <table class="ps-table">
+                        <tr><th>공제 항목</th><th>금액</th></tr>
+                        <tr><td>소득세 (3.3%)</td><td>-₩${s.income_tax.toLocaleString()}</td></tr>
+                        <tr><td>국민연금 (9%)</td><td>-₩${s.pension.toLocaleString()}</td></tr>
+                        <tr><td>건강보험 (3.49%)</td><td>-₩${s.health.toLocaleString()}</td></tr>
+                        <tr><td>고용보험 (0.65%)</td><td>-₩${s.employment.toLocaleString()}</td></tr>
+                        <tr class="ps-total"><td>공제 합계</td><td>-₩${s.total_deduction.toLocaleString()}</td></tr>
+                    </table>
+                    <div class="ps-net"><span>실수령액</span><span>₩${s.net.toLocaleString()}</span></div>
+                    ${confirmedLine}
+                </div>`;
+        }
+
+        function openStatement(s) {
+            if (!s) return;
+            document.getElementById('payslipBody').innerHTML = payslipHtml(s);
+            document.getElementById('payslipModal').dataset.current = JSON.stringify(s);
+            document.getElementById('payslipModal').style.display = 'flex';
+        }
+
+        function closeStatement() { document.getElementById('payslipModal').style.display = 'none'; }
+
+        // PDF 저장: 인쇄 영역만 채우고 브라우저 인쇄창을 띄운다 (거기서 "PDF로 저장"을 고르면 된다)
+        function printStatement(s) {
+            if (!s) return;
+            document.getElementById('printArea').innerHTML = payslipHtml(s);
+            window.print();
         }
 
         function openDetail(s) {
