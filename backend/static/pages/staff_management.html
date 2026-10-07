@@ -289,13 +289,13 @@
             <div class="table-wrapper">
                 <div id="addStaffPanel" class="st-add-panel">
                     <label style="display: flex; flex-direction: column; font-size: 12px; gap: 4px;">이름
-                        <input id="newStaffName" type="text" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 140px;">
+                        <input id="newStaffName" type="text" autocomplete="off" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 140px;">
                     </label>
                     <label style="display: flex; flex-direction: column; font-size: 12px; gap: 4px;">이메일(로그인 아이디)
-                        <input id="newStaffEmail" type="email" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 220px;">
+                        <input id="newStaffEmail" type="email" autocomplete="off" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 220px;">
                     </label>
                     <label style="display: flex; flex-direction: column; font-size: 12px; gap: 4px;">초기 비밀번호(8자 이상)
-                        <input id="newStaffPassword" type="password" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 180px;">
+                        <input id="newStaffPassword" type="password" autocomplete="new-password" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 180px;">
                     </label>
                     <label style="display: flex; flex-direction: column; font-size: 12px; gap: 4px;">역할
                         <select id="newStaffRole" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
@@ -767,6 +767,7 @@
 
         window.addEventListener('load', () => {
             if (checkAuth()) {
+                resetAddStaffForm();  // 새로고침 후에도 이전 아이디·비밀번호가 남지 않도록 비운다
                 loadStaffData();
             }
         });
