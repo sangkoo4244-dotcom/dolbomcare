@@ -175,7 +175,7 @@
                 </div>
             </div>
             <nav id="navContent" class="p-4"></nav>
-            <div class="side-bottom"><img src="assets/user_design/sidebar_care_landscape.png" alt=""></div>
+            <div class="side-bottom"><img src="assets/user_design/sidebar_care_landscape.jpg" alt=""></div>
         </aside>
 
         <!-- 메인 컨텐츠 -->
@@ -287,7 +287,7 @@
         function renderCaregiverDashboard() {
             document.getElementById('pageTitle').textContent = '대시보드';
             document.getElementById('dashboardContent').innerHTML = `
-                <div class="dash-banner-wrap"><img class="dash-banner" src="assets/user_design/dashboard_banner.png" alt=""></div>
+                <div class="dash-banner-wrap"><img class="dash-banner" src="assets/user_design/dashboard_banner.jpg" alt=""></div>
                 ${summaryRow([
                     ['오늘 방문', 'todayVisits', '계획된 방문', ART.illus.clock],
                     ['기록 필요', 'needRecord', '방문을 마치고 기록 전', ART.illus.checklist],
@@ -317,7 +317,7 @@
         function renderManagerDashboard() {
             document.getElementById('pageTitle').textContent = '대시보드';
             document.getElementById('dashboardContent').innerHTML = `
-                <div class="dash-banner-wrap"><img class="dash-banner" src="assets/user_design/dashboard_banner.png" alt=""></div>
+                <div class="dash-banner-wrap"><img class="dash-banner" src="assets/user_design/dashboard_banner.jpg" alt=""></div>
                 ${summaryRow([
                     ['요양사', 'totalStaff', '명', designImg('icon_metric_caregiver.png')],
                     ['이용자', 'totalResidents', '명', designImg('icon_metric_user.png')],
@@ -326,7 +326,7 @@
                 ])}
                 <div class="cg-grid">
                     <section class="panel">
-                        <div class="section-head"><img class="section-icon" src="assets/user_design/section_today_records.png" alt=""><h2 class="section-title">오늘 들어온 방문 기록</h2></div>
+                        <div class="section-head"><img class="section-icon" src="assets/user_design/section_today_records.jpg" alt=""><h2 class="section-title">오늘 들어온 방문 기록</h2></div>
                         <p class="section-sub">요양사가 오늘 저장한 기록을 시간 순서로 보여 줍니다.</p>
                         <div id="timeline"><div class="empty">불러오는 중입니다</div></div>
                     </section>
@@ -442,10 +442,10 @@
                         const meta = `${names[r.caregiver_id] || '요양사'} · ${r.service_type || ''} · 청부 ₩${(r.billing_amount || 0).toLocaleString()}`;
                         return timelineItem(time, residentNames[r.resident_id] || '이용자', meta, '기록 저장됨', 'done', '기');
                     }).join('')}</ul>`
-                    : `<div class="empty-box"><img class="empty-scene" src="assets/user_design/empty_today_records.png" alt=""><p>오늘 저장된 방문 기록이 없습니다.</p></div>`;
+                    : `<div class="empty-box"><img class="empty-scene" src="assets/user_design/empty_today_records.jpg" alt=""><p>오늘 저장된 방문 기록이 없습니다.</p></div>`;
 
                 const tasks = [
-                    ['청부 승인 대기', pendingClaims, './billing_management.html', '<img src="assets/user_design/task_billing_approval.png" alt="">'],
+                    ['청부 승인 대기', pendingClaims, './billing_management.html', '<img src="assets/user_design/task_billing_approval.jpg" alt="">'],
                     ['방문 계획 승인 대기', pendingPlans, './schedule_approval.html', ART.illus.clock],
                     ['보호자 가입 요청', pendingGuardians, './guardian_management.html', ART.illus.group],
                 ];
