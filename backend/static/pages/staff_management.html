@@ -169,7 +169,11 @@
         }
 
         /* 직원 관리 시안 배치 */
-        .sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
+        .sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); display: flex; flex-direction: column; }
+        .sidebar-landscape { display: block; width: 100%; height: auto; margin-top: auto; }
+        .st-act { padding: 8px 14px; border: 1px solid #D6D0C4; border-radius: 10px; background: white; color: #9CA3AF; font-size: 13px; font-weight: 600; cursor: not-allowed; margin-right: 6px; }
+        .st-cal { width: 36px; height: 36px; border: 1px solid #F3C9A9; border-radius: 10px; background: #FFF7F0; cursor: not-allowed; vertical-align: middle; }
+        .st-cal img { width: 22px; height: 22px; object-fit: contain; display: block; margin: 0 auto; }
         .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
         .side-icon img { display: block; }
         .st-banner { height: 220px; border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
@@ -213,6 +217,7 @@
     <aside class="sidebar">
         <div class="side-brand"><div class="side-logo"></div><div><div class="side-title">돌봄케어</div><div class="side-sub">Care Management</div></div></div>
         <nav class="sidebar-nav"></nav>
+        <img class="sidebar-landscape" src="assets/user_design/sidebar_care_landscape.png" alt="">
     </aside>
 
     <!-- Main Layout -->
@@ -247,6 +252,10 @@
                     <input id="staffSearch" type="search" placeholder="이름, 이메일로 검색하세요" oninput="filterStaff()"></label>
                 <div class="st-field"><span class="st-label">직종</span>
                     <select id="roleFilter" onchange="filterStaff()"><option value="">전체</option><option value="caregiver">요양사</option><option value="center_manager">센터장</option></select></div>
+                <div class="st-field"><span class="st-label">근무 상태</span>
+                    <select id="statusFilter" onchange="filterStaff()"><option value="">전체</option><option value="active">근무 중</option><option value="inactive">비활성</option></select></div>
+                <div class="st-field"><span class="st-label">자격증 보유</span>
+                    <select disabled title="자격증 정보가 아직 등록되지 않았습니다"><option>전체</option></select></div>
                 <button class="st-search-btn" onclick="filterStaff()">검색</button>
                 <button class="st-add-btn" onclick="document.getElementById('newStaffName').focus()">+ 직원 등록</button>
             </div>
@@ -366,9 +375,11 @@
         function filterStaff() {
             const q = document.getElementById('staffSearch').value.trim();
             const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
             renderStaff(staffList.filter(s =>
                 (!q || (s.full_name || '').includes(q) || (s.email || '').includes(q)) &&
-                (!role || s.role === role)));
+                (!role || s.role === role) &&
+                (!status || (status === 'active') === (s.is_active !== false))));
         }
 
         function renderStaff(list) {
@@ -389,7 +400,10 @@
                         <td>-</td>
                         <td>${s.hire_date || '-'}</td>
                         <td><span class="st-work">${s.is_active === false ? '비활성' : '근무 중'}</span></td>
-                        <td><button class="st-pw-btn" onclick="resetPassword(${s.id}, '${name.replace(/'/g, '')}')">비밀번호 재설정</button></td>
+                        <td>
+                            <button class="st-act" disabled title="수정 화면은 아직 준비 중입니다">수정</button><button class="st-act" disabled title="상세 화면은 아직 준비 중입니다">상세보기</button><button class="st-cal" disabled title="근무 일정은 아직 준비 중입니다"><img src="assets/user_design/15_icon_calendar_action.png" alt=""></button>
+                            <button class="st-pw-btn" onclick="resetPassword(${s.id}, '${name.replace(/'/g, '')}')">비밀번호 재설정</button>
+                        </td>
                     </tr>`;
             }).join('');
         }
