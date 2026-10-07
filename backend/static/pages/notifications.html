@@ -6,97 +6,311 @@
     <title>돌봄케어 - 알림</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        .nt-sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
+        .nt-icon { object-fit: contain; mix-blend-mode: multiply; }
+        .nt-chip { padding: 9px 18px; border-radius: 10px; font-size: 14px; font-weight: 700; color: #374151; background: white; border: 1px solid #e5e7eb; }
+        .nt-chip.active { background: #2E7D4F; color: white; border-color: #2E7D4F; }
+        .nt-row { display: flex; align-items: flex-start; gap: 14px; padding: 16px; border-radius: 14px; }
+        .nt-row.unread { background: #F7FAF8; }
+        .nt-row.important { background: #FDF1F1; border: 1px solid #FBD5D5; }
+    </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
-        <aside class="w-72 bg-gradient-to-b from-gray-800 to-gray-900 text-white fixed h-screen overflow-y-auto">
-            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
-                <div class="text-3xl"></div>
-                <div><div class="text-lg font-bold">돌봄케어</div><div class="text-xs text-gray-400">Care Management</div></div>
+        <aside class="nt-sidebar w-72 text-white fixed h-screen overflow-y-auto flex flex-col">
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div class="text-lg font-bold">돌봄케어</div>
+                <div class="text-xs text-white/60 ml-1">Care Management</div>
             </div>
             <nav id="navContent" class="p-4"></nav>
+            <img src="assets/user_design/sidebar_care_landscape.jpg" alt="" class="w-full h-auto mt-auto">
         </aside>
         <main class="ml-72 w-full flex flex-col">
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-bold text-gray-900">알림</h1>
+                <h1 class="text-3xl font-extrabold text-[#1E3A5F]">알림</h1>
                 <div class="flex items-center gap-6">
-                    <div class="text-right"><div class="text-sm font-semibold text-gray-900" id="userName">사용자</div><div class="text-xs text-gray-500" id="userRole">역할</div></div>
-                    <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
+                    <img src="assets/user_design/28_top_notification_icon.png" alt="" class="w-7 h-7 object-contain">
+                    <div class="flex items-center gap-3">
+                        <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
+                        <span id="userName" class="text-base font-bold text-gray-900">사용자</span>
+                        <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                    <button onclick="logout()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:border-red-500 hover:text-red-600 transition">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+                        로그아웃
+                    </button>
                 </div>
             </div>
+
             <div class="flex-1 overflow-y-auto p-8">
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900">
-                            새 알림 <span id="unreadBadge" class="ml-2 px-3 py-1 rounded-full text-sm bg-emerald-100 text-emerald-800 hidden"></span>
-                        </h2>
-                        <button id="readAllBtn" onclick="markAllRead()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 transition">모두 읽음</button>
+                <div class="rounded-2xl overflow-hidden mb-5">
+                    <img src="assets/user_design/nt_banner.jpg" alt="" class="w-full h-auto block">
+                </div>
+
+                <!-- 요약 카드 -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
+                    <div class="bg-amber-50 p-5 rounded-2xl border border-amber-100 flex items-center gap-4">
+                        <img src="assets/user_design/nt_metric_bell.png" alt="" class="w-14 h-14 nt-icon">
+                        <div><div class="text-sm font-bold text-amber-700">새 알림</div><div class="text-3xl font-extrabold text-gray-900" id="metricNew">0건</div></div>
                     </div>
-                    <ul id="notificationList" class="divide-y divide-gray-100">
-                        <li class="py-8 text-center text-gray-400">불러오는 중...</li>
-                    </ul>
+                    <div class="bg-red-50 p-5 rounded-2xl border border-red-100 flex items-center gap-4">
+                        <img src="assets/user_design/nt_metric_warning.png" alt="" class="w-14 h-14 nt-icon">
+                        <div><div class="text-sm font-bold text-red-700">처리 필요</div><div class="text-3xl font-extrabold text-gray-900" id="metricAction">0건</div></div>
+                    </div>
+                    <div class="bg-blue-50 p-5 rounded-2xl border border-blue-100 flex items-center gap-4">
+                        <img src="assets/user_design/nt_metric_calendar.png" alt="" class="w-14 h-14 nt-icon">
+                        <div><div class="text-sm font-bold text-blue-700">오늘 일정</div><div class="text-3xl font-extrabold text-gray-900" id="metricToday">-</div></div>
+                    </div>
+                    <div class="bg-amber-50 p-5 rounded-2xl border border-amber-100 flex items-center gap-4">
+                        <img src="assets/user_design/nt_metric_star.png" alt="" class="w-14 h-14 nt-icon">
+                        <div><div class="text-sm font-bold text-amber-700">중요 알림</div><div class="text-3xl font-extrabold text-gray-900" id="metricImportant">0건</div></div>
+                    </div>
+                </div>
+
+                <!-- 필터 -->
+                <div class="flex items-center justify-between flex-wrap gap-3 mb-5">
+                    <div class="flex gap-2 flex-wrap">
+                        <button class="nt-chip active" data-filter="all" onclick="setFilter(event,'all')">전체</button>
+                        <button class="nt-chip" data-filter="unread" onclick="setFilter(event,'unread')">안 읽음</button>
+                        <button class="nt-chip" data-filter="schedule" onclick="setFilter(event,'schedule')">일정</button>
+                        <button class="nt-chip" data-filter="record" onclick="setFilter(event,'record')">기록</button>
+                        <button class="nt-chip" data-filter="salary" onclick="setFilter(event,'salary')">급여</button>
+                        <button class="nt-chip" data-filter="guardian" onclick="setFilter(event,'guardian')">보호자</button>
+                        <button class="nt-chip" data-filter="approval" onclick="setFilter(event,'approval')">승인</button>
+                    </div>
+                    <div class="flex gap-3 items-center">
+                        <label class="flex items-center gap-2 border border-gray-300 rounded-xl px-4 h-11 w-72">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                            <input id="searchInput" type="search" placeholder="알림 내용을 검색하세요" oninput="renderNotifications()" class="flex-1 outline-none text-sm bg-transparent">
+                        </label>
+                        <button id="readAllBtn" onclick="markAllRead()" class="inline-flex items-center gap-2 px-4 h-11 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:border-emerald-500 hover:text-emerald-700">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                            모두 읽음
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-5">
+                    <!-- 알림 목록 -->
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <h2 class="text-xl font-extrabold text-gray-900">새 알림</h2>
+                            <span id="unreadBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 hidden"></span>
+                        </div>
+                        <div id="notificationList" class="space-y-3">
+                            <div class="py-8 text-center text-gray-400">불러오는 중...</div>
+                        </div>
+                    </div>
+
+                    <!-- 알림 안내 -->
+                    <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 h-fit">
+                        <div class="flex items-center gap-2 mb-4">
+                            <img src="assets/user_design/nt_icon_lightbulb.png" alt="" class="w-7 h-7 nt-icon">
+                            <h2 class="text-base font-extrabold text-gray-900">알림 안내</h2>
+                        </div>
+                        <ul class="space-y-4 text-sm text-gray-700">
+                            <li class="flex items-start gap-2"><span class="text-amber-500">★</span>중요 알림은 빨간 표시로 눈에 띄게 나옵니다.</li>
+                            <li class="flex items-start gap-2"><span class="text-emerald-600">➤</span>알림을 클릭하면 관련 화면으로 이동합니다.</li>
+                            <li class="flex items-start gap-2"><span class="text-emerald-600">✓</span>모두 읽음을 눌러 한 번에 정리할 수 있습니다.</li>
+                        </ul>
+                        <img src="assets/user_design/nt_sidebox_art.png" alt="" class="w-full h-auto mt-4 rounded-xl">
+                    </div>
                 </div>
             </div>
         </main>
     </div>
+
     <script src="menu.js"></script>
     <script>
         let currentUser = null;
         const API_URL = '/api/v1';
+        let allNotifications = [];
+        let currentFilter = 'all';
+
+        // 알림 종류(kind)를 화면 분류로 묶는다. 일정·기록·시스템 알림은 아직 만드는 곳이 없어
+        // 항상 비어 있을 수 있다 (가짜 데이터를 넣지 않는다).
+        const CATEGORY_OF = {
+            plan_approved: 'approval', plan_rejected: 'approval',
+            claim_approved: 'approval', claim_rejected: 'approval',
+            change_approved: 'approval', change_rejected: 'approval',
+            statement_confirmed: 'salary',
+            message_received: 'guardian',
+        };
+        const CATEGORY_LABEL = { schedule: '일정 알림', record: '기록 알림', salary: '급여 알림', guardian: '보호자 소통 알림', approval: '승인 알림', system: '시스템 알림' };
+        const CATEGORY_ICON = { schedule: 'nt_icon_schedule.png', record: 'nt_icon_record.png', salary: 'nt_icon_salary.png', guardian: 'nt_icon_guardian.png', approval: 'nt_icon_approval.png', system: 'nt_icon_system.png' };
+        // 중요(처리 필요) 알림: 반려된 건은 요양사가 다시 조치해야 한다
+        const IMPORTANT_KINDS = ['claim_rejected', 'plan_rejected', 'change_rejected'];
+        // 알림을 누르면 이동할 화면 (실제로 존재하는 화면만 연결한다)
+        const ACTION_LINK = {
+            statement_confirmed: ['급여 보기', './my_salary.html'],
+            message_received: ['메시지 보기', './messages.html'],
+            plan_approved: ['일정 보기', './my_schedule.html'],
+            plan_rejected: ['일정 보기', './my_schedule.html'],
+            claim_approved: ['청구 보기', './caregiver_billing.html'],
+            claim_rejected: ['청구 보기', './caregiver_billing.html'],
+        };
 
         function checkAuth() {
             const token = localStorage.getItem('access_token');
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (!token || !user.id) { window.location.href = './login.html'; return; }
             currentUser = user;
-            document.getElementById('userName').textContent = user.full_name || '사용자';
-            document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
+            document.getElementById('userName').textContent = `${user.full_name || '사용자'}님`;
             renderSidebar();
+            applyNavIcons();
             loadNotifications();
+            loadTodayScheduleCount();
         }
+
+        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
+        const NAV_ICON_FILES = {
+            '대시보드': '20_nav_dashboard_icon.png',
+            '이용자관리': '21_nav_user_icon.png',
+            '음성 기록': '22_nav_voice_icon.png',
+            '방문계획 승인': '23_nav_service_plan_icon.png',
+            '청부관리': '24_nav_billing_icon.png',
+            '수익분석': '25_nav_statistics_icon.png',
+            '알림': '26_nav_notice_icon.png',
+            '설정': '27_nav_settings_icon.png',
+        };
+        function applyNavIcons() {
+            document.querySelectorAll('.sidebar-nav .side-item, #navContent .side-item').forEach(item => {
+                const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
+                if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
+            });
+        }
+
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text ?? ''; return div.innerHTML; }
 
         function formatTime(iso) {
             if (!iso) return '';
             const d = new Date(iso);
-            return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            const now = new Date();
+            const diffMin = Math.floor((now - d) / 60000);
+            if (diffMin < 1) return '방금 전';
+            if (diffMin < 60) return `${diffMin}분 전`;
+            if (diffMin < 1440 && d.toDateString() === now.toDateString()) return `${Math.floor(diffMin / 60)}시간 전`;
+            const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+            if (d.toDateString() === yesterday.toDateString()) return `어제 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            return `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        function groupLabel(iso) {
+            const d = new Date(iso);
+            const now = new Date();
+            if (d.toDateString() === now.toDateString()) return '오늘';
+            const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+            if (d.toDateString() === yesterday.toDateString()) return '어제';
+            return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
         }
 
         async function loadNotifications() {
             try {
                 const r = await fetch(`${API_URL}/notifications/mine`);
                 const d = await r.json();
-                renderNotifications(d.notifications || []);
-                const badge = document.getElementById('unreadBadge');
-                badge.textContent = `${d.unread_count}건`;
-                badge.classList.toggle('hidden', !d.unread_count);
+                allNotifications = d.notifications || [];
+                updateMetrics(d.unread_count || 0);
+                renderNotifications();
             } catch (e) {
-                document.getElementById('notificationList').innerHTML = '<li class="py-8 text-center text-gray-400">알림을 불러올 수 없습니다</li>';
+                document.getElementById('notificationList').innerHTML = '<div class="py-8 text-center text-gray-400">알림을 불러올 수 없습니다</div>';
             }
         }
 
-        function renderNotifications(items) {
+        // 오늘 일정: 요양사 본인 일정만 알 수 있다 (센터장은 개인 일정이 없어 "-"로 둔다)
+        async function loadTodayScheduleCount() {
+            if (currentUser.role !== 'caregiver') return;
+            try {
+                const now = new Date();
+                const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                const r = await fetch(`${API_URL}/schedule/caregiver-view?caregiver_id=${currentUser.id}&year_month=${ym}&user_id=${currentUser.id}&user_role=${currentUser.role}`);
+                const d = await r.json();
+                const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const count = (d.items || []).filter(it => it.date === todayKey).length;
+                document.getElementById('metricToday').textContent = `${count}건`;
+            } catch (e) { /* 오늘 일정은 참고 정보이므로 실패해도 화면은 그대로 둔다 */ }
+        }
+
+        function updateMetrics(unreadCount) {
+            document.getElementById('metricNew').textContent = `${unreadCount}건`;
+            const actionCount = allNotifications.filter(n => !n.is_read && IMPORTANT_KINDS.includes(n.kind)).length;
+            const importantCount = allNotifications.filter(n => IMPORTANT_KINDS.includes(n.kind)).length;
+            document.getElementById('metricAction').textContent = `${actionCount}건`;
+            document.getElementById('metricImportant').textContent = `${importantCount}건`;
+        }
+
+        function setFilter(e, key) {
+            document.querySelectorAll('.nt-chip').forEach(b => b.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            currentFilter = key;
+            renderNotifications();
+        }
+
+        function matchesFilter(n) {
+            if (currentFilter === 'all') return true;
+            if (currentFilter === 'unread') return !n.is_read;
+            return CATEGORY_OF[n.kind] === currentFilter;
+        }
+
+        function renderNotifications() {
+            const q = document.getElementById('searchInput').value.trim().toLowerCase();
+            const badge = document.getElementById('unreadBadge');
+            const unreadTotal = allNotifications.filter(n => !n.is_read).length;
+            badge.textContent = `${unreadTotal}건`;
+            badge.classList.toggle('hidden', !unreadTotal);
+
+            let rows = allNotifications.filter(matchesFilter);
+            if (q) rows = rows.filter(n => (n.message || '').toLowerCase().includes(q));
+            // 날짜별로 묶어 보여줘야 하므로 순서는 최신순 그대로 둔다 (서버가 이미 최신순으로 준다).
+            // 중요 알림은 순서를 바꾸는 대신 빨간 표시로 눈에 띄게 한다.
+
             const list = document.getElementById('notificationList');
-            if (!items.length) {
-                list.innerHTML = '<li class="py-8 text-center text-gray-400">🔔 새 알림이 없습니다</li>';
+            if (rows.length === 0) {
+                list.innerHTML = '<div class="py-10 text-center text-gray-400">해당하는 알림이 없습니다</div>';
                 return;
             }
-            list.innerHTML = items.map(n => `
-                <li class="py-4 px-2 flex justify-between items-start gap-4 ${n.is_read ? 'text-gray-500' : 'bg-emerald-50 font-semibold text-gray-900'} rounded cursor-pointer" onclick="markRead(${n.id}, ${n.is_read})">
-                    <span>${escapeHtml(n.message)}</span>
-                    <span class="text-xs text-gray-400 whitespace-nowrap">${formatTime(n.created_at)}</span>
-                </li>`).join('');
+
+            let html = '';
+            let lastGroup = null;
+            rows.forEach(n => {
+                const g = groupLabel(n.created_at);
+                if (g !== lastGroup) {
+                    html += `<div class="text-sm font-extrabold text-gray-500 pt-2 ${lastGroup ? 'mt-2 border-t border-gray-100' : ''}">${g}</div>`;
+                    lastGroup = g;
+                }
+                const category = CATEGORY_OF[n.kind] || 'system';
+                const important = IMPORTANT_KINDS.includes(n.kind);
+                const [title, rest] = splitMessage(n.message);
+                const action = ACTION_LINK[n.kind];
+                html += `
+                    <div class="nt-row ${n.is_read ? '' : 'unread'} ${important ? 'important' : ''}" onclick="handleRowClick(${n.id}, ${n.is_read}, ${action ? `'${action[1]}'` : 'null'})" style="cursor:pointer;">
+                        <img src="assets/user_design/${CATEGORY_ICON[category]}" alt="" class="w-11 h-11 nt-icon shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs font-bold text-gray-500 mb-1">${CATEGORY_LABEL[category]}</div>
+                            <div class="font-bold text-gray-900">${escapeHtml(title)}${important ? ' <span class="ml-1 px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700">중요</span>' : ''}</div>
+                            ${rest ? `<div class="text-sm text-gray-600 mt-0.5">${escapeHtml(rest)}</div>` : ''}
+                        </div>
+                        <div class="text-right shrink-0 flex flex-col items-end gap-2">
+                            <span class="text-xs text-gray-400 whitespace-nowrap">${formatTime(n.created_at)}</span>
+                            ${action ? `<span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700">${action[0]}</span>` : ''}
+                        </div>
+                    </div>`;
+            });
+            list.innerHTML = html;
         }
 
-        async function markRead(id, alreadyRead) {
-            if (alreadyRead) return;
-            await fetch(`${API_URL}/notifications/${id}/read`, { method: 'POST' });
-            loadNotifications();
+        // 메시지 앞부분을 제목처럼, 나머지를 설명처럼 보여 준다 (문장이 짧으면 제목만 나온다)
+        function splitMessage(message) {
+            const m = message || '';
+            const idx = m.indexOf(': ');
+            if (idx > -1 && idx < 20) return [m.slice(0, idx), m.slice(idx + 2)];
+            return [m, ''];
+        }
+
+        async function handleRowClick(id, alreadyRead, link) {
+            if (!alreadyRead) await fetch(`${API_URL}/notifications/${id}/read`, { method: 'POST' });
+            if (link) { window.location.href = link; return; }
+            if (!alreadyRead) loadNotifications();
         }
 
         async function markAllRead() {
@@ -107,7 +321,5 @@
         function logout() { if (confirm('로그아웃하시겠습니까?')) { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; } }
         window.addEventListener('load', checkAuth);
     </script>
-    <script src="art.js"></script>
-    <script>ART.placeScene('notify');</script>
 </body>
 </html>
