@@ -257,6 +257,24 @@
         .sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
         .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
         .cm-metric-sub { font-size: 14px; font-weight: 700; color: #374151; margin-top: 2px; }
+        .cm-search { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; background: white; border: 1px solid var(--border); border-radius: 16px; padding: 16px 20px; margin-bottom: 18px; }
+        .cm-field { display: flex; flex-direction: column; gap: 6px; }
+        .cm-label { font-size: 12px; font-weight: 700; color: #374151; }
+        .cm-field input, .cm-field select { height: 40px; padding: 0 10px; border: 1px solid #D6D0C4; border-radius: 10px; font-size: 14px; background: white; }
+        .cm-range { display: flex; align-items: center; gap: 8px; }
+        .cm-search-btn { height: 44px; padding: 0 28px; border: none; border-radius: 12px; background: #1F6FD1; color: white; font-size: 15px; font-weight: 700; cursor: pointer; }
+        .cm-chips { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+        .cm-chip { padding: 10px 18px; border: none; border-radius: 12px; background: #EEF6F1; color: #15803D; font-size: 14px; font-weight: 700; cursor: pointer; }
+        .cm-chip:nth-child(3) { background: #FDF6EC; color: #B45309; }
+        .cm-chip:nth-child(4) { background: #FBEAEA; color: #B91C1C; }
+        .cm-chip.active { outline: 2px solid #1F6FD1; outline-offset: 1px; }
+        .cm-chip b { font-weight: 800; }
+        .cm-spacer { flex: 1 1 auto; }
+        .cm-tool { padding: 10px 16px; border: 1px solid #C9D8EE; border-radius: 12px; background: white; color: #1F6FD1; font-size: 14px; font-weight: 700; cursor: pointer; }
+        .cm-tool.primary { background: #1F6FD1; color: white; border-color: #1F6FD1; }
+        .cm-tool.clean { background: #B5532F; color: white; border-color: #B5532F; }
+        .svc-chip { display: inline-block; padding: 4px 10px; border-radius: 8px; background: #EEF2FF; color: #3730A3; font-size: 12px; font-weight: 700; }
+        @media print { .sidebar, .topbar, .cm-search, .cm-chips, .cm-features, .cm-banner, .cm-metrics, .action-buttons { display: none !important; } .main-layout { margin-left: 0; } }
         @media (max-width: 900px) { .cm-metrics, .cm-features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
         .status-badge {
@@ -405,15 +423,30 @@
                 </button>
             </div>
 
-            <!-- Filters -->
-            <div class="filter-section">
-                <button class="filter-btn active" onclick="filterByStatus('all')">전체</button>
-                <button class="filter-btn" onclick="filterByStatus('pending')"> 검토대기</button>
-                <button class="filter-btn" onclick="filterByStatus('approved')"> 승인</button>
-                <button class="filter-btn" onclick="filterByStatus('submitted_to_nhis')"> 공단청구</button>
-                <button class="filter-btn" onclick="filterByStatus('reimbursed')"> 정산</button>
-                <button class="filter-btn" onclick="filterByStatus('rejected')"> 반려</button>
-                <button class="filter-btn" onclick="approveCleanBilling()" style="background: #B5532F; color: white;"> 정상 건 일괄 승인</button>
+            <!-- 검색 -->
+            <div class="cm-search">
+                <div class="cm-field"><span class="cm-label">청구 기간</span>
+                    <div class="cm-range"><input type="date" id="fFrom"><span>~</span><input type="date" id="fTo"></div></div>
+                <div class="cm-field"><span class="cm-label">이용자</span>
+                    <select id="fResident"><option value="">전체</option></select></div>
+                <div class="cm-field"><span class="cm-label">상태</span>
+                    <select id="fStatus"><option value="">전체</option><option value="pending">검토 중</option><option value="approved">승인 완료</option><option value="submitted_to_nhis">공단 청구</option><option value="reimbursed">정산 완료</option><option value="rejected">반려</option></select></div>
+                <div class="cm-field"><span class="cm-label">서비스 유형</span>
+                    <select id="fService"><option value="">전체</option><option value="basic_care">기본 요양</option><option value="meal_service">식사 서비스</option><option value="medical_care">의료 처치</option><option value="emergency">응급 대응</option></select></div>
+                <button class="cm-search-btn" onclick="applyFilters()">검색</button>
+            </div>
+
+            <!-- 상태 칩과 상단 도구 -->
+            <div class="cm-chips">
+                <button class="cm-chip active" onclick="filterByStatus('all')">전체 <b id="chipAll">(0)</b></button>
+                <button class="cm-chip" onclick="filterByStatus('approved')">승인 완료 <b id="chipApproved">(0)</b></button>
+                <button class="cm-chip" onclick="filterByStatus('pending')">검토 중 <b id="chipPending">(0)</b></button>
+                <button class="cm-chip" onclick="filterByStatus('rejected')">반려 <b id="chipRejected">(0)</b></button>
+                <span class="cm-spacer"></span>
+                <button class="cm-tool" onclick="exportCsv()">엑셀 다운로드</button>
+                <button class="cm-tool primary" onclick="transmitToNhis()">공단 전송</button>
+                <button class="cm-tool" onclick="window.print()">청구서 인쇄</button>
+                <button class="cm-tool clean" onclick="approveCleanBilling()">정상 건 일괄 승인</button>
             </div>
 
             <!-- Table -->
@@ -421,11 +454,12 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>날짜</th>
-                            <th>요양사</th>
+                            <th>청구번호</th>
                             <th>이용자</th>
-                            <th>서비스</th>
-                            <th style="text-align: right;">금액</th>
+                            <th>서비스 기간</th>
+                            <th>방문횟수</th>
+                            <th>서비스 유형</th>
+                            <th style="text-align: right;">청구금액</th>
                             <th>상태</th>
                             <th>관리</th>
                         </tr>
@@ -482,6 +516,94 @@
 
         let currentUser = null;
         let allBillings = [];
+        let residentMapGlobal = {};
+
+        function claimNumber(record) {
+            const d = new Date(record.recorded_date);
+            return `CLM-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}-${String(record.id).padStart(3, '0')}`;
+        }
+
+        // 서비스 기간: 기록이 있는 달의 1일부터 말일까지
+        function periodLabel(dateStr) {
+            const d = new Date(dateStr);
+            const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            return `${m}/01 ~ ${m}/${String(last).padStart(2, '0')}`;
+        }
+
+        // 같은 이용자·같은 달의 청구 건수를 방문 횟수로 본다
+        function visitCount(record) {
+            const d = new Date(record.recorded_date);
+            return allBillings.filter(r => {
+                const rd = new Date(r.recorded_date);
+                return r.resident_id === record.resident_id && rd.getFullYear() === d.getFullYear() && rd.getMonth() === d.getMonth();
+            }).length;
+        }
+
+        function fillResidentOptions(residents) {
+            const sel = document.getElementById('fResident');
+            const keep = sel.value;
+            sel.innerHTML = '<option value="">전체</option>' + residents.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            sel.value = keep;
+            residentMapGlobal = {};
+            residents.forEach(r => { residentMapGlobal[r.id] = `${r.name} (${r.care_grade}등급 · ${r.client_type})`; });
+        }
+
+        // 칩 상태와 검색 조건을 함께 적용한 목록
+        function currentView(list) {
+            const get = id => document.getElementById(id)?.value || '';
+            const from = get('fFrom'), to = get('fTo'), resident = get('fResident'), svc = get('fService'), st = get('fStatus');
+            return list.filter(r => {
+                const d = new Date(r.recorded_date);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                if (from && key < from) return false;
+                if (to && key > to) return false;
+                if (resident && String(r.resident_id) !== resident) return false;
+                if (svc && r.service_type !== svc) return false;
+                if (st && r.approval_status !== st) return false;
+                if (currentFilter !== 'all' && r.approval_status !== currentFilter) return false;
+                return true;
+            });
+        }
+
+        function applyFilters() {
+            renderBillingTable(currentView(allBillings), residentMapGlobal);
+        }
+
+        // 화면에 보이는 목록을 CSV로 내려받는다 (엑셀에서 열 수 있다)
+        function exportCsv() {
+            const rows = currentView(allBillings);
+            if (rows.length === 0) { alert('내려받을 청구 기록이 없습니다'); return; }
+            const header = ['청구번호', '이용자', '서비스 기간', '방문횟수', '서비스 유형', '청구금액', '상태'];
+            const lines = rows.map(r => [
+                claimNumber(r), residentMapGlobal[r.resident_id] || `ID ${r.resident_id}`, periodLabel(r.recorded_date),
+                visitCount(r), getServiceLabel(r.service_type), r.amount || 0, getStatusLabel(r.approval_status)
+            ]);
+            const csv = [header, ...lines].map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `청구목록_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        // 승인 완료 건을 건강보험공단에 청구한다 (건별 청구 API를 사용)
+        async function transmitToNhis() {
+            const targets = currentView(allBillings).filter(r => r.approval_status === 'approved');
+            if (targets.length === 0) { alert('공단에 전송할 승인 완료 건이 없습니다'); return; }
+            if (!confirm(`승인 완료 ${targets.length}건을 건강보험공단에 전송합니다. 계속할까요?`)) return;
+            let sent = 0;
+            for (const r of targets) {
+                const res = await fetch(`${API_URL}/billing/${r.id}/submit-to-nhis`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: currentUser.role })
+                });
+                if (res.ok) sent++;
+            }
+            alert(`${sent}건을 건강보험공단에 전송했습니다`);
+            loadBillingRecords();
+        }
         let currentFilter = 'all';
         let currentTab = 'current';  // 'current' or 'archived'
 
@@ -567,6 +689,10 @@
                 document.getElementById('submittedToNhisCount').textContent = submittedToNhisCount;
                 document.getElementById('reimbursedCount').textContent = reimbursedCount;
                 document.getElementById('rejectedCount').textContent = rejectedCount;
+                document.getElementById('chipAll').textContent = `(${totalCount})`;
+                document.getElementById('chipApproved').textContent = `(${approvedCount})`;
+                document.getElementById('chipPending').textContent = `(${pendingCount})`;
+                document.getElementById('chipRejected').textContent = `(${rejectedCount})`;
 
                 console.log('📊 통계 업데이트:', {
                     total: totalCount,
@@ -587,7 +713,8 @@
                     residentMap[r.id] = `${r.name} (${r.care_grade}등급 · ${r.client_type})`;
                 });
 
-                renderBillingTable(allBillings, residentMap);
+                fillResidentOptions(residents);
+                renderBillingTable(currentView(allBillings), residentMap);
                 console.log('✅ 청부 기록 로드 완료:', allBillings.length + '건');
             } catch (error) {
                 console.error('❌ 청부 기록 로드 실패:', error);
@@ -608,7 +735,7 @@
             if (records.length === 0) {
                 html = `
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
+                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
                             청부 기록이 없습니다
                         </td>
                     </tr>
@@ -653,11 +780,12 @@
 
                     html += `
                         <tr>
-                            <td>${recordedDate}</td>
-                            <td>${record.caregiver_name || '미등록'}</td>
+                            <td>${claimNumber(record)}</td>
                             <td>${residentName}</td>
-                            <td>${serviceLabel}</td>
-                            <td style="text-align: right;">${record.amount?.toLocaleString() || '0'}원</td>
+                            <td>${periodLabel(record.recorded_date)}</td>
+                            <td>${visitCount(record)}회</td>
+                            <td><span class="svc-chip">${serviceLabel}</span></td>
+                            <td style="text-align: right;">₩${(record.amount || 0).toLocaleString()}</td>
                             <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
                             <td>${actionHtml || '-'}</td>
                         </tr>
@@ -670,12 +798,10 @@
 
         async function filterByStatus(status) {
             currentFilter = status;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            document.querySelectorAll('.cm-chip').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
 
-            const filtered = currentFilter === 'all'
-                ? allBillings
-                : allBillings.filter(b => b.approval_status === currentFilter);
+            const filtered = currentView(allBillings);
 
             console.log('🔍 필터:', {
                 status: currentFilter,
@@ -948,10 +1074,8 @@
                     console.log('✅ 청부 데이터 갱신:', allBillings.length + '건');
                 }
 
-                // 현재 필터 유지하면서 재렌더링
-                const filtered = currentFilter === 'all'
-                    ? allBillings
-                    : allBillings.filter(b => b.approval_status === currentFilter);
+                // 현재 필터와 검색 조건을 유지하면서 재렌더링
+                const filtered = currentView(allBillings);
 
                 console.log('🔍 필터링 결과:', {
                     filter: currentFilter,
@@ -1003,9 +1127,9 @@
             event.target.style.color = '#3b82f6';
             event.target.style.borderBottomColor = '#3b82f6';
 
-            // 필터 버튼도 초기화
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.filter-btn')[0].classList.add('active');  // 첫 번째 '전체' 버튼 활성화
+            // 칩 선택도 '전체'로 되돌린다
+            document.querySelectorAll('.cm-chip').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.cm-chip')[0].classList.add('active');
 
             // 데이터 새로 로드 (이 과정에서 통계도 자동으로 업데이트됨)
             loadBillingRecords();
