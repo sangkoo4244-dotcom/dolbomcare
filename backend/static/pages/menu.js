@@ -62,13 +62,13 @@ const SIDEBAR_MENUS = {
     center_manager: [
         { href: 'dashboard.html', icon: 'dashboard', label: '대시보드' },
         { href: 'resident_management.html', icon: 'residents', label: '이용자관리' },
+        { href: 'guardian_management.html', icon: 'guardian', label: '보호자 관리' },
         { href: 'voice_record.html', icon: 'voice', label: '음성 기록' },
         { href: 'schedule_approval.html', icon: 'schedule_check', label: '방문계획 승인' },
         { href: 'billing_management.html', icon: 'billing', label: '청부관리' },
         { href: 'staff_management.html', icon: 'staff', label: '직원관리' },
         { href: 'monthly_settlement.html', icon: 'settlement', label: '월별정산' },
         { href: 'profit_analysis.html', icon: 'profit', label: '수익분석' },
-        { href: 'guardian_management.html', icon: 'guardian', label: '보호자 관리' },
         { href: 'statement_confirm.html', icon: 'stamp', label: '급여 확정' },
         { href: 'messages.html', icon: 'messages', label: '보호자 소통' }
     ]
