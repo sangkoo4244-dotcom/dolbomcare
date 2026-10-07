@@ -11,51 +11,91 @@
         main { font-size: 18px; }
         main .text-xs { font-size: 15px !important; }
         main .text-sm { font-size: 17px !important; }
-        main h1 { font-size: 32px !important; }
-        main h2 { font-size: 24px !important; }
+        .g-sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
+        .g-nav-item { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-radius: 12px; color: rgba(255,255,255,0.85); font-size: 16px; font-weight: 600; }
+        .g-nav-item.active { background: #B5532F; color: #fff; }
+        .g-pill { display: inline-block; padding: 6px 14px; border-radius: 10px; font-size: 15px; font-weight: 700; }
+        .g-icon { object-fit: contain; mix-blend-mode: multiply; }
     </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
-        <aside class="w-72 bg-gradient-to-b from-gray-800 to-gray-900 text-white fixed h-screen overflow-y-auto">
-            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
-                <div class="text-3xl"></div>
-                <div><div class="text-lg font-bold">돌봄케어</div><div class="text-xs text-gray-400">Care Management</div></div>
+        <aside class="g-sidebar w-72 text-white fixed h-screen overflow-y-auto flex flex-col">
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div class="text-lg font-bold">돌봄케어</div>
+                <div class="text-xs text-white/60 ml-1">Care Management</div>
             </div>
             <nav id="navContent" class="p-4"></nav>
+            <img src="assets/user_design/sidebar_care_landscape.png" alt="" class="w-full h-auto mt-auto">
         </aside>
         <main class="ml-72 w-full flex flex-col">
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-bold text-gray-900">이용자 방문 기록</h1>
+                <h1 class="text-3xl font-bold text-[#1E3A5F]">이용자 방문 기록</h1>
                 <div class="flex items-center gap-6">
-                    <div class="text-right"><div class="text-sm font-semibold text-gray-900" id="userName">사용자</div><div class="text-xs text-gray-500">보호자</div></div>
-                    <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
+                    <img src="assets/user_design/28_top_notification_icon.png" alt="" class="w-7 h-7 object-contain">
+                    <div class="flex items-center gap-3">
+                        <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
+                        <span id="userName" class="text-base font-bold text-gray-900">보호자</span>
+                        <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                    <button onclick="logout()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:border-red-500 hover:text-red-600 transition">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+                        로그아웃
+                    </button>
                 </div>
             </div>
             <div class="flex-1 overflow-y-auto p-8">
-                <div id="homeArt" class="mb-4" aria-hidden="true"></div>
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-6">
-                    <label class="text-sm font-semibold text-gray-700">이용자 선택
-                        <select id="residentSelect" onchange="loadVisits()" class="ml-2 border border-gray-300 rounded-lg px-3 py-2"></select>
+                <div class="rounded-2xl overflow-hidden mb-5">
+                    <img src="assets/user_design/guardian_banner.png" alt="" class="w-full h-auto block">
+                </div>
+
+                <!-- 이용자 선택 -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-5 flex items-center gap-5 flex-wrap">
+                    <img src="assets/user_design/guardian_select_people.png" alt="" class="w-20 h-20 g-icon">
+                    <label class="text-lg font-bold text-gray-800 flex items-center gap-4">이용자 선택
+                        <select id="residentSelect" onchange="loadVisits()" class="border border-gray-300 rounded-xl px-4 py-3 text-lg min-w-[260px] bg-white"></select>
                     </label>
-                    <div id="emptyNotice" class="hidden mt-4 text-gray-500">
-                        <div id="emptyArt"></div>
-                        <p>연결된 이용자가 없습니다. 센터에서 승인이 완료되면 여기에 표시됩니다.</p>
+                    <div class="ml-auto hidden md:flex items-center gap-3">
+                        <img src="assets/user_design/guardian_family_art.png" alt="" class="h-20 w-auto g-icon">
                     </div>
                 </div>
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-2">최근 14일 방문 기록</h2>
-                    <p class="text-sm text-gray-500 mb-6">방문 시각, 제공 내용, 컨디션, 요양보호사 메모를 보여 줍니다. 비용 정보는 보이지 않습니다.</p>
-                    <ul id="visitList" class="divide-y divide-gray-100"></ul>
+                <div id="emptyNotice" class="hidden bg-white rounded-2xl border border-gray-200 p-8 mb-5 text-center text-gray-500 text-lg">
+                    연결된 이용자가 없습니다. 센터에서 승인이 완료되면 여기에 표시됩니다.
+                </div>
+
+                <!-- 최근 방문 기록 -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+                    <div class="flex items-center gap-3 mb-2">
+                        <svg class="w-8 h-8 text-[#F97316]" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2zm13 8H4v10h16V10z"/></svg>
+                        <h2 class="text-2xl font-extrabold text-gray-900">최근 14일 방문 기록</h2>
+                    </div>
+                    <p class="text-base text-gray-500 mb-6 ml-11">방문 시각, 제공 내용, 컨디션, 요양보호사 메모를 보여 줍니다. 비용 정보는 보이지 않습니다.</p>
+                    <ul id="visitList" class="space-y-4"></ul>
                 </div>
             </div>
         </main>
     </div>
     <script src="menu.js"></script>
-    <script src="art.js"></script>
     <script>
         let currentUser = null;
         const API_URL = '/api/v1';
+
+        // 제공 내용 태그 색 (시안 순서)
+        const CHIP_STYLES = [
+            'bg-rose-50 text-rose-600',
+            'bg-orange-50 text-orange-600',
+            'bg-blue-50 text-blue-600',
+            'bg-purple-50 text-purple-600',
+            'bg-emerald-50 text-emerald-600'
+        ];
+
+        const CONDITION_STYLE = {
+            '좋음': { icon: 'guardian_cond_good.png', cls: 'bg-emerald-50 text-emerald-600' },
+            '보통': { icon: 'guardian_cond_neutral.png', cls: 'bg-yellow-50 text-yellow-700' },
+            '나쁨': { icon: 'guardian_cond_neutral.png', cls: 'bg-red-50 text-red-600' }
+        };
+
+        const WEEKDAY = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
 
         function checkAuth() {
             const token = localStorage.getItem('access_token');
@@ -63,9 +103,31 @@
             if (!token || !user.id) { window.location.href = './login.html'; return; }
             if (user.role !== 'guardian') { window.location.href = './dashboard.html'; return; }
             currentUser = user;
-            document.getElementById('userName').textContent = user.full_name || '보호자';
+            document.getElementById('userName').textContent = `${user.full_name || '보호자'}님`;
             renderSidebar();
+            applyNavIcons();
             loadResidents();
+        }
+
+        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
+        const NAV_ICON_FILES = {
+            '대시보드': '20_nav_dashboard_icon.png',
+            '이용자관리': '21_nav_user_icon.png',
+            '음성 기록': '22_nav_voice_icon.png',
+            '방문계획 승인': '23_nav_service_plan_icon.png',
+            '청부관리': '24_nav_billing_icon.png',
+            '수익분석': '25_nav_statistics_icon.png',
+            '알림': '26_nav_notice_icon.png',
+            '설정': '27_nav_settings_icon.png',
+        };
+
+        function applyNavIcons() {
+            document.querySelectorAll('#navContent a, #navContent .side-item, #navContent [class*="item"]').forEach(item => {
+                const label = item.querySelector('span:last-child')?.textContent.trim() || item.textContent.trim();
+                const file = NAV_ICON_FILES[label];
+                const icon = item.querySelector('.side-icon');
+                if (file && icon) icon.innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
+            });
         }
 
         function escapeHtml(text) {
@@ -74,15 +136,73 @@
             return div.innerHTML;
         }
 
+        // 서버 시각 "09:00"을 "오전 09:00"으로 바꾼다
+        function timeLabel(hhmm) {
+            const [h, m] = (hhmm || '').split(':').map(Number);
+            if (Number.isNaN(h)) return escapeHtml(hhmm);
+            const period = h < 12 ? '오전' : '오후';
+            const hour12 = h % 12 === 0 ? 12 : h % 12;
+            return `${period} ${String(hour12).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
         async function loadResidents() {
             const d = await (await fetch(`${API_URL}/guardian/my-residents`)).json();
             const select = document.getElementById('residentSelect');
             const residents = d.residents || [];
             document.getElementById('emptyNotice').classList.toggle('hidden', residents.length > 0);
-            document.getElementById('emptyArt').innerHTML = ART.home;
-            document.getElementById('homeArt').innerHTML = ART.homeScene;
             select.innerHTML = residents.map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
             if (residents.length) loadVisits();
+        }
+
+        function visitCard(v) {
+            const d = new Date(`${v.date}T00:00:00`);
+            const weekday = WEEKDAY[d.getDay()];
+            const dayColor = d.getDay() === 0 ? 'text-red-500' : d.getDay() === 6 ? 'text-blue-600' : 'text-gray-500';
+            const dayBox = d.getDay() === 0 ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-200';
+            const chips = (v.care_items || []).map((c, i) =>
+                `<span class="g-pill ${CHIP_STYLES[i % CHIP_STYLES.length]}">${escapeHtml(c)}</span>`).join('') || '<span class="text-gray-400">-</span>';
+            const cond = CONDITION_STYLE[v.condition] || { icon: 'guardian_cond_neutral.png', cls: 'bg-gray-100 text-gray-500' };
+            return `
+                <li class="grid grid-cols-[120px_1fr] gap-4 items-stretch">
+                    <div class="${dayBox} border rounded-xl flex flex-col items-center justify-center py-4">
+                        <span class="text-base font-semibold text-gray-700">${d.getMonth() + 1}월</span>
+                        <span class="text-3xl font-extrabold text-gray-900">${String(d.getDate()).padStart(2, '0')}일</span>
+                        <span class="text-sm font-semibold ${dayColor}">${weekday}</span>
+                    </div>
+                    <div class="border border-gray-200 rounded-xl p-5">
+                        <div class="grid grid-cols-[170px_1fr_120px_220px] gap-4 items-center">
+                            <div class="flex items-center gap-3 border-r border-gray-200 pr-4">
+                                <img src="assets/user_design/guardian_clock.png" alt="" class="w-9 h-9 g-icon">
+                                <div class="text-lg font-bold text-gray-900">${timeLabel(v.time)}</div>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <img src="assets/user_design/guardian_care_heart.png" alt="" class="w-9 h-9 g-icon">
+                                    <span class="text-sm font-semibold text-gray-600">제공 내용</span>
+                                </div>
+                                <div class="flex flex-wrap gap-2">${chips}</div>
+                            </div>
+                            <div class="flex items-center gap-3 border-l border-gray-200 pl-4">
+                                <img src="assets/user_design/${cond.icon}" alt="" class="w-10 h-10 g-icon">
+                                <div>
+                                    <div class="text-sm font-semibold text-gray-600">컨디션</div>
+                                    <span class="g-pill ${cond.cls}">${escapeHtml(v.condition) || '-'}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 border-l border-gray-200 pl-4">
+                                <img src="assets/user_design/${v.caregiver_name ? (v.visit_index % 2 ? 'guardian_caregiver_orange.png' : 'guardian_caregiver_purple.png') : 'guardian_caregiver_purple.png'}" alt="" class="w-10 h-10 g-icon">
+                                <div>
+                                    <div class="text-sm font-semibold text-gray-600 whitespace-nowrap">담당 요양보호사</div>
+                                    <div class="text-lg font-bold text-gray-900">${escapeHtml(v.caregiver_name) || '-'}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 bg-gray-50 rounded-lg p-4 flex gap-3 items-start">
+                            <img src="assets/user_design/guardian_memo.png" alt="" class="w-7 h-7 g-icon shrink-0">
+                            <div class="text-base text-gray-700"><span class="font-bold text-gray-900 mr-2">메모</span>${escapeHtml(v.notes) || '메모 없음'}</div>
+                        </div>
+                    </div>
+                </li>`;
         }
 
         async function loadVisits() {
@@ -93,16 +213,7 @@
             if (!r.ok) { list.innerHTML = '<li class="py-8 text-center text-gray-400">기록을 불러올 수 없습니다</li>'; return; }
             const d = await r.json();
             if (!d.visits.length) { list.innerHTML = '<li class="py-8 text-center text-gray-400">최근 14일 기록이 없습니다</li>'; return; }
-            list.innerHTML = d.visits.map(v => `
-                <li class="py-5">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="font-bold text-gray-900">${escapeHtml(v.date)} ${escapeHtml(v.time)}</span>
-                        <span class="text-sm text-gray-500">담당 ${escapeHtml(v.caregiver_name)}</span>
-                    </div>
-                    <div class="text-sm text-gray-700 mb-1">제공 내용: ${v.care_items.map(escapeHtml).join(', ') || '-'}</div>
-                    <div class="text-sm text-gray-700 mb-1">컨디션: ${escapeHtml(v.condition) || '-'}</div>
-                    <div class="text-sm text-gray-600 bg-gray-50 rounded p-3 mt-2">${escapeHtml(v.notes) || '메모 없음'}</div>
-                </li>`).join('');
+            list.innerHTML = d.visits.map((v, i) => visitCard({ ...v, visit_index: i })).join('');
         }
 
         function logout() { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; }
