@@ -335,10 +335,10 @@
             const prevAmount = billingAmountOfMonth(prevYm);
             const prev = prevConfirmed || (prevAmount ? calcSalary(prevAmount) : null);
             const momEl = document.getElementById('momText');
-            if (prev && prev.net) {
+            if (prev) {
                 const diff = c.net - prev.net;
-                const pct = (diff / prev.net * 100).toFixed(1);
-                momEl.innerHTML = `<span class="${diff >= 0 ? 'text-red-600' : 'text-blue-600'}">${diff >= 0 ? '▲' : '▼'} ${Math.abs(diff).toLocaleString()}원 (${Math.abs(pct)}%)</span>`;
+                const pctText = prev.net ? ` (${Math.abs(diff / prev.net * 100).toFixed(1)}%)` : '';
+                momEl.innerHTML = `<span class="${diff >= 0 ? 'text-red-600' : 'text-blue-600'}">${diff >= 0 ? '▲' : '▼'} ${Math.abs(diff).toLocaleString()}원${pctText}</span>`;
             } else {
                 momEl.textContent = '전월 기록 없음';
                 momEl.className = 'text-base text-gray-400 mt-1';
