@@ -211,6 +211,13 @@
         .st-form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
         .st-detail-row { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px; }
         .st-detail-row span:first-child { color: #6B7280; }
+        .st-cert-title { font-size: 15px; font-weight: 800; color: #1F2937; margin: 18px 0 8px; }
+        .st-cert-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px; }
+        .st-muted { color: #9CA3AF; font-size: 14px; padding: 6px 0; }
+        .st-cert-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+        .st-cert-form input { height: 38px; padding: 0 10px; border: 1px solid #D6D0C4; border-radius: 10px; font-size: 14px; }
+        .st-cert-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: #374151; }
+        .st-cert-form .st-add-btn { grid-column: 1 / -1; }
         .st-features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
         .st-feature { display: flex; align-items: center; gap: 14px; padding: 18px 20px; background: white; border: 1px solid #e5e7eb; border-radius: 16px; }
         .st-feature img { width: 64px; height: 64px; object-fit: contain; flex: 0 0 auto; }
@@ -270,7 +277,7 @@
                 <div class="st-field"><span class="st-label">근무 상태</span>
                     <select id="statusFilter" onchange="filterStaff()"><option value="">전체</option><option value="active">근무 중</option><option value="leave">휴직</option><option value="inactive">비활성</option></select></div>
                 <div class="st-field"><span class="st-label">자격증 보유</span>
-                    <select disabled title="자격증 정보가 아직 등록되지 않았습니다"><option>전체</option></select></div>
+                    <select id="certFilter" onchange="filterStaff()"><option value="">전체</option><option value="has">보유</option><option value="none">미보유</option></select></div>
                 <button class="st-search-btn" onclick="filterStaff()">검색</button>
                 <button class="st-add-btn" onclick="document.getElementById('newStaffName').focus()">+ 직원 등록</button>
             </div>
@@ -470,11 +477,11 @@
                 ['연락처', s.phone || '-'],
                 ['긴급 연락처', s.emergency_contact || '-'],
                 ['입사일', s.hire_date || '-'],
-                ['근무 상태', STATUS_LABEL[statusOf(s)] || statusOf(s)],
-                ['자격증', '등록된 자격증이 없습니다']
+                ['근무 상태', STATUS_LABEL[statusOf(s)] || statusOf(s)]
             ];
             document.getElementById('staffModalTitle').textContent = '직원 상세';
             document.getElementById('staffModalBody').innerHTML = rows.map(([k, v]) => `<div class="st-detail-row"><span>${k}</span><span>${escapeAttr(v)}</span></div>`).join('')
+                + certSectionHtml(s)
                 + `<div class="st-form-actions"><button class="st-act" onclick="closeStaffModal()">닫기</button></div>`;
             document.getElementById('staffModal').hidden = false;
         }
@@ -483,14 +490,92 @@
             document.getElementById('staffModal').hidden = true;
         }
 
+        // 자격증: 센터 전체 목록을 한 번 받아 직원별로 나눠 쓴다
+        let certMap = {};
+
+        async function loadCertificates() {
+            try {
+                const r = await fetch(`${API_URL}/certificates/?center_id=${currentUser?.center_id || 1}`);
+                const data = r.ok ? await r.json() : { certificates: [] };
+                certMap = {};
+                (data.certificates || []).forEach(c => {
+                    (certMap[c.user_id] = certMap[c.user_id] || []).push(c);
+                });
+            } catch (e) {
+                certMap = {};
+            }
+        }
+
+        function certSummary(s) {
+            const list = certMap[s.id] || [];
+            if (list.length === 0) return '-';
+            const first = list[0];
+            const label = first.grade ? `${first.name} ${first.grade}` : first.name;
+            return list.length > 1 ? `${label} 외 ${list.length - 1}` : label;
+        }
+
+        function certSectionHtml(s) {
+            const list = certMap[s.id] || [];
+            const items = list.length
+                ? list.map(c => `<div class="st-cert-row"><span>${escapeAttr(c.name)}${c.grade ? ' ' + escapeAttr(c.grade) : ''} · 만료 ${c.expires_on || '-'}</span><button class="st-act" onclick="deleteCert(${c.id}, ${s.id})">삭제</button></div>`).join('')
+                : '<p class="st-muted">등록된 자격증이 없습니다</p>';
+            return `<h4 class="st-cert-title">자격증</h4>${items}
+                <div class="st-cert-form">
+                    <input id="cName" placeholder="자격증 이름 (예: 요양보호사)">
+                    <input id="cGrade" placeholder="등급 (예: 1급)">
+                    <label>발급일<input id="cIssued" type="date"></label>
+                    <label>만료일<input id="cExpires" type="date"></label>
+                    <button class="st-add-btn" onclick="addCert(${s.id})">자격증 추가</button>
+                </div>`;
+        }
+
+        async function addCert(userId) {
+            const body = {
+                user_id: userId,
+                name: document.getElementById('cName').value.trim(),
+                grade: document.getElementById('cGrade').value.trim() || null,
+                issued_on: document.getElementById('cIssued').value || null,
+                expires_on: document.getElementById('cExpires').value || null
+            };
+            try {
+                const r = await fetch(`${API_URL}/certificates/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!r.ok) {
+                    const e = await r.json().catch(() => ({}));
+                    throw new Error(e.detail || '등록 실패');
+                }
+                await loadStaffData();
+                openDetailModal(userId);
+            } catch (e) {
+                alert('자격증 등록 중 오류가 발생했습니다: ' + e.message);
+            }
+        }
+
+        async function deleteCert(certId, userId) {
+            if (!confirm('이 자격증을 삭제하시겠습니까?')) return;
+            try {
+                const r = await fetch(`${API_URL}/certificates/${certId}`, { method: 'DELETE' });
+                if (!r.ok) throw new Error('삭제 실패');
+                await loadStaffData();
+                openDetailModal(userId);
+            } catch (e) {
+                alert('자격증 삭제 중 오류가 발생했습니다: ' + e.message);
+            }
+        }
+
         function filterStaff() {
             const q = document.getElementById('staffSearch').value.trim();
             const role = document.getElementById('roleFilter').value;
             const status = document.getElementById('statusFilter').value;
+            const cert = document.getElementById('certFilter').value;
             renderStaff(staffList.filter(s =>
                 (!q || (s.full_name || '').includes(q) || (s.email || '').includes(q)) &&
                 (!role || s.role === role) &&
-                (!status || statusOf(s) === status)));
+                (!status || statusOf(s) === status) &&
+                (!cert || (cert === 'has') === ((certMap[s.id] || []).length > 0))));
         }
 
         function renderStaff(list) {
@@ -508,7 +593,7 @@
                         <td><div class="st-name"><span class="st-initial">${name.charAt(0)}</span>${name}</div></td>
                         <td>${jobOf(s)}</td>
                         <td>${s.phone || '-'}</td>
-                        <td>-</td>
+                        <td>${certSummary(s)}</td>
                         <td>${s.hire_date || '-'}</td>
                         <td><span class="st-work st-${statusOf(s)}">${STATUS_LABEL[statusOf(s)] || statusOf(s)}</span></td>
                         <td>
@@ -539,6 +624,7 @@
 
                 staffList = staff;
                 updateStaffStats(staff);
+                await loadCertificates();
                 renderStaff(staff);
 
             } catch (error) {
