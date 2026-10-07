@@ -171,7 +171,8 @@
         /* 직원 관리 시안 배치 */
         .sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); display: flex; flex-direction: column; }
         .sidebar-landscape { display: block; width: 100%; height: auto; margin-top: auto; }
-        .st-act { padding: 8px 14px; border: 1px solid #D6D0C4; border-radius: 10px; background: white; color: #9CA3AF; font-size: 13px; font-weight: 600; cursor: not-allowed; margin-right: 6px; }
+        .st-act { padding: 8px 14px; border: 1px solid #D6D0C4; border-radius: 10px; background: white; color: #374151; font-size: 13px; font-weight: 600; cursor: pointer; margin-right: 6px; }
+        .st-act:hover { border-color: #B5532F; color: #B5532F; }
         .st-cal { width: 36px; height: 36px; border: 1px solid #F3C9A9; border-radius: 10px; background: #FFF7F0; cursor: not-allowed; vertical-align: middle; }
         .st-cal img { width: 22px; height: 22px; object-fit: contain; display: block; margin: 0 auto; }
         .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
@@ -196,6 +197,20 @@
         .st-initial { width: 34px; height: 34px; border-radius: 50%; background: #EAF6F0; color: #15803D; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; }
         .st-work { display: inline-block; padding: 4px 12px; border-radius: 10px; background: #DCFCE7; color: #15803D; font-size: 12px; font-weight: 700; }
         .st-pw-btn { padding: 6px 12px; background: #e5e7eb; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .st-leave { background: #FEF3C7; color: #B45309; }
+        .st-inactive { background: #FBEAEA; color: #B91C1C; }
+        .st-modal[hidden] { display: none; }
+        .st-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .st-modal-box { background: white; border-radius: 16px; padding: 28px; width: min(480px, 92vw); max-height: 90vh; overflow-y: auto; }
+        .st-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .st-modal-head h3 { font-size: 20px; font-weight: 800; color: #1F2937; }
+        .st-modal-x { border: none; background: none; font-size: 26px; cursor: pointer; color: #6B7280; }
+        .st-form { display: flex; flex-direction: column; gap: 12px; }
+        .st-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #374151; }
+        .st-form input, .st-form select { height: 40px; padding: 0 10px; border: 1px solid #D6D0C4; border-radius: 10px; font-size: 14px; }
+        .st-form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+        .st-detail-row { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px; }
+        .st-detail-row span:first-child { color: #6B7280; }
         .st-features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
         .st-feature { display: flex; align-items: center; gap: 14px; padding: 18px 20px; background: white; border: 1px solid #e5e7eb; border-radius: 16px; }
         .st-feature img { width: 64px; height: 64px; object-fit: contain; flex: 0 0 auto; }
@@ -253,7 +268,7 @@
                 <div class="st-field"><span class="st-label">직종</span>
                     <select id="roleFilter" onchange="filterStaff()"><option value="">전체</option><option value="caregiver">요양사</option><option value="center_manager">센터장</option></select></div>
                 <div class="st-field"><span class="st-label">근무 상태</span>
-                    <select id="statusFilter" onchange="filterStaff()"><option value="">전체</option><option value="active">근무 중</option><option value="inactive">비활성</option></select></div>
+                    <select id="statusFilter" onchange="filterStaff()"><option value="">전체</option><option value="active">근무 중</option><option value="leave">휴직</option><option value="inactive">비활성</option></select></div>
                 <div class="st-field"><span class="st-label">자격증 보유</span>
                     <select disabled title="자격증 정보가 아직 등록되지 않았습니다"><option>전체</option></select></div>
                 <button class="st-search-btn" onclick="filterStaff()">검색</button>
@@ -309,6 +324,13 @@
                 <div class="st-feature"><img src="assets/user_design/08_icon_certificate.png" alt=""><div><div class="st-feature-title">자격증 만료 알림</div><div class="st-feature-desc">자격증 만료일을 자동으로 알려 지속적인 관리를 지원합니다.</div></div></div>
                 <div class="st-feature"><img src="assets/user_design/09_icon_new_staff.png" alt=""><div><div class="st-feature-title">신규 직원 등록</div><div class="st-feature-desc">새로운 직원을 간편하게 등록하고 바로 업무에 배치할 수 있습니다.</div></div></div>
             </div>
+        </div>
+    </div>
+
+    <div id="staffModal" class="st-modal" hidden>
+        <div class="st-modal-box">
+            <div class="st-modal-head"><h3 id="staffModalTitle"></h3><button class="st-modal-x" onclick="closeStaffModal()" aria-label="닫기">×</button></div>
+            <div id="staffModalBody"></div>
         </div>
     </div>
 
@@ -370,6 +392,95 @@
             document.getElementById('staffTotal').textContent = staff.length;
             document.getElementById('staffCaregiver').textContent = staff.filter(s => s.role === 'caregiver').length;
             document.getElementById('staffAdmin').textContent = staff.filter(s => s.role === 'center_manager').length;
+            document.getElementById('staffNurse').textContent = staff.filter(s => (s.position || '').includes('간호')).length;
+        }
+
+        // 직종(직급)과 근무 상태: 저장된 값이 없으면 기존 역할과 활성 여부로 보여 준다
+        const JOB_OPTIONS = ['요양사', '간호(조무)사', '관리직'];
+        const STATUS_LABEL = { active: '근무 중', leave: '휴직', inactive: '비활성' };
+        let editingId = null;
+
+        function jobOf(s) {
+            if (s.position) return s.position;
+            return s.role === 'caregiver' ? '요양사' : '관리직';
+        }
+
+        function statusOf(s) {
+            if (s.employment_status) return s.employment_status;
+            return s.is_active === false ? 'inactive' : 'active';
+        }
+
+        const escapeAttr = v => String(v ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+        function openEditModal(id) {
+            const s = staffList.find(x => x.id === id);
+            if (!s) return;
+            editingId = id;
+            document.getElementById('staffModalTitle').textContent = '직원 정보 수정';
+            document.getElementById('staffModalBody').innerHTML = `
+                <div class="st-form">
+                    <label>이름<input id="eName" value="${escapeAttr(s.full_name)}"></label>
+                    <label>이메일<input id="eEmail" type="email" value="${escapeAttr(s.email)}"></label>
+                    <label>연락처<input id="ePhone" value="${escapeAttr(s.phone)}"></label>
+                    <label>입사일<input id="eHire" type="date" value="${escapeAttr(s.hire_date)}"></label>
+                    <label>직종<select id="eJob">${JOB_OPTIONS.map(j => `<option ${jobOf(s) === j ? 'selected' : ''}>${j}</option>`).join('')}</select></label>
+                    <label>근무 상태<select id="eStatus">${Object.entries(STATUS_LABEL).map(([k, v]) => `<option value="${k}" ${statusOf(s) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+                    <div class="st-form-actions">
+                        <button class="st-act" onclick="closeStaffModal()">취소</button>
+                        <button class="st-add-btn" onclick="saveStaffEdit()">저장</button>
+                    </div>
+                </div>`;
+            document.getElementById('staffModal').hidden = false;
+        }
+
+        async function saveStaffEdit() {
+            const body = {
+                full_name: document.getElementById('eName').value.trim(),
+                email: document.getElementById('eEmail').value.trim(),
+                phone: document.getElementById('ePhone').value.trim(),
+                hire_date: document.getElementById('eHire').value || null,
+                position: document.getElementById('eJob').value,
+                employment_status: document.getElementById('eStatus').value
+            };
+            try {
+                const r = await fetch(`${API_URL}/users/${editingId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!r.ok) {
+                    const e = await r.json().catch(() => ({}));
+                    throw new Error(e.detail || '저장 실패');
+                }
+                closeStaffModal();
+                alert('직원 정보를 수정했습니다');
+                loadStaffData();
+            } catch (e) {
+                alert('수정 중 오류가 발생했습니다: ' + e.message);
+            }
+        }
+
+        function openDetailModal(id) {
+            const s = staffList.find(x => x.id === id);
+            if (!s) return;
+            const rows = [
+                ['이름', s.full_name || '-'],
+                ['이메일', s.email || '-'],
+                ['직종', jobOf(s)],
+                ['연락처', s.phone || '-'],
+                ['긴급 연락처', s.emergency_contact || '-'],
+                ['입사일', s.hire_date || '-'],
+                ['근무 상태', STATUS_LABEL[statusOf(s)] || statusOf(s)],
+                ['자격증', '등록된 자격증이 없습니다']
+            ];
+            document.getElementById('staffModalTitle').textContent = '직원 상세';
+            document.getElementById('staffModalBody').innerHTML = rows.map(([k, v]) => `<div class="st-detail-row"><span>${k}</span><span>${escapeAttr(v)}</span></div>`).join('')
+                + `<div class="st-form-actions"><button class="st-act" onclick="closeStaffModal()">닫기</button></div>`;
+            document.getElementById('staffModal').hidden = false;
+        }
+
+        function closeStaffModal() {
+            document.getElementById('staffModal').hidden = true;
         }
 
         function filterStaff() {
@@ -379,7 +490,7 @@
             renderStaff(staffList.filter(s =>
                 (!q || (s.full_name || '').includes(q) || (s.email || '').includes(q)) &&
                 (!role || s.role === role) &&
-                (!status || (status === 'active') === (s.is_active !== false))));
+                (!status || statusOf(s) === status)));
         }
 
         function renderStaff(list) {
@@ -395,13 +506,13 @@
                         <td><input type="checkbox" aria-label="${name} 선택"></td>
                         <td>${i + 1}</td>
                         <td><div class="st-name"><span class="st-initial">${name.charAt(0)}</span>${name}</div></td>
-                        <td>${s.role === 'caregiver' ? '요양사' : '센터장'}</td>
+                        <td>${jobOf(s)}</td>
                         <td>${s.phone || '-'}</td>
                         <td>-</td>
                         <td>${s.hire_date || '-'}</td>
-                        <td><span class="st-work">${s.is_active === false ? '비활성' : '근무 중'}</span></td>
+                        <td><span class="st-work st-${statusOf(s)}">${STATUS_LABEL[statusOf(s)] || statusOf(s)}</span></td>
                         <td>
-                            <button class="st-act" disabled title="수정 화면은 아직 준비 중입니다">수정</button><button class="st-act" disabled title="상세 화면은 아직 준비 중입니다">상세보기</button><button class="st-cal" disabled title="근무 일정은 아직 준비 중입니다"><img src="assets/user_design/15_icon_calendar_action.png" alt=""></button>
+                            <button class="st-act" onclick="openEditModal(${s.id})">수정</button><button class="st-act" onclick="openDetailModal(${s.id})">상세보기</button><button class="st-cal" disabled title="근무 일정은 아직 준비 중입니다"><img src="assets/user_design/15_icon_calendar_action.png" alt=""></button>
                             <button class="st-pw-btn" onclick="resetPassword(${s.id}, '${name.replace(/'/g, '')}')">비밀번호 재설정</button>
                         </td>
                     </tr>`;
