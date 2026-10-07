@@ -254,6 +254,9 @@
         .cm-feature-title { font-size: 15px; font-weight: 700; color: #1F2937; }
         .cm-feature-desc { font-size: 13px; color: #6B7280; margin-top: 4px; line-height: 1.5; }
         .side-icon img { display: block; }
+        .sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
+        .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
+        .cm-metric-sub { font-size: 14px; font-weight: 700; color: #374151; margin-top: 2px; }
         @media (max-width: 900px) { .cm-metrics, .cm-features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
         .status-badge {
@@ -363,7 +366,7 @@
         <!-- Top Bar -->
         <div class="topbar">
             <div class="topbar-title">
-                <h1>청부 관리</h1>
+                <h1>청구 관리</h1>
             </div>
             <div class="user-menu">
                 <img src="assets/user_design/28_top_notification_icon.png" alt="" style="width:28px;height:28px;object-fit:contain;">
@@ -383,10 +386,10 @@
 
             <!-- Stats -->
             <div class="cm-metrics">
-                <div class="cm-metric" style="background:#EAF1FC;"><img src="assets/user_design/claim_metric_expected.png" alt=""><div><div class="cm-metric-label">이번 달 청구 예정</div><div class="cm-metric-value" id="totalCount">0</div></div></div>
-                <div class="cm-metric" style="background:#EAF6F0;"><img src="assets/user_design/claim_metric_approved.png" alt=""><div><div class="cm-metric-label">승인 완료</div><div class="cm-metric-value" id="approvedCount">0</div></div></div>
-                <div class="cm-metric" style="background:#FDF6EC;"><img src="assets/user_design/claim_metric_reviewing.png" alt=""><div><div class="cm-metric-label">검토 중</div><div class="cm-metric-value" id="pendingCount">0</div></div></div>
-                <div class="cm-metric" style="background:#FBEAEA;"><img src="assets/user_design/claim_metric_rejected.png" alt=""><div><div class="cm-metric-label">반려</div><div class="cm-metric-value" id="rejectedCount">0</div></div></div>
+                <div class="cm-metric" style="background:#EAF1FC;"><img src="assets/user_design/claim_metric_expected.png" alt=""><div><div class="cm-metric-label">이번 달 청구 예정</div><div class="cm-metric-value" id="totalCount">0</div><div class="cm-metric-sub" id="totalAmount">₩0</div></div></div>
+                <div class="cm-metric" style="background:#EAF6F0;"><img src="assets/user_design/claim_metric_approved.png" alt=""><div><div class="cm-metric-label">승인 완료</div><div class="cm-metric-value" id="approvedCount">0</div><div class="cm-metric-sub" id="approvedAmount">₩0</div></div></div>
+                <div class="cm-metric" style="background:#FDF6EC;"><img src="assets/user_design/claim_metric_reviewing.png" alt=""><div><div class="cm-metric-label">검토 중</div><div class="cm-metric-value" id="pendingCount">0</div><div class="cm-metric-sub" id="pendingAmount">₩0</div></div></div>
+                <div class="cm-metric" style="background:#FBEAEA;"><img src="assets/user_design/claim_metric_rejected.png" alt=""><div><div class="cm-metric-label">반려</div><div class="cm-metric-value" id="rejectedCount">0</div><div class="cm-metric-sub" id="rejectedAmount">₩0</div></div></div>
             </div>
             <!-- 공단청구·정산완료 수치는 아래 목록 필터에서 쓰이므로 화면에는 두지 않고 값만 갱신한다 -->
             <span id="submittedToNhisCount" hidden>0</span>
@@ -552,6 +555,12 @@
                 const reimbursedCount = activeOnly.filter(r => r.approval_status === 'reimbursed').length;
                 const rejectedCount = activeOnly.filter(r => r.approval_status === 'rejected').length;
 
+                const sumAmount = list => list.reduce((s, r) => s + (r.amount || 0), 0);
+                const money = n => `₩${n.toLocaleString()}`;
+                document.getElementById('totalAmount').textContent = money(sumAmount(activeOnly));
+                document.getElementById('approvedAmount').textContent = money(sumAmount(activeOnly.filter(r => r.approval_status === 'approved')));
+                document.getElementById('pendingAmount').textContent = money(sumAmount(activeOnly.filter(r => r.approval_status === 'pending')));
+                document.getElementById('rejectedAmount').textContent = money(sumAmount(activeOnly.filter(r => r.approval_status === 'rejected')));
                 document.getElementById('totalCount').textContent = totalCount;
                 document.getElementById('pendingCount').textContent = pendingCount;
                 document.getElementById('approvedCount').textContent = approvedCount;
