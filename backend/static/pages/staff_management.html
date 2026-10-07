@@ -283,11 +283,11 @@
                 <div class="st-field"><span class="st-label">자격증 보유</span>
                     <select id="certFilter" onchange="filterStaff()"><option value="">전체</option><option value="has">보유</option><option value="none">미보유</option></select></div>
                 <button class="st-search-btn" onclick="filterStaff()">검색</button>
-                <button class="st-add-btn" onclick="toggleAddStaff()">+ 직원 등록</button>
+                <button class="st-add-btn" onclick="document.getElementById('newStaffName').focus()">+ 직원 등록</button>
             </div>
 
             <div class="table-wrapper">
-                <div id="addStaffPanel" class="st-add-panel" hidden>
+                <div id="addStaffPanel" class="st-add-panel">
                     <label style="display: flex; flex-direction: column; font-size: 12px; gap: 4px;">이름
                         <input id="newStaffName" type="text" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 140px;">
                     </label>
@@ -304,6 +304,7 @@
                         </select>
                     </label>
                     <button onclick="addStaff()" style="padding: 9px 16px; background: #B5532F; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">직원 추가</button>
+                    <button type="button" onclick="resetAddStaffForm()" style="padding: 9px 16px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 6px; font-weight: 700; cursor: pointer;">초기화</button>
                 </div>
                 <table class="table">
                     <thead>
@@ -703,11 +704,10 @@
             }
         }
 
-        // 직원 등록 입력 줄은 평소에는 숨기고, '+ 직원 등록' 버튼으로 펼친다
-        function toggleAddStaff() {
-            const panel = document.getElementById('addStaffPanel');
-            panel.hidden = !panel.hidden;
-            if (!panel.hidden) document.getElementById('newStaffName').focus();
+        // 직원 등록 입력 줄의 값을 모두 지운다 (아이디·비밀번호 포함)
+        function resetAddStaffForm() {
+            ['newStaffName', 'newStaffEmail', 'newStaffPassword'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('newStaffRole').value = 'caregiver';
         }
 
         async function addStaff() {
