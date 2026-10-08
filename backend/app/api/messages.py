@@ -79,6 +79,7 @@ def _unread_for(db: Session, user: User, resident_id: int) -> int:
 def _to_dict(m: ResidentMessage, names: dict, read_by: list) -> dict:
     return {
         "id": m.id,
+        "sender_id": m.sender_id,
         "sender_name": names.get(m.sender_id),
         "sender_role": m.sender_role,
         "sender_role_label": ROLE_LABELS.get(m.sender_role, m.sender_role),
