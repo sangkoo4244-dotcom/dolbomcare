@@ -7,8 +7,83 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
-        .gm-sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
+        /* ===== Premium Healthcare Management SaaS 톤 (대시보드·이용자관리와 동일) ===== */
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247;
+            --warn: #B45309; --danger: #DC2626; --line2: #E2E8F0;
+        }
+        html, body { background: var(--bg) !important; background-image: none !important; }
+        body { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .gm-sidebar { background: var(--navy) !important; }
         .gm-icon { object-fit: contain; mix-blend-mode: multiply; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+        #navContent .side-item { color: #C9D6E3 !important; border-radius: 8px; }
+        #navContent .side-item:hover { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+        #navContent .side-item.active { background: var(--teal) !important; color: #fff !important; }
+
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .date-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line2); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--charcoal); }
+        .bell-wrap { position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #F1F5F9; border-radius: 10px; }
+        .bell-wrap svg { width: 17px; height: 17px; color: var(--charcoal); }
+
+        .summary-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; margin-bottom: 20px; }
+        .summary-row > div { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .summary-top { display: flex; align-items: center; justify-content: space-between; }
+        .summary-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+        .summary-icon svg { width: 19px; height: 19px; }
+        .summary-row > div:nth-child(1) .summary-icon { background: #E6F7EE; color: #15803D; }
+        .summary-row > div:nth-child(2) .summary-icon { background: #E8F1FC; color: #1D4ED8; }
+        .summary-row > div:nth-child(3) .summary-icon { background: #FDF1E3; color: var(--warn); }
+        .summary-row > div:nth-child(4) .summary-icon { background: #F1ECFB; color: #6D28D9; }
+        .summary-label { font-size: 13px; font-weight: 600; color: #64748B; }
+        .summary-value { font-size: 28px; font-weight: 800; color: var(--navy); margin-top: 8px; font-variant-numeric: tabular-nums; }
+        .summary-note { font-size: 12px; color: #94A3B8; margin-top: 2px; }
+        .summary-note .up { color: #15803D; font-weight: 700; }
+
+        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 12px; }
+        .list-panel { padding: 18px 20px; }
+        .filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .filter-row select, .filter-row .search-box { height: 40px; border: 1px solid var(--line2); border-radius: 9px; font-size: 13px; }
+        .filter-row select { padding: 0 10px; background: #fff; color: var(--charcoal); }
+        .filter-row .search-box { flex: 1 1 260px; min-width: 200px; padding: 0 12px; display: flex; align-items: center; gap: 8px; }
+        .filter-row .search-box input { border: none; outline: none; flex: 1; font-size: 13px; background: transparent; }
+        .btn-ghost { height: 40px; padding: 0 14px; border: 1px solid var(--line2); border-radius: 9px; background: #fff; font-size: 13px; font-weight: 600; color: var(--charcoal); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
+        .btn-teal { height: 40px; padding: 0 16px; border: none; border-radius: 9px; background: var(--teal); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-teal:hover { background: #0C6F66; }
+
+        .ptable { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .ptable th { text-align: left; font-weight: 700; color: #64748B; font-size: 12px; padding: 10px 8px; border-bottom: 1px solid #EEF2F6; white-space: nowrap; }
+        .ptable td { padding: 11px 8px; border-bottom: 1px solid #F3F5F8; color: var(--charcoal); vertical-align: middle; }
+        .ptable tr:last-child td { border-bottom: none; }
+        .ptable tr:hover td { background: #F8FAFC; }
+        .p-badge { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 12px; padding: 3px 9px; border-radius: 999px; }
+        .p-badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+        .badge-issued { color: #1D4ED8; background: #E8F1FC; }
+        .badge-submitted { color: var(--warn); background: #FDF1E3; }
+        .badge-approved { color: #15803D; background: #E6F7EE; }
+        .badge-rejected { color: var(--danger); background: #FDE8E8; }
+        .badge-expired { color: #64748B; background: #F1F5F9; }
+        .pager { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; font-size: 13px; color: #64748B; }
+        .pager-btns { display: flex; align-items: center; gap: 4px; }
+        .pager-btns button { width: 30px; height: 30px; border: 1px solid var(--line2); background: #fff; border-radius: 7px; cursor: pointer; font-size: 12px; color: var(--charcoal); }
+        .pager-btns button.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+        .pager-btns button:disabled { opacity: 0.4; cursor: default; }
+        .pager-size { border: 1px solid var(--line2); border-radius: 7px; padding: 5px 8px; font-size: 12px; }
+
+        .side-panel { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; }
+        .side-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 14px; font-weight: 800; color: var(--navy); }
+        .recent-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F3F5F8; }
+        .recent-row:last-child { border-bottom: none; }
+        .recent-row .rn { font-size: 13px; font-weight: 700; }
+        .recent-row .rd { font-size: 11px; color: #94A3B8; }
+        .recent-row .rcode { font-family: monospace; font-size: 12px; color: var(--teal); font-weight: 700; }
+        .notice-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F3F5F8; font-size: 12px; color: #64748B; line-height: 1.5; }
+        .notice-item:last-child { border-bottom: none; }
+        .notice-item b { display: block; color: var(--charcoal); font-size: 13px; margin-bottom: 2px; }
+        .layout-grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+        @media (max-width: 1100px) { .layout-grid { grid-template-columns: 1fr; } .summary-row { grid-template-columns: repeat(2, minmax(0,1fr)); } }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -19,13 +94,18 @@
                 <div class="text-xs text-white/60 ml-1">Care Management</div>
             </div>
             <nav id="navContent" class="p-4"></nav>
-            <img src="assets/user_design/sidebar_care_landscape.jpg" alt="" class="w-full h-auto mt-auto">
         </aside>
         <main class="ml-72 w-full flex flex-col">
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-extrabold text-[#1E3A5F]">보호자 관리</h1>
-                <div class="flex items-center gap-6">
-                    <img src="assets/user_design/28_top_notification_icon.png" alt="" class="w-7 h-7 object-contain">
+                <div>
+                    <h1 class="text-3xl font-extrabold text-[#1E3A5F]">보호자 관리</h1>
+                    <div class="breadcrumb">홈 › <b>보호자 관리</b></div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="date-chip" id="headerDate"></div>
+                    <div class="bell-wrap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    </div>
                     <div class="flex items-center gap-3">
                         <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
                         <span id="userName" class="text-base font-bold text-gray-900">센터장</span>
@@ -39,56 +119,122 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-8">
-                <div class="rounded-2xl overflow-hidden mb-5">
-                    <img src="assets/user_design/gm_banner.jpg" alt="" class="w-full h-auto block">
-                </div>
-
                 <div id="message" class="hidden mb-5 p-4 rounded-xl text-base"></div>
 
+                <!-- Stats -->
+                <div class="summary-row">
+                    <div>
+                        <div class="summary-top"><div class="summary-label">등록 보호자</div><div class="summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg></div></div>
+                        <div class="summary-value" id="totalGuardianCount">0</div>
+                        <div class="summary-note">전체 보호자 수</div>
+                    </div>
+                    <div>
+                        <div class="summary-top"><div class="summary-label">이번 달 신규 등록</div><div class="summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg></div></div>
+                        <div class="summary-value" id="newGuardianCount">0</div>
+                        <div class="summary-note">전월 대비</div>
+                    </div>
+                    <div>
+                        <div class="summary-top"><div class="summary-label">초대 코드 발급</div><div class="summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-10 5L2 7"/></svg></div></div>
+                        <div class="summary-value" id="monthInviteCount">0</div>
+                        <div class="summary-note">이번 달 발급 건수</div>
+                    </div>
+                    <div>
+                        <div class="summary-top"><div class="summary-label">가입 완료</div><div class="summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></div></div>
+                        <div class="summary-value" id="approvedCount">0</div>
+                        <div class="summary-note" id="approvedNote">발급 코드 대비</div>
+                    </div>
+                </div>
+
                 <!-- 초대 코드 발급 -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-7 mb-5">
+                <div class="panel p-6 mb-5">
                     <div class="flex items-start gap-5 flex-wrap">
-                        <img src="assets/user_design/gm_icon_envelope.png" alt="" class="w-14 h-14 gm-icon shrink-0">
+                        <img src="assets/user_design/gm_icon_envelope.png" alt="" class="w-11 h-11 gm-icon shrink-0">
                         <div class="flex-1 min-w-[260px]">
-                            <h2 class="text-2xl font-extrabold text-gray-900 mb-1">초대 코드 발급</h2>
-                            <p class="text-base text-gray-500 mb-5">이용자를 선택하고 코드를 발급해 보호자에게 전달합니다. 코드는 7일 동안 한 번만 쓸 수 있습니다.</p>
+                            <h2 class="text-xl font-extrabold text-gray-900 mb-1">초대 코드 발급</h2>
+                            <p class="text-sm text-gray-500 mb-4">이용자를 선택하고 코드를 발급해 보호자에게 전달합니다. 코드는 7일 동안 한 번만 쓸 수 있습니다.</p>
                             <div class="flex gap-4 items-center flex-wrap">
-                                <label class="text-lg font-bold text-gray-800 flex items-center gap-3">
-                                    <img src="assets/user_design/gm_icon_people.png" alt="" class="w-10 h-10 gm-icon">이용자 선택
-                                    <select id="residentSelect" class="border border-gray-300 rounded-xl px-4 py-3 text-lg min-w-[240px] bg-white"></select>
+                                <label class="text-sm font-bold text-gray-800 flex items-center gap-3">
+                                    이용자 선택
+                                    <select id="residentSelect" class="border border-gray-300 rounded-xl px-4 py-2.5 text-sm min-w-[220px] bg-white"></select>
                                 </label>
-                                <button onclick="issueInvite()" class="inline-flex items-center gap-2 px-6 py-3 bg-[#2E7D4F] text-white font-extrabold rounded-xl text-lg hover:bg-[#256a40]">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3-3.5 3.5z"/></svg>
+                                <button onclick="issueInvite()" class="btn-teal">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3-3.5 3.5z"/></svg>
                                     코드 발급
                                 </button>
+                                <span class="text-xs text-gray-500 inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">유효기간 7일 · 1회 사용</span>
                             </div>
                         </div>
-                        <img src="assets/user_design/gm_art_7days.jpg" alt="" class="hidden lg:block h-28 w-auto gm-icon ml-auto">
                     </div>
-                    <div id="codeBox" class="hidden mt-6 bg-emerald-50 border border-emerald-100 rounded-xl p-5 flex items-center gap-6 flex-wrap">
-                        <img src="assets/user_design/gm_icon_key.png" alt="" class="w-14 h-14 object-contain rounded-xl bg-white p-1">
+                    <div id="codeBox" class="hidden mt-5 bg-emerald-50 border border-emerald-100 rounded-xl p-5 flex items-center gap-6 flex-wrap">
+                        <img src="assets/user_design/gm_icon_key.png" alt="" class="w-11 h-11 object-contain rounded-xl bg-white p-1">
                         <div>
                             <div class="text-sm font-bold text-emerald-800">발급된 코드</div>
-                            <div id="codeValue" class="text-4xl font-extrabold tracking-widest text-emerald-900 mt-1"></div>
+                            <div id="codeValue" class="text-3xl font-extrabold tracking-widest text-emerald-900 mt-1"></div>
                         </div>
-                        <div id="codeInfo" class="text-base text-emerald-800 space-y-1"></div>
-                        <button onclick="copyCode()" class="ml-auto inline-flex items-center gap-2 px-5 py-3 bg-white border border-emerald-200 rounded-xl font-bold text-emerald-800 hover:border-emerald-400">
-                            <img src="assets/user_design/gm_icon_copy.png" alt="" class="w-6 h-6 gm-icon">코드 복사
+                        <div id="codeInfo" class="text-sm text-emerald-800 space-y-1"></div>
+                        <button onclick="copyCode()" class="ml-auto inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-emerald-200 rounded-xl font-bold text-sm text-emerald-800 hover:border-emerald-400">
+                            <img src="assets/user_design/gm_icon_copy.png" alt="" class="w-5 h-5 gm-icon">코드 복사
                         </button>
                     </div>
                 </div>
 
                 <!-- 가입 승인 대기 -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-7">
-                    <div class="flex items-start gap-5 flex-wrap mb-4">
-                        <img src="assets/user_design/gm_icon_people2.png" alt="" class="w-14 h-14 gm-icon shrink-0">
+                <div class="panel p-6 mb-5">
+                    <div class="flex items-start gap-5 flex-wrap mb-3">
+                        <img src="assets/user_design/gm_icon_people2.png" alt="" class="w-11 h-11 gm-icon shrink-0">
                         <div class="flex-1 min-w-[260px]">
-                            <h2 class="text-2xl font-extrabold text-gray-900 mb-1">가입 승인 대기</h2>
-                            <p class="text-base text-gray-500">보호자의 가입 신청을 확인하고 승인하거나 반려할 수 있습니다.</p>
+                            <h2 class="text-xl font-extrabold text-gray-900 mb-1">가입 승인 대기</h2>
+                            <p class="text-sm text-gray-500">보호자의 가입 신청을 확인하고 승인하거나 반려할 수 있습니다.</p>
                         </div>
-                        <img src="assets/user_design/gm_art_together.png" alt="" class="hidden lg:block h-20 w-auto gm-icon ml-auto">
                     </div>
                     <ul id="requestList" class="divide-y divide-gray-100"></ul>
+                </div>
+
+                <!-- 보호자 목록 + 사이드 패널 -->
+                <div class="layout-grid">
+                    <div class="list-panel panel">
+                        <div class="flex items-center gap-2 mb-4">
+                            <svg class="w-5 h-5" style="color:var(--teal);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <h2 class="text-lg font-extrabold" style="color:var(--navy);">보호자 목록</h2>
+                            <span class="text-xs text-gray-500">등록된 보호자를 관리하고 초대 코드 발급 현황을 확인할 수 있습니다.</span>
+                        </div>
+                        <div class="filter-row">
+                            <label class="search-box">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                                <input id="guardianSearch" type="search" placeholder="보호자 이름, 연락처, 이용자 이름으로 검색" oninput="filterGuardians()">
+                            </label>
+                            <select id="statusFilter" onchange="filterGuardians()">
+                                <option value="">상태 전체</option>
+                                <option value="issued">발급(대기)</option>
+                                <option value="submitted">승인 대기</option>
+                                <option value="approved">가입 완료</option>
+                                <option value="rejected">반려</option>
+                            </select>
+                            <button type="button" class="btn-ghost" onclick="resetGuardianFilters()">↻ 초기화</button>
+                        </div>
+                        <div id="guardianTable"><div class="text-center py-10 text-gray-400 text-sm">불러오는 중...</div></div>
+                        <div class="pager" id="gPager" style="display:none;">
+                            <div id="gPagerInfo"></div>
+                            <div class="pager-btns" id="gPagerBtns"></div>
+                            <select class="pager-size" id="gPageSize" onchange="renderGuardianPage()">
+                                <option value="5">5개씩 보기</option>
+                                <option value="10">10개씩 보기</option>
+                                <option value="20">20개씩 보기</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="side-panel">
+                            <div class="side-panel-head">최근 발급 내역</div>
+                            <div id="recentInvites"></div>
+                        </div>
+                        <div class="side-panel">
+                            <div class="side-panel-head">안내사항</div>
+                            <div class="notice-item"><b>보호자 초대</b>이용자 선택 후 코드를 발급하여 전달하세요.</div>
+                            <div class="notice-item"><b>유효기간</b>발급된 코드는 7일 동안 한 번만 사용할 수 있습니다.</div>
+                            <div class="notice-item"><b>가입 승인</b>보호자가 코드로 가입을 신청하면 센터장이 승인해야 연결됩니다.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -106,9 +252,40 @@
             if (user.role !== 'center_manager') { window.location.href = './dashboard.html'; return; }
             currentUser = user;
             document.getElementById('userName').textContent = `${user.full_name || '센터장'}님`;
+            document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
             renderSidebar();
+            groupSidebar();
             loadResidents();
             loadRequests();
+            loadGuardianList();
+        }
+
+        // 대시보드·이용자관리와 동일한 사이드바 그룹 라벨 (menu.js는 그대로 두고 이 페이지에서만 DOM 보정)
+        const SIDE_GROUPS = [
+            ['매인', ['대시보드']],
+            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
+            ['방문 서비스 운영', ['음성 기록', '방문계획 승인', '보호자 소통']],
+            ['청구 및 경영 관리', ['청부관리', '월별정산', '수익분석', '급여 확정']],
+        ];
+        function groupSidebar() {
+            const nav = document.getElementById('navContent');
+            const items = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+            if (!items.length) return;
+            const byLabel = {};
+            items.forEach(item => { byLabel[item.querySelector('span:last-child')?.textContent.trim()] = item; });
+            const frag = document.createDocumentFragment();
+            SIDE_GROUPS.forEach(([groupLabel, labels]) => {
+                const found = labels.map(l => byLabel[l]).filter(Boolean);
+                if (!found.length) return;
+                const h = document.createElement('div');
+                h.className = 'side-group-label';
+                h.textContent = groupLabel;
+                frag.appendChild(h);
+                found.forEach(el => frag.appendChild(el));
+            });
+            items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
+            nav.innerHTML = '';
+            nav.appendChild(frag);
         }
 
         function escapeHtml(text) {
@@ -129,6 +306,130 @@
                 .map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
         }
 
+        const STATUS_LABEL = { issued: '발급(대기)', submitted: '승인 대기', approved: '가입 완료', rejected: '반려' };
+        let allInvites = [];
+        let filteredInvites = [];
+        let gCurrentPage = 1;
+
+        async function loadGuardianList() {
+            try {
+                const [invitesRes, usersRes] = await Promise.all([
+                    fetch(`${API_URL}/guardian/invites`),
+                    fetch(`${API_URL}/users/?role=guardian&center_id=${currentUser.center_id}`),
+                ]);
+                const invitesData = invitesRes.ok ? await invitesRes.json() : { invites: [] };
+                const usersData = usersRes.ok ? await usersRes.json() : { users: [] };
+                allInvites = invitesData.invites || [];
+                const guardianUsers = usersData.users || [];
+
+                // 지표 카드: 전부 실제 데이터로 계산한다
+                document.getElementById('totalGuardianCount').textContent = guardianUsers.length;
+                const now = new Date();
+                const inMonth = (iso, y, m) => { if (!iso) return false; const d = new Date(iso); return d.getFullYear() === y && d.getMonth() === m; };
+                const newThisMonth = guardianUsers.filter(u => inMonth(u.created_at, now.getFullYear(), now.getMonth())).length;
+                document.getElementById('newGuardianCount').textContent = newThisMonth;
+
+                const monthInvites = allInvites.filter(i => inMonth(i.created_at, now.getFullYear(), now.getMonth()));
+                document.getElementById('monthInviteCount').textContent = monthInvites.length;
+
+                const approvedCount = allInvites.filter(i => i.status === 'approved').length;
+                document.getElementById('approvedCount').textContent = approvedCount;
+                document.getElementById('approvedNote').textContent = allInvites.length
+                    ? `발급 ${allInvites.length}건 대비 ${Math.round(approvedCount / allInvites.length * 100)}%`
+                    : '발급 코드 대비';
+
+                renderRecentInvites();
+                filterGuardians();
+            } catch (error) {
+                console.error('보호자 목록 로드 실패:', error);
+                document.getElementById('guardianTable').innerHTML = '<div class="text-center py-10 text-red-500 text-sm">보호자 목록을 불러오지 못했습니다</div>';
+            }
+        }
+
+        function renderRecentInvites() {
+            const recent = [...allInvites].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 4);
+            const el = document.getElementById('recentInvites');
+            if (!recent.length) { el.innerHTML = '<div style="font-size:13px;color:#94A3B8;padding:6px 0;">발급된 코드가 없습니다</div>'; return; }
+            el.innerHTML = recent.map(i => `
+                <div class="recent-row">
+                    <div style="flex:1;">
+                        <div class="rn">${escapeHtml(i.resident_name || '이용자')} 어르신</div>
+                        <div class="rd">${(i.created_at || '').slice(0, 10)} · <span class="rcode">${escapeHtml(i.code)}</span></div>
+                    </div>
+                    <span class="p-badge badge-${i.expired ? 'expired' : i.status}">${i.expired ? '만료' : (STATUS_LABEL[i.status] || i.status)}</span>
+                </div>`).join('');
+        }
+
+        function resetGuardianFilters() {
+            document.getElementById('guardianSearch').value = '';
+            document.getElementById('statusFilter').value = '';
+            filterGuardians();
+        }
+
+        function filterGuardians() {
+            const q = document.getElementById('guardianSearch').value.trim();
+            const status = document.getElementById('statusFilter').value;
+            let list = allInvites;
+            if (q) list = list.filter(i => [i.guardian_name, i.guardian_phone, i.resident_name].some(v => (v || '').includes(q)));
+            if (status) list = list.filter(i => i.status === status);
+            filteredInvites = list;
+            gCurrentPage = 1;
+            renderGuardianPage();
+        }
+
+        function renderGuardianPage() {
+            const size = parseInt(document.getElementById('gPageSize').value, 10) || 5;
+            const totalPages = Math.max(1, Math.ceil(filteredInvites.length / size));
+            gCurrentPage = Math.min(gCurrentPage, totalPages);
+            const start = (gCurrentPage - 1) * size;
+            renderGuardianTable(filteredInvites.slice(start, start + size));
+
+            const pager = document.getElementById('gPager');
+            if (!filteredInvites.length) { pager.style.display = 'none'; return; }
+            pager.style.display = 'flex';
+            document.getElementById('gPagerInfo').textContent = `총 ${filteredInvites.length}명 중 ${start + 1}-${Math.min(start + size, filteredInvites.length)}명 표시`;
+            let btns = `<button ${gCurrentPage === 1 ? 'disabled' : ''} onclick="gCurrentPage=1;renderGuardianPage()">«</button><button ${gCurrentPage === 1 ? 'disabled' : ''} onclick="gCurrentPage--;renderGuardianPage()">‹</button>`;
+            for (let p = Math.max(1, gCurrentPage - 2); p <= Math.min(totalPages, gCurrentPage + 2); p++) {
+                btns += `<button class="${p === gCurrentPage ? 'active' : ''}" onclick="gCurrentPage=${p};renderGuardianPage()">${p}</button>`;
+            }
+            btns += `<button ${gCurrentPage === totalPages ? 'disabled' : ''} onclick="gCurrentPage++;renderGuardianPage()">›</button><button ${gCurrentPage === totalPages ? 'disabled' : ''} onclick="gCurrentPage=${totalPages};renderGuardianPage()">»</button>`;
+            document.getElementById('gPagerBtns').innerHTML = btns;
+        }
+
+        function renderGuardianTable(rows) {
+            const el = document.getElementById('guardianTable');
+            if (!rows.length) {
+                el.innerHTML = allInvites.length
+                    ? '<div class="text-center py-10 text-gray-400 text-sm">조건에 맞는 보호자가 없습니다</div>'
+                    : '<div class="text-center py-10 text-gray-400 text-sm">발급된 초대 코드가 없습니다. 위에서 코드를 발급해 보세요.</div>';
+                return;
+            }
+            el.innerHTML = `
+                <table class="ptable">
+                    <thead>
+                        <tr>
+                            <th>보호자 정보</th>
+                            <th>연락처</th>
+                            <th>연결된 이용자</th>
+                            <th>초대 코드</th>
+                            <th>상태</th>
+                            <th>발급일</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(i => `
+                            <tr>
+                                <td><div class="resident-name" style="font-size:14px;">${escapeHtml(i.guardian_name || '(가입 전)')}</div></td>
+                                <td>${escapeHtml(i.guardian_phone || '-')}</td>
+                                <td>${escapeHtml(i.resident_name || '-')} 어르신</td>
+                                <td class="rcode">${escapeHtml(i.code)}</td>
+                                <td><span class="p-badge badge-${i.expired ? 'expired' : i.status}">${i.expired ? '만료' : (STATUS_LABEL[i.status] || i.status)}</span></td>
+                                <td>${(i.created_at || '').slice(0, 10)}</td>
+                            </tr>`).join('')}
+                    </tbody>
+                </table>`;
+        }
+
         async function issueInvite() {
             const residentId = parseInt(document.getElementById('residentSelect').value);
             if (!residentId) { showMessage('이용자를 선택해 주세요', false); return; }
@@ -143,6 +444,7 @@
             document.getElementById('codeInfo').innerHTML = `
                 <div>이용자: ${escapeHtml(d.resident_name)}</div>
                 <div>만료일: ${new Date(d.expires_at).toLocaleDateString('ko-KR')}</div>`;
+            loadGuardianList();
         }
 
         async function copyCode() {
@@ -195,6 +497,7 @@
             const d = await r.json().catch(() => ({}));
             showMessage(r.ok ? d.message : (d.detail || '처리에 실패했습니다'), r.ok);
             loadRequests();
+            loadGuardianList();
         }
 
         function logout() { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; }

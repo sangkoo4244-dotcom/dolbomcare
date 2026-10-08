@@ -96,6 +96,31 @@ def redeem_invite(body: RedeemBody, db: Session = Depends(get_db), guardian: Use
     return {"status": "success", "message": "요청을 보냈습니다. 센터장이 승인하면 이용자 기록을 볼 수 있습니다"}
 
 
+@router.get("/invites")
+def list_invites(db: Session = Depends(get_db), manager: User = Depends(require_manager)):
+    """센터의 발급된 초대 코드 전체 조회 (읽기 전용, 보호자 목록/발급내역 표시용)"""
+    rows = db.query(GuardianInvite).filter(GuardianInvite.center_id == manager.center_id).order_by(GuardianInvite.created_at.desc()).all()
+    residents = {r.id: r for r in db.query(Resident).filter(Resident.center_id == manager.center_id).all()}
+    guardians = {u.id: u for u in db.query(User).filter(User.role == "guardian").all()}
+    now = datetime.utcnow()
+    return {"invites": [
+        {
+            "id": inv.id,
+            "code": inv.code,
+            "status": inv.status,
+            "expired": inv.expires_at < now and inv.status == "issued",
+            "resident_id": inv.resident_id,
+            "resident_name": residents[inv.resident_id].name if inv.resident_id in residents else None,
+            "guardian_id": inv.guardian_id,
+            "guardian_name": guardians[inv.guardian_id].full_name if inv.guardian_id in guardians else None,
+            "guardian_phone": guardians[inv.guardian_id].phone if inv.guardian_id in guardians else None,
+            "created_at": inv.created_at.isoformat() if inv.created_at else None,
+            "expires_at": inv.expires_at.isoformat() if inv.expires_at else None,
+        }
+        for inv in rows
+    ]}
+
+
 @router.get("/requests")
 def list_requests(db: Session = Depends(get_db), manager: User = Depends(require_manager)):
     rows = db.query(GuardianInvite).filter(
