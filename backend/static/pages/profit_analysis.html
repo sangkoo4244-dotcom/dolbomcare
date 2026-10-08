@@ -10,9 +10,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: var(--font-family); background: #f5f7fa; color: var(--text-primary); }
 
-        /* 사이드바: 직원 관리 시안과 동일 */
         .sidebar { width: 288px; background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); z-index: 1000; display: flex; flex-direction: column; }
-        .sidebar-landscape { display: block; width: 100%; height: auto; margin-top: auto; }
         .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
         .side-icon img { display: block; }
 
@@ -21,69 +19,93 @@
         .topbar-title h1 { margin: 0; font-size: 26px; font-weight: 800; color: #1E3A5F; }
         .user-menu { display: flex; align-items: center; gap: 16px; }
         .user-info { display: flex; align-items: center; gap: 6px; font-weight: 700; color: #1F2937; font-size: 14px; }
-        .user-info .chev { width: 14px; height: 14px; color: #6B7280; }
         .logout-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: white; border: 1px solid #D6D0C4; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #374151; }
         .logout-btn:hover { border-color: #dc2626; color: #dc2626; }
 
         .content { flex: 1; padding: 30px 32px; }
-        .pa-banner { border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
-        .pa-banner img { width: 100%; height: auto; display: block; }
-
-        .pa-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
-        .pa-metric { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid #e5e7eb; }
-        .pa-metric img { width: 44px; height: 44px; object-fit: contain; flex: 0 0 auto; mix-blend-mode: multiply; border-radius: 50%; }
-        .pa-metric-label { font-size: 13px; font-weight: 700; }
-        .pa-metric-value { font-size: 22px; font-weight: 800; line-height: 1.2; margin-top: 2px; }
-        .pa-delta { font-size: 13px; font-weight: 700; margin-top: 4px; }
-        .pa-delta.up { color: #15803D; }
-        .pa-delta.down { color: #DC2626; }
-        .pa-delta.flat { color: #6B7280; }
 
         .pa-row { display: grid; grid-template-columns: minmax(0, 1.46fr) minmax(0, 1fr); gap: 15px; margin-bottom: 15px; }
-        .pa-row-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 15px; }
+        .pa-row-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 15px; margin-bottom: 15px; }
         .pa-card { background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 18px 20px; }
         .pa-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-        .pa-card-title { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 800; color: #1F2937; }
-        .pa-card-title img { width: 30px; height: 30px; object-fit: contain; mix-blend-mode: multiply; }
+        .pa-card-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 800; color: #1F2937; }
         .pa-note { font-size: 12px; color: #6B7280; }
-        .pa-select { height: 34px; width: 110px; padding: 0 10px; border: 1px solid #D6D0C4; border-radius: 8px; font-size: 13px; background: white; flex: 0 0 auto; }
 
         .pa-chart { position: relative; height: 240px; }
         .pa-donut-wrap { display: flex; align-items: center; gap: 18px; padding-top: 6px; }
-        .pa-donut { position: relative; width: 200px; height: 200px; flex: 0 0 auto; }
+        .pa-donut { position: relative; width: 180px; height: 180px; flex: 0 0 auto; }
         .pa-donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-        .pa-donut-center .k { font-size: 13px; color: #6B7280; font-weight: 700; }
-        .pa-donut-center .v { font-size: 16px; font-weight: 800; color: #1F2937; }
+        .pa-donut-center .k { font-size: 12px; color: #6B7280; font-weight: 700; }
+        .pa-donut-center .v { font-size: 15px; font-weight: 800; color: #1F2937; }
         .pa-legend { flex: 1; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
         .pa-legend-row { display: flex; align-items: center; gap: 10px; font-size: 14px; }
-        .pa-dot { width: 40px; height: 40px; border-radius: 12px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; }
-        .pa-dot::after { content: ''; width: 16px; height: 16px; border-radius: 5px; background: var(--dot); }
+        .pa-dot { width: 14px; height: 14px; border-radius: 4px; flex: 0 0 auto; }
         .pa-legend-name { font-weight: 700; color: #1F2937; }
         .pa-legend-amt { font-size: 12px; color: #6B7280; }
         .pa-legend-pct { margin-left: auto; font-weight: 800; color: #1F2937; }
 
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { padding: 12px 14px; text-align: center; background: #f9fafb; border-bottom: 1px solid #e5e7eb; font-weight: 700; color: #1F2937; }
-        td { padding: 12px 14px; border-bottom: 1px solid #f3f4f6; text-align: center; color: #1F2937; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { padding: 12px 10px; text-align: center; background: #f9fafb; border-bottom: 1px solid #e5e7eb; font-weight: 700; color: #1F2937; white-space: nowrap; }
+        td { padding: 12px 10px; border-bottom: 1px solid #f3f4f6; text-align: center; color: #1F2937; }
         td.num { text-align: right; font-variant-numeric: tabular-nums; }
         tr.total td { background: #EEF4FC; font-weight: 800; }
         .pa-muted { color: #9CA3AF; }
 
         .pa-quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
         .pa-quick-item { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; padding: 16px 10px; border-radius: 14px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; font: inherit; color: inherit; }
-        .pa-quick-item:disabled { cursor: not-allowed; opacity: 0.9; }
-        .pa-quick-item img { width: 36px; height: 36px; object-fit: contain; mix-blend-mode: multiply; }
+        .pa-quick-item:disabled { cursor: not-allowed; opacity: 0.6; }
         .pa-quick-title { font-size: 14px; font-weight: 800; color: #1F2937; }
         .pa-quick-desc { font-size: 12px; color: #6B7280; line-height: 1.4; }
 
         .error { background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
 
-        @media (max-width: 1100px) { .pa-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pa-row, .pa-row-2 { grid-template-columns: 1fr; } }
+        /* ===== Premium Healthcare Management SaaS 톤 (대시보드·청구관리·월별정산 등과 동일, 사이드바 색상만 통일) ===== */
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247;
+            --warn: #B45309; --danger2: #DC2626; --line2: #E2E8F0;
+        }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .date-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line2); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--charcoal); white-space: nowrap; }
+        .bell-wrap { position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #F1F5F9; border-radius: 10px; flex: 0 0 auto; }
+        .bell-wrap svg { width: 17px; height: 17px; color: var(--charcoal); }
+        .bell-badge { position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--danger2); color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+        .filter-bar { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .filter-input { padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 13px; outline: none; }
+        .filter-input:focus { border-color: var(--teal); }
+        .btn-solid { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
+        .btn-solid:hover { background: #0C756C; }
+
+        .summary-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .summary-row > div { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); display: flex; align-items: center; gap: 14px; }
+        .summary-icon { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .summary-icon svg { width: 21px; height: 21px; }
+        .summary-label { font-size: 13px; font-weight: 700; color: #64748B; }
+        .summary-value { font-size: 22px; font-weight: 800; color: var(--navy); line-height: 1.2; font-variant-numeric: tabular-nums; }
+        .pa-delta { font-size: 12px; font-weight: 700; margin-top: 2px; }
+        .pa-delta.up { color: #15803D; }
+        .pa-delta.down { color: #DC2626; }
+        .pa-delta.flat { color: #94A3B8; }
+        @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pa-row, .pa-row-2 { grid-template-columns: 1fr; } }
+
+        .panel2 { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .panel2-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 14px; font-weight: 800; color: var(--navy); }
+        .notice-list2 { list-style: none; margin: 0; padding: 0; }
+        .notice-list2 li { display: flex; gap: 8px; font-size: 12px; color: #64748B; padding: 6px 0; line-height: 1.4; }
+        .notice-list2 li svg { width: 14px; height: 14px; color: var(--teal); flex: 0 0 auto; margin-top: 2px; }
+        .resident-avatar2 { width: 30px; height: 30px; border-radius: 50%; background: var(--teal); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; vertical-align: middle; margin-right: 6px; }
+
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
             .main-layout { margin-left: 0; }
             .content { padding: 16px; }
-            .pa-metrics { grid-template-columns: 1fr; }
             .pa-donut-wrap { flex-direction: column; }
         }
     </style>
@@ -95,20 +117,25 @@
     <aside class="sidebar">
         <div class="side-brand"><div class="side-logo"></div><div><div class="side-title">돌봄케어</div><div class="side-sub">Care Management</div></div></div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <img class="sidebar-landscape" src="assets/user_design/sidebar_care_landscape.jpg" alt="">
     </aside>
 
     <!-- Main Layout -->
     <div class="main-layout">
         <!-- Top Bar -->
         <div class="topbar">
-            <div class="topbar-title"><h1>수익 분석</h1></div>
+            <div class="topbar-title">
+                <h1>수익 분석</h1>
+                <div class="breadcrumb">홈 › 청구 및 경영 관리 › <b>수익 분석</b></div>
+            </div>
             <div class="user-menu">
-                <img src="assets/user_design/28_top_notification_icon.png" alt="" style="width:28px;height:28px;object-fit:contain;">
+                <div class="date-chip" id="headerDate"></div>
+                <div class="bell-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <span class="bell-badge" id="bellBadge" style="display:none;">0</span>
+                </div>
                 <div class="user-info">
-                    <img id="userAvatar" src="assets/user_design/29_top_profile_icon.png" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+                    <img id="userAvatar" src="assets/user_design/29_top_profile_icon.png" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
                     <span id="userName">사용자</span>
-                    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
                 </div>
                 <button class="logout-btn" onclick="logout()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
@@ -119,43 +146,44 @@
 
         <!-- Content -->
         <div class="content">
-            <div class="pa-banner"><img src="assets/user_design/profit_banner.jpg" alt=""></div>
-
             <div id="errorContainer"></div>
 
+            <!-- 분석 조건 -->
+            <div class="filter-bar">
+                <select id="yearSelect" class="filter-input" onchange="loadProfitData()"></select>
+                <select id="monthSelect" class="filter-input" onchange="loadProfitData()">
+                    <option value="0">전체(연간)</option>
+                    <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option>
+                    <option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option>
+                    <option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+                </select>
+                <select id="serviceFilter" class="filter-input" onchange="loadProfitData()"><option value="">서비스 유형 전체</option></select>
+                <select id="residentFilter" class="filter-input" onchange="loadProfitData()"><option value="">이용자 전체</option></select>
+                <select id="caregiverFilter" class="filter-input" onchange="loadProfitData()"><option value="">직원 전체</option></select>
+                <select id="compareBasis" class="filter-input" onchange="loadProfitData()">
+                    <option value="prevMonth">전월 대비</option>
+                    <option value="prevYear">전년 동월 대비</option>
+                </select>
+                <button class="btn-solid" onclick="loadProfitData()">조회</button>
+            </div>
+
             <!-- Key Metrics -->
-            <div class="pa-metrics">
-                <div class="pa-metric" style="background:#EEF4FC;">
-                    <img src="assets/user_design/profit_metric_total.png" alt="">
-                    <div>
-                        <div class="pa-metric-label" style="color:#1D4ED8;">총 청구액</div>
-                        <div class="pa-metric-value" id="metricTotal" style="color:#1F2937;">₩0</div>
-                        <div class="pa-delta flat" id="deltaTotal">-</div>
-                    </div>
+            <div class="summary-row">
+                <div>
+                    <div class="summary-icon" style="background:#E8F1FC;color:#1D4ED8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                    <div><div class="summary-label">총 청구액</div><div class="summary-value" id="metricTotal">₩0</div><div class="pa-delta flat" id="deltaTotal">-</div></div>
                 </div>
-                <div class="pa-metric" style="background:#EAF8F0;">
-                    <img src="assets/user_design/profit_metric_service.png" alt="">
-                    <div>
-                        <div class="pa-metric-label" style="color:#15803D;">정산 완료 금액</div>
-                        <div class="pa-metric-value" id="metricPaid" style="color:#1F2937;">₩0</div>
-                        <div class="pa-delta flat" id="deltaPaid">-</div>
-                    </div>
+                <div>
+                    <div class="summary-icon" style="background:#FDF1E3;color:#B45309;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+                    <div><div class="summary-label">공단 청구액</div><div class="summary-value" id="metricInsurance">₩0</div><div class="pa-delta flat" id="deltaInsurance">-</div></div>
                 </div>
-                <div class="pa-metric" style="background:#FBEAEA;">
-                    <img src="assets/user_design/profit_metric_copay.png" alt="">
-                    <div>
-                        <div class="pa-metric-label" style="color:#DC2626;">정산 대기 금액</div>
-                        <div class="pa-metric-value" id="metricPending" style="color:#DC2626;">₩0</div>
-                        <div class="pa-delta flat" id="deltaPending">-</div>
-                    </div>
+                <div>
+                    <div class="summary-icon" style="background:#F1ECFB;color:#6D28D9;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg></div>
+                    <div><div class="summary-label">본인부담금</div><div class="summary-value" id="metricPatient">₩0</div><div class="pa-delta flat" id="deltaPatient">-</div></div>
                 </div>
-                <div class="pa-metric" style="background:#F3F0FD;">
-                    <img src="assets/user_design/profit_metric_other.png" alt="">
-                    <div>
-                        <div class="pa-metric-label" style="color:#6D28D9;">정산 중단 금액</div>
-                        <div class="pa-metric-value" id="metricSuspended" style="color:#6D28D9;">₩0</div>
-                        <div class="pa-delta flat" id="deltaSuspended">-</div>
-                    </div>
+                <div>
+                    <div class="summary-icon" style="background:#E6F7EE;color:#15803D;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
+                    <div><div class="summary-label">정산 완료 금액</div><div class="summary-value" id="metricPaid">₩0</div><div class="pa-delta flat" id="deltaPaid">-</div></div>
                 </div>
             </div>
 
@@ -163,14 +191,14 @@
             <div class="pa-row">
                 <div class="pa-card">
                     <div class="pa-card-head">
-                        <div class="pa-card-title"><img src="assets/user_design/profit_title_bar.png" alt="">월별 수익 추이</div>
-                        <select class="pa-select" id="yearSelect" onchange="loadProfitData()"></select>
+                        <div class="pa-card-title">월별 수익 추이</div>
+                        <span class="pa-note">단위: 원</span>
                     </div>
                     <div class="pa-chart"><canvas id="monthlyChart"></canvas></div>
                 </div>
                 <div class="pa-card">
                     <div class="pa-card-head">
-                        <div class="pa-card-title"><img src="assets/user_design/profit_title_pie.png" alt="">수익 구성 비율</div>
+                        <div class="pa-card-title">수익 구성 비율</div>
                         <span class="pa-note" id="donutNote"></span>
                     </div>
                     <div class="pa-donut-wrap">
@@ -187,12 +215,12 @@
             <div class="pa-row-2">
                 <div class="pa-card">
                     <div class="pa-card-head">
-                        <div class="pa-card-title"><img src="assets/user_design/profit_title_table.png" alt="">주요 항목별 수익 현황</div>
+                        <div class="pa-card-title">서비스 유형별 수익</div>
                         <span class="pa-note" id="tableNote"></span>
                     </div>
                     <table>
                         <thead>
-                            <tr><th style="text-align:left;">항목</th><th style="text-align:right;">금액</th><th>비율</th><th>전월 대비</th></tr>
+                            <tr><th style="text-align:left;">서비스</th><th style="text-align:right;">금액</th><th>비율</th><th id="deltaColHead">전월 대비</th></tr>
                         </thead>
                         <tbody id="serviceTableBody">
                             <tr><td colspan="4" class="pa-muted" style="padding:30px;">데이터를 불러오는 중입니다...</td></tr>
@@ -201,30 +229,62 @@
                 </div>
                 <div class="pa-card">
                     <div class="pa-card-head">
-                        <div class="pa-card-title"><img src="assets/user_design/profit_title_bolt.png" alt="">빠른 기능</div>
+                        <div class="pa-card-title">기간별 수익 비교</div>
+                        <span class="pa-note" id="compareNote"></span>
                     </div>
+                    <div class="pa-chart" style="height:200px;"><canvas id="compareChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- 이용자별 수익 현황 -->
+            <div class="pa-card" style="margin-bottom:15px;">
+                <div class="pa-card-head">
+                    <div class="pa-card-title">이용자별 수익 현황</div>
+                    <button class="btn-solid" onclick="exportResidentCsv()">엑셀 다운로드</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;">이용자</th><th>방문 횟수</th><th style="text-align:right;">공단 청구액</th>
+                            <th style="text-align:right;">본인부담금</th><th style="text-align:right;">총 청구액</th><th>비중</th>
+                        </tr>
+                    </thead>
+                    <tbody id="residentTableBody">
+                        <tr><td colspan="6" class="pa-muted" style="padding:30px;">데이터를 불러오는 중입니다...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pa-row-2" style="margin-bottom:0;">
+                <div class="pa-card">
+                    <div class="pa-card-head"><div class="pa-card-title">빠른 기능</div></div>
                     <div class="pa-quick">
-                        <button class="pa-quick-item" style="background:#FFF1F1;" disabled title="준비 중인 기능입니다">
-                            <img src="assets/user_design/profit_quick_detail.png" alt="">
+                        <button class="pa-quick-item" style="background:#FFF1F1;" disabled title="추가 개발 필요">
                             <span class="pa-quick-title">상세 수익 분석</span>
                             <span class="pa-quick-desc">항목별 수익을 상세히 분석합니다.</span>
                         </button>
-                        <button class="pa-quick-item" style="background:#EEF4FC;" disabled title="준비 중인 기능입니다">
-                            <img src="assets/user_design/profit_quick_report.png" alt="">
+                        <button class="pa-quick-item" style="background:#EEF4FC;" disabled title="추가 개발 필요">
                             <span class="pa-quick-title">월별 보고서</span>
                             <span class="pa-quick-desc">월별 수익 보고서를 생성합니다.</span>
                         </button>
                         <button class="pa-quick-item" style="background:#EAF8F0;" onclick="exportCsv()">
-                            <img src="assets/user_design/profit_quick_excel.png" alt="">
                             <span class="pa-quick-title">엑셀 다운로드</span>
-                            <span class="pa-quick-desc">수익 데이터를 엑셀로 다운로드합니다.</span>
+                            <span class="pa-quick-desc">서비스별 수익 데이터를 다운로드합니다.</span>
                         </button>
                         <button class="pa-quick-item" style="background:#FFF7EC;" onclick="window.print()">
-                            <img src="assets/user_design/profit_quick_print.png" alt="">
                             <span class="pa-quick-title">인쇄하기</span>
                             <span class="pa-quick-desc">분석 결과를 인쇄할 수 있습니다.</span>
                         </button>
                     </div>
+                </div>
+                <div class="panel2" style="margin-bottom:0;">
+                    <div class="panel2-head"><span>수익 분석 안내</span></div>
+                    <ul class="notice-list2">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>모든 금액은 반려를 제외한 청구 내역 기준입니다.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>"공단 청구액"·"본인부담금"은 청구 기준 산정액이며, 실제 입금액과 차이가 있을 수 있습니다.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>"정산 완료"는 공단 환급까지 확인된 건만을 의미합니다.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>급여·운영비 등 비용 데이터가 없어 순이익은 계산하지 않습니다 (청구액 ≠ 순이익).</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -235,11 +295,13 @@
         let currentUser = null;
         let monthlyChart = null;
         let donutChart = null;
-        let loadedRows = [];   // 선택 연도의 월별·서비스별 집계
-        let serviceRows = [];  // 표 CSV 용
+        let compareChart = null;
+        let allRecordsRaw = [];  // 센터 전체 원본 (연도 무관, 필터 전)
+        let residentsMap = {};   // id -> {name, age, gender, care_grade}
+        let serviceRows = [];
+        let residentRows = [];
 
-        // 청구 기록 상태 묶음 (정산 화면과 동일 기준)
-        const PAID = ['approved', 'submitted_to_nhis', 'reimbursed'];
+        // 정산 완료는 "환급 확인"까지 끝난 건만을 의미한다 (월별정산 화면과 동일 기준으로 통일)
         const SERVICE_LABEL = { basic_care: '기본요양', meal_service: '식사지원', medical_care: '의료관리', emergency: '응급' };
 
         function logout() {
@@ -256,132 +318,230 @@
         function checkAuth() {
             const token = localStorage.getItem('access_token');
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-
             if (!token || !user.id || user.role !== 'center_manager') {
                 alert('센터장 권한이 필요합니다');
                 window.location.href = './login.html';
                 return false;
             }
-
             currentUser = user;
             document.getElementById('userName').textContent = user.full_name || '사용자';
-            document.getElementById('userAvatar').alt = user.full_name || '';
+            document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
             renderSidebar();
             applyNavIcons();
+            groupSidebar();
+            loadBellBadge();
             return true;
         }
 
-        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
         const NAV_ICON_FILES = {
-            '대시보드': '20_nav_dashboard_icon.png',
-            '이용자관리': '21_nav_user_icon.png',
-            '음성 기록': '22_nav_voice_icon.png',
-            '방문계획 승인': '23_nav_service_plan_icon.png',
-            '청부관리': '24_nav_billing_icon.png',
-            '수익분석': '25_nav_statistics_icon.png',
-            '알림': '26_nav_notice_icon.png',
-            '설정': '27_nav_settings_icon.png',
+            '대시보드': '20_nav_dashboard_icon.png', '이용자관리': '21_nav_user_icon.png', '음성 기록': '22_nav_voice_icon.png',
+            '방문계획 승인': '23_nav_service_plan_icon.png', '청부관리': '24_nav_billing_icon.png', '수익분석': '25_nav_statistics_icon.png',
+            '알림': '26_nav_notice_icon.png', '설정': '27_nav_settings_icon.png',
         };
-
         function applyNavIcons() {
             document.querySelectorAll('.sidebar-nav .side-item').forEach(item => {
                 const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
                 if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
             });
         }
-
-        // 청부 기록을 연·월별로 묶는다 (금액은 반려 제외 기준)
-        function summarize(records, year) {
-            const months = Array.from({ length: 12 }, () => ({ total: 0, paid: 0, pending: 0, suspended: 0, services: {} }));
-            records.forEach(r => {
-                if (!r.recorded_date) return;
-                const [y, m] = r.recorded_date.slice(0, 7).split('-').map(Number);
-                if (y !== year) return;
-                const cell = months[m - 1];
-                const amount = r.amount || 0;
-                if (r.approval_status === 'rejected') { cell.suspended += amount; return; }
-                cell.total += amount;
-                if (PAID.includes(r.approval_status)) cell.paid += amount;
-                else if (r.approval_status === 'pending') cell.pending += amount;
-                cell.services[r.service_type] = (cell.services[r.service_type] || 0) + amount;
+        const SIDE_GROUPS2 = [
+            ['매인', ['대시보드']],
+            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
+            ['방문 서비스 운영', ['음성 기록', '방문계획 승인', '보호자 소통']],
+            ['청구 및 경영 관리', ['청부관리', '월별정산', '수익분석', '급여 확정']],
+        ];
+        function groupSidebar() {
+            const nav = document.getElementById('sidebarNav');
+            const items = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+            if (!items.length) return;
+            const byLabel = {};
+            items.forEach(item => { byLabel[item.querySelector('span:last-child')?.textContent.trim()] = item; });
+            const frag = document.createDocumentFragment();
+            SIDE_GROUPS2.forEach(([groupLabel, labels]) => {
+                const found = labels.map(l => byLabel[l]).filter(Boolean);
+                if (!found.length) return;
+                const h = document.createElement('div');
+                h.className = 'side-group-label';
+                h.textContent = groupLabel;
+                frag.appendChild(h);
+                found.forEach(el => frag.appendChild(el));
             });
-            return months;
+            items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
+            nav.innerHTML = '';
+            nav.appendChild(frag);
         }
 
-        // 기준 월: 선택 연도에서 기록이 있는 가장 최근 달 (없으면 1월)
-        function pickMonth(months) {
-            for (let i = 11; i >= 0; i--) {
-                if (months[i].total || months[i].suspended) return i;
-            }
-            return 0;
+        async function loadBellBadge() {
+            try {
+                const r = await fetch(`${API_URL}/notifications/mine`);
+                if (!r.ok) return;
+                const d = await r.json();
+                const n = d.unread_count || 0;
+                if (n > 0) {
+                    const badge = document.getElementById('bellBadge');
+                    badge.textContent = n > 99 ? '99+' : n;
+                    badge.style.display = 'flex';
+                }
+            } catch (e) { /* 부가 기능이므로 실패해도 무시 */ }
+        }
+
+        function patientAmount(r) {
+            if (r.total_cost == null) return 0;
+            return Math.max(0, r.total_cost - (r.amount || 0));
         }
 
         function delta(cur, prev) {
             if (!prev && !cur) return { text: '-', cls: 'flat' };
-            if (!prev) return { text: '전월 기록 없음', cls: 'flat' };
+            if (!prev) return { text: '비교 기간 기록 없음', cls: 'flat' };
             const pct = (cur - prev) / prev * 100;
             const arrow = pct >= 0 ? '▲' : '▼';
-            return { text: `${arrow} ${Math.abs(pct).toFixed(1)}% 전월 대비`, cls: pct >= 0 ? 'up' : 'down' };
+            return { text: `${arrow} ${Math.abs(pct).toFixed(1)}%`, cls: pct >= 0 ? 'up' : 'down' };
         }
-
         function setDelta(id, d) {
             const el = document.getElementById(id);
             el.textContent = d.text;
             el.className = `pa-delta ${d.cls}`;
         }
 
+        function initYearSelect() {
+            const now = new Date().getFullYear();
+            const select = document.getElementById('yearSelect');
+            select.innerHTML = [now - 2, now - 1, now].map(y => `<option value="${y}">${y}년</option>`).join('');
+            select.value = now;
+            document.getElementById('monthSelect').value = new Date().getMonth() + 1;
+        }
+
+        async function loadResidentsAndCaregivers() {
+            const centerId = currentUser?.center_id || 1;
+            const [rRes, cRes] = await Promise.all([
+                fetch(`${API_URL}/residents/?center_id=${centerId}`),
+                fetch(`${API_URL}/users/?role=caregiver&center_id=${centerId}`)
+            ]);
+            const residents = rRes.ok ? (await rRes.json()).residents || [] : [];
+            const caregivers = cRes.ok ? (await cRes.json()).users || [] : [];
+            residentsMap = {};
+            residents.forEach(r => { residentsMap[r.id] = r; });
+
+            const resSel = document.getElementById('residentFilter');
+            if (resSel.options.length <= 1) residents.forEach(r => { resSel.innerHTML += `<option value="${r.id}">${r.name}</option>`; });
+            const cgSel = document.getElementById('caregiverFilter');
+            if (cgSel.options.length <= 1) caregivers.forEach(c => { cgSel.innerHTML += `<option value="${c.id}">${c.full_name}</option>`; });
+            const svcSel = document.getElementById('serviceFilter');
+            if (svcSel.options.length <= 1) Object.entries(SERVICE_LABEL).forEach(([k, v]) => { svcSel.innerHTML += `<option value="${k}">${v}</option>`; });
+        }
+
+        function applyFilters(records) {
+            const svc = document.getElementById('serviceFilter').value;
+            const resident = document.getElementById('residentFilter').value;
+            const caregiver = document.getElementById('caregiverFilter').value;
+            return records.filter(r =>
+                (!svc || r.service_type === svc) &&
+                (!resident || String(r.resident_id) === resident) &&
+                (!caregiver || String(r.caregiver_id) === caregiver));
+        }
+
+        // 청구 기록을 연·월별로 묶는다 (반려 제외, 공단/본인부담/정산완료(환급확인만) 전부 분리 집계)
+        function summarize(records, year) {
+            const months = Array.from({ length: 12 }, () => ({ total: 0, insurance: 0, patient: 0, paid: 0, pending: 0, processing: 0, suspended: 0, services: {} }));
+            records.forEach(r => {
+                if (!r.recorded_date) return;
+                const [y, m] = r.recorded_date.slice(0, 7).split('-').map(Number);
+                if (y !== year) return;
+                const cell = months[m - 1];
+                const amount = r.amount || 0;
+                const pat = patientAmount(r);
+                const total = amount + pat;
+                if (r.approval_status === 'rejected') { cell.suspended += total; return; }
+                cell.total += total;
+                cell.insurance += amount;
+                cell.patient += pat;
+                if (r.approval_status === 'reimbursed') cell.paid += total;
+                else if (r.approval_status === 'approved' || r.approval_status === 'submitted_to_nhis') cell.processing += total;
+                else if (r.approval_status === 'pending') cell.pending += total;
+                cell.services[r.service_type] = (cell.services[r.service_type] || 0) + total;
+            });
+            return months;
+        }
+
+        function pickMonth(months, explicit) {
+            if (explicit) return explicit - 1;
+            for (let i = 11; i >= 0; i--) {
+                if (months[i].total || months[i].suspended) return i;
+            }
+            return 0;
+        }
+
         async function loadProfitData() {
             try {
+                await loadResidentsAndCaregivers();
                 const centerId = currentUser?.center_id || 1;
                 const year = parseInt(document.getElementById('yearSelect').value);
-                const response = await fetch(`${API_URL}/billing/?center_id=${centerId}&include_archived=true`);
-                if (!response.ok) throw new Error('데이터 조회 실패');
+                const monthSel = parseInt(document.getElementById('monthSelect').value);
+                const compareBasis = document.getElementById('compareBasis').value;
 
-                const data = await response.json();
-                const records = data.records || [];
+                if (!allRecordsRaw.length) {
+                    const response = await fetch(`${API_URL}/billing/?center_id=${centerId}&include_archived=true`);
+                    if (!response.ok) throw new Error('데이터 조회 실패');
+                    allRecordsRaw = (await response.json()).records || [];
+                }
+                const records = applyFilters(allRecordsRaw);
+
                 const months = summarize(records, year);
-                const idx = pickMonth(months);
+                const idx = pickMonth(months, monthSel);
                 const cur = months[idx];
-                const prev = idx > 0 ? months[idx - 1] : { total: 0, paid: 0, pending: 0, suspended: 0, services: {} };
 
-                // 지표 카드
+                let prev, prevLabel;
+                if (compareBasis === 'prevYear') {
+                    const prevYearMonths = summarize(records, year - 1);
+                    prev = prevYearMonths[idx];
+                    prevLabel = `${year - 1}년 ${idx + 1}월 대비`;
+                } else {
+                    prev = idx > 0 ? months[idx - 1] : { total: 0, insurance: 0, patient: 0, paid: 0, pending: 0, processing: 0, suspended: 0, services: {} };
+                    prevLabel = '전월 대비';
+                }
+                document.getElementById('deltaColHead').textContent = prevLabel;
+                document.getElementById('compareNote').textContent = prevLabel;
+
                 document.getElementById('metricTotal').textContent = won(cur.total);
+                document.getElementById('metricInsurance').textContent = won(cur.insurance);
+                document.getElementById('metricPatient').textContent = won(cur.patient);
                 document.getElementById('metricPaid').textContent = won(cur.paid);
-                document.getElementById('metricPending').textContent = won(cur.pending);
-                document.getElementById('metricSuspended').textContent = won(cur.suspended);
                 setDelta('deltaTotal', delta(cur.total, prev.total));
+                setDelta('deltaInsurance', delta(cur.insurance, prev.insurance));
+                setDelta('deltaPatient', delta(cur.patient, prev.patient));
                 setDelta('deltaPaid', delta(cur.paid, prev.paid));
-                setDelta('deltaPending', delta(cur.pending, prev.pending));
-                setDelta('deltaSuspended', delta(cur.suspended, prev.suspended));
 
-                renderMonthlyChart(months);
+                renderMonthlyChart(months, monthSel ? idx : null);
                 renderDonut(cur, idx + 1, year);
                 renderServiceTable(cur, prev, idx + 1);
+                renderCompareChart(cur, prev, prevLabel, year, idx + 1);
+                renderResidentTable(records, year, idx + 1, monthSel > 0);
+
                 hideError();
             } catch (error) {
-                console.error('❌ 데이터 로드 실패:', error);
+                console.error('데이터 로드 실패:', error);
                 showError('수익 데이터를 불러올 수 없습니다');
             }
         }
 
-        function renderMonthlyChart(months) {
+        function renderMonthlyChart(months, highlightIdx) {
             const labels = months.map((_, i) => `${i + 1}월`);
             if (monthlyChart) monthlyChart.destroy();
             monthlyChart = new Chart(document.getElementById('monthlyChart'), {
                 data: {
                     labels,
                     datasets: [
-                        { type: 'bar', label: '정산 완료', data: months.map(m => m.paid), backgroundColor: '#86D7A6', borderRadius: 3, order: 2, pointStyle: 'rectRounded' },
-                        { type: 'bar', label: '정산 대기', data: months.map(m => m.pending), backgroundColor: '#FB923C', borderRadius: 3, order: 2, pointStyle: 'rectRounded' },
-                        { type: 'line', label: '총 청구액', data: months.map(m => m.total), borderColor: '#2563EB', backgroundColor: '#2563EB', tension: 0, pointRadius: 4, order: 1, pointStyle: 'circle' }
+                        { type: 'bar', label: '정산 완료', data: months.map(m => m.paid), backgroundColor: '#86D7A6', borderRadius: 3, order: 2 },
+                        { type: 'bar', label: '승인·공단청구 중', data: months.map(m => m.processing), backgroundColor: '#93C5FD', borderRadius: 3, order: 2 },
+                        { type: 'bar', label: '검토 대기', data: months.map(m => m.pending), backgroundColor: '#FB923C', borderRadius: 3, order: 2 },
+                        { type: 'line', label: '총 청구액', data: months.map(m => m.total), borderColor: '#2563EB', backgroundColor: '#2563EB', tension: 0, pointRadius: 4, order: 1 }
                     ]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 12, boxHeight: 12, padding: 14 } } },
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 10, boxHeight: 10, padding: 12, font: { size: 11 } } } },
                     scales: {
-                        y: { beginAtZero: true, ticks: { callback: v => manLabel(v) }, grid: { color: '#eef1f5' } },
+                        y: { beginAtZero: true, stacked: false, ticks: { callback: v => manLabel(v) }, grid: { color: '#eef1f5' } },
                         x: { grid: { display: false } }
                     }
                 }
@@ -390,9 +550,8 @@
 
         function renderDonut(cur, month, year) {
             const parts = [
-                { name: '정산 완료', color: '#22C55E', tint: '#DCFCE7', value: cur.paid },
-                { name: '정산 대기', color: '#F97316', tint: '#FFEDD5', value: cur.pending },
-                { name: '정산 중단', color: '#8B5CF6', tint: '#EDE9FE', value: cur.suspended }
+                { name: '공단 청구액', color: '#2563EB', value: cur.insurance },
+                { name: '본인부담금', color: '#F59E0B', value: cur.patient }
             ];
             const sum = parts.reduce((s, p) => s + p.value, 0);
             document.getElementById('donutNote').textContent = `${year}년 ${month}월 기준`;
@@ -405,7 +564,7 @@
             });
             document.getElementById('donutLegend').innerHTML = parts.map(p => `
                 <div class="pa-legend-row">
-                    <span class="pa-dot" style="background:${p.tint};--dot:${p.color};"></span>
+                    <span class="pa-dot" style="background:${p.color};"></span>
                     <div><div class="pa-legend-name">${p.name}</div><div class="pa-legend-amt">${won(p.value)}</div></div>
                     <span class="pa-legend-pct">${sum ? (p.value / sum * 100).toFixed(1) : '0.0'}%</span>
                 </div>`).join('');
@@ -436,32 +595,91 @@
             tbody.innerHTML = rows + total;
         }
 
+        function renderCompareChart(cur, prev, prevLabel, year, month) {
+            if (compareChart) compareChart.destroy();
+            compareChart = new Chart(document.getElementById('compareChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['총 청구액', '공단 청구액', '본인부담금'],
+                    datasets: [
+                        { label: `${year}년 ${month}월`, data: [cur.total, cur.insurance, cur.patient], backgroundColor: '#0F8B80', borderRadius: 4 },
+                        { label: prevLabel.replace(' 대비', ''), data: [prev.total, prev.insurance, prev.patient], backgroundColor: '#CBD5E1', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { boxWidth: 10, boxHeight: 10, font: { size: 11 } } } },
+                    scales: { y: { beginAtZero: true, ticks: { callback: v => manLabel(v) } } }
+                }
+            });
+        }
+
+        // 이용자별 집계는 /billing/ 원본 레코드를 이용자 기준으로 묶어서 만든다 (별도 집계 API 없음)
+        function renderResidentTable(records, year, month, isMonthSel) {
+            const scoped = records.filter(r => {
+                if (!r.recorded_date || r.approval_status === 'rejected') return false;
+                const [y, m] = r.recorded_date.slice(0, 7).split('-').map(Number);
+                return y === year && (!isMonthSel || m === month);
+            });
+            const byResident = {};
+            scoped.forEach(r => {
+                const id = r.resident_id;
+                if (!byResident[id]) byResident[id] = { id, name: r.resident_name, visits: 0, insurance: 0, patient: 0, total: 0 };
+                byResident[id].visits += 1;
+                byResident[id].insurance += r.amount || 0;
+                byResident[id].patient += patientAmount(r);
+                byResident[id].total += (r.amount || 0) + patientAmount(r);
+            });
+            residentRows = Object.values(byResident).sort((a, b) => b.total - a.total);
+            const grand = residentRows.reduce((s, r) => s + r.total, 0) || 1;
+            const tbody = document.getElementById('residentTableBody');
+            if (!residentRows.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="pa-muted" style="padding:30px;">해당 기간의 청구 기록이 없습니다</td></tr>';
+                return;
+            }
+            tbody.innerHTML = residentRows.map(r => {
+                const meta = residentsMap[r.id];
+                const initial = (r.name || '?').slice(0, 1);
+                const sub = meta ? `${meta.gender === '여' ? '여' : meta.gender === '남' ? '남' : (meta.gender || '-')}, ${meta.age ?? '-'}세` : '';
+                return `<tr>
+                    <td style="text-align:left;"><span class="resident-avatar2">${initial}</span>${r.name || '-'}${sub ? `<div style="font-size:11px;color:#94A3B8;margin-left:36px;">${sub}</div>` : ''}</td>
+                    <td>${r.visits}회</td>
+                    <td class="num">${won(r.insurance)}</td>
+                    <td class="num">${won(r.patient)}</td>
+                    <td class="num">${won(r.total)}</td>
+                    <td>${(r.total / grand * 100).toFixed(1)}%</td>
+                </tr>`;
+            }).join('');
+        }
+
         function exportCsv() {
             if (serviceRows.length === 0) { alert('내려받을 수익 기록이 없습니다'); return; }
-            const header = ['항목', '금액', '비율(%)', '전월 대비'];
+            const header = ['항목', '금액', '비율(%)', '비교 기간 대비'];
             const lines = serviceRows.map(r => [r.name, Math.round(r.amount), r.ratio.toFixed(1), r.change.text]);
             const csv = [header, ...lines].map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
             const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `수익분석_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.download = `수익분석_서비스별_${new Date().toISOString().slice(0, 10)}.csv`;
             a.click();
+            URL.revokeObjectURL(a.href);
         }
 
-        function initYearSelect() {
-            const now = new Date().getFullYear();
-            const select = document.getElementById('yearSelect');
-            select.innerHTML = [now - 2, now - 1, now].map(y => `<option value="${y}">${y}년</option>`).join('');
-            select.value = now;
+        function exportResidentCsv() {
+            if (residentRows.length === 0) { alert('내려받을 이용자별 수익 기록이 없습니다'); return; }
+            const header = ['이용자', '방문횟수', '공단청구액', '본인부담금', '총청구액'];
+            const lines = residentRows.map(r => [r.name || '', r.visits, Math.round(r.insurance), Math.round(r.patient), Math.round(r.total)]);
+            const csv = [header, ...lines].map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `수익분석_이용자별_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(a.href);
         }
 
-        function showError(message) {
-            document.getElementById('errorContainer').innerHTML = `<div class="error">${message}</div>`;
-        }
-
-        function hideError() {
-            document.getElementById('errorContainer').innerHTML = '';
-        }
+        function showError(message) { document.getElementById('errorContainer').innerHTML = `<div class="error">${message}</div>`; }
+        function hideError() { document.getElementById('errorContainer').innerHTML = ''; }
 
         window.addEventListener('load', () => {
             if (checkAuth()) {
