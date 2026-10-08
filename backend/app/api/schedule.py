@@ -52,6 +52,8 @@ async def get_schedules(
         query = query.filter(Schedule.status == status)
 
     schedules = query.order_by(Schedule.scheduled_date).all()
+    residents = {x.id: x.name for x in db.query(Resident).all()}
+    caregivers = {x.id: x.full_name for x in db.query(User).all()}
 
     return {
         "total": len(schedules),
@@ -59,9 +61,16 @@ async def get_schedules(
             {
                 "id": s.id,
                 "caregiver_id": s.caregiver_id,
+                "caregiver_name": caregivers.get(s.caregiver_id),
                 "resident_id": s.resident_id,
+                "resident_name": residents.get(s.resident_id),
                 "center_id": s.center_id,
                 "scheduled_date": s.scheduled_date.isoformat(),
+                "duration_minutes": s.duration_minutes,
+                "planned_items": _codes(s.planned_items),
+                "arrived_at": s.arrived_at.isoformat() if s.arrived_at else None,
+                "left_at": s.left_at.isoformat() if s.left_at else None,
+                "review_note": s.review_note,
                 "service_type": s.service_type,
                 "status": s.status,
                 "notes": s.notes,
@@ -339,6 +348,7 @@ def list_proposals(center_id: int, db: Session = Depends(get_db), actor: User = 
                 "duration_minutes": s.duration_minutes,
                 "planned_items": _codes(s.planned_items),
                 "review_note": s.review_note,
+                "service_type": s.service_type,
             }
             for s in rows
         ]

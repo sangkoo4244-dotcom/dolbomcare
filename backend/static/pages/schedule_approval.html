@@ -7,56 +7,222 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
-        .sa-banner { border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
-        .sa-banner img { width: 100%; height: auto; display: block; }
-        .sa-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .sa-metric { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; }
-        .sa-metric img { width: 44px; height: 44px; object-fit: contain; flex: 0 0 auto; mix-blend-mode: multiply; }
-        .sa-metric-label { font-size: 13px; font-weight: 700; color: #1F2937; }
-        .sa-metric-value { font-size: 28px; font-weight: 800; color: #1F2937; line-height: 1.2; margin-top: 2px; }
-        .sa-metric-note { font-size: 12px; color: #6B7280; margin-top: 1px; }
-        .sa-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-        .sa-head img { width: 44px; height: 44px; object-fit: contain; }
-        .side-icon img { display: block; }
-        @media (max-width: 900px) { .sa-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        /* ===== Premium Healthcare Management SaaS 톤 (대시보드·이용자관리·음성기록 등과 동일) ===== */
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247;
+            --warn: #B45309; --danger: #DC2626; --line2: #E2E8F0;
+        }
+        html, body { background: var(--bg) !important; }
+        body { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        aside.w-72 { background: var(--navy) !important; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+        #navContent .side-item { color: #C9D6E3 !important; border-radius: 8px; }
+        #navContent .side-item:hover { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+        #navContent .side-item.active { background: var(--teal) !important; color: #fff !important; }
+
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .page-intro { font-size: 13px; color: #64748B; margin: 10px 0 20px; }
+        .date-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line2); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--charcoal); white-space: nowrap; }
+        .bell-wrap { position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #F1F5F9; border-radius: 10px; flex: 0 0 auto; }
+        .bell-wrap svg { width: 17px; height: 17px; color: var(--charcoal); }
+        .bell-badge { position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+        /* 운영 지표 카드 4개 */
+        .summary-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .summary-row > div { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); display: flex; align-items: center; gap: 14px; }
+        .summary-icon { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .summary-icon svg { width: 21px; height: 21px; }
+        .summary-label { font-size: 13px; font-weight: 700; color: #64748B; }
+        .summary-value { font-size: 26px; font-weight: 800; color: var(--navy); line-height: 1.2; font-variant-numeric: tabular-nums; }
+        .summary-note { font-size: 12px; color: #94A3B8; margin-top: 1px; }
+        @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+        /* 필터 툴바 */
+        .filter-bar { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .filter-input { padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 13px; outline: none; }
+        .filter-input:focus { border-color: var(--teal); }
+        .btn-outline { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .btn-outline:disabled, .btn-solid:disabled { opacity: .5; cursor: not-allowed; }
+        .btn-solid { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
+        .btn-solid:hover { background: #0C756C; }
+
+        /* 상태 탭 */
+        .sa-tabs { display: flex; gap: 8px; background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 6px; margin-bottom: 16px; width: fit-content; }
+        .sa-tab { padding: 9px 18px; border-radius: 9px; font-weight: 700; font-size: 13px; color: #64748B; cursor: pointer; white-space: nowrap; }
+        .sa-tab.active { background: var(--teal); color: #fff; }
+
+        /* 테이블 */
+        .plan-table { border-collapse: collapse; width: 100%; }
+        .plan-table th { text-align: left; font-size: 12px; font-weight: 700; color: #64748B; padding: 10px 12px; background: #F8FAFC; border-bottom: 1px solid var(--line2); white-space: nowrap; }
+        .plan-table td { padding: 12px; font-size: 13px; color: var(--charcoal); border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+        .plan-table tr:hover td { background: #FAFBFC; }
+        .status-pill { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+        .sp-proposed { background: #FDF1E3; color: #B45309; }
+        .sp-scheduled { background: #E6F7EE; color: #15803D; }
+        .sp-rejected { background: #FDE8E8; color: #DC2626; }
+        .svc-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #E8F1FC; color: #1D4ED8; white-space: nowrap; }
+
+        /* 우측 패널 */
+        .panel { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 14px; font-weight: 800; color: var(--navy); }
+        .panel-head .panel-sub { font-size: 11px; font-weight: 600; color: #94A3B8; }
+        .panel-link { font-size: 12px; font-weight: 600; color: var(--teal); cursor: pointer; background: none; border: none; }
+        .stat-row { margin-bottom: 12px; font-size: 12px; }
+        .stat-row:last-child { margin-bottom: 0; }
+        .stat-row .sr-top { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--charcoal); font-weight: 600; }
+        .stat-row .sr-track { height: 6px; border-radius: 3px; background: #EEF2F6; overflow: hidden; }
+        .stat-row .sr-fill { height: 100%; border-radius: 3px; }
+        .cg-row { margin-bottom: 10px; font-size: 12px; }
+        .cg-row:last-child { margin-bottom: 0; }
+        .cg-row .cg-top { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--charcoal); font-weight: 600; }
+        .cg-row .cg-track { height: 6px; border-radius: 3px; background: #EEF2F6; overflow: hidden; }
+        .cg-row .cg-fill { height: 100%; border-radius: 3px; background: var(--teal); }
+        .notice-item { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid #F3F5F8; }
+        .notice-item:last-child { border-bottom: none; }
+        .notice-ico { width: 26px; height: 26px; border-radius: 8px; background: #E8F1FC; color: #1D4ED8; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .notice-ico svg { width: 14px; height: 14px; }
+        .notice-title { font-size: 12.5px; font-weight: 700; color: var(--charcoal); }
+        .notice-desc { font-size: 11.5px; color: #94A3B8; margin-top: 1px; line-height: 1.4; }
     </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
-        <aside class="w-72 bg-gradient-to-b from-gray-800 to-gray-900 text-white fixed h-screen overflow-y-auto">
+        <!-- 사이드바 -->
+        <aside class="w-72 text-white fixed h-screen overflow-hidden">
             <div class="p-6 border-b border-gray-700 flex items-center gap-3">
                 <div class="text-3xl"></div>
                 <div><div class="text-lg font-bold">돌봄케어</div><div class="text-xs text-gray-400">Care Management</div></div>
             </div>
             <nav id="navContent" class="p-4"></nav>
         </aside>
+
+        <!-- 메인 컨텐츠 -->
         <main class="ml-72 w-full flex flex-col">
+            <!-- 탑바 -->
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-bold text-gray-900">방문 계획 승인</h1>
-                <div class="flex items-center gap-6">
-                    <img src="assets/user_design/28_top_notification_icon.png" alt="" style="width:28px;height:28px;object-fit:contain;">
-                    <div class="text-right"><div class="text-sm font-semibold text-gray-900" id="userName">사용자</div><div class="text-xs text-gray-500" id="userRole">역할</div></div>
-                    <img src="assets/user_design/29_top_profile_icon.png" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">방문 계획 승인</h1>
+                    <div class="breadcrumb">홈 › 방문 서비스 운영 › <b>방문 계획 승인</b></div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="date-chip" id="headerDate"></div>
+                    <div class="bell-wrap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <span class="bell-badge" id="bellBadge" style="display:none;">0</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
+                        <div class="text-xs text-gray-500" id="userRole">역할</div>
+                    </div>
+                    <img src="assets/user_design/29_top_profile_icon.png" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
                     <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
                 </div>
             </div>
-            <div class="flex-1 overflow-y-auto p-8">
+
+            <div class="flex-1 overflow-y-auto px-8 py-8">
                 <div id="message" class="hidden mb-6 p-4 rounded-lg"></div>
-                <div class="sa-banner"><img src="assets/user_design/approval_banner.jpg" alt=""></div>
-                <div class="sa-metrics">
-                    <div class="sa-metric" style="background:#FDF6EC;"><img src="assets/user_design/approval_metric_pending.png" alt=""><div><div class="sa-metric-label">승인 대기 계획</div><div class="sa-metric-value" id="metricPending">0건</div><div class="sa-metric-note">요양사가 제안한 계획</div></div></div>
-                    <div class="sa-metric" style="background:#EAF6F0;"><img src="assets/user_design/approval_metric_approved.png" alt=""><div><div class="sa-metric-label">승인된 계획</div><div class="sa-metric-value" id="metricApproved">-</div><div class="sa-metric-note">이번 달 승인 완료</div></div></div>
-                    <div class="sa-metric" style="background:#FBEAEA;"><img src="assets/user_design/approval_metric_rejected.png" alt=""><div><div class="sa-metric-label">반려된 계획</div><div class="sa-metric-value" id="metricRejected">0건</div><div class="sa-metric-note">수정 요청한 계획</div></div></div>
-                    <div class="sa-metric" style="background:#E8F2FC;"><img src="assets/user_design/approval_metric_today_visit.png" alt=""><div><div class="sa-metric-label">오늘 예정 방문</div><div class="sa-metric-value" id="metricToday">-</div><div class="sa-metric-note">승인된 일정</div></div></div>
-                </div>
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
-                    <div class="sa-head"><img src="assets/user_design/approval_section_header_icon.png" alt=""><h2 class="text-2xl font-bold text-gray-900">승인 대기 계획</h2></div>
-                    <p class="text-sm text-gray-600 mb-6">요양사가 제안한 방문 계획입니다. 승인하면 요양사의 나의 일정에 확정됩니다. 반려하면 사유가 요양사에게 전달됩니다.</p>
-                    <div class="flex justify-end mb-4">
-                        <button onclick="approveAllPlans()" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">승인 대기 계획 모두 승인</button>
+                <div class="page-intro">요양사가 제출한 방문 계획을 검토하고 승인하는 메뉴입니다. 승인된 계획은 방문 일정에 반영되어 서비스가 진행됩니다.</div>
+
+                <!-- 운영 지표 카드 -->
+                <div class="summary-row">
+                    <div>
+                        <div class="summary-icon" style="background:#E8F1FC;color:#1D4ED8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+                        <div><div class="summary-label">승인 대기 계획</div><div class="summary-value" id="metricPending">0건</div><div class="summary-note">요양사가 제안한 계획</div></div>
                     </div>
-                    <div id="proposalList" class="space-y-4">
-                        <div class="text-center py-8 text-gray-400">불러오는 중...</div>
+                    <div>
+                        <div class="summary-icon" style="background:#E6F7EE;color:#15803D;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
+                        <div><div class="summary-label">승인 완료</div><div class="summary-value" id="metricApproved">0건</div><div class="summary-note" id="metricApprovedNote">이번 주 승인 완료</div></div>
+                    </div>
+                    <div>
+                        <div class="summary-icon" style="background:#FDE8E8;color:#DC2626;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg></div>
+                        <div><div class="summary-label">반려된 계획</div><div class="summary-value" id="metricRejected">0건</div><div class="summary-note">수정 요청한 계획</div></div>
+                    </div>
+                    <div>
+                        <div class="summary-icon" style="background:#F1ECFB;color:#6D28D9;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+                        <div><div class="summary-label">오늘 예정 방문</div><div class="summary-value" id="metricToday">0건</div><div class="summary-note" id="metricTodayNote">승인된 일정</div></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1" style="grid-template-columns: minmax(0,1fr) 300px; gap: 16px; align-items: start; display: grid;">
+                    <div style="min-width:0;">
+                        <!-- 필터 -->
+                        <div class="filter-bar">
+                            <input id="dateFrom" type="date" class="filter-input">
+                            <span class="text-gray-400 text-sm">~</span>
+                            <input id="dateTo" type="date" class="filter-input">
+                            <select id="residentFilter" class="filter-input"><option value="">이용자 전체</option></select>
+                            <select id="caregiverFilter" class="filter-input"><option value="">요양사 전체</option></select>
+                            <select id="serviceFilter" class="filter-input">
+                                <option value="">서비스 유형 전체</option>
+                                <option value="basic_care">기본 돌봄</option><option value="meal_service">식사 서빙</option><option value="medical_care">의료 관리</option><option value="emergency">응급</option>
+                            </select>
+                            <input id="searchInput" type="search" placeholder="이용자명, 요양사명, 계획항목 검색" class="filter-input" style="width:220px;">
+                            <button type="button" class="btn-outline" onclick="resetFilters()">초기화</button>
+                            <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+                                <button type="button" class="btn-outline" onclick="bulkApprove()">✓ 선택 승인</button>
+                                <button type="button" class="btn-outline" style="color:#DC2626;border-color:#FBCFCF;" onclick="bulkReject()">✕ 선택 반려</button>
+                                <button type="button" class="btn-solid" onclick="approveAllPlans()">승인 대기 계획 모두 승인</button>
+                            </div>
+                        </div>
+
+                        <!-- 상태 탭 -->
+                        <div class="sa-tabs">
+                            <div class="sa-tab active" data-tab="proposed" onclick="switchTab(event)">승인 대기</div>
+                            <div class="sa-tab" data-tab="scheduled" onclick="switchTab(event)">승인 완료</div>
+                            <div class="sa-tab" data-tab="rejected" onclick="switchTab(event)">반려된 계획</div>
+                            <div class="sa-tab" data-tab="all" onclick="switchTab(event)">전체 계획</div>
+                        </div>
+
+                        <!-- 목록 테이블 -->
+                        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-lg font-bold text-gray-900" id="tableTitle">승인 대기 계획 (총 0건)</h2>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="plan-table">
+                                    <thead>
+                                        <tr>
+                                            <th><input type="checkbox" id="selectAllBox" onchange="toggleSelectAll(this)"></th>
+                                            <th>No</th><th>방문 일시</th><th>이용자 정보</th><th>담당 요양사</th><th>서비스 유형</th><th>계획 항목</th><th>상태</th><th>관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="planTableBody">
+                                        <tr><td colspan="9" style="text-align:center;padding:40px 0;color:#94A3B8;">불러오는 중...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="flex items-center justify-between mt-4" style="font-size:13px;color:#64748B;">
+                                <div class="flex items-center gap-2">
+                                    <span>페이지당</span>
+                                    <select id="pageSizeSelect" class="filter-input" style="padding:4px 8px;" onchange="changePageSize()">
+                                        <option value="10">10개씩 보기</option>
+                                        <option value="20">20개씩 보기</option>
+                                        <option value="50">50개씩 보기</option>
+                                    </select>
+                                    <span id="pageInfoLabel"></span>
+                                </div>
+                                <div class="flex items-center gap-1" id="pager"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 우측 패널 -->
+                    <div>
+                        <div class="panel">
+                            <div class="panel-head"><span>이번 주 방문 현황</span><span class="panel-sub" id="weekRangeLabel"></span></div>
+                            <div id="weekStatusPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-head"><span>요양사별 제안 현황</span><span class="panel-sub">이번 주</span></div>
+                            <div id="caregiverStatsPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
+                            <button type="button" class="panel-link" style="margin-top:10px;" id="cgMoreBtn" onclick="toggleCaregiverMore()">더보기 ›</button>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-head"><span>안내사항</span></div>
+                            <div id="noticePanel"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -64,6 +230,7 @@
     </div>
 
     <script src="menu.js"></script>
+    <script src="art.js"></script>
     <script>
         const API_URL = '/api/v1';
         const CARE_ITEM_LABELS = {
@@ -72,7 +239,20 @@
             emotional: '말벗·정서 지원', cognitive: '인지활동',
             cleaning: '청소·정돈', laundry: '세탁', shopping: '장보기·취사'
         };
+        const SERVICE_TYPE_LABELS = { basic_care: '기본 돌봄', meal_service: '식사 서빙', medical_care: '의료 관리', emergency: '응급' };
+        const STATUS_LABELS = {
+            proposed: ['승인 대기', 'sp-proposed'], scheduled: ['승인 완료', 'sp-scheduled'], rejected: ['반려됨', 'sp-rejected']
+        };
+
         let currentUser = null;
+        let residents = [];
+        let caregivers = [];
+        let allPlans = [];
+        let currentTab = 'proposed';
+        let selectedIds = new Set();
+        let currentPage = 1;
+        let pageSize = 10;
+        let caregiverStatsExpanded = false;
 
         function checkAuth() {
             const token = localStorage.getItem('access_token');
@@ -82,116 +262,415 @@
             currentUser = user;
             document.getElementById('userName').textContent = user.full_name || '사용자';
             document.getElementById('userRole').textContent = '센터장';
+            document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
             renderSidebar();
-            applyNavIcons();
-            loadProposals();
+            groupSidebar();
+            loadBellBadge();
+            loadFilters();
+            loadPlans();
         }
 
-        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
-        const NAV_ICON_FILES = {
-            '대시보드': '20_nav_dashboard_icon.png',
-            '이용자관리': '21_nav_user_icon.png',
-            '음성 기록': '22_nav_voice_icon.png',
-            '방문계획 승인': '23_nav_service_plan_icon.png',
-            '청부관리': '24_nav_billing_icon.png',
-            '수익분석': '25_nav_statistics_icon.png',
-            '알림': '26_nav_notice_icon.png',
-            '설정': '27_nav_settings_icon.png',
-        };
-
-        function applyNavIcons() {
-            document.querySelectorAll('.sidebar-nav .side-item, #navContent .side-item').forEach(item => {
-                const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
-                if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
+        const SIDE_GROUPS = [
+            ['매인', ['대시보드']],
+            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
+            ['방문 서비스 운영', ['음성 기록', '방문계획 승인', '보호자 소통']],
+            ['청구 및 경영 관리', ['청부관리', '월별정산', '수익분석', '급여 확정']],
+        ];
+        function groupSidebar() {
+            const nav = document.getElementById('navContent');
+            const items = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+            if (!items.length) return;
+            const byLabel = {};
+            items.forEach(item => { byLabel[item.querySelector('span:last-child')?.textContent.trim()] = item; });
+            const frag = document.createDocumentFragment();
+            SIDE_GROUPS.forEach(([groupLabel, labels]) => {
+                const found = labels.map(l => byLabel[l]).filter(Boolean);
+                if (!found.length) return;
+                const h = document.createElement('div');
+                h.className = 'side-group-label';
+                h.textContent = groupLabel;
+                frag.appendChild(h);
+                found.forEach(el => frag.appendChild(el));
             });
+            items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
+            nav.innerHTML = '';
+            nav.appendChild(frag);
+
+            const map = {
+                '대시보드': '20_nav_dashboard_icon.png', '이용자관리': '21_nav_user_icon.png', '음성 기록': '22_nav_voice_icon.png',
+                '방문계획 승인': '23_nav_service_plan_icon.png', '청부관리': '24_nav_billing_icon.png', '수익분석': '25_nav_statistics_icon.png',
+                '알림': '26_nav_notice_icon.png', '설정': '27_nav_settings_icon.png'
+            };
+            nav.querySelectorAll('a').forEach(a => {
+                const file = map[a.textContent.trim()];
+                const icon = a.querySelector('.side-icon');
+                if (file && icon) icon.innerHTML = `<img src="assets/user_design/${file}" alt="" style="width:24px;height:24px;object-fit:contain;">`;
+            });
+        }
+
+        // 알림 벨: /notifications/mine 의 실제 unread_count 사용 (가짜 숫자 없음)
+        async function loadBellBadge() {
+            try {
+                const r = await fetch(`${API_URL}/notifications/mine`);
+                if (!r.ok) return;
+                const d = await r.json();
+                const n = d.unread_count || 0;
+                if (n > 0) {
+                    const badge = document.getElementById('bellBadge');
+                    badge.textContent = n > 99 ? '99+' : n;
+                    badge.style.display = 'flex';
+                }
+            } catch (e) { /* 배지는 부가 기능이므로 실패해도 무시 */ }
+        }
+
+        async function loadFilters() {
+            try {
+                const centerId = currentUser.center_id || 1;
+                const [resResp, cgResp] = await Promise.all([
+                    fetch(`${API_URL}/residents/?center_id=${centerId}`),
+                    fetch(`${API_URL}/users/?role=caregiver&center_id=${centerId}`)
+                ]);
+                residents = (await resResp.json()).residents || [];
+                caregivers = (await cgResp.json()).users || [];
+
+                const resSel = document.getElementById('residentFilter');
+                residents.forEach(r => { resSel.innerHTML += `<option value="${r.id}">${r.name}</option>`; });
+                const cgSel = document.getElementById('caregiverFilter');
+                caregivers.forEach(c => { cgSel.innerHTML += `<option value="${c.id}">${c.full_name}</option>`; });
+            } catch (e) { showMessage('필터 목록 로드 실패', 'error'); }
+        }
+
+        // "YYYY-MM-DD HH:MM" (proposals API)과 ISO 문자열(schedule API) 둘 다 파싱
+        function parseScheduleDate(str) {
+            if (!str) return null;
+            return new Date(str.includes('T') ? str : str.replace(' ', 'T'));
+        }
+
+        async function loadPlans() {
+            try {
+                const centerId = currentUser.center_id || 1;
+                const [proposalsResp, scheduledResp] = await Promise.all([
+                    fetch(`${API_URL}/schedule/proposals?center_id=${centerId}`),
+                    fetch(`${API_URL}/schedule/?center_id=${centerId}&status=scheduled`)
+                ]);
+                const proposals = ((await proposalsResp.json()).items || []).map(p => ({
+                    schedule_id: p.schedule_id, status: p.status, caregiver_id: p.caregiver_id, caregiver_name: p.caregiver_name,
+                    resident_id: p.resident_id, resident_name: p.resident_name, date: parseScheduleDate(p.scheduled_date),
+                    duration_minutes: p.duration_minutes, planned_items: p.planned_items || [], review_note: p.review_note,
+                    service_type: p.service_type, arrived_at: null, left_at: null
+                }));
+                const scheduled = ((await scheduledResp.json()).schedules || []).map(s => ({
+                    schedule_id: s.id, status: s.status, caregiver_id: s.caregiver_id, caregiver_name: s.caregiver_name,
+                    resident_id: s.resident_id, resident_name: s.resident_name, date: parseScheduleDate(s.scheduled_date),
+                    duration_minutes: s.duration_minutes, planned_items: s.planned_items || [], review_note: s.review_note,
+                    service_type: s.service_type, arrived_at: s.arrived_at, left_at: s.left_at
+                }));
+                allPlans = [...proposals, ...scheduled];
+                computeMetrics();
+                renderWeekStatus();
+                renderCaregiverStats();
+                renderTable();
+            } catch (e) { showMessage('방문 계획 로드 실패', 'error'); }
+        }
+
+        function thisWeekRange() {
+            const now = new Date();
+            const day = now.getDay() === 0 ? 7 : now.getDay(); // 월=1 ... 일=7
+            const monday = new Date(now); monday.setHours(0, 0, 0, 0); monday.setDate(now.getDate() - day + 1);
+            const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); sunday.setHours(23, 59, 59, 999);
+            return { start: monday, end: sunday };
+        }
+
+        function computeMetrics() {
+            const pending = allPlans.filter(p => p.status === 'proposed');
+            const rejected = allPlans.filter(p => p.status === 'rejected');
+            const { start, end } = thisWeekRange();
+            const weekPlans = allPlans.filter(p => p.date && p.date >= start && p.date <= end);
+            const weekNotApproved = weekPlans.filter(p => p.status === 'proposed' || p.status === 'rejected');
+            const weekInProgress = weekPlans.filter(p => p.status === 'scheduled' && p.arrived_at && !p.left_at);
+            const weekApproved = weekPlans.length - weekNotApproved.length - weekInProgress.length;
+
+            document.getElementById('metricPending').textContent = `${pending.length}건`;
+            document.getElementById('metricApproved').textContent = `${weekApproved}건`;
+            document.getElementById('metricRejected').textContent = `${rejected.length}건`;
+
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const todayEnd = new Date(today); todayEnd.setHours(23, 59, 59, 999);
+            const todayApproved = allPlans.filter(p => p.status === 'scheduled' && p.date >= today && p.date <= todayEnd);
+            document.getElementById('metricToday').textContent = `${todayApproved.length}건`;
+            document.getElementById('metricTodayNote').textContent = `전체 ${weekPlans.length}건 중`;
+
+            window._weekPlans = weekPlans;
+            window._weekNotApproved = weekNotApproved;
+            window._weekInProgress = weekInProgress;
+            window._weekApproved = weekApproved;
+        }
+
+        function renderWeekStatus() {
+            const { start, end } = thisWeekRange();
+            const fmt = d => `${d.getMonth() + 1}/${d.getDate()}`;
+            document.getElementById('weekRangeLabel').textContent = `${fmt(start)} ~ ${fmt(end)}`;
+
+            const total = window._weekPlans.length || 1;
+            const rows = [
+                ['전체 예정 방문', window._weekPlans.length, '#64748B'],
+                ['승인 완료', window._weekApproved, '#15803D'],
+                ['진행 중', window._weekInProgress.length, '#1D4ED8'],
+                ['미승인', window._weekNotApproved.length, '#DC2626'],
+            ];
+            document.getElementById('weekStatusPanel').innerHTML = rows.map(([label, count, color], i) => {
+                if (i === 0) return `<div class="stat-row"><div class="sr-top"><span>${label}</span><span>${count}건</span></div></div>`;
+                const pct = Math.round(count / total * 100);
+                return `<div class="stat-row"><div class="sr-top"><span>${label}</span><span>${count}건 · ${pct}%</span></div><div class="sr-track"><div class="sr-fill" style="width:${pct}%;background:${color};"></div></div></div>`;
+            }).join('');
+        }
+
+        function renderCaregiverStats() {
+            const counts = {};
+            window._weekPlans.forEach(p => {
+                const name = p.caregiver_name || `요양사 #${p.caregiver_id}`;
+                counts[name] = (counts[name] || 0) + 1;
+            });
+            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+            const max = sorted.length ? sorted[0][1] : 1;
+            const visible = caregiverStatsExpanded ? sorted : sorted.slice(0, 5);
+            const panel = document.getElementById('caregiverStatsPanel');
+            panel.innerHTML = visible.length
+                ? visible.map(([name, count]) => `
+                    <div class="cg-row"><div class="cg-top"><span>${name} 요양사</span><span>${count}건</span></div><div class="cg-track"><div class="cg-fill" style="width:${Math.round(count / max * 100)}%;"></div></div></div>
+                `).join('')
+                : '<div style="font-size:13px;color:#94A3B8;">이번 주 방문 계획이 없습니다</div>';
+            const moreBtn = document.getElementById('cgMoreBtn');
+            moreBtn.style.display = sorted.length > 5 ? 'block' : 'none';
+            moreBtn.textContent = caregiverStatsExpanded ? '접기 ›' : '더보기 ›';
+        }
+
+        function toggleCaregiverMore() {
+            caregiverStatsExpanded = !caregiverStatsExpanded;
+            renderCaregiverStats();
+        }
+
+        const NOTICES = [
+            { title: '방문 계획은 방문 1일 전까지 검토해 주세요', desc: '승인된 계획은 요양사의 나의 일정에 자동으로 반영됩니다.' },
+            { title: '반려 시 사유를 반드시 입력해 주세요', desc: '입력한 사유는 요양사에게 즉시 전달되며, 요양사가 수정하여 다시 제안할 수 있습니다.' },
+            { title: '승인 후 일정 변경이 필요한 경우', desc: '요양사와 협의 후 일정 관리 메뉴에서 수정해 주세요.' },
+        ];
+        function renderNotices() {
+            document.getElementById('noticePanel').innerHTML = NOTICES.map(n => `
+                <div class="notice-item">
+                    <div class="notice-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
+                    <div><div class="notice-title">${n.title}</div><div class="notice-desc">${n.desc}</div></div>
+                </div>
+            `).join('');
+        }
+
+        function visiblePlans() {
+            const from = document.getElementById('dateFrom').value;
+            const to = document.getElementById('dateTo').value;
+            const residentId = document.getElementById('residentFilter').value;
+            const caregiverId = document.getElementById('caregiverFilter').value;
+            const svc = document.getElementById('serviceFilter').value;
+            const q = (document.getElementById('searchInput').value || '').trim();
+
+            return allPlans
+                .filter(p => currentTab === 'all' || p.status === currentTab)
+                .filter(p => !from || (p.date && p.date >= new Date(from + 'T00:00:00')))
+                .filter(p => !to || (p.date && p.date <= new Date(to + 'T23:59:59')))
+                .filter(p => !residentId || p.resident_id == residentId)
+                .filter(p => !caregiverId || p.caregiver_id == caregiverId)
+                .filter(p => !svc || p.service_type === svc)
+                .filter(p => !q || (p.resident_name || '').includes(q) || (p.caregiver_name || '').includes(q)
+                    || p.planned_items.some(c => (CARE_ITEM_LABELS[c] || c).includes(q)))
+                .sort((a, b) => (a.date || 0) - (b.date || 0));
+        }
+
+        function resetFilters() {
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            document.getElementById('residentFilter').value = '';
+            document.getElementById('caregiverFilter').value = '';
+            document.getElementById('serviceFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            currentPage = 1;
+            renderTable();
+        }
+        ['dateFrom', 'dateTo', 'residentFilter', 'caregiverFilter', 'serviceFilter'].forEach(id =>
+            document.getElementById(id).addEventListener('change', () => { currentPage = 1; renderTable(); }));
+        document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; renderTable(); });
+
+        function switchTab(e) {
+            document.querySelectorAll('.sa-tab').forEach(t => t.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            currentTab = e.currentTarget.dataset.tab;
+            currentPage = 1;
+            selectedIds.clear();
+            renderTable();
+        }
+
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSizeSelect').value);
+            currentPage = 1;
+            renderTable();
+        }
+
+        function residentInfo(residentId) {
+            const r = residents.find(x => x.id == residentId);
+            if (!r) return { line1: '-', line2: '' };
+            const genderLabel = r.gender === 'male' || r.gender === '남' ? '남' : (r.gender === 'female' || r.gender === '여' ? '여' : (r.gender || '-'));
+            return { line1: `${r.name} (${r.age ?? '-'}세)`, line2: `${genderLabel} / 노인장기요양 ${r.care_grade ?? '-'}등급` };
+        }
+
+        function renderTable() {
+            const rows = visiblePlans();
+            const tabLabelMap = { proposed: '승인 대기 계획', scheduled: '승인 완료 계획', rejected: '반려된 계획', all: '전체 계획' };
+            document.getElementById('tableTitle').textContent = `${tabLabelMap[currentTab]} (총 ${rows.length}건)`;
+
+            const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+            const start = (currentPage - 1) * pageSize;
+            const pageRows = rows.slice(start, start + pageSize);
+
+            const tbody = document.getElementById('planTableBody');
+            if (!pageRows.length) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px 0;color:#94A3B8;">해당하는 방문 계획이 없습니다</td></tr>';
+            } else {
+                tbody.innerHTML = pageRows.map((p, i) => {
+                    const [label, cls] = STATUS_LABELS[p.status] || ['-', 'sp-proposed'];
+                    const info = residentInfo(p.resident_id);
+                    const itemsText = p.planned_items.map(c => CARE_ITEM_LABELS[c] || c).join(', ') || '-';
+                    const dateLine1 = p.date ? p.date.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit', weekday: 'short' }) : '-';
+                    const dateLine2 = p.date ? p.date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '';
+                    const checked = selectedIds.has(p.schedule_id) ? 'checked' : '';
+                    const checkbox = p.status === 'proposed'
+                        ? `<input type="checkbox" data-id="${p.schedule_id}" ${checked} onchange="toggleSelect(${p.schedule_id}, this.checked)">`
+                        : '';
+                    const actions = p.status === 'proposed'
+                        ? `<button class="btn-solid" style="padding:6px 12px;" onclick="approve(${p.schedule_id}, this)">승인</button>
+                           <button class="btn-outline" style="padding:6px 12px;color:#DC2626;border-color:#FBCFCF;margin-left:6px;" onclick="reject(${p.schedule_id}, this)">반려</button>`
+                        : (p.status === 'rejected' && p.review_note ? `<span style="font-size:12px;color:#DC2626;" title="${p.review_note.replace(/"/g, '&quot;')}">사유 보기</span>` : '-');
+                    return `<tr>
+                        <td>${checkbox}</td>
+                        <td>${start + i + 1}</td>
+                        <td><div style="font-weight:700;">${dateLine1}</div><div style="font-size:12px;color:#94A3B8;">${dateLine2}</div></td>
+                        <td><div style="font-weight:700;">${info.line1}</div><div style="font-size:12px;color:#94A3B8;">${info.line2}</div></td>
+                        <td>${p.caregiver_name || '-'} 요양사</td>
+                        <td><span class="svc-badge">${SERVICE_TYPE_LABELS[p.service_type] || p.service_type || '-'}</span></td>
+                        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${itemsText}">${itemsText}</td>
+                        <td><span class="status-pill ${cls}">${label}</span></td>
+                        <td>${actions}</td>
+                    </tr>`;
+                }).join('');
+            }
+
+            document.getElementById('selectAllBox').checked = pageRows.length > 0 && pageRows.every(p => p.status !== 'proposed' || selectedIds.has(p.schedule_id));
+            document.getElementById('pageInfoLabel').textContent = rows.length ? `총 ${rows.length}건 중 ${start + 1}-${Math.min(start + pageSize, rows.length)}건을 표시합니다` : '';
+            renderPager(totalPages);
+        }
+
+        function renderPager(totalPages) {
+            const pager = document.getElementById('pager');
+            let html = `<button class="btn-outline" style="padding:4px 10px;" ${currentPage <= 1 ? 'disabled' : ''} onclick="goPage(${currentPage - 1})">‹</button>`;
+            for (let p = 1; p <= totalPages; p++) {
+                html += `<button class="btn-outline" style="padding:4px 10px;${p === currentPage ? 'background:var(--teal);color:#fff;border-color:var(--teal);' : ''}" onclick="goPage(${p})">${p}</button>`;
+            }
+            html += `<button class="btn-outline" style="padding:4px 10px;" ${currentPage >= totalPages ? 'disabled' : ''} onclick="goPage(${currentPage + 1})">›</button>`;
+            pager.innerHTML = html;
+        }
+        function goPage(p) { currentPage = p; renderTable(); }
+
+        function toggleSelect(id, checked) {
+            if (checked) selectedIds.add(id); else selectedIds.delete(id);
+        }
+        function toggleSelectAll(box) {
+            visiblePlans().filter(p => p.status === 'proposed').forEach(p => {
+                if (box.checked) selectedIds.add(p.schedule_id); else selectedIds.delete(p.schedule_id);
+            });
+            renderTable();
         }
 
         function showMessage(text, type) {
             const msg = document.getElementById('message');
             msg.textContent = text;
             msg.className = `${type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'} mb-6 p-4 rounded-lg`;
+            msg.classList.remove('hidden');
             setTimeout(() => msg.classList.add('hidden'), 4000);
         }
 
-        async function loadProposals() {
-            const r = await fetch(`${API_URL}/schedule/proposals?center_id=${currentUser.center_id || 1}&user_role=center_manager`);
-            const d = await r.json();
-            const list = document.getElementById('proposalList');
-            const items = d.items || [];
-            const pendingItems = items.filter(p => p.status === 'proposed');
-            document.getElementById('metricPending').textContent = `${pendingItems.length}건`;
-            document.getElementById('metricRejected').textContent = `${items.length - pendingItems.length}건`;
-            if (items.length === 0) {
-                list.innerHTML = '<div class="text-center py-8 text-gray-400"><img src="assets/user_design/approval_empty_state.png" alt="" style="width:160px;height:auto;margin:0 auto 8px;display:block;">승인 대기 중인 방문 계획이 없습니다</div>';
-                return;
-            }
-            list.innerHTML = d.items.map(p => {
-                const items = p.planned_items.map(c => CARE_ITEM_LABELS[c] || c).join(', ') || '-';
-                const status = p.status === 'proposed'
-                    ? '<span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">승인 대기</span>'
-                    : '<span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">요양사 수정 대기</span>';
-                const actions = p.status === 'proposed'
-                    ? `<button onclick="approve(${p.schedule_id})" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">승인</button>
-                       <button onclick="reject(${p.schedule_id})" class="px-4 py-2 bg-white border border-red-300 text-red-700 text-sm font-bold rounded-lg hover:bg-red-50 ml-2">반려</button>`
-                    : '';
-                return `
-                    <div class="border border-gray-200 rounded-lg p-6 flex justify-between items-start gap-6">
-                        <div>
-                            <div class="text-lg font-bold text-gray-900">${p.resident_name || '-'} <span class="text-sm font-normal text-gray-500">· 요양사 ${p.caregiver_name || p.caregiver_id}</span></div>
-                            <div class="text-sm text-gray-700 mt-1">${p.scheduled_date} · ${p.duration_minutes || '-'}분</div>
-                            <div class="text-sm text-gray-700 mt-1">계획 항목: ${items}</div>
-                            ${p.review_note ? `<div class="text-sm text-red-600 mt-1">반려 사유: ${p.review_note}</div>` : ''}
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="mb-3">${status}</div>
-                            <div>${actions}</div>
-                        </div>
-                    </div>`;
-            }).join('');
-        }
-
-        async function approveAllPlans() {
-            const listed = await fetch(`${API_URL}/schedule/proposals?center_id=${currentUser.center_id || 1}&user_role=center_manager`);
-            const items = ((await listed.json()).items || []).filter(p => p.status === 'proposed');
-            if (items.length === 0) { showMessage('승인 대기 중인 방문 계획이 없습니다', 'error'); return; }
-            if (!confirm(`승인 대기 계획 ${items.length}건을 모두 승인하시겠습니까?`)) return;
-            let approved = 0;
-            for (const p of items) {
-                const r = await fetch(`${API_URL}/schedule/${p.schedule_id}/approve`, {
+        async function approve(scheduleId, btn) {
+            if (!confirm('이 방문 계획을 승인하시겠습니까?')) return;
+            if (btn) btn.disabled = true;
+            try {
+                const r = await fetch(`${API_URL}/schedule/${scheduleId}/approve`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: currentUser.id, user_role: 'center_manager', reason: '' })
                 });
-                if (r.ok) approved++;
-            }
-            showMessage(`방문 계획 ${approved}건을 승인했습니다`, 'success');
-            loadProposals();
+                if (!r.ok) { const e = await r.json().catch(() => ({})); showMessage(e.detail || '승인 실패', 'error'); if (btn) btn.disabled = false; return; }
+                showMessage('방문 계획을 승인했습니다', 'success');
+                selectedIds.delete(scheduleId);
+                loadPlans();
+            } catch (e) { showMessage('오류: ' + e.message, 'error'); if (btn) btn.disabled = false; }
         }
 
-        async function approve(scheduleId) {
-            if (!confirm('이 방문 계획을 승인하시겠습니까?')) return;
-            const r = await fetch(`${API_URL}/schedule/${scheduleId}/approve`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: currentUser.id, user_role: 'center_manager', reason: '' })
-            });
-            if (!r.ok) { const e = await r.json().catch(() => ({})); showMessage(e.detail || '승인 실패', 'error'); return; }
-            showMessage('방문 계획을 승인했습니다', 'success');
-            loadProposals();
-        }
-
-        async function reject(scheduleId) {
+        async function reject(scheduleId, btn) {
             const reason = prompt('반려 사유를 입력하세요:');
             if (reason === null) return;
             if (!reason.trim()) { showMessage('반려 사유를 입력해 주세요', 'error'); return; }
-            const r = await fetch(`${API_URL}/schedule/${scheduleId}/reject`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: currentUser.id, user_role: 'center_manager', reason: reason })
-            });
-            if (!r.ok) { const e = await r.json().catch(() => ({})); showMessage(e.detail || '반려 실패', 'error'); return; }
-            showMessage('방문 계획을 반려했습니다', 'success');
-            loadProposals();
+            if (btn) btn.disabled = true;
+            try {
+                const r = await fetch(`${API_URL}/schedule/${scheduleId}/reject`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: 'center_manager', reason: reason })
+                });
+                if (!r.ok) { const e = await r.json().catch(() => ({})); showMessage(e.detail || '반려 실패', 'error'); if (btn) btn.disabled = false; return; }
+                showMessage('방문 계획을 반려했습니다', 'success');
+                selectedIds.delete(scheduleId);
+                loadPlans();
+            } catch (e) { showMessage('오류: ' + e.message, 'error'); if (btn) btn.disabled = false; }
+        }
+
+        async function approveAllPlans() {
+            const pending = allPlans.filter(p => p.status === 'proposed');
+            if (pending.length === 0) { showMessage('승인 대기 중인 방문 계획이 없습니다', 'error'); return; }
+            if (!confirm(`승인 대기 계획 ${pending.length}건을 모두 승인하시겠습니까?`)) return;
+            await runBulk(pending.map(p => p.schedule_id), 'approve');
+        }
+
+        async function bulkApprove() {
+            const ids = [...selectedIds].filter(id => allPlans.find(p => p.schedule_id === id && p.status === 'proposed'));
+            if (!ids.length) { showMessage('승인할 계획을 선택해 주세요', 'error'); return; }
+            if (!confirm(`선택한 계획 ${ids.length}건을 승인하시겠습니까?`)) return;
+            await runBulk(ids, 'approve');
+        }
+
+        async function bulkReject() {
+            const ids = [...selectedIds].filter(id => allPlans.find(p => p.schedule_id === id && p.status === 'proposed'));
+            if (!ids.length) { showMessage('반려할 계획을 선택해 주세요', 'error'); return; }
+            const reason = prompt(`선택한 ${ids.length}건에 적용할 반려 사유를 입력하세요:`);
+            if (reason === null) return;
+            if (!reason.trim()) { showMessage('반려 사유를 입력해 주세요', 'error'); return; }
+            await runBulk(ids, 'reject', reason);
+        }
+
+        async function runBulk(ids, action, reason) {
+            let success = 0, fail = 0;
+            for (const id of ids) {
+                try {
+                    const r = await fetch(`${API_URL}/schedule/${id}/${action}`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: currentUser.id, user_role: 'center_manager', reason: reason || '' })
+                    });
+                    if (r.ok) success++; else fail++;
+                } catch (e) { fail++; }
+            }
+            selectedIds.clear();
+            const verb = action === 'approve' ? '승인' : '반려';
+            showMessage(fail === 0 ? `${success}건을 ${verb}했습니다` : `${success}건 ${verb} 성공, ${fail}건 실패`, fail === 0 ? 'success' : 'error');
+            loadPlans();
         }
 
         function logout() { if (confirm('로그아웃하시겠습니까?')) { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; } }
+
+        renderNotices();
         window.addEventListener('load', checkAuth);
     </script>
 </body>

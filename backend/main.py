@@ -16,7 +16,7 @@ from app.api import guardian
 from app.api import messages
 from app.api import statements
 from app.api import certificates
-from app.models import StaffCertificate, SalaryStatement, GuardianInvite
+from app.models import StaffCertificate, SalaryStatement, GuardianInvite, Notification
 from app.database import Base, engine, SessionLocal
 import os
 from pathlib import Path
@@ -58,6 +58,7 @@ def run_migrations():
         StaffCertificate.__table__.create(bind=engine, checkfirst=True)  # 없을 때만 자격증 테이블을 만든다
         SalaryStatement.__table__.create(bind=engine, checkfirst=True)  # 없을 때만 급여명세 테이블을 만든다
         GuardianInvite.__table__.create(bind=engine, checkfirst=True)  # 없을 때만 보호자 초대 테이블을 만든다
+        Notification.__table__.create(bind=engine, checkfirst=True)  # 없을 때만 알림 테이블을 만든다 (없으면 방문계획 승인/반려가 500 에러)
         db = SessionLocal()
         db_url = str(engine.url)
 
