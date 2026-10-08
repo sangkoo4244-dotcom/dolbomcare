@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>청부 관리 - 돌봄케어</title>
+    <title>청구 관리 - 돌봄케어</title>
     <link rel="stylesheet" href="design-system.css">
     <style>
         body { margin: 0; padding: 0; }
@@ -143,171 +143,10 @@
             padding: 30px;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border);
-            transition: all var(--transition-base);
-        }
-
-        .stat-card:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        .filter-section {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            padding: 8px 16px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            background: white;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all var(--transition-fast);
-        }
-
-        .filter-btn:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .filter-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .table-wrapper {
-            background: white;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        .table thead {
-            background: var(--bg-tertiary);
-            border-bottom: 2px solid var(--border);
-        }
-
-        .table th {
-            padding: 14px 16px;
-            text-align: left;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .table td {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .table tbody tr:hover {
-            background: var(--bg-secondary);
-        }
-
-        /* 청구 관리 시안 배치 */
-        .cm-banner { border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
-        .cm-banner img { width: 100%; height: auto; display: block; }
-        .cm-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .cm-metric { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; }
-        .cm-metric img { width: 44px; height: 44px; object-fit: contain; flex: 0 0 auto; mix-blend-mode: multiply; }
-        .cm-metric-label { font-size: 13px; font-weight: 700; color: #1F2937; }
-        .cm-metric-value { font-size: 26px; font-weight: 800; color: #1F2937; line-height: 1.2; margin-top: 2px; }
-        .cm-features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
-        .cm-feature { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: white; border: 1px solid var(--border); border-radius: 12px; }
-        .cm-feature img { width: 36px; height: 36px; object-fit: contain; flex: 0 0 auto; }
-        .cm-feature-title { font-size: 15px; font-weight: 700; color: #1F2937; }
-        .cm-feature-desc { font-size: 13px; color: #6B7280; margin-top: 4px; line-height: 1.5; }
-        .side-icon img { display: block; }
-        .sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
-        .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
-        .cm-metric-sub { font-size: 14px; font-weight: 700; color: #374151; margin-top: 2px; }
-        .cm-search { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; background: white; border: 1px solid var(--border); border-radius: 16px; padding: 16px 20px; margin-bottom: 18px; }
-        .cm-field { display: flex; flex-direction: column; gap: 6px; }
-        .cm-label { font-size: 12px; font-weight: 700; color: #374151; }
-        .cm-field input, .cm-field select { height: 40px; padding: 0 10px; border: 1px solid #D6D0C4; border-radius: 10px; font-size: 14px; background: white; }
-        .cm-range { display: flex; align-items: center; gap: 8px; }
-        .cm-search-btn { height: 44px; padding: 0 28px; border: none; border-radius: 12px; background: #1F6FD1; color: white; font-size: 15px; font-weight: 700; cursor: pointer; }
-        .cm-chips { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
-        .cm-chip { padding: 10px 18px; border: none; border-radius: 12px; background: #EEF6F1; color: #15803D; font-size: 14px; font-weight: 700; cursor: pointer; }
-        .cm-chip:nth-child(3) { background: #FDF6EC; color: #B45309; }
-        .cm-chip:nth-child(4) { background: #FBEAEA; color: #B91C1C; }
-        .cm-chip.active { outline: 2px solid #1F6FD1; outline-offset: 1px; }
-        .cm-chip b { font-weight: 800; }
-        .cm-spacer { flex: 1 1 auto; }
-        .cm-tool { padding: 10px 16px; border: 1px solid #C9D8EE; border-radius: 12px; background: white; color: #1F6FD1; font-size: 14px; font-weight: 700; cursor: pointer; }
-        .cm-tool.primary { background: #1F6FD1; color: white; border-color: #1F6FD1; }
-        .cm-tool.clean { background: #B5532F; color: white; border-color: #B5532F; }
-        .svc-chip { display: inline-block; padding: 4px 10px; border-radius: 8px; background: #EEF2FF; color: #3730A3; font-size: 12px; font-weight: 700; }
-        @media print { .sidebar, .topbar, .cm-search, .cm-chips, .cm-features, .cm-banner, .cm-metrics, .action-buttons { display: none !important; } .main-layout { margin-left: 0; } }
-        @media (max-width: 900px) { .cm-metrics, .cm-features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: var(--radius-md);
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-approved {
-            background: var(--secondary-light);
-            color: #065f46;
-        }
-
-        .status-rejected {
-            background: var(--danger-light);
-            color: #991b1b;
-        }
-
-        .status-pending {
-            background: var(--warning-light);
-            color: #92400e;
-        }
-
         .action-buttons {
             display: flex;
             gap: 6px;
+            flex-wrap: wrap;
         }
 
         .action-btn {
@@ -340,22 +179,85 @@
         }
 
         @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .main-layout {
-                margin-left: 0;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .content {
-                padding: 20px;
-            }
+            .sidebar { transform: translateX(-100%); }
+            .main-layout { margin-left: 0; }
+            .content { padding: 20px; }
         }
+
+        /* ===== Premium Healthcare Management SaaS 톤 (대시보드·방문계획승인 등과 동일, 사이드바 색상만 통일) ===== */
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247;
+            --warn: #B45309; --danger2: #DC2626; --line2: #E2E8F0;
+        }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active, .sidebar-nav .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .date-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line2); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--charcoal); white-space: nowrap; }
+        .bell-wrap { position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #F1F5F9; border-radius: 10px; flex: 0 0 auto; }
+        .bell-wrap svg { width: 17px; height: 17px; color: var(--charcoal); }
+        .bell-badge { position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--danger2); color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+        .summary-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .summary-row > div { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); display: flex; align-items: center; gap: 14px; }
+        .summary-icon { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .summary-icon svg { width: 21px; height: 21px; }
+        .summary-label { font-size: 13px; font-weight: 700; color: #64748B; }
+        .summary-value { font-size: 26px; font-weight: 800; color: var(--navy); line-height: 1.2; font-variant-numeric: tabular-nums; }
+        .summary-note { font-size: 12px; color: #94A3B8; margin-top: 1px; }
+        @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+        .filter-bar { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .filter-input { padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 13px; outline: none; }
+        .filter-input:focus { border-color: var(--teal); }
+        .btn-outline { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .btn-solid { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
+        .btn-solid:hover { background: #0C756C; }
+
+        .archive-tabs2 { display: flex; gap: 8px; background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 6px; margin-bottom: 16px; width: fit-content; }
+        .archive-tab2 { padding: 9px 18px; border-radius: 9px; font-weight: 700; font-size: 13px; color: #64748B; cursor: pointer; white-space: nowrap; }
+        .archive-tab2.active { background: var(--teal); color: #fff; }
+
+        .cm-chips2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+        .cm-chip2 { padding: 9px 16px; border: 1.5px solid var(--line2); border-radius: 10px; background: #fff; font-size: 13px; font-weight: 700; color: #64748B; cursor: pointer; }
+        .cm-chip2.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+        .cm-spacer2 { flex: 1 1 auto; }
+
+        .bill-table { border-collapse: collapse; width: 100%; }
+        .bill-table th { text-align: left; font-size: 12px; font-weight: 700; color: #64748B; padding: 10px 12px; background: #F8FAFC; border-bottom: 1px solid var(--line2); white-space: nowrap; }
+        .bill-table td { padding: 12px; font-size: 13px; color: var(--charcoal); border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+        .bill-table tr:hover td { background: #FAFBFC; }
+        .status-pill2 { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; display: inline-block; }
+        .sp-draft { background: #F1F5F9; color: #64748B; }
+        .sp-pending { background: #FDF1E3; color: #B45309; }
+        .sp-approved { background: #E6F3F1; color: #0F8B80; }
+        .sp-submitted_to_nhis { background: #E8F1FC; color: #1D4ED8; }
+        .sp-reimbursed { background: #E6F7EE; color: #15803D; }
+        .sp-rejected { background: #FDE8E8; color: #DC2626; }
+        .sp-cancelled { background: #F1F5F9; color: #64748B; }
+
+        .panel2 { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .panel2-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 14px; font-weight: 800; color: var(--navy); }
+        .stat-row2 { margin-bottom: 12px; font-size: 12px; }
+        .stat-row2:last-child { margin-bottom: 0; }
+        .stat-row2 .sr-top { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--charcoal); font-weight: 600; }
+        .stat-row2 .sr-track { height: 6px; border-radius: 3px; background: #EEF2F6; overflow: hidden; }
+        .stat-row2 .sr-fill { height: 100%; border-radius: 3px; }
+        .svc-row { margin-bottom: 10px; font-size: 12px; }
+        .svc-row:last-child { margin-bottom: 0; }
+        .svc-row .sv-top { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--charcoal); font-weight: 600; }
+        .svc-row .sv-track { height: 6px; border-radius: 3px; background: #EEF2F6; overflow: hidden; }
+        .svc-row .sv-fill { height: 100%; border-radius: 3px; background: var(--teal); }
+        .notice-list2 { list-style: none; margin: 0; padding: 0; }
+        .notice-list2 li { display: flex; gap: 8px; font-size: 12px; color: #64748B; padding: 6px 0; line-height: 1.4; }
+        .notice-list2 li svg { width: 14px; height: 14px; color: var(--teal); flex: 0 0 auto; margin-top: 2px; }
+
+        @media print { .sidebar, .topbar, .filter-bar, .cm-chips2, .archive-tabs2, .action-buttons { display: none !important; } .main-layout { margin-left: 0; } }
     </style>
     <script src="menu.js"></script>
     <script>
@@ -388,9 +290,14 @@
         <div class="topbar">
             <div class="topbar-title">
                 <h1>청구 관리</h1>
+                <div class="breadcrumb">홈 › 청구 및 경영 관리 › <b>청구 관리</b></div>
             </div>
             <div class="user-menu">
-                <img src="assets/user_design/28_top_notification_icon.png" alt="" style="width:28px;height:28px;object-fit:contain;">
+                <div class="date-chip" id="headerDate"></div>
+                <div class="bell-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <span class="bell-badge" id="bellBadge" style="display:none;">0</span>
+                </div>
                 <div class="user-info">
                     <div class="user-name" id="userName">센터장</div>
                     <div class="user-role">관리자</div>
@@ -402,87 +309,121 @@
 
         <!-- Content -->
         <div class="content">
-            <!-- Banner -->
-            <div class="cm-banner"><img src="assets/user_design/claim_management_banner.jpg" alt=""></div>
-
-            <!-- Stats -->
-            <div class="cm-metrics">
-                <div class="cm-metric" style="background:#EAF1FC;"><img src="assets/user_design/claim_metric_expected.png" alt=""><div><div class="cm-metric-label">이번 달 청구 예정</div><div class="cm-metric-value" id="totalCount">0</div><div class="cm-metric-sub" id="totalAmount">₩0</div></div></div>
-                <div class="cm-metric" style="background:#EAF6F0;"><img src="assets/user_design/claim_metric_approved.png" alt=""><div><div class="cm-metric-label">승인 완료</div><div class="cm-metric-value" id="approvedCount">0</div><div class="cm-metric-sub" id="approvedAmount">₩0</div></div></div>
-                <div class="cm-metric" style="background:#FDF6EC;"><img src="assets/user_design/claim_metric_reviewing.png" alt=""><div><div class="cm-metric-label">검토 중</div><div class="cm-metric-value" id="pendingCount">0</div><div class="cm-metric-sub" id="pendingAmount">₩0</div></div></div>
-                <div class="cm-metric" style="background:#FBEAEA;"><img src="assets/user_design/claim_metric_rejected.png" alt=""><div><div class="cm-metric-label">반려</div><div class="cm-metric-value" id="rejectedCount">0</div><div class="cm-metric-sub" id="rejectedAmount">₩0</div></div></div>
+            <!-- 운영 지표 -->
+            <div class="summary-row">
+                <div>
+                    <div class="summary-icon" style="background:#E8F1FC;color:#1D4ED8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+                    <div><div class="summary-label">이번 달 청구 대상</div><div class="summary-value" id="totalCount">0건</div><div class="summary-note" id="totalAmount">₩0</div></div>
+                </div>
+                <div>
+                    <div class="summary-icon" style="background:#E6F3F1;color:#0F8B80;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
+                    <div><div class="summary-label">승인 완료</div><div class="summary-value" id="approvedCount">0건</div><div class="summary-note" id="approvedAmount">₩0</div></div>
+                </div>
+                <div>
+                    <div class="summary-icon" style="background:#F1ECFB;color:#6D28D9;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+                    <div><div class="summary-label">검토 중</div><div class="summary-value" id="pendingCount">0건</div><div class="summary-note" id="pendingAmount">₩0</div></div>
+                </div>
+                <div>
+                    <div class="summary-icon" style="background:#FDE8E8;color:#DC2626;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg></div>
+                    <div><div class="summary-label">반려</div><div class="summary-value" id="rejectedCount">0건</div><div class="summary-note" id="rejectedAmount">₩0</div></div>
+                </div>
             </div>
             <!-- 공단청구·정산완료 수치는 아래 목록 필터에서 쓰이므로 화면에는 두지 않고 값만 갱신한다 -->
             <span id="submittedToNhisCount" hidden>0</span>
             <span id="reimbursedCount" hidden>0</span>
 
-            <!-- Archive Tabs -->
-            <div class="archive-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; border-bottom: 2px solid var(--border);">
-                <button class="archive-tab active" onclick="switchTab('current')" style="padding: 12px 20px; font-weight: 600; color: #3b82f6; border-bottom: 3px solid #3b82f6; background: none; border: none; cursor: pointer;">
-                     현재 청부
-                </button>
-                <button class="archive-tab" onclick="switchTab('archived')" style="padding: 12px 20px; font-weight: 600; color: rgba(0,0,0,0.5); border-bottom: 3px solid transparent; background: none; border: none; cursor: pointer;">
-                     아카이브된 청부
-                </button>
-            </div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;">
+                <div style="min-width:0;">
+                    <!-- Archive Tabs -->
+                    <div class="archive-tabs2">
+                        <div class="archive-tab2 active" data-tab="current" onclick="switchTab('current', event)">현재 청구</div>
+                        <div class="archive-tab2" data-tab="archived" onclick="switchTab('archived', event)">아카이브된 청구</div>
+                    </div>
 
-            <!-- 검색 -->
-            <div class="cm-search">
-                <div class="cm-field"><span class="cm-label">청구 기간</span>
-                    <div class="cm-range"><input type="date" id="fFrom"><span>~</span><input type="date" id="fTo"></div></div>
-                <div class="cm-field"><span class="cm-label">이용자</span>
-                    <select id="fResident"><option value="">전체</option></select></div>
-                <div class="cm-field"><span class="cm-label">상태</span>
-                    <select id="fStatus"><option value="">전체</option><option value="pending">검토 중</option><option value="approved">승인 완료</option><option value="submitted_to_nhis">공단 청구</option><option value="reimbursed">정산 완료</option><option value="rejected">반려</option></select></div>
-                <div class="cm-field"><span class="cm-label">서비스 유형</span>
-                    <select id="fService"><option value="">전체</option><option value="basic_care">기본 요양</option><option value="meal_service">식사 서비스</option><option value="medical_care">의료 처치</option><option value="emergency">응급 대응</option></select></div>
-                <button class="cm-search-btn" onclick="applyFilters()">검색</button>
-            </div>
+                    <!-- 검색 -->
+                    <div class="filter-bar">
+                        <input type="date" id="fFrom" class="filter-input">
+                        <span class="text-gray-400 text-sm">~</span>
+                        <input type="date" id="fTo" class="filter-input">
+                        <select id="fResident" class="filter-input"><option value="">이용자 전체</option></select>
+                        <select id="fService" class="filter-input">
+                            <option value="">서비스 유형 전체</option>
+                            <option value="basic_care">기본 요양</option><option value="meal_service">식사 서비스</option><option value="medical_care">의료 처치</option><option value="emergency">응급 대응</option>
+                        </select>
+                        <select id="fStatus" class="filter-input">
+                            <option value="">상태 전체</option><option value="draft">작성 중</option><option value="pending">검토 중</option><option value="approved">승인 완료</option><option value="submitted_to_nhis">공단 청구</option><option value="reimbursed">정산 완료</option><option value="rejected">반려</option>
+                        </select>
+                        <button type="button" class="btn-solid" onclick="applyFilters()">조회</button>
+                        <button type="button" class="btn-outline" onclick="resetFilters2()">초기화</button>
+                    </div>
 
-            <!-- 상태 칩과 상단 도구 -->
-            <div class="cm-chips">
-                <button class="cm-chip active" onclick="filterByStatus('all')">전체 <b id="chipAll">(0)</b></button>
-                <button class="cm-chip" onclick="filterByStatus('approved')">승인 완료 <b id="chipApproved">(0)</b></button>
-                <button class="cm-chip" onclick="filterByStatus('pending')">검토 중 <b id="chipPending">(0)</b></button>
-                <button class="cm-chip" onclick="filterByStatus('rejected')">반려 <b id="chipRejected">(0)</b></button>
-                <span class="cm-spacer"></span>
-                <button class="cm-tool" onclick="exportCsv()">엑셀 다운로드</button>
-                <button class="cm-tool primary" onclick="transmitToNhis()">공단 전송</button>
-                <button class="cm-tool" onclick="window.print()">청구서 인쇄</button>
-                <button class="cm-tool clean" onclick="approveCleanBilling()">정상 건 일괄 승인</button>
-            </div>
+                    <!-- 상태 칩과 업무 버튼 -->
+                    <div class="cm-chips2">
+                        <button class="cm-chip2 active" onclick="filterByStatus('all', event)">전체 청구 <b id="chipAll">(0)</b></button>
+                        <button class="cm-chip2" onclick="filterByStatus('approved', event)">승인 완료 <b id="chipApproved">(0)</b></button>
+                        <button class="cm-chip2" onclick="filterByStatus('pending', event)">검토 중 <b id="chipPending">(0)</b></button>
+                        <button class="cm-chip2" onclick="filterByStatus('rejected', event)">반려 <b id="chipRejected">(0)</b></button>
+                        <span class="cm-spacer2"></span>
+                        <button class="btn-outline" onclick="bulkApprove()">선택 승인</button>
+                        <button class="btn-outline" style="color:#DC2626;border-color:#FBCFCF;" onclick="bulkReject()">선택 반려</button>
+                        <button class="btn-solid" onclick="bulkSubmitToNhis()">선택 건 공단 청구</button>
+                    </div>
+                    <div class="cm-chips2">
+                        <button class="btn-outline" onclick="approveCleanBilling()">정상 건 일괄 승인</button>
+                        <button class="btn-outline" onclick="exportCsv()">엑셀 다운로드</button>
+                        <button class="btn-outline" onclick="window.print()">청구서 인쇄</button>
+                    </div>
 
-            <!-- Table -->
-            <div class="table-wrapper">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>청구번호</th>
-                            <th>이용자</th>
-                            <th>서비스 기간</th>
-                            <th>방문횟수</th>
-                            <th>서비스 유형</th>
-                            <th style="text-align: right;">청구금액</th>
-                            <th>상태</th>
-                            <th>관리</th>
-                        </tr>
-                    </thead>
-                    <tbody id="billingTableBody">
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
-                                청부 기록을 로드 중입니다...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                    <!-- Table -->
+                    <div class="bg-white" style="background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden;">
+                        <div style="overflow-x:auto;">
+                            <table class="bill-table">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="selectAllBox2" onchange="toggleSelectAll2(this)"></th>
+                                        <th>청구번호</th>
+                                        <th>이용자 정보</th>
+                                        <th>서비스 기간</th>
+                                        <th>서비스 유형</th>
+                                        <th>방문횟수</th>
+                                        <th style="text-align:right;">청구금액</th>
+                                        <th style="text-align:right;">본인부담금</th>
+                                        <th>상태</th>
+                                        <th>관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="billingTableBody">
+                                    <tr>
+                                        <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
+                                            청구 기록을 로드 중입니다...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- 기능 안내 -->
-            <div class="cm-features">
-                <div class="cm-feature"><img src="assets/user_design/claim_feature_auto_billing.png" alt=""><div><div class="cm-feature-title">자동 청구 계산</div><div class="cm-feature-desc">방문기록을 기반으로 정확한 청구금액을 자동 계산합니다.</div></div></div>
-                <div class="cm-feature"><img src="assets/user_design/claim_feature_agency_transmission.png" alt=""><div><div class="cm-feature-title">공단 전송</div><div class="cm-feature-desc">승인된 청구서를 국민건강보험공단으로 간편하게 전송합니다.</div></div></div>
-                <div class="cm-feature"><img src="assets/user_design/claim_feature_statistics.png" alt=""><div><div class="cm-feature-title">청구 현황 통계</div><div class="cm-feature-desc">월별·이용자별 청구 현황을 한눈에 확인할 수 있습니다.</div></div></div>
-                <div class="cm-feature"><img src="assets/user_design/claim_feature_security.png" alt=""><div><div class="cm-feature-title">데이터 안전성</div><div class="cm-feature-desc">모든 청구 내역은 안전하게 보관되며 이력을 관리합니다.</div></div></div>
+                <!-- 우측 분석 영역 -->
+                <div>
+                    <div class="panel2">
+                        <div class="panel2-head"><span>이번 달 청구 현황</span></div>
+                        <div id="monthStatusPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
+                    </div>
+                    <div class="panel2">
+                        <div class="panel2-head"><span>서비스 유형별 청구 현황</span></div>
+                        <div id="serviceStatsPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
+                    </div>
+                    <div class="panel2">
+                        <div class="panel2-head"><span>청구 업무 안내</span></div>
+                        <ul class="notice-list2">
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>승인 전 방문 기록과 청구 금액을 확인해 주세요.</li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>반려 시 입력한 사유가 요양사에게 전달됩니다.</li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>"공단 청구"는 내부 상태 변경이며, 실제 공단 전송은 시스템 외부에서 별도로 진행합니다.</li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>환급 확인된 청구는 자동으로 아카이브됩니다.</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -493,16 +434,19 @@
         // 상태값 한글 변환 함수 (요양보호사/센터장 관점)
         function getStatusLabel(status) {
             const statusMap = {
-                'draft': '📝 작성중',
-                'pending': '🔍 센터장검토대기',
-                'approved': '✅ 센터장승인',
-                'submitted_to_nhis': '📤 공단청구',
-                'submitted': '📤 공단청구',
-                'reimbursed': '💰 정산완료',
-                'rejected': '❌ 반려',
-                'cancelled': '🚫 취소됨'
+                'draft': '작성중',
+                'pending': '검토중',
+                'approved': '승인완료',
+                'submitted_to_nhis': '공단청구',
+                'submitted': '공단청구',
+                'reimbursed': '정산완료',
+                'rejected': '반려',
+                'cancelled': '취소됨'
             };
             return statusMap[status] || status;
+        }
+        function statusPillClass(status) {
+            return `sp-${status === 'submitted' ? 'submitted_to_nhis' : (status || 'draft')}`;
         }
 
         // 서비스 타입 한글 변환 함수
@@ -516,10 +460,11 @@
             return serviceMap[type] || type;
         }
 
-
         let currentUser = null;
         let allBillings = [];
         let residentMapGlobal = {};
+        let residentAgeGenderMap = {};
+        let selectedBillingIds = new Set();
 
         function claimNumber(record) {
             const d = new Date(record.recorded_date);
@@ -543,13 +488,23 @@
             }).length;
         }
 
+        // 본인부담금 = 급여비용 총액(total_cost) - 청구액(amount). total_cost가 없으면 알 수 없음("-")
+        function patientAmount(record) {
+            if (record.total_cost == null) return null;
+            return Math.max(0, record.total_cost - (record.amount || 0));
+        }
+
         function fillResidentOptions(residents) {
             const sel = document.getElementById('fResident');
             const keep = sel.value;
-            sel.innerHTML = '<option value="">전체</option>' + residents.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            sel.innerHTML = '<option value="">이용자 전체</option>' + residents.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
             sel.value = keep;
             residentMapGlobal = {};
-            residents.forEach(r => { residentMapGlobal[r.id] = `${r.name} (${r.care_grade}등급 · ${r.client_type})`; });
+            residentAgeGenderMap = {};
+            residents.forEach(r => {
+                residentMapGlobal[r.id] = `${r.name} (${r.care_grade}등급 · ${r.client_type})`;
+                residentAgeGenderMap[r.id] = { age: r.age, gender: r.gender };
+            });
         }
 
         // 칩 상태와 검색 조건을 함께 적용한 목록
@@ -573,14 +528,19 @@
             renderBillingTable(currentView(allBillings), residentMapGlobal);
         }
 
+        function resetFilters2() {
+            ['fFrom', 'fTo', 'fResident', 'fService', 'fStatus'].forEach(id => { document.getElementById(id).value = ''; });
+            applyFilters();
+        }
+
         // 화면에 보이는 목록을 CSV로 내려받는다 (엑셀에서 열 수 있다)
         function exportCsv() {
             const rows = currentView(allBillings);
             if (rows.length === 0) { alert('내려받을 청구 기록이 없습니다'); return; }
-            const header = ['청구번호', '이용자', '서비스 기간', '방문횟수', '서비스 유형', '청구금액', '상태'];
+            const header = ['청구번호', '이용자', '서비스 기간', '방문횟수', '서비스 유형', '청구금액', '본인부담금', '상태'];
             const lines = rows.map(r => [
                 claimNumber(r), residentMapGlobal[r.resident_id] || `ID ${r.resident_id}`, periodLabel(r.recorded_date),
-                visitCount(r), getServiceLabel(r.service_type), r.amount || 0, getStatusLabel(r.approval_status)
+                visitCount(r), getServiceLabel(r.service_type), r.amount || 0, patientAmount(r) ?? '', getStatusLabel(r.approval_status)
             ]);
             const csv = [header, ...lines].map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
             const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
@@ -591,11 +551,11 @@
             URL.revokeObjectURL(a.href);
         }
 
-        // 승인 완료 건을 건강보험공단에 청구한다 (건별 청구 API를 사용)
+        // 승인 완료 건을 건강보험공단 청구 상태로 전환한다 (내부 상태 변경 — 외부 전송 아님)
         async function transmitToNhis() {
             const targets = currentView(allBillings).filter(r => r.approval_status === 'approved');
-            if (targets.length === 0) { alert('공단에 전송할 승인 완료 건이 없습니다'); return; }
-            if (!confirm(`승인 완료 ${targets.length}건을 건강보험공단에 전송합니다. 계속할까요?`)) return;
+            if (targets.length === 0) { alert('공단 청구로 전환할 승인 완료 건이 없습니다'); return; }
+            if (!confirm(`승인 완료 ${targets.length}건을 공단 청구 상태로 전환합니다 (내부 상태 변경이며 외부 전송은 아닙니다). 계속할까요?`)) return;
             let sent = 0;
             for (const r of targets) {
                 const res = await fetch(`${API_URL}/billing/${r.id}/submit-to-nhis`, {
@@ -604,9 +564,71 @@
                 });
                 if (res.ok) sent++;
             }
-            alert(`${sent}건을 건강보험공단에 전송했습니다`);
+            alert(`${sent}건을 공단 청구 상태로 전환했습니다`);
             loadBillingRecords();
         }
+
+        async function bulkSubmitToNhis() {
+            const targets = [...selectedBillingIds].map(id => allBillings.find(r => r.id === id)).filter(r => r && r.approval_status === 'approved');
+            if (!targets.length) { alert('선택한 건 중 승인 완료 상태인 청구가 없습니다'); return; }
+            if (!confirm(`선택한 ${targets.length}건을 공단 청구 상태로 전환합니다 (내부 상태 변경이며 외부 전송은 아닙니다). 계속할까요?`)) return;
+            let sent = 0;
+            for (const r of targets) {
+                const res = await fetch(`${API_URL}/billing/${r.id}/submit-to-nhis`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: currentUser.role })
+                });
+                if (res.ok) sent++;
+            }
+            selectedBillingIds.clear();
+            alert(`${sent}건을 공단 청구 상태로 전환했습니다`);
+            loadBillingRecords();
+        }
+
+        async function bulkApprove() {
+            const targets = [...selectedBillingIds].map(id => allBillings.find(r => r.id === id)).filter(r => r && r.approval_status === 'pending');
+            if (!targets.length) { alert('선택한 건 중 검토 중 상태인 청구가 없습니다'); return; }
+            if (!confirm(`선택한 ${targets.length}건을 승인하시겠습니까?`)) return;
+            let ok = 0;
+            for (const r of targets) {
+                const res = await fetch(`${API_URL}/billing/${r.id}/approve`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: currentUser.role })
+                });
+                if (res.ok) ok++;
+            }
+            selectedBillingIds.clear();
+            alert(`${ok}건을 승인했습니다`);
+            loadBillingRecords();
+        }
+
+        async function bulkReject() {
+            const targets = [...selectedBillingIds].map(id => allBillings.find(r => r.id === id)).filter(r => r && r.approval_status === 'pending');
+            if (!targets.length) { alert('선택한 건 중 검토 중 상태인 청구가 없습니다'); return; }
+            const reason = prompt(`선택한 ${targets.length}건에 적용할 반려 사유를 입력하세요:`);
+            if (reason === null) return;
+            if (!reason.trim()) { alert('반려 사유를 입력해 주세요'); return; }
+            let ok = 0;
+            for (const r of targets) {
+                const res = await fetch(`${API_URL}/billing/${r.id}/reject`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: currentUser.role, reason })
+                });
+                if (res.ok) ok++;
+            }
+            selectedBillingIds.clear();
+            alert(`${ok}건을 반려했습니다`);
+            loadBillingRecords();
+        }
+
+        function toggleSelect2(id, checked) {
+            if (checked) selectedBillingIds.add(id); else selectedBillingIds.delete(id);
+        }
+        function toggleSelectAll2(box) {
+            currentView(allBillings).forEach(r => { if (box.checked) selectedBillingIds.add(r.id); else selectedBillingIds.delete(r.id); });
+            renderBillingTable(currentView(allBillings), residentMapGlobal);
+        }
+
         let currentFilter = 'all';
         let currentTab = 'current';  // 'current' or 'archived'
 
@@ -627,12 +649,29 @@
             currentUser = user;
             document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
             document.getElementById('userAvatar').textContent = (user.full_name || user.email).charAt(0).toUpperCase();
+            document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
 
             // 메뉴 필터링
             if (typeof renderSidebar === 'function') {
                 renderSidebar();
                 applyNavIcons();
+                groupSidebar();
             }
+            loadBellBadge();
+        }
+
+        async function loadBellBadge() {
+            try {
+                const r = await fetch(`${API_URL}/notifications/mine`);
+                if (!r.ok) return;
+                const d = await r.json();
+                const n = d.unread_count || 0;
+                if (n > 0) {
+                    const badge = document.getElementById('bellBadge');
+                    badge.textContent = n > 99 ? '99+' : n;
+                    badge.style.display = 'flex';
+                }
+            } catch (e) { /* 부가 기능이므로 실패해도 무시 */ }
         }
 
         // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
@@ -655,6 +694,114 @@
             });
         }
 
+        // 사이드바 구조/메뉴/링크는 menu.js 그대로, 라벨만 그룹으로 DOM 재배치 (센터장 메뉴 기준)
+        const SIDE_GROUPS2 = [
+            ['매인', ['대시보드']],
+            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
+            ['방문 서비스 운영', ['음성 기록', '방문계획 승인', '보호자 소통']],
+            ['청구 및 경영 관리', ['청부관리', '월별정산', '수익분석', '급여 확정']],
+        ];
+        function groupSidebar() {
+            const nav = document.querySelector('.sidebar-nav');
+            const items = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+            if (!items.length) return;
+            const byLabel = {};
+            items.forEach(item => { byLabel[item.querySelector('span:last-child')?.textContent.trim()] = item; });
+            const frag = document.createDocumentFragment();
+            SIDE_GROUPS2.forEach(([groupLabel, labels]) => {
+                const found = labels.map(l => byLabel[l]).filter(Boolean);
+                if (!found.length) return;
+                const h = document.createElement('div');
+                h.className = 'side-group-label';
+                h.textContent = groupLabel;
+                frag.appendChild(h);
+                found.forEach(el => frag.appendChild(el));
+            });
+            items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
+            nav.innerHTML = '';
+            nav.appendChild(frag);
+        }
+
+        function isThisMonth(dateStr) {
+            const d = new Date(dateStr);
+            const now = new Date();
+            return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        }
+        function isLastMonth(dateStr) {
+            const d = new Date(dateStr);
+            const now = new Date();
+            const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            return d.getFullYear() === last.getFullYear() && d.getMonth() === last.getMonth();
+        }
+
+        function updateStats(activeOnly) {
+            const monthRecords = activeOnly.filter(r => isThisMonth(r.recorded_date));
+            const lastMonthRecords = activeOnly.filter(r => isLastMonth(r.recorded_date));
+
+            const pendingCount = monthRecords.filter(r => r.approval_status === 'pending').length;
+            const approvedCount = monthRecords.filter(r => r.approval_status === 'approved').length;
+            const rejectedCount = monthRecords.filter(r => r.approval_status === 'rejected').length;
+
+            const sumAmount = list => list.reduce((s, r) => s + (r.amount || 0), 0);
+            const money = n => `₩${n.toLocaleString()}`;
+
+            document.getElementById('totalCount').textContent = `${monthRecords.length}건`;
+            document.getElementById('totalAmount').textContent = lastMonthRecords.length
+                ? `전월 대비 ${monthRecords.length - lastMonthRecords.length >= 0 ? '+' : ''}${monthRecords.length - lastMonthRecords.length}건`
+                : money(sumAmount(monthRecords));
+            document.getElementById('approvedCount').textContent = `${approvedCount}건`;
+            document.getElementById('approvedAmount').textContent = money(sumAmount(monthRecords.filter(r => r.approval_status === 'approved')));
+            document.getElementById('pendingCount').textContent = `${pendingCount}건`;
+            document.getElementById('pendingAmount').textContent = money(sumAmount(monthRecords.filter(r => r.approval_status === 'pending')));
+            document.getElementById('rejectedCount').textContent = `${rejectedCount}건`;
+            document.getElementById('rejectedAmount').textContent = money(sumAmount(monthRecords.filter(r => r.approval_status === 'rejected')));
+
+            // 칩 카운트는 기존처럼 전체 기간(활성 청부) 기준 유지
+            const totalCount = activeOnly.length;
+            const totalApproved = activeOnly.filter(r => r.approval_status === 'approved').length;
+            const totalPending = activeOnly.filter(r => r.approval_status === 'pending').length;
+            const totalRejected = activeOnly.filter(r => r.approval_status === 'rejected').length;
+            const submittedToNhisCount = activeOnly.filter(r => r.approval_status === 'submitted_to_nhis').length;
+            const reimbursedCount = activeOnly.filter(r => r.approval_status === 'reimbursed').length;
+            document.getElementById('submittedToNhisCount').textContent = submittedToNhisCount;
+            document.getElementById('reimbursedCount').textContent = reimbursedCount;
+            document.getElementById('chipAll').textContent = `(${totalCount})`;
+            document.getElementById('chipApproved').textContent = `(${totalApproved})`;
+            document.getElementById('chipPending').textContent = `(${totalPending})`;
+            document.getElementById('chipRejected').textContent = `(${totalRejected})`;
+
+            renderMonthStatusPanel(monthRecords);
+            renderServiceStatsPanel(monthRecords);
+        }
+
+        function renderMonthStatusPanel(monthRecords) {
+            const totalAmount = monthRecords.reduce((s, r) => s + (r.amount || 0), 0);
+            const patientTotal = monthRecords.reduce((s, r) => s + (patientAmount(r) || 0), 0);
+            const grandTotal = totalAmount + patientTotal;
+            const insurancePct = grandTotal ? Math.round(totalAmount / grandTotal * 100) : 0;
+            const patientPct = grandTotal ? 100 - insurancePct : 0;
+            document.getElementById('monthStatusPanel').innerHTML = `
+                <div style="font-size:22px;font-weight:800;color:var(--navy);margin-bottom:10px;">₩${grandTotal.toLocaleString()}</div>
+                <div class="stat-row2"><div class="sr-top"><span>공단 청구액</span><span>₩${totalAmount.toLocaleString()} (${insurancePct}%)</span></div><div class="sr-track"><div class="sr-fill" style="width:${insurancePct}%;background:#1D4ED8;"></div></div></div>
+                <div class="stat-row2"><div class="sr-top"><span>본인부담금</span><span>₩${patientTotal.toLocaleString()} (${patientPct}%)</span></div><div class="sr-track"><div class="sr-fill" style="width:${patientPct}%;background:#B45309;"></div></div></div>
+            `;
+        }
+
+        function renderServiceStatsPanel(monthRecords) {
+            const byType = {};
+            monthRecords.forEach(r => {
+                const key = r.service_type || 'basic_care';
+                byType[key] = (byType[key] || 0) + (r.amount || 0);
+            });
+            const total = Object.values(byType).reduce((a, b) => a + b, 0) || 1;
+            const sorted = Object.entries(byType).sort((a, b) => b[1] - a[1]);
+            const panel = document.getElementById('serviceStatsPanel');
+            panel.innerHTML = sorted.length ? sorted.map(([type, amount]) => {
+                const pct = Math.round(amount / total * 100);
+                return `<div class="svc-row"><div class="sv-top"><span>${getServiceLabel(type)}</span><span>₩${amount.toLocaleString()} (${pct}%)</span></div><div class="sv-track"><div class="sv-fill" style="width:${pct}%;"></div></div></div>`;
+            }).join('') : '<div style="font-size:13px;color:#94A3B8;">이번 달 청구 데이터가 없습니다</div>';
+        }
+
         async function loadBillingRecords() {
             try {
                 const centerId = currentUser?.center_id || 1;
@@ -665,46 +812,15 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('청부 기록 조회 실패');
+                    throw new Error('청구 기록 조회 실패');
                 }
 
                 const data = await response.json();
                 allBillings = data.records || [];
 
-                // 통계 업데이트 - 활성 청부만 포함 (아카이브 제외)
+                // 통계 업데이트 - 활성 청구만 포함 (아카이브 제외)
                 const activeOnly = allBillings.filter(r => !r.is_archived);
-                const totalCount = activeOnly.length;
-                const pendingCount = activeOnly.filter(r => r.approval_status === 'pending').length;
-                const approvedCount = activeOnly.filter(r => r.approval_status === 'approved').length;
-                const submittedToNhisCount = activeOnly.filter(r => r.approval_status === 'submitted_to_nhis').length;
-                const reimbursedCount = activeOnly.filter(r => r.approval_status === 'reimbursed').length;
-                const rejectedCount = activeOnly.filter(r => r.approval_status === 'rejected').length;
-
-                const sumAmount = list => list.reduce((s, r) => s + (r.amount || 0), 0);
-                const money = n => `₩${n.toLocaleString()}`;
-                document.getElementById('totalAmount').textContent = money(sumAmount(activeOnly));
-                document.getElementById('approvedAmount').textContent = money(sumAmount(activeOnly.filter(r => r.approval_status === 'approved')));
-                document.getElementById('pendingAmount').textContent = money(sumAmount(activeOnly.filter(r => r.approval_status === 'pending')));
-                document.getElementById('rejectedAmount').textContent = money(sumAmount(activeOnly.filter(r => r.approval_status === 'rejected')));
-                document.getElementById('totalCount').textContent = totalCount;
-                document.getElementById('pendingCount').textContent = pendingCount;
-                document.getElementById('approvedCount').textContent = approvedCount;
-                document.getElementById('submittedToNhisCount').textContent = submittedToNhisCount;
-                document.getElementById('reimbursedCount').textContent = reimbursedCount;
-                document.getElementById('rejectedCount').textContent = rejectedCount;
-                document.getElementById('chipAll').textContent = `(${totalCount})`;
-                document.getElementById('chipApproved').textContent = `(${approvedCount})`;
-                document.getElementById('chipPending').textContent = `(${pendingCount})`;
-                document.getElementById('chipRejected').textContent = `(${rejectedCount})`;
-
-                console.log('📊 통계 업데이트:', {
-                    total: totalCount,
-                    pending: pendingCount,
-                    approved: approvedCount,
-                    submittedToNhis: submittedToNhisCount,
-                    reimbursed: reimbursedCount,
-                    rejected: rejectedCount
-                });
+                updateStats(activeOnly);
 
                 // 주민 정보 로드 (센터의 모든 주민)
                 const residentsRes = await fetch(`${API_URL}/residents/?center_id=${centerId}`);
@@ -712,23 +828,29 @@
                 const residents = residentsData.residents || [];
                 const residentMap = {};
                 residents.forEach(r => {
-                    // 이용자 정보: 이름 (등급 · 소득분류) 형식으로 저장
                     residentMap[r.id] = `${r.name} (${r.care_grade}등급 · ${r.client_type})`;
                 });
 
                 fillResidentOptions(residents);
                 renderBillingTable(currentView(allBillings), residentMap);
-                console.log('✅ 청부 기록 로드 완료:', allBillings.length + '건');
             } catch (error) {
-                console.error('❌ 청부 기록 로드 실패:', error);
+                console.error('청구 기록 로드 실패:', error);
                 document.getElementById('billingTableBody').innerHTML = `
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
-                            청부 기록을 불러올 수 없습니다: ${error.message}
+                        <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
+                            청구 기록을 불러올 수 없습니다: ${error.message}
                         </td>
                     </tr>
                 `;
             }
+        }
+
+        function residentInfoLine(record) {
+            const ag = residentAgeGenderMap[record.resident_id];
+            const name = record.resident_name || residentMapGlobal[record.resident_id] || `ID ${record.resident_id}`;
+            if (!ag) return name;
+            const genderLabel = ag.gender === 'male' || ag.gender === '남' ? '남' : (ag.gender === 'female' || ag.gender === '여' ? '여' : (ag.gender || '-'));
+            return `${record.resident_name || name}<div style="font-size:11px;color:#94A3B8;margin-top:1px;">${genderLabel}, ${ag.age ?? '-'}세</div>`;
         }
 
         function renderBillingTable(records, residentMap = {}) {
@@ -738,58 +860,59 @@
             if (records.length === 0) {
                 html = `
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
-                            청부 기록이 없습니다
+                        <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
+                            청구 기록이 없습니다
                         </td>
                     </tr>
                 `;
             } else {
                 records.forEach(record => {
-                    const statusClass = `status-${record.approval_status}`;
                     const statusLabel = getStatusLabel(record.approval_status || record.status);
                     const serviceLabel = getServiceLabel(record.service_type);
-
-                    const recordedDate = new Date(record.recorded_date).toLocaleDateString('ko-KR');
-                    const residentName = residentMap[record.resident_id] || `ID: ${record.resident_id}`;
+                    const pAmount = patientAmount(record);
+                    const checked = selectedBillingIds.has(record.id) ? 'checked' : '';
 
                     let actionHtml = '';
                     if (record.approval_status === 'pending') {
                         actionHtml = `
                             <div class="action-buttons">
                                 <button class="action-btn success" onclick="approveBilling(${record.id})">승인</button>
-                                <button class="action-btn danger" onclick="rejectBilling(${record.id})">거절</button>
-                                ${(record.review_flags || []).length ? `<div class="text-xs text-red-600 font-semibold mt-1">⚠️ ${record.review_flags.join(', ')}</div>` : ''}
+                                <button class="action-btn danger" onclick="rejectBilling(${record.id})">반려</button>
+                                ${(record.review_flags || []).length ? `<div style="font-size:11px;color:#DC2626;font-weight:700;width:100%;">⚠ ${record.review_flags.join(', ')}</div>` : ''}
                             </div>
                         `;
                     } else if (record.approval_status === 'approved') {
                         actionHtml = `
                             <div class="action-buttons">
-                                <button class="action-btn primary" onclick="submitToNHIS(${record.id})">건보 청구</button>
-                                <button class="action-btn danger" onclick="deleteBilling(${record.id}, '${currentUser.role}')">취소</button>
+                                <button class="action-btn primary" onclick="submitToNHIS(${record.id})">공단 청구</button>
+                                <button class="action-btn danger" onclick="deleteBilling(${record.id}, '${currentUser.role}')">되돌리기</button>
                             </div>
                         `;
                     } else if (record.approval_status === 'submitted_to_nhis') {
-                        // 건보 청구됨 - 센터장이 수동으로 확인 후 처리
                         actionHtml = `
                             <div class="action-buttons">
                                 <button class="action-btn success" onclick="confirmReimbursement(${record.id})">환급 확인</button>
-                                <button class="action-btn warning" onclick="cancelNHISSubmission(${record.id})">취소</button>
+                                <button class="action-btn" onclick="cancelNHISSubmission(${record.id})">취소</button>
                             </div>
                         `;
-                    } else if (record.approval_status === 'reimbursed') {
-                        // 환급완료 (아카이브됨)
+                    } else if (record.approval_status === 'rejected') {
+                        actionHtml = record.rejection_reason ? `<span style="font-size:12px;color:#DC2626;" title="${record.rejection_reason.replace(/"/g, '&quot;')}">사유 보기</span>` : '-';
+                    } else {
                         actionHtml = '-';
                     }
 
+                    const selectable = record.approval_status === 'pending' || record.approval_status === 'approved';
                     html += `
                         <tr>
+                            <td>${selectable ? `<input type="checkbox" ${checked} onchange="toggleSelect2(${record.id}, this.checked)">` : ''}</td>
                             <td>${claimNumber(record)}</td>
-                            <td>${residentName}</td>
+                            <td>${residentInfoLine(record)}</td>
                             <td>${periodLabel(record.recorded_date)}</td>
+                            <td>${serviceLabel}</td>
                             <td>${visitCount(record)}회</td>
-                            <td><span class="svc-chip">${serviceLabel}</span></td>
                             <td style="text-align: right;">₩${(record.amount || 0).toLocaleString()}</td>
-                            <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                            <td style="text-align: right;">${pAmount == null ? '-' : '₩' + pAmount.toLocaleString()}</td>
+                            <td><span class="status-pill2 ${statusPillClass(record.approval_status)}">${statusLabel}</span></td>
                             <td>${actionHtml || '-'}</td>
                         </tr>
                     `;
@@ -799,35 +922,11 @@
             tbody.innerHTML = html;
         }
 
-        async function filterByStatus(status) {
+        async function filterByStatus(status, evt) {
             currentFilter = status;
-            document.querySelectorAll('.cm-chip').forEach(b => b.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-
-            const filtered = currentView(allBillings);
-
-            console.log('🔍 필터:', {
-                status: currentFilter,
-                count: filtered.length,
-                records: filtered.map(r => r.approval_status)
-            });
-
-            // 주민 정보 로드 (센터의 모든 주민)
-            try {
-                const centerId = currentUser?.center_id || 1;
-                const residentsRes = await fetch(`${API_URL}/residents/?center_id=${centerId}`);
-                const residentsData = residentsRes.ok ? await residentsRes.json() : { residents: [] };
-                const residents = residentsData.residents || [];
-                const residentMap = {};
-                residents.forEach(r => {
-                    // 이용자 정보: 이름 (등급 · 소득분류) 형식으로 저장
-                    residentMap[r.id] = `${r.name} (${r.care_grade}등급 · ${r.client_type})`;
-                });
-                renderBillingTable(filtered, residentMap);
-            } catch (error) {
-                console.error('❌ 주민 정보 로드 실패:', error);
-                renderBillingTable(filtered, {});
-            }
+            document.querySelectorAll('.cm-chip2').forEach(b => b.classList.remove('active'));
+            (evt?.currentTarget || document.querySelector('.cm-chip2')).classList.add('active');
+            renderBillingTable(currentView(allBillings), residentMapGlobal);
         }
 
         async function approveCleanBilling() {
@@ -854,184 +953,93 @@
         }
 
         async function approveBilling(recordId) {
-            if (!confirm('이 청부를 승인하시겠습니까?')) return;
-
+            if (!confirm('이 청구를 승인하시겠습니까?')) return;
             try {
                 const response = await fetch(`${API_URL}/billing/${recordId}/approve`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: currentUser.id,
-                        user_role: currentUser.role
-                    })
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: currentUser.role })
                 });
-
-                if (!response.ok) {
-                    throw new Error('승인 실패');
-                }
-
-                alert('청부가 승인되었습니다');
+                if (!response.ok) throw new Error('승인 실패');
                 loadBillingRecords();
             } catch (error) {
-                console.error('❌ 승인 오류:', error);
                 alert('승인 중 오류가 발생했습니다: ' + error.message);
             }
         }
 
         async function rejectBilling(recordId) {
-            const reason = prompt('거절 사유를 입력하세요:');
+            const reason = prompt('반려 사유를 입력하세요:');
             if (reason === null) return;
-            if (!reason.trim()) {
-                alert('거절 사유를 입력해 주세요');
-                return;
-            }
-
+            if (!reason.trim()) { alert('반려 사유를 입력해 주세요'); return; }
             try {
                 const response = await fetch(`${API_URL}/billing/${recordId}/reject`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: currentUser.id,
-                        user_role: currentUser.role,
-                        reason: reason
-                    })
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: currentUser.role, reason })
                 });
-
-                if (!response.ok) {
-                    throw new Error('거절 실패');
-                }
-
-                alert('청부가 거절되었습니다');
+                if (!response.ok) throw new Error('반려 실패');
                 loadBillingRecords();
             } catch (error) {
-                console.error('❌ 거절 오류:', error);
-                alert('거절 중 오류가 발생했습니다: ' + error.message);
+                alert('반려 중 오류가 발생했습니다: ' + error.message);
             }
         }
 
         async function submitToNHIS(recordId) {
-            if (!confirm('이 청부를 건강보험공단에 청구하시겠습니까?')) return;
-
+            if (!confirm('이 청구를 공단 청구 상태로 전환하시겠습니까? (내부 상태 변경이며 외부 전송은 아닙니다)')) return;
             try {
                 const response = await fetch(`${API_URL}/billing/${recordId}/submit-to-nhis`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: currentUser.id,
-                        user_role: currentUser.role
-                    })
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: currentUser.role })
                 });
-
-                if (!response.ok) {
-                    throw new Error('건보 청구 실패');
-                }
-
-                alert('청부가 건강보험공단에 청구되었습니다');
+                if (!response.ok) throw new Error('공단 청구 전환 실패');
                 loadBillingRecords();
             } catch (error) {
-                console.error('❌ 건보 청구 오류:', error);
-                alert('건보 청구 중 오류가 발생했습니다: ' + error.message);
+                alert('공단 청구 전환 중 오류가 발생했습니다: ' + error.message);
             }
         }
 
         async function confirmReimbursement(recordId) {
             if (!confirm('건보 환급을 확인하시겠습니까?')) return;
-
             try {
                 const response = await fetch(`${API_URL}/billing/${recordId}/confirm-reimbursement`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: currentUser.id,
-                        user_role: currentUser.role
-                    })
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: currentUser.role })
                 });
-
-                if (!response.ok) {
-                    throw new Error('환급 확인 실패');
-                }
-
-                alert('환급이 확인되었습니다');
+                if (!response.ok) throw new Error('환급 확인 실패');
                 loadBillingRecords();
             } catch (error) {
-                console.error('❌ 환급 확인 오류:', error);
                 alert('환급 확인 중 오류가 발생했습니다: ' + error.message);
             }
         }
 
         async function cancelNHISSubmission(recordId) {
-            if (!confirm('건보 청구를 취소하시겠습니까?')) return;
-
+            if (!confirm('공단 청구를 취소하시겠습니까?')) return;
             try {
                 const response = await fetch(`${API_URL}/billing/${recordId}/cancel-nhis-submission`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: currentUser.id,
-                        user_role: currentUser.role
-                    })
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: currentUser.role })
                 });
-
-                if (!response.ok) {
-                    throw new Error('건보 청구 취소 실패');
-                }
-
-                alert('건보 청구가 취소되었습니다');
+                if (!response.ok) throw new Error('공단 청구 취소 실패');
                 loadBillingRecords();
             } catch (error) {
-                console.error('❌ 건보 청구 취소 오류:', error);
-                alert('건보 청구 취소 중 오류가 발생했습니다: ' + error.message);
-            }
-        }
-
-        async function resubmitToNHIS(recordId) {
-            if (!confirm('건보 반려된 청부를 다시 청구하시겠습니까?')) return;
-
-            try {
-                const response = await fetch(`${API_URL}/billing/${recordId}/submit-to-nhis`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: currentUser.id,
-                        user_role: currentUser.role
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('재청구 실패');
-                }
-
-                alert('청부가 다시 건강보험공단에 청구되었습니다');
-                loadBillingRecords();
-            } catch (error) {
-                console.error('❌ 재청구 오류:', error);
-                alert('재청구 중 오류가 발생했습니다: ' + error.message);
+                alert('공단 청구 취소 중 오류가 발생했습니다: ' + error.message);
             }
         }
 
         async function deleteBilling(recordId, userRole) {
-            if (!confirm('이 청부를 이전 단계로 되돌리시겠습니까?')) return;
-
+            if (!confirm('이 청구를 이전 단계로 되돌리시겠습니까?')) return;
             try {
-                // 승인됨 → 대기 중으로 되돌리기
                 const response = await fetch(`${API_URL}/billing/${recordId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        approval_status: 'pending',
-                        user_id: currentUser.id,
-                        user_role: userRole
-                    })
+                    body: JSON.stringify({ approval_status: 'pending', user_id: currentUser.id, user_role: userRole })
                 });
-
-                if (!response.ok) {
-                    throw new Error('상태 변경 실패');
-                }
-
-                alert('청부 상태가 대기 중으로 변경되었습니다');
+                if (!response.ok) throw new Error('상태 변경 실패');
                 loadBillingRecords();
             } catch (error) {
-                console.error('❌ 상태 변경 오류:', error);
                 alert('상태 변경 중 오류가 발생했습니다: ' + error.message);
             }
         }
@@ -1040,72 +1048,32 @@
 
         async function refreshBillingData() {
             try {
-                // center_id 포함해서 API 호출
                 const centerId = currentUser?.center_id || 1;
                 const includeArchived = currentTab === 'archived' ? 'true' : 'false';
                 const apiUrl = `${API_URL}/billing/?center_id=${centerId}&include_archived=${includeArchived}`;
 
-                console.log('🔄 API 호출 정보:', {
-                    url: apiUrl,
-                    centerId: centerId,
-                    currentTab: currentTab,
-                    currentUser: currentUser,
-                    currentUserCenterId: currentUser?.center_id
-                });
-
                 const response = await fetch(apiUrl);
-                if (!response.ok) {
-                    console.error('❌ API 응답 오류:', response.status, response.statusText);
-                    return;  // 실패 시 기존 데이터 유지
-                }
+                if (!response.ok) return;
 
                 const data = await response.json();
-                console.log('📋 원본 API 응답:', data);
+                const newBillings = Array.isArray(data.records) ? data.records : [];
 
-                // API 응답: { total_records: 4, records: [...] }
-                const newBillings = Array.isArray(data.records) ? data.records : (Array.isArray(data.billings) ? data.billings : []);
-
-                console.log('📊 새로고침 - API 응답:', {
-                    total: newBillings.length,
-                    filter: currentFilter,
-                    statuses: newBillings.map(b => b.approval_status)
-                });
-
-                // 데이터가 변경되었을 때만 업데이트
                 if (JSON.stringify(newBillings) !== JSON.stringify(allBillings)) {
                     allBillings = newBillings;
-                    console.log('✅ 청부 데이터 갱신:', allBillings.length + '건');
+                    updateStats(allBillings.filter(r => !r.is_archived));
                 }
 
-                // 현재 필터와 검색 조건을 유지하면서 재렌더링
-                const filtered = currentView(allBillings);
-
-                console.log('🔍 필터링 결과:', {
-                    filter: currentFilter,
-                    count: filtered.length + '건',
-                    statuses: filtered.map(b => b.approval_status)
-                });
-
-                const residentsRes = await fetch(`${API_URL}/residents/`);
-                const residentsData = residentsRes.ok ? await residentsRes.json() : { residents: [] };
-                const residents = residentsData.residents || [];
-                const residentMap = {};
-                residents.forEach(r => {
-                    // 이용자 정보: 이름 (등급 · 소득분류) 형식으로 저장
-                    residentMap[r.id] = `${r.name} (${r.care_grade}등급 · ${r.client_type})`;
-                });
-
-                renderBillingTable(filtered, residentMap);
+                renderBillingTable(currentView(allBillings), residentMapGlobal);
             } catch (error) {
-                console.error('❌ 새로고침 오류:', error);
+                console.error('새로고침 오류:', error);
             }
         }
 
         function startAutoRefresh() {
             if (autoRefreshInterval) return;
             autoRefreshInterval = setInterval(() => {
-                refreshBillingData();  // ← 필터 유지하면서 갱신
-            }, 3000); // 3초마다 새로고침 (안정성 향상)
+                refreshBillingData();
+            }, 3000);
         }
 
         function stopAutoRefresh() {
@@ -1115,29 +1083,18 @@
             }
         }
 
-        function switchTab(tab) {
+        function switchTab(tab, evt) {
             currentTab = tab;
-            currentFilter = 'all';  // 탭 전환 시 필터 초기화
+            currentFilter = 'all';
+            selectedBillingIds.clear();
 
-            // 탭 UI 업데이트
-            document.querySelectorAll('.archive-tab').forEach(t => {
-                t.classList.remove('active');
-                t.style.color = 'rgba(0,0,0,0.5)';
-                t.style.borderBottomColor = 'transparent';
-            });
+            document.querySelectorAll('.archive-tab2').forEach(t => t.classList.remove('active'));
+            (evt?.currentTarget || document.querySelector('.archive-tab2')).classList.add('active');
 
-            event.target.classList.add('active');
-            event.target.style.color = '#3b82f6';
-            event.target.style.borderBottomColor = '#3b82f6';
+            document.querySelectorAll('.cm-chip2').forEach(b => b.classList.remove('active'));
+            document.querySelector('.cm-chip2').classList.add('active');
 
-            // 칩 선택도 '전체'로 되돌린다
-            document.querySelectorAll('.cm-chip').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.cm-chip')[0].classList.add('active');
-
-            // 데이터 새로 로드 (이 과정에서 통계도 자동으로 업데이트됨)
             loadBillingRecords();
-
-            console.log('📑 탭 전환:', currentTab === 'current' ? '현재 청부' : '아카이브된 청부');
         }
 
         window.addEventListener('load', () => {
