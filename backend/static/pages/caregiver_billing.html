@@ -3,128 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>돌봄케어 - 나의 청부</title>
+    <title>돌봄케어 - 나의 청구</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
-        .cb-sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
-        .cb-icon { object-fit: contain; mix-blend-mode: multiply; }
-        .cb-filter { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 14px; color: #374151; background: white; }
-        .cb-filter.active { background: #2E7D4F; color: white; }
+        /* ===== Premium Healthcare Management SaaS 톤 (대시보드·음성기록·청구관리 등과 동일) ===== */
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247;
+            --warn: #B45309; --danger: #DC2626; --line2: #E2E8F0;
+        }
+        html, body { background: var(--bg) !important; }
+        body { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .cb-sidebar { background: var(--navy) !important; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+        #navContent .side-item { color: #C9D6E3 !important; border-radius: 8px; }
+        #navContent .side-item:hover { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+        #navContent .side-item.active { background: var(--teal) !important; color: #fff !important; }
+
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .date-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line2); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--charcoal); white-space: nowrap; }
+        .bell-wrap { position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #F1F5F9; border-radius: 10px; flex: 0 0 auto; }
+        .bell-wrap svg { width: 17px; height: 17px; color: var(--charcoal); }
+        .bell-badge { position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+        .info-banner { background: #EDF8F6; border: 1px solid #CDEAE5; border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+        .info-ico { width: 38px; height: 38px; border-radius: 10px; background: var(--teal); color: #fff; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .info-ico svg { width: 19px; height: 19px; }
+        .info-banner b { color: var(--navy); font-size: 14px; display: block; margin-bottom: 2px; }
+        .info-banner p { font-size: 12.5px; color: #4B6B64; margin: 0; line-height: 1.5; }
+        .info-checks { list-style: none; margin: 0 0 0 auto; padding: 0; font-size: 12px; color: #2E6B61; }
+        .info-checks li { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+        .info-checks svg { width: 13px; height: 13px; color: var(--teal); flex: 0 0 auto; }
+
+        .filter-bar { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .filter-input { padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 13px; outline: none; }
+        .filter-input:focus { border-color: var(--teal); }
+        .btn-outline { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .btn-solid { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
+        .btn-solid:hover { background: #0C756C; }
+        .btn-solid:disabled, .btn-outline:disabled { opacity: .55; cursor: not-allowed; }
+
+        .summary-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+        .summary-card { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); display: flex; align-items: center; gap: 14px; cursor: pointer; transition: border-color .15s; text-align: left; }
+        .summary-card:hover { border-color: var(--teal); }
+        .summary-card.active { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(15,139,128,0.15); }
+        .summary-icon { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .summary-icon svg { width: 21px; height: 21px; }
+        .summary-label { font-size: 13px; font-weight: 700; color: #64748B; }
+        .summary-value { font-size: 24px; font-weight: 800; color: var(--navy); line-height: 1.2; font-variant-numeric: tabular-nums; }
+        .summary-note { font-size: 12px; color: #94A3B8; margin-top: 1px; }
+        @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+        .cb-table { border-collapse: collapse; width: 100%; }
+        .cb-table th { text-align: left; font-size: 12px; font-weight: 700; color: #64748B; padding: 10px 12px; background: #F8FAFC; border-bottom: 1px solid var(--line2); white-space: nowrap; }
+        .cb-table td { padding: 12px; font-size: 13px; color: var(--charcoal); border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+        .cb-table tr:hover td { background: #FAFBFC; }
+        .cb-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+        .status-pill2 { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; display: inline-block; }
+        .sp-draft { background: #E8F1FC; color: #1D4ED8; }
+        .sp-pending { background: #FDF1E3; color: #B45309; }
+        .sp-approved { background: #E6F3F1; color: #0F8B80; }
+        .sp-rejected { background: #FDE8E8; color: #DC2626; }
+
+        .panel2 { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .panel2-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 14px; font-weight: 800; color: var(--navy); }
+        .stat-row2 { margin-bottom: 12px; font-size: 12px; }
+        .stat-row2:last-child { margin-bottom: 0; }
+        .stat-row2 .sr-top { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--charcoal); font-weight: 600; }
+        .stat-row2 .sr-track { height: 6px; border-radius: 3px; background: #EEF2F6; overflow: hidden; }
+        .stat-row2 .sr-fill { height: 100%; border-radius: 3px; }
+        .notice-list2 { list-style: none; margin: 0; padding: 0; }
+        .notice-list2 li { display: flex; gap: 8px; font-size: 12px; color: #64748B; padding: 6px 0; line-height: 1.4; }
+        .notice-list2 li svg { width: 14px; height: 14px; color: var(--teal); flex: 0 0 auto; margin-top: 2px; }
+
+        .pager { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--line2); font-size: 12px; color: #64748B; }
+        .pager-btns { display: flex; align-items: center; gap: 4px; }
+        .pager-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line2); background: #fff; font-size: 12px; font-weight: 700; color: var(--charcoal); cursor: pointer; }
+        .pager-btn.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+        .pager-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+        @media print { .cb-sidebar, .filter-bar, .info-banner, .pager { display: none !important; } main { margin-left: 0 !important; } }
     </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
-        <aside class="cb-sidebar w-72 text-white fixed h-screen overflow-y-auto flex flex-col">
-            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
-                <div class="text-lg font-bold">돌봄케어</div>
-                <div class="text-xs text-white/60 ml-1">Care Management</div>
+        <aside class="cb-sidebar w-72 text-white fixed h-screen overflow-hidden">
+            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
+                <div>
+                    <div class="text-lg font-bold">돌봄케어</div>
+                    <div class="text-xs text-gray-400">Care Management</div>
+                </div>
             </div>
             <nav id="navContent" class="p-4"></nav>
-            <img src="assets/user_design/sidebar_care_landscape.jpg" alt="" class="w-full h-auto mt-auto">
         </aside>
         <main class="ml-72 w-full flex flex-col">
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-extrabold text-[#1E3A5F]">나의 청부</h1>
-                <div class="flex items-center gap-6">
-                    <img src="assets/user_design/28_top_notification_icon.png" alt="" class="w-7 h-7 object-contain">
-                    <div class="flex items-center gap-3">
-                        <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
-                        <span id="userName" class="text-base font-bold text-gray-900">사용자</span>
-                        <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">나의 청구</h1>
+                    <div class="breadcrumb">홈 › <b>나의 청구</b></div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="date-chip" id="headerDate"></div>
+                    <div class="bell-wrap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <span class="bell-badge" id="bellBadge" style="display:none;">0</span>
                     </div>
-                    <button onclick="logout()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:border-red-500 hover:text-red-600 transition">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
-                        로그아웃
-                    </button>
+                    <div class="text-right">
+                        <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
+                        <div class="text-xs text-gray-500">요양보호사</div>
+                    </div>
+                    <img src="assets/user_design/29_top_profile_icon.png" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+                    <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-8">
-                <div class="rounded-2xl overflow-hidden mb-5">
-                    <img src="assets/user_design/cb_banner.jpg" alt="" class="w-full h-auto block">
-                </div>
-
-                <div id="message" class="hidden mb-5 p-4 rounded-xl text-base"></div>
-
-                <!-- 이번 달 요약 -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-7 mb-5">
-                    <div class="flex items-center gap-3 mb-1">
-                        <img src="assets/user_design/cb_title_coins.png" alt="" class="w-9 h-9 cb-icon">
-                        <h2 class="text-2xl font-extrabold text-gray-900">이번 달 요약</h2>
+            <div class="flex-1 overflow-y-auto px-8 py-8">
+                <!-- 안내 -->
+                <div class="info-banner">
+                    <div class="info-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg></div>
+                    <div>
+                        <b>나의 청구 내역을 한눈에 확인하세요.</b>
+                        <p>작성한 청구의 진행 상태와 금액을 확인하고, 제출 전 내용을 수정할 수 있습니다.</p>
                     </div>
-                    <p class="text-base text-gray-500 mb-5 ml-12">이번 달 작성한 청구 내역의 상태를 한눈에 확인하세요.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-blue-50 p-5 rounded-2xl border border-blue-100 flex items-center gap-4">
-                            <img src="assets/user_design/cb_metric_draft.png" alt="" class="w-14 h-14 cb-icon">
-                            <div><div class="text-base font-bold text-blue-700">작성중</div><div class="text-3xl font-extrabold text-blue-900" id="draftCount">0건</div><div class="text-sm text-blue-500 mt-1">₩<span id="draftAmount">0</span></div></div>
-                        </div>
-                        <div class="bg-amber-50 p-5 rounded-2xl border border-amber-100 flex items-center gap-4">
-                            <img src="assets/user_design/cb_metric_pending.png" alt="" class="w-14 h-14 cb-icon">
-                            <div><div class="text-base font-bold text-amber-700">검토중</div><div class="text-3xl font-extrabold text-amber-900" id="pendingCount">0건</div><div class="text-sm text-amber-500 mt-1">₩<span id="pendingAmount">0</span></div></div>
-                        </div>
-                        <div class="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 flex items-center gap-4">
-                            <img src="assets/user_design/cb_metric_approved.png" alt="" class="w-14 h-14 cb-icon">
-                            <div><div class="text-base font-bold text-emerald-700">승인완료</div><div class="text-3xl font-extrabold text-emerald-900" id="approvedCount">0건</div><div class="text-sm text-emerald-500 mt-1">₩<span id="approvedAmount">0</span></div></div>
-                        </div>
-                        <div class="bg-red-50 p-5 rounded-2xl border border-red-100 flex items-center gap-4">
-                            <img src="assets/user_design/cb_metric_rejected.png" alt="" class="w-14 h-14 cb-icon">
-                            <div><div class="text-base font-bold text-red-700">보완 요청</div><div class="text-3xl font-extrabold text-red-900" id="rejectedCount">0건</div><div class="text-sm text-red-500 mt-1">₩<span id="rejectedAmount">0</span></div></div>
-                        </div>
+                    <ul class="info-checks">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>방문 기록을 기반으로 자동 생성된 청구 내역입니다.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>청구 상태별 진행 상황을 실시간으로 확인할 수 있습니다.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>보완 요청을 받으면 사유를 확인하고 재제출하세요.</li>
+                    </ul>
+                </div>
+
+                <div id="message" class="hidden mb-5 p-4 rounded-lg text-sm"></div>
+
+                <!-- 조회 -->
+                <div class="filter-bar">
+                    <span style="font-size:13px;font-weight:700;color:var(--charcoal);">조회 월</span>
+                    <input id="monthSelect" type="month" class="filter-input">
+                    <select id="fService" class="filter-input">
+                        <option value="">서비스 유형 전체</option>
+                        <option value="basic_care">기본 요양</option><option value="meal_service">식사 서비스</option><option value="medical_care">의료 처치</option><option value="emergency">응급 대응</option>
+                    </select>
+                    <select id="fStatus" class="filter-input">
+                        <option value="">청구 상태 전체</option>
+                        <option value="draft">작성중</option><option value="pending">검토중</option><option value="approved">승인완료</option><option value="rejected">보완 요청</option>
+                    </select>
+                    <input id="fSearch" type="text" class="filter-input" placeholder="이용자명, 서비스명 검색" style="min-width:200px;">
+                    <button type="button" class="btn-solid" onclick="applyFilters()">조회</button>
+                    <button type="button" class="btn-outline" onclick="resetFilters()">초기화</button>
+                    <div style="margin-left:auto;display:flex;gap:8px;">
+                        <button type="button" class="btn-outline" onclick="exportCsv()">엑셀 다운로드</button>
+                        <button id="submitAllBtn" type="button" class="btn-solid" onclick="submitAllDrafts()">
+                            <svg style="width:14px;height:14px;display:inline;vertical-align:-2px;margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>작성중 전체 제출
+                        </button>
                     </div>
                 </div>
 
-                <!-- 필터 -->
-                <div class="flex gap-3 mb-5 flex-wrap">
-                    <button class="cb-filter active flex-1 justify-center" data-filter="all" onclick="filterBilling(event)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>전체</button>
-                    <button class="cb-filter flex-1 justify-center" data-filter="draft" onclick="filterBilling(event)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>작성중</button>
-                    <button class="cb-filter flex-1 justify-center" data-filter="pending" onclick="filterBilling(event)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>검토중</button>
-                    <button class="cb-filter flex-1 justify-center" data-filter="approved" onclick="filterBilling(event)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 5-5"/></svg>승인완료</button>
-                    <button class="cb-filter flex-1 justify-center" data-filter="rejected" onclick="filterBilling(event)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 20h20z"/><path d="M12 9v4M12 17h.01"/></svg>보완 요청</button>
+                <!-- 청구 현황 카드 -->
+                <div class="summary-row">
+                    <button type="button" class="summary-card" data-status="draft" onclick="cardFilter('draft')">
+                        <div class="summary-icon" style="background:#E8F1FC;color:#1D4ED8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+                        <div><div class="summary-label">작성중</div><div class="summary-value" id="draftCount">0건</div><div class="summary-note">₩<span id="draftAmount">0</span></div></div>
+                    </button>
+                    <button type="button" class="summary-card" data-status="pending" onclick="cardFilter('pending')">
+                        <div class="summary-icon" style="background:#FDF1E3;color:#B45309;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+                        <div><div class="summary-label">검토중</div><div class="summary-value" id="pendingCount">0건</div><div class="summary-note">₩<span id="pendingAmount">0</span></div></div>
+                    </button>
+                    <button type="button" class="summary-card" data-status="approved" onclick="cardFilter('approved')">
+                        <div class="summary-icon" style="background:#E6F3F1;color:#0F8B80;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
+                        <div><div class="summary-label">승인완료</div><div class="summary-value" id="approvedCount">0건</div><div class="summary-note">₩<span id="approvedAmount">0</span></div></div>
+                    </button>
+                    <button type="button" class="summary-card" data-status="rejected" onclick="cardFilter('rejected')">
+                        <div class="summary-icon" style="background:#FDE8E8;color:#DC2626;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+                        <div><div class="summary-label">보완 요청</div><div class="summary-value" id="rejectedCount">0건</div><div class="summary-note">₩<span id="rejectedAmount">0</span></div></div>
+                    </button>
                 </div>
 
-                <div class="flex justify-end mb-4">
-                    <button onclick="submitAllDrafts()" class="inline-flex items-center gap-2 px-5 py-2 bg-[#2E7D4F] text-white font-bold rounded-xl hover:bg-[#256a40]">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>작성중 전체 제출</button>
-                </div>
-
-                <!-- 청구 내역 -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-7">
-                    <div class="flex items-center justify-between flex-wrap gap-4 mb-5">
-                        <div class="flex items-center gap-3">
-                            <img src="assets/user_design/cb_title_doc.png" alt="" class="w-9 h-9 cb-icon">
-                            <div>
-                                <h2 class="text-2xl font-extrabold text-gray-900">청구 내역</h2>
-                                <p class="text-sm text-gray-500">작성한 청구 내역을 확인하고 상태를 관리하세요.</p>
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;">
+                    <div style="min-width:0;">
+                        <!-- 청구 내역 목록 -->
+                        <div style="background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden;">
+                            <div style="padding:14px 16px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                                <div>
+                                    <div style="font-size:15px;font-weight:800;color:var(--navy);">청구 내역 목록</div>
+                                    <div style="font-size:12px;color:#94A3B8;margin-top:2px;">최근 작성한 청구 내역입니다.</div>
+                                </div>
+                                <select id="pageSize" class="filter-input" onchange="currentPage=1;renderBillings();">
+                                    <option value="10">10개씩 보기</option>
+                                    <option value="20">20개씩 보기</option>
+                                    <option value="50">50개씩 보기</option>
+                                </select>
                             </div>
+                            <div style="overflow-x:auto;">
+                            <table class="cb-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th><th>이용자 정보</th><th>서비스 기간</th><th>서비스 유형</th><th>방문 횟수</th>
+                                        <th style="text-align:right;">청구 금액</th><th>상태</th><th>작성일</th><th>관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="billingTableBody">
+                                    <tr><td colspan="9" style="text-align:center;padding:40px;color:#94A3B8;">불러오는 중...</td></tr>
+                                </tbody>
+                            </table>
+                            </div>
+                            <div class="pager" id="pager"></div>
                         </div>
-                        <label class="flex items-center gap-2 border border-gray-300 rounded-xl px-4 py-3">
-                            <img src="assets/user_design/cb_month_calendar.png" alt="" class="w-6 h-6 cb-icon">
-                            <input id="monthSelect" type="month" onchange="renderBillings()" class="text-base font-bold text-gray-800 bg-transparent">
-                        </label>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-base">
-                            <thead>
-                                <tr class="border-b border-gray-200 bg-gray-50">
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">청구번호</th>
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">이용자</th>
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">서비스 기간</th>
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">총 금액</th>
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">상태</th>
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">작성일</th>
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">관리</th>
-                                </tr>
-                            </thead>
-                            <tbody id="billingTableBody">
-                                <tr><td colspan="7" class="py-10 text-center text-gray-400">청구가 없습니다</td></tr>
-                            </tbody>
-                        </table>
+
+                    <!-- 우측 패널 -->
+                    <div>
+                        <div class="panel2">
+                            <div class="panel2-head"><span>이번 달 청구 현황</span></div>
+                            <div id="monthStatusPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
+                        </div>
+                        <div class="panel2">
+                            <div class="panel2-head"><span>서비스 유형별 청구 현황</span></div>
+                            <div id="serviceStatsPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
+                        </div>
+                        <div class="panel2">
+                            <div class="panel2-head"><span>청구 업무 안내</span></div>
+                            <ul class="notice-list2">
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>청구 제출 후에는 센터장의 검토를 기다려 주세요.</li>
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>보완 요청을 받으면 사유를 확인하고 수정 후 다시 제출하세요.</li>
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>승인 완료된 청구는 임의로 수정할 수 없습니다.</li>
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>작성중 청구는 "작성중 전체 제출"로 한 번에 제출할 수 있습니다.</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -142,43 +247,83 @@
     </div>
 
     <script src="menu.js"></script>
-    <script src="art.js"></script>
     <script>
         const API_URL = '/api/v1';
         let currentUser = null;
         let billings = [];
-        let currentFilter = 'all';
+        let residentAgeGenderMap = {};
+        let statusFilter = '';
+        let currentPage = 1;
 
         function checkAuth() {
             const token = localStorage.getItem('access_token');
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (!token || !user.id) { window.location.href = './login.html'; return; }
             currentUser = user;
-            document.getElementById('userName').textContent = `${user.full_name || '사용자'}님`;
+            document.getElementById('userName').textContent = user.full_name || '사용자';
+            document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
             renderSidebar();
-            applyNavIcons();
+            groupSidebar();
+            loadBellBadge();
             const now = new Date();
             document.getElementById('monthSelect').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             loadBillings();
         }
 
-        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
-        const NAV_ICON_FILES = {
-            '대시보드': '20_nav_dashboard_icon.png',
-            '이용자관리': '21_nav_user_icon.png',
-            '음성 기록': '22_nav_voice_icon.png',
-            '방문계획 승인': '23_nav_service_plan_icon.png',
-            '청부관리': '24_nav_billing_icon.png',
-            '수익분석': '25_nav_statistics_icon.png',
-            '알림': '26_nav_notice_icon.png',
-            '설정': '27_nav_settings_icon.png',
-        };
-
-        function applyNavIcons() {
-            document.querySelectorAll('.sidebar-nav .side-item, #navContent .side-item').forEach(item => {
-                const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
-                if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
+        // 대시보드·음성기록·청부관리 등과 동일한 사이드바 그룹 라벨 (menu.js는 그대로 두고 이 페이지에서만 DOM 보정)
+        const SIDE_GROUPS_CG = [
+            ['매인', ['대시보드']],
+            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
+            ['방문 서비스 운영', ['음성 기록', '나의 일정', '방문계획 승인', '보호자 소통']],
+            ['청구 및 경영 관리', ['나의 청부', '나의 급여', '청부관리', '월별정산', '수익분석', '급여 확정']],
+        ];
+        function groupSidebar() {
+            const nav = document.getElementById('navContent');
+            const items = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+            if (!items.length) return;
+            const byLabel = {};
+            items.forEach(item => { byLabel[item.querySelector('span:last-child')?.textContent.trim()] = item; });
+            const frag = document.createDocumentFragment();
+            SIDE_GROUPS_CG.forEach(([groupLabel, labels]) => {
+                const found = labels.map(l => byLabel[l]).filter(Boolean);
+                if (!found.length) return;
+                const h = document.createElement('div');
+                h.className = 'side-group-label';
+                h.textContent = groupLabel;
+                frag.appendChild(h);
+                found.forEach(el => frag.appendChild(el));
             });
+            items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
+            nav.innerHTML = '';
+            nav.appendChild(frag);
+        }
+
+        async function loadBellBadge() {
+            try {
+                const r = await fetch(`${API_URL}/notifications/mine`);
+                if (!r.ok) return;
+                const d = await r.json();
+                const n = d.unread_count || 0;
+                if (n > 0) {
+                    const badge = document.getElementById('bellBadge');
+                    badge.textContent = n > 99 ? '99+' : n;
+                    badge.style.display = 'flex';
+                }
+            } catch (e) { /* 부가 기능이므로 실패해도 무시 */ }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text ?? '';
+            return div.innerHTML;
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `mb-5 p-4 rounded-lg text-sm ${type === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-800'}`;
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 4000);
         }
 
         async function loadBillings() {
@@ -186,11 +331,25 @@
                 const r = await fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}`);
                 const d = await r.json();
                 billings = d.records || [];
+                await loadResidentAgeGender();
                 updateSummary();
+                updateThisMonthPanels();
                 renderBillings();
             } catch (e) {
-                showMessage('청부 로드 실패: ' + e.message, 'error');
+                showMessage('청구 로드 실패: ' + e.message, 'error');
             }
+        }
+
+        // 이용자 나이·성별은 /residents/ 에서 보강한다 (billing_management.html과 동일한 방식)
+        async function loadResidentAgeGender() {
+            try {
+                const centerId = currentUser.center_id || 1;
+                const r = await fetch(`${API_URL}/residents/?center_id=${centerId}`);
+                if (!r.ok) return;
+                const d = await r.json();
+                residentAgeGenderMap = {};
+                (d.residents || []).forEach(res => { residentAgeGenderMap[res.id] = { age: res.age, gender: res.gender }; });
+            } catch (e) { /* 보조 정보이므로 실패해도 무시 */ }
         }
 
         // 선택한 달에 해당하는 청구만 추린다
@@ -207,13 +366,15 @@
                 document.getElementById(`${key}Count`).textContent = `${list.length}건`;
                 document.getElementById(`${key}Amount`).textContent = sumOf(list).toLocaleString();
             });
+            document.querySelectorAll('.summary-card').forEach(c => c.classList.toggle('active', c.dataset.status === statusFilter));
         }
 
+        const SERVICE_LABELS = { basic_care: '기본 요양', meal_service: '식사 서비스', medical_care: '의료 처치', emergency: '응급 대응' };
         const STATUS_BADGE = {
-            draft: ['bg-blue-100 text-blue-800', '작성중'],
-            pending: ['bg-amber-100 text-amber-800', '검토중'],
-            approved: ['bg-emerald-100 text-emerald-800', '승인완료'],
-            rejected: ['bg-red-100 text-red-800', '보완 요청']
+            draft: ['sp-draft', '작성중'],
+            pending: ['sp-pending', '검토중'],
+            approved: ['sp-approved', '승인완료'],
+            rejected: ['sp-rejected', '보완 요청']
         };
 
         function claimNumber(b) {
@@ -221,7 +382,7 @@
             return `CLM-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}-${String(b.id).padStart(3, '0')}`;
         }
 
-        // 서비스 기간: 청구가 속한 달의 1일부터 말일까지
+        // 서비스 기간: 청구가 속한 달의 1일부터 말일까지 (청구는 월 단위로 묶여 공단에 제출된다)
         function periodLabel(dateStr) {
             const d = new Date(dateStr);
             const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
@@ -233,27 +394,175 @@
             return b.resident_gender === '남' ? 'resident_avatar_male.png' : 'resident_avatar_female.png';
         }
 
-        function renderBillings() {
+        function residentInfoLine(b) {
+            const ag = residentAgeGenderMap[b.resident_id];
+            const gender = b.resident_gender || ag?.gender || '-';
+            const sub = ag?.age != null ? `${gender}, ${ag.age}세` : gender;
+            return `<div class="flex items-center gap-2">
+                <img src="assets/user_design/${avatarOf(b)}" alt="" class="w-9 h-9 rounded-full object-cover">
+                <div><div class="font-bold text-gray-900">${escapeHtml(b.resident_name || '-')}</div><div style="font-size:11px;color:#94A3B8;">${escapeHtml(sub)}</div></div>
+            </div>`;
+        }
+
+        // 같은 이용자·같은 달의 청구 건수를 방문 횟수로 본다 (청구관리 화면과 동일한 산정 방식)
+        function visitCount(record) {
+            const d = new Date(record.recorded_date);
+            return billings.filter(r => {
+                const rd = new Date(r.recorded_date);
+                return r.resident_id === record.resident_id && rd.getFullYear() === d.getFullYear() && rd.getMonth() === d.getMonth();
+            }).length;
+        }
+
+        // 조회월 + 서비스유형 + 상태 + 검색어를 모두 적용한 목록
+        function visibleBillings() {
             const ym = document.getElementById('monthSelect').value;
-            updateSummary();
-            let filtered = billingsOfMonth(ym);
-            if (currentFilter !== 'all') filtered = filtered.filter(b => b.approval_status === currentFilter);
-            filtered = filtered.slice().sort((a, b) => new Date(b.recorded_date) - new Date(a.recorded_date));
+            const svc = document.getElementById('fService').value;
+            const st = statusFilter;
+            const q = document.getElementById('fSearch').value.trim().toLowerCase();
+            return billingsOfMonth(ym).filter(b => {
+                if (svc && b.service_type !== svc) return false;
+                if (st && b.approval_status !== st) return false;
+                if (q) {
+                    const hay = `${b.resident_name || ''} ${SERVICE_LABELS[b.service_type] || ''}`.toLowerCase();
+                    if (!hay.includes(q)) return false;
+                }
+                return true;
+            }).sort((a, b) => new Date(b.recorded_date) - new Date(a.recorded_date));
+        }
+
+        function cardFilter(status) {
+            statusFilter = statusFilter === status ? '' : status;
+            document.getElementById('fStatus').value = statusFilter;
+            currentPage = 1;
+            renderBillings();
+            document.querySelectorAll('.summary-card').forEach(c => c.classList.toggle('active', c.dataset.status === statusFilter));
+        }
+
+        function applyFilters() {
+            statusFilter = document.getElementById('fStatus').value;
+            currentPage = 1;
+            renderBillings();
+            document.querySelectorAll('.summary-card').forEach(c => c.classList.toggle('active', c.dataset.status === statusFilter));
+        }
+
+        function resetFilters() {
+            document.getElementById('fService').value = '';
+            document.getElementById('fStatus').value = '';
+            document.getElementById('fSearch').value = '';
+            statusFilter = '';
+            currentPage = 1;
+            renderBillings();
+            document.querySelectorAll('.summary-card').forEach(c => c.classList.remove('active'));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('monthSelect')?.addEventListener('change', () => { currentPage = 1; updateSummary(); renderBillings(); });
+        });
+
+        function renderBillings() {
+            const all = visibleBillings();
+            const pageSize = parseInt(document.getElementById('pageSize').value, 10);
+            const totalPages = Math.max(1, Math.ceil(all.length / pageSize));
+            currentPage = Math.min(currentPage, totalPages);
+            const start = (currentPage - 1) * pageSize;
+            const rows = all.slice(start, start + pageSize);
+
             const tbody = document.getElementById('billingTableBody');
-            if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="py-10 text-center text-gray-400">청구가 없습니다</td></tr>'; return; }
-            tbody.innerHTML = filtered.map(b => {
-                const [cls, label] = STATUS_BADGE[b.approval_status] || ['bg-gray-100 text-gray-700', b.approval_status];
-                return `
-                    <tr class="border-b border-gray-100 hover:bg-gray-50">
-                        <td class="py-4 px-4 font-semibold text-gray-700">${claimNumber(b)}</td>
-                        <td class="py-4 px-4"><div class="flex items-center gap-2"><img src="assets/user_design/${avatarOf(b)}" alt="" class="w-9 h-9 rounded-full object-cover"><span class="font-bold text-gray-900">${b.resident_name || '-'}</span></div></td>
-                        <td class="py-4 px-4 text-gray-600">${periodLabel(b.recorded_date)}</td>
-                        <td class="py-4 px-4 font-extrabold text-gray-900">₩${(b.amount || 0).toLocaleString()}</td>
-                        <td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${cls}">${label}</span></td>
-                        <td class="py-4 px-4 text-gray-500">${new Date(b.recorded_date).toLocaleDateString('ko-KR')}</td>
-                        <td class="py-4 px-4"><button onclick="openDetail(${b.id})" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-50">상세보기</button></td>
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#94A3B8;">청구가 없습니다</td></tr>';
+            } else {
+                tbody.innerHTML = rows.map((b, i) => {
+                    const [cls, label] = STATUS_BADGE[b.approval_status] || ['sp-draft', b.approval_status];
+                    const editable = b.approval_status === 'draft' || b.approval_status === 'rejected';
+                    return `<tr>
+                        <td>${start + i + 1}</td>
+                        <td>${residentInfoLine(b)}</td>
+                        <td>${periodLabel(b.recorded_date)}</td>
+                        <td>${SERVICE_LABELS[b.service_type] || b.service_type || '-'}</td>
+                        <td>${visitCount(b)}회</td>
+                        <td class="num">₩${(b.amount || 0).toLocaleString()}</td>
+                        <td><span class="status-pill2 ${cls}">${label}</span></td>
+                        <td>${new Date(b.recorded_date).toLocaleDateString('ko-KR')}</td>
+                        <td><button onclick="openDetail(${b.id})" class="btn-outline" style="padding:6px 12px;font-size:12px;">${editable ? '상세·수정' : '상세보기'}</button></td>
                     </tr>`;
-            }).join('');
+                }).join('');
+            }
+
+            const pager = document.getElementById('pager');
+            if (all.length === 0) { pager.innerHTML = ''; }
+            else {
+                const from = start + 1, to = Math.min(start + pageSize, all.length);
+                let btns = '';
+                for (let p = 1; p <= totalPages; p++) {
+                    if (p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1) {
+                        btns += `<button class="pager-btn ${p === currentPage ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`;
+                    } else if (Math.abs(p - currentPage) === 2) {
+                        btns += `<span style="padding:0 2px;">…</span>`;
+                    }
+                }
+                pager.innerHTML = `
+                    <span>총 ${all.length}건 중 ${from}-${to}건 표시</span>
+                    <div class="pager-btns">
+                        <button class="pager-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goPage(${currentPage - 1})">‹</button>
+                        ${btns}
+                        <button class="pager-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goPage(${currentPage + 1})">›</button>
+                    </div>`;
+            }
+        }
+
+        function goPage(p) { currentPage = p; renderBillings(); }
+
+        function isThisMonth(dateStr) {
+            const d = new Date(dateStr);
+            const now = new Date();
+            return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        }
+
+        // 우측 "이번 달" 패널은 조회월 필터와 무관하게 실제 달력상 이번 달 기준으로 표시한다 (청구관리 화면과 동일한 규칙)
+        function updateThisMonthPanels() {
+            const monthRecords = billings.filter(b => isThisMonth(b.recorded_date));
+            const total = monthRecords.reduce((s, b) => s + (b.amount || 0), 0);
+            const byStatus = key => monthRecords.filter(b => b.approval_status === key).reduce((s, b) => s + (b.amount || 0), 0);
+            const rows = [
+                ['승인완료', byStatus('approved'), '#0F8B80'],
+                ['검토중', byStatus('pending'), '#B45309'],
+                ['작성중', byStatus('draft'), '#1D4ED8'],
+                ['보완 요청', byStatus('rejected'), '#DC2626'],
+            ];
+            document.getElementById('monthStatusPanel').innerHTML = `
+                <div style="font-size:22px;font-weight:800;color:var(--navy);margin-bottom:10px;">₩${total.toLocaleString()}</div>
+                ${rows.map(([label, amt, color]) => {
+                    const pct = total ? Math.round(amt / total * 100) : 0;
+                    return `<div class="stat-row2"><div class="sr-top"><span>${label}</span><span>₩${amt.toLocaleString()} (${pct}%)</span></div><div class="sr-track"><div class="sr-fill" style="width:${pct}%;background:${color};"></div></div></div>`;
+                }).join('')}
+            `;
+
+            const byType = {};
+            monthRecords.forEach(b => { const k = b.service_type || 'basic_care'; byType[k] = (byType[k] || 0) + (b.amount || 0); });
+            const svcTotal = Object.values(byType).reduce((a, c) => a + c, 0) || 1;
+            const sorted = Object.entries(byType).sort((a, b) => b[1] - a[1]);
+            const panel = document.getElementById('serviceStatsPanel');
+            panel.innerHTML = sorted.length ? sorted.map(([type, amount]) => {
+                const pct = Math.round(amount / svcTotal * 100);
+                return `<div class="stat-row2"><div class="sr-top"><span>${SERVICE_LABELS[type] || type}</span><span>₩${amount.toLocaleString()} (${pct}%)</span></div><div class="sr-track"><div class="sr-fill" style="width:${pct}%;background:var(--teal);"></div></div></div>`;
+            }).join('') : '<div style="font-size:13px;color:#94A3B8;">이번 달 청구 데이터가 없습니다</div>';
+        }
+
+        function exportCsv() {
+            const rows = visibleBillings();
+            if (rows.length === 0) { alert('내려받을 청구 내역이 없습니다'); return; }
+            const header = ['청구번호', '이용자', '서비스 기간', '서비스 유형', '방문횟수', '청구금액', '상태', '작성일'];
+            const lines = rows.map(b => [
+                claimNumber(b), b.resident_name || '-', periodLabel(b.recorded_date), SERVICE_LABELS[b.service_type] || b.service_type,
+                visitCount(b), b.amount || 0, (STATUS_BADGE[b.approval_status] || [, b.approval_status])[1], new Date(b.recorded_date).toLocaleDateString('ko-KR')
+            ]);
+            const csv = [header, ...lines].map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `나의청구_${document.getElementById('monthSelect').value}.csv`;
+            a.click();
+            URL.revokeObjectURL(a.href);
         }
 
         const SERVICE_NAMES_EDIT = { basic_care: '기본 돌봄', meal_service: '식사 서빙', medical_care: '의료 관리', emergency: '응급' };
@@ -272,7 +581,7 @@
             if (!billing) return;
             editingBillingId = billingId;
             editingDailyId = billing.daily_record_id;
-            const [cls, label] = STATUS_BADGE[billing.approval_status] || ['bg-gray-100 text-gray-700', billing.approval_status];
+            const [cls, label] = STATUS_BADGE[billing.approval_status] || ['sp-draft', billing.approval_status];
             const editable = (billing.approval_status === 'draft' || billing.approval_status === 'rejected') && billing.daily_record_id;
 
             let rec = null;
@@ -284,11 +593,11 @@
             const summary = `
                 <div class="space-y-2 text-base mb-5">
                     <div class="flex justify-between"><span class="text-gray-500">청구번호</span><span class="font-bold text-gray-900">${claimNumber(billing)}</span></div>
-                    <div class="flex justify-between"><span class="text-gray-500">이용자</span><span class="font-bold text-gray-900">${billing.resident_name || '-'}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">이용자</span><span class="font-bold text-gray-900">${escapeHtml(billing.resident_name || '-')}</span></div>
                     <div class="flex justify-between"><span class="text-gray-500">서비스 기간</span><span class="font-bold text-gray-900">${periodLabel(billing.recorded_date)}</span></div>
                     <div class="flex justify-between"><span class="text-gray-500">총 금액</span><span class="font-bold text-gray-900">₩${(billing.amount || 0).toLocaleString()}</span></div>
-                    <div class="flex justify-between"><span class="text-gray-500">상태</span><span class="px-3 py-1 rounded-full text-xs font-bold ${cls}">${label}</span></div>
-                    ${billing.approval_status === 'rejected' && billing.rejection_reason ? `<div class="text-red-600 text-sm bg-red-50 rounded-lg p-3">보완 요청 사유: ${billing.rejection_reason}</div>` : ''}
+                    <div class="flex justify-between"><span class="text-gray-500">상태</span><span class="status-pill2 ${cls}">${label}</span></div>
+                    ${billing.approval_status === 'rejected' && billing.rejection_reason ? `<div class="text-red-600 text-sm bg-red-50 rounded-lg p-3">보완 요청 사유: ${escapeHtml(billing.rejection_reason)}</div>` : ''}
                 </div>`;
 
             if (!editable || !rec) {
@@ -324,12 +633,12 @@
                     </div>
                     <div>
                         <label class="block text-sm font-bold mb-1">기록 내용</label>
-                        <textarea id="editNotes" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${rec.notes || ''}</textarea>
+                        <textarea id="editNotes" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${escapeHtml(rec.notes || '')}</textarea>
                     </div>
                 </div>
                 <div class="flex gap-3 mt-6">
-                    <button onclick="saveEdit()" class="flex-1 py-2 bg-[#2E7D4F] text-white font-bold rounded-xl hover:bg-[#256a40]">저장</button>
-                    <button onclick="submitBilling(${billing.id})" class="flex-1 py-2 bg-white border border-[#2E7D4F] text-[#2E7D4F] font-bold rounded-xl hover:bg-emerald-50">제출</button>
+                    <button onclick="saveEdit()" class="flex-1 py-2 text-white font-bold rounded-xl" style="background:var(--teal);">저장</button>
+                    <button onclick="submitBilling(${billing.id})" class="flex-1 py-2 bg-white border font-bold rounded-xl" style="border-color:var(--teal);color:var(--teal);">제출</button>
                     <button onclick="closeDetail()" class="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200">닫기</button>
                 </div>`;
             document.getElementById('detailModal').style.display = 'flex';
@@ -375,34 +684,30 @@
         async function submitBilling(id) {
             const ok = await postSubmit(id);
             closeDetail();
-            showMessage(ok ? '청부를 제출했습니다. 센터장 검토를 기다려 주세요.' : '제출에 실패했습니다', ok ? 'success' : 'error');
+            showMessage(ok ? '청구를 제출했습니다. 센터장 검토를 기다려 주세요.' : '제출에 실패했습니다', ok ? 'success' : 'error');
             await loadBillings();
         }
 
+        let bulkSubmitInFlight = false;
         async function submitAllDrafts() {
+            if (bulkSubmitInFlight) return;
             const ym = document.getElementById('monthSelect').value;
             const drafts = billingsOfMonth(ym).filter(b => b.approval_status === 'draft');
             if (drafts.length === 0) { showMessage('제출할 작성중 청구가 없습니다', 'error'); return; }
-            if (!confirm(`작성중 청구 ${drafts.length}건을 센터장에게 제출할까요?`)) return;
-            let ok = 0;
-            for (const b of drafts) { if (await postSubmit(b.id)) ok++; }
-            showMessage(`${ok}건을 제출했습니다`, 'success');
+            if (!confirm(`${ym} 작성중 청구 ${drafts.length}건을 센터장에게 제출할까요?`)) return;
+
+            bulkSubmitInFlight = true;
+            const btn = document.getElementById('submitAllBtn');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.textContent = '제출 중…';
+            let ok = 0, fail = 0;
+            for (const b of drafts) { (await postSubmit(b.id)) ? ok++ : fail++; }
+            showMessage(fail ? `${ok}건 제출 완료, ${fail}건 실패` : `${ok}건을 제출했습니다`, fail ? 'error' : 'success');
+            bulkSubmitInFlight = false;
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
             await loadBillings();
-        }
-
-        function filterBilling(e) {
-            document.querySelectorAll('.cb-filter').forEach(btn => btn.classList.remove('active'));
-            e.currentTarget.classList.add('active');
-            currentFilter = e.currentTarget.dataset.filter;
-            renderBillings();
-        }
-
-        function showMessage(text, type) {
-            const msg = document.getElementById('message');
-            msg.textContent = text;
-            msg.className = `mb-5 p-4 rounded-xl text-base ${type === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-800'}`;
-            msg.classList.remove('hidden');
-            setTimeout(() => msg.classList.add('hidden'), 4000);
         }
 
         function logout() {
