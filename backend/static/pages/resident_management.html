@@ -402,6 +402,89 @@
             .topbar { padding: 16px; }
             .topbar-title h1 { font-size: 20px; }
         }
+
+        /* ===== Premium Healthcare Management SaaS 톤 (대시보드와 동일, 이 페이지 전용 덮어쓰기) ===== */
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247;
+            --warn: #B45309; --danger: #DC2626; --line2: #E2E8F0;
+        }
+        html, body { background: var(--bg) !important; background-image: none !important; }
+        body { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: var(--navy) !important; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+        .sidebar-nav .side-item, .sidebar .side-item { color: #C9D6E3 !important; border-radius: 8px; }
+        .sidebar-nav .side-item:hover, .sidebar .side-item:hover { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+        .sidebar-nav .side-item.active, .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .sidebar-landscape { display: none !important; }
+
+        .topbar { background: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .date-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line2); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--charcoal); }
+        .bell-wrap { position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #F1F5F9; border-radius: 10px; }
+        .bell-wrap svg { width: 17px; height: 17px; color: var(--charcoal); }
+
+        .summary-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; margin-bottom: 20px; }
+        .summary-row > div { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .summary-top { display: flex; align-items: center; justify-content: space-between; }
+        .summary-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+        .summary-icon svg { width: 19px; height: 19px; }
+        .summary-row > div:nth-child(1) .summary-icon { background: #E6F7EE; color: #15803D; }
+        .summary-row > div:nth-child(2) .summary-icon { background: #E8F1FC; color: #1D4ED8; }
+        .summary-row > div:nth-child(3) .summary-icon { background: #FDF1E3; color: var(--warn); }
+        .summary-row > div:nth-child(4) .summary-icon { background: #F1ECFB; color: #6D28D9; }
+        .summary-label { font-size: 13px; font-weight: 600; color: #64748B; }
+        .summary-value { font-size: 28px; font-weight: 800; color: var(--navy); margin-top: 8px; font-variant-numeric: tabular-nums; }
+        .summary-note { font-size: 12px; color: #94A3B8; margin-top: 2px; }
+        .summary-note .up { color: #15803D; font-weight: 700; }
+        .summary-bar { height: 6px; border-radius: 3px; background: #EEF2F6; overflow: hidden; margin-top: 8px; }
+        .summary-bar > span { display: block; height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+        .list-panel { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 18px 20px; }
+        .list-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line2); margin-bottom: 14px; }
+        .list-tab { padding: 8px 4px; margin-right: 18px; font-size: 14px; font-weight: 600; color: #94A3B8; border-bottom: 2px solid transparent; cursor: pointer; background: none; border-top: none; border-left: none; border-right: none; }
+        .list-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+        .list-tab .cnt { font-size: 12px; margin-left: 2px; }
+        .filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .filter-row select, .filter-row .search-box { height: 40px; border: 1px solid var(--line2); border-radius: 9px; font-size: 13px; }
+        .filter-row select { padding: 0 10px; background: #fff; color: var(--charcoal); }
+        .filter-row .search-box { flex: 1 1 260px; min-width: 200px; padding: 0 12px; display: flex; align-items: center; gap: 8px; }
+        .filter-row .search-box input { border: none; outline: none; flex: 1; font-size: 13px; background: transparent; }
+        .btn-ghost { height: 40px; padding: 0 14px; border: 1px solid var(--line2); border-radius: 9px; background: #fff; font-size: 13px; font-weight: 600; color: var(--charcoal); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
+        .btn-teal { height: 40px; padding: 0 16px; border: none; border-radius: 9px; background: var(--teal); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-teal:hover { background: #0C6F66; }
+
+        .ptable { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .ptable th { text-align: left; font-weight: 700; color: #64748B; font-size: 12px; padding: 10px 8px; border-bottom: 1px solid #EEF2F6; white-space: nowrap; }
+        .ptable td { padding: 11px 8px; border-bottom: 1px solid #F3F5F8; color: var(--charcoal); vertical-align: middle; }
+        .ptable tr:last-child td { border-bottom: none; }
+        .ptable tr:hover td { background: #F8FAFC; }
+        .p-grade { display: inline-block; min-width: 46px; text-align: center; padding: 3px 9px; border-radius: 8px; font-weight: 700; font-size: 12px; }
+        .p-health { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 12px; }
+        .p-health::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+        .p-health.health-stable { color: #15803D; } .p-health.health-warning { color: var(--warn); } .p-health.health-critical { color: var(--danger); }
+        .pager { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; font-size: 13px; color: #64748B; }
+        .pager-btns { display: flex; align-items: center; gap: 4px; }
+        .pager-btns button { width: 30px; height: 30px; border: 1px solid var(--line2); background: #fff; border-radius: 7px; cursor: pointer; font-size: 12px; color: var(--charcoal); }
+        .pager-btns button.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+        .pager-btns button:disabled { opacity: 0.4; cursor: default; }
+        .pager-size { border: 1px solid var(--line2); border-radius: 7px; padding: 5px 8px; font-size: 12px; }
+
+        .side-panel { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; }
+        .side-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 14px; font-weight: 800; color: var(--navy); }
+        .recent-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F3F5F8; }
+        .recent-row:last-child { border-bottom: none; }
+        .recent-row img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+        .recent-row .rn { font-size: 13px; font-weight: 700; }
+        .recent-row .rd { font-size: 11px; color: #94A3B8; }
+        .recent-row .rg { margin-left: auto; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 7px; }
+        .brand-panel { background: linear-gradient(135deg, var(--teal) 0%, var(--navy) 100%); border-radius: 12px; padding: 20px; color: #fff; }
+        .brand-panel img { width: 100%; border-radius: 8px; margin-top: 10px; }
+        .brand-panel p { font-size: 14px; font-weight: 700; line-height: 1.5; }
+
+        .layout-grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+        @media (max-width: 1100px) { .layout-grid { grid-template-columns: 1fr; } .summary-row { grid-template-columns: repeat(2, minmax(0,1fr)); } }
     </style>
     <script src="menu.js"></script>
     <link rel="stylesheet" href="theme.css">
@@ -410,7 +493,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="side-brand"><div class="side-logo"></div><div><div class="side-title">돌봄케어</div><div class="side-sub">Care Management</div></div></div>
-        <nav class="sidebar-nav"></nav>
+        <nav class="sidebar-nav" id="navContent"></nav>
         <img class="sidebar-landscape" src="assets/user_design/sidebar_care_landscape.jpg" alt="">
     </aside>
 
@@ -418,9 +501,15 @@
     <div class="main-layout">
         <!-- Top Bar -->
         <div class="topbar">
-            <div class="topbar-title"><h1 class="page-title">이용자 관리</h1></div>
+            <div class="topbar-title">
+                <h1 class="page-title">이용자 관리</h1>
+                <div class="breadcrumb">홈 › <b>이용자 관리</b></div>
+            </div>
             <div class="user-menu">
-                <img class="top-bell" src="assets/user_design/28_top_notification_icon.png" alt="">
+                <div class="date-chip" id="headerDate"></div>
+                <div class="bell-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                </div>
                 <span class="user-divider"></span>
                 <div class="user-info">
                     <div class="user-name" id="userName">사용자</div>
@@ -434,31 +523,28 @@
         <!-- Content -->
         <div class="content">
             <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card stat-with-art">
-                    <img class="stat-art" src="assets/user_design/resident_metric_total.png" alt="">
-                    <div>
-                        <div class="stat-label">전체 이용자</div>
-                        <div><span class="stat-value" id="totalCount">0</span><span class="stat-unit">명</span></div>
-                    </div>
-                    <svg class="stat-deco" viewBox="0 0 150 90" fill="currentColor" aria-hidden="true">
-                        <circle cx="40" cy="30" r="14"/><path d="M14 80 Q14 50 40 50 Q66 50 66 80 Z"/>
-                        <circle cx="110" cy="30" r="14"/><path d="M84 80 Q84 50 110 50 Q136 50 136 80 Z"/>
-                        <circle cx="75" cy="36" r="16"/><path d="M48 86 Q48 52 75 52 Q102 52 102 86 Z"/>
-                    </svg>
+            <div class="summary-row">
+                <div>
+                    <div class="summary-top"><div class="summary-label">등록 이용자</div><div class="summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg></div></div>
+                    <div class="summary-value" id="totalCount">0</div>
+                    <div class="summary-note">전체 이용자 수</div>
                 </div>
-                <div class="stat-card stat-with-art">
-                    <img class="stat-art" src="assets/user_design/resident_metric_active.png" alt="">
-                    <div>
-                        <div class="stat-label">활성 이용자</div>
-                        <div><span class="stat-value" id="activeCount">0</span><span class="stat-unit">명</span></div>
-                    </div>
-                    <svg class="stat-deco" viewBox="0 0 150 90" fill="currentColor" aria-hidden="true">
-                        <rect x="20" y="52" width="18" height="30" rx="4"/>
-                        <rect x="50" y="36" width="18" height="46" rx="4"/>
-                        <rect x="80" y="20" width="18" height="62" rx="4"/>
-                        <rect x="110" y="6" width="18" height="76" rx="4"/>
-                    </svg>
+                <div>
+                    <div class="summary-top"><div class="summary-label">이번 달 신규 등록</div><div class="summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg></div></div>
+                    <div class="summary-value" id="newCount">0</div>
+                    <div class="summary-note" id="newCountNote">전월 대비</div>
+                </div>
+                <div>
+                    <div class="summary-top"><div class="summary-label">서비스 진행중</div><div class="summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div></div>
+                    <div class="summary-value" id="activeCount">0</div>
+                    <div class="summary-note" id="activeCountNote">최근 방문 기준</div>
+                    <div class="summary-bar"><span id="activeBar" style="width:0;background:#15803D;"></span></div>
+                </div>
+                <div>
+                    <div class="summary-top"><div class="summary-label">최근 방문 없음</div><div class="summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l-4 2"/></svg></div></div>
+                    <div class="summary-value" id="inactiveCount">0</div>
+                    <div class="summary-note" id="inactiveCountNote">최근 방문 기준</div>
+                    <div class="summary-bar"><span id="inactiveBar" style="width:0;background:#6D28D9;"></span></div>
                 </div>
             </div>
 
@@ -496,23 +582,59 @@
                 <div id="changeRequestList" style="font-size: 14px;"></div>
             </div>
 
-            <!-- Header -->
-            <div class="list-head">
-                <h2 class="list-title"><img src="assets/user_design/section_resident_list.png" alt="">이용자 목록</h2>
-                <div class="list-tools">
-                    <label class="search-box">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-                        <input id="residentSearch" type="search" placeholder="이름, 주소, 보호자명 등으로 검색하세요" oninput="filterResidents()">
-                    </label>
-                    <button class="add-btn" onclick="showAddModal()">+ 이용자 추가</button>
+            <div class="layout-grid">
+                <div class="list-panel">
+                    <div class="list-tabs">
+                        <button type="button" class="list-tab active" data-tab="all" onclick="setListTab('all')">전체 <span class="cnt" id="tabAllCount"></span></button>
+                        <button type="button" class="list-tab" data-tab="active" onclick="setListTab('active')">서비스 진행중 <span class="cnt" id="tabActiveCount"></span></button>
+                        <button type="button" class="list-tab" data-tab="inactive" onclick="setListTab('inactive')">최근 방문 없음 <span class="cnt" id="tabInactiveCount"></span></button>
+                    </div>
+                    <div class="filter-row">
+                        <label class="search-box">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                            <input id="residentSearch" type="search" placeholder="이름, 주소, 보호자명으로 검색" oninput="filterResidents()">
+                        </label>
+                        <select id="gradeFilter" onchange="filterResidents()">
+                            <option value="">장기요양등급 전체</option>
+                            <option value="1">1등급</option><option value="2">2등급</option><option value="3">3등급</option>
+                            <option value="4">4등급</option><option value="5">5등급</option>
+                        </select>
+                        <select id="serviceTypeFilter" onchange="filterResidents()">
+                            <option value="">서비스 종류 전체</option>
+                            <option value="기본 돌봄">기본 돌봄</option><option value="식사 지원">식사 지원</option>
+                            <option value="의료 돌봄">의료 돌봄</option><option value="응급 대응">응급 대응</option>
+                        </select>
+                        <select id="healthFilter" onchange="filterResidents()">
+                            <option value="">건강상태 전체</option>
+                            <option value="stable">안정</option><option value="warning">주의</option><option value="critical">위험</option>
+                        </select>
+                        <button type="button" class="btn-ghost" onclick="resetFilters()">초기화</button>
+                        <button type="button" class="btn-ghost" onclick="exportResidentsCsv()">⬇ 엑셀 다운로드</button>
+                        <button type="button" class="btn-teal" onclick="showAddModal()">+ 이용자 등록</button>
+                    </div>
+                    <div id="residentsTable" class="empty-state">
+                        <div class="empty-state-icon"></div>
+                        <div>이용자 정보를 불러오는 중입니다...</div>
+                    </div>
+                    <div class="pager" id="pager" style="display:none;">
+                        <div id="pagerInfo"></div>
+                        <div class="pager-btns" id="pagerBtns"></div>
+                        <select class="pager-size" id="pageSize" onchange="renderPage()">
+                            <option value="8">8개씩 보기</option>
+                            <option value="20">20개씩 보기</option>
+                            <option value="50">50개씩 보기</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Table -->
-            <div class="table-wrapper">
-                <div id="residentsTable" class="empty-state">
-                    <div class="empty-state-icon"></div>
-                    <div>이용자 정보를 불러오는 중입니다...</div>
+                <div>
+                    <div class="side-panel">
+                        <div class="side-panel-head">최근 등록된 이용자</div>
+                        <div id="recentList"></div>
+                    </div>
+                    <div class="brand-panel">
+                        <p>이용자 맞춤 케어로<br>더 행복한 일상을 함께합니다.</p>
+                        <img src="assets/user_design/resident_banner.jpg" alt="" style="opacity:0.9;">
+                    </div>
                 </div>
             </div>
         </div>
@@ -658,13 +780,43 @@
             currentUser = user;
             document.getElementById('userName').textContent = user.full_name || '사용자';
             document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
+            document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
             document.getElementById(user.role === 'caregiver' ? 'cardMyRequest' : 'cardApproval').style.display = 'flex';
 
             // 메뉴 필터링은 menu.js의 renderSidebar() 함수에서 처리
             renderSidebar();
             applyNavIcons();
+            if (user.role !== 'caregiver') groupSidebar();
 
             return true;
+        }
+
+        // 대시보드와 동일한 사이드바 그룹 라벨 (menu.js는 그대로 두고 이 페이지에서만 DOM 보정)
+        const SIDE_GROUPS = [
+            ['매인', ['대시보드']],
+            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
+            ['방문 서비스 운영', ['음성 기록', '방문계획 승인', '보호자 소통']],
+            ['청구 및 경영 관리', ['청부관리', '월별정산', '수익분석', '급여 확정']],
+        ];
+        function groupSidebar() {
+            const nav = document.getElementById('navContent');
+            const items = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+            if (!items.length) return;
+            const byLabel = {};
+            items.forEach(item => { byLabel[item.querySelector('span:last-child')?.textContent.trim()] = item; });
+            const frag = document.createDocumentFragment();
+            SIDE_GROUPS.forEach(([groupLabel, labels]) => {
+                const found = labels.map(l => byLabel[l]).filter(Boolean);
+                if (!found.length) return;
+                const h = document.createElement('div');
+                h.className = 'side-group-label';
+                h.textContent = groupLabel;
+                frag.appendChild(h);
+                found.forEach(el => frag.appendChild(el));
+            });
+            items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
+            nav.innerHTML = '';
+            nav.appendChild(frag);
         }
 
         // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
@@ -686,6 +838,14 @@
             });
         }
 
+        const HEALTH_LABEL = { stable: '안정', warning: '주의', critical: '위험' };
+        let currentTab = 'all';
+        let currentPage = 1;
+        let filteredList = [];
+
+        const SERVICE_TYPE_LABEL = { basic_care: '기본 돌봄', meal_service: '식사 지원', medical_care: '의료 돌봄', emergency: '응급 대응' };
+        const ACTIVE_WINDOW_DAYS = 30;
+
         async function loadResidents() {
             loadChangeRequests();
             try {
@@ -700,15 +860,71 @@
                     url += `?center_id=${currentUser.center_id}`;
                 }
 
-                const response = await fetch(url);
+                const centerId = currentUser.center_id || 1;
+                const [response, scheduleRes, usersRes] = await Promise.all([
+                    fetch(url),
+                    fetch(`${API_URL}/schedule/?center_id=${centerId}`).catch(() => null),
+                    fetch(`${API_URL}/users/?center_id=${centerId}`).catch(() => null),
+                ]);
                 if (!response.ok) throw new Error('이용자 정보 조회 실패');
 
                 const data = await response.json();
                 residents = data.residents || [];
 
-                document.getElementById('totalCount').textContent = residents.length;
-                document.getElementById('activeCount').textContent = residents.filter(r => !r.is_archived).length;
+                // 담당 요양보호사 / 서비스 종류 / 최근 방문일: Schedule 레코드에서 이용자별 "가장 최근" 건을 찾아 붙인다 (지어낸 값 아님)
+                const names = {};
+                if (usersRes && usersRes.ok) {
+                    const usersData = await usersRes.json();
+                    (usersData.users || []).forEach(u => { names[u.id] = u.full_name; });
+                }
+                const latestByResident = {};
+                if (scheduleRes && scheduleRes.ok) {
+                    const scheduleData = await scheduleRes.json();
+                    (scheduleData.schedules || []).forEach(s => {
+                        if (!s.resident_id || s.status === 'cancelled') return;
+                        const prev = latestByResident[s.resident_id];
+                        if (!prev || new Date(s.scheduled_date) > new Date(prev.scheduled_date)) {
+                            latestByResident[s.resident_id] = s;
+                        }
+                    });
+                }
+                const now = new Date();
+                residents.forEach(r => {
+                    const latest = latestByResident[r.id];
+                    r._caregiverName = latest ? (names[latest.caregiver_id] || '-') : '-';
+                    r._serviceType = latest ? (SERVICE_TYPE_LABEL[latest.service_type] || latest.service_type) : '-';
+                    r._lastVisit = latest ? latest.scheduled_date : null;
+                    r._active = r._lastVisit ? ((now - new Date(r._lastVisit)) / 86400000 <= ACTIVE_WINDOW_DAYS) : false;
+                });
 
+                // 지표 카드: 실제 필드(admission_date, health_status) + 실제 방문기록 기반 파생값으로 계산한다
+                document.getElementById('totalCount').textContent = residents.length;
+                const inMonth = (iso, y, m) => { if (!iso) return false; const d = new Date(iso); return d.getFullYear() === y && d.getMonth() === m; };
+                const newThisMonth = residents.filter(r => inMonth(r.admission_date, now.getFullYear(), now.getMonth())).length;
+                const prevD = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const newPrevMonth = residents.filter(r => inMonth(r.admission_date, prevD.getFullYear(), prevD.getMonth())).length;
+                document.getElementById('newCount').textContent = newThisMonth;
+                document.getElementById('newCountNote').innerHTML = newPrevMonth
+                    ? `전월(${newPrevMonth}명) 대비 <span class="up">${newThisMonth >= newPrevMonth ? '▲' : '▼'} ${Math.abs(newThisMonth - newPrevMonth)}명</span>`
+                    : '전월 대비';
+
+                const total = residents.length || 1;
+                const activeCount = residents.filter(r => r._active).length;
+                const inactiveCount = residents.length - activeCount;
+                const activePct = Math.round(activeCount / total * 100);
+                const inactivePct = Math.round(inactiveCount / total * 100);
+                document.getElementById('activeCount').textContent = activeCount;
+                document.getElementById('activeCountNote').textContent = `${ACTIVE_WINDOW_DAYS}일 내 방문 (${activePct}%)`;
+                document.getElementById('activeBar').style.width = `${activePct}%`;
+                document.getElementById('inactiveCount').textContent = inactiveCount;
+                document.getElementById('inactiveCountNote').textContent = `${ACTIVE_WINDOW_DAYS}일 내 방문 없음 (${inactivePct}%)`;
+                document.getElementById('inactiveBar').style.width = `${inactivePct}%`;
+
+                document.getElementById('tabAllCount').textContent = residents.length;
+                document.getElementById('tabActiveCount').textContent = activeCount;
+                document.getElementById('tabInactiveCount').textContent = inactiveCount;
+
+                renderRecentList();
                 filterResidents();
             } catch (error) {
                 console.error('❌ 이용자 로드 실패:', error);
@@ -716,70 +932,154 @@
             }
         }
 
-        function filterResidents() {
-            const q = document.getElementById('residentSearch').value.trim();
-            const list = q
-                ? residents.filter(r => [r.name, r.address, r.guardian_name].some(v => (v || '').includes(q)))
-                : residents;
-            renderResidentsTable(list, Boolean(q));
+        function renderRecentList() {
+            const recent = [...residents]
+                .filter(r => r.admission_date)
+                .sort((a, b) => new Date(b.admission_date) - new Date(a.admission_date))
+                .slice(0, 3);
+            const el = document.getElementById('recentList');
+            if (!recent.length) { el.innerHTML = '<div style="font-size:13px;color:#94A3B8;padding:6px 0;">등록된 이용자가 없습니다</div>'; return; }
+            const gradeColor = { 1: '#B91C1C', 2: '#15803D', 3: '#B45309', 4: '#6D28D9', 5: '#0369A1' };
+            el.innerHTML = recent.map(r => `
+                <div class="recent-row">
+                    <img src="assets/user_design/resident_avatar_${r.gender === '여' ? 'female' : 'male'}.png" alt="">
+                    <div><div class="rn">${escapeHtml(r.name)} 어르신</div><div class="rd">${(r.admission_date || '').slice(0, 10)}</div></div>
+                    <span class="rg" style="background:${gradeColor[r.care_grade]}1A;color:${gradeColor[r.care_grade] || '#64748B'};">${r.care_grade || '-'}등급</span>
+                </div>`).join('');
         }
 
-        function renderResidentsTable(residents, isSearching = false) {
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text ?? '';
+            return div.innerHTML;
+        }
+
+        function setListTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.list-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+            filterResidents();
+        }
+
+        function resetFilters() {
+            document.getElementById('residentSearch').value = '';
+            document.getElementById('gradeFilter').value = '';
+            document.getElementById('healthFilter').value = '';
+            document.getElementById('serviceTypeFilter').value = '';
+            setListTab('all');
+        }
+
+        function filterResidents() {
+            const q = document.getElementById('residentSearch').value.trim();
+            const grade = document.getElementById('gradeFilter').value;
+            const health = document.getElementById('healthFilter').value;
+            const serviceType = document.getElementById('serviceTypeFilter').value;
+            let list = residents;
+            if (currentTab === 'active') list = list.filter(r => r._active);
+            if (currentTab === 'inactive') list = list.filter(r => !r._active);
+            if (q) list = list.filter(r => [r.name, r.address, r.guardian_name].some(v => (v || '').includes(q)));
+            if (grade) list = list.filter(r => String(r.care_grade) === grade);
+            if (health) list = list.filter(r => r.health_status === health);
+            if (serviceType) list = list.filter(r => r._serviceType === serviceType);
+            filteredList = list;
+            currentPage = 1;
+            renderPage();
+        }
+
+        function renderPage() {
+            const size = parseInt(document.getElementById('pageSize').value, 10) || 8;
+            const totalPages = Math.max(1, Math.ceil(filteredList.length / size));
+            currentPage = Math.min(currentPage, totalPages);
+            const start = (currentPage - 1) * size;
+            const pageItems = filteredList.slice(start, start + size);
+            renderResidentsTable(pageItems, filteredList.length === 0);
+
+            const pager = document.getElementById('pager');
+            if (!filteredList.length) { pager.style.display = 'none'; return; }
+            pager.style.display = 'flex';
+            document.getElementById('pagerInfo').textContent = `총 ${filteredList.length}명 중 ${start + 1}-${Math.min(start + size, filteredList.length)}명 표시`;
+            let btns = `<button ${currentPage === 1 ? 'disabled' : ''} onclick="currentPage=1;renderPage()">«</button><button ${currentPage === 1 ? 'disabled' : ''} onclick="currentPage--;renderPage()">‹</button>`;
+            for (let p = Math.max(1, currentPage - 2); p <= Math.min(totalPages, currentPage + 2); p++) {
+                btns += `<button class="${p === currentPage ? 'active' : ''}" onclick="currentPage=${p};renderPage()">${p}</button>`;
+            }
+            btns += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="currentPage++;renderPage()">›</button><button ${currentPage === totalPages ? 'disabled' : ''} onclick="currentPage=${totalPages};renderPage()">»</button>`;
+            document.getElementById('pagerBtns').innerHTML = btns;
+        }
+
+        function exportResidentsCsv() {
+            if (!filteredList.length) { alert('내려받을 이용자 정보가 없습니다'); return; }
+            const header = ['이름', '성별', '생년월일', '요양등급', '소득분류', '인정번호', '인정기간', '보호자', '보호자연락처', '건강상태', '서비스종류', '담당요양보호사'];
+            const rows = filteredList.map(r => [
+                r.name, r.gender || '', r.birth_date || '', r.care_grade || '', r.client_type || '',
+                r.recognition_number || '', `${r.recognition_start || ''}~${r.recognition_end || ''}`,
+                r.guardian_name || '', r.guardian_phone || '', HEALTH_LABEL[r.health_status] || '',
+                r._serviceType || '', r._caregiverName || '',
+            ]);
+            const csv = [header, ...rows].map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `이용자목록_${todayKey()}.csv`;
+            a.click();
+        }
+
+        function todayKey() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function renderResidentsTable(residents, isEmpty = false) {
             const tableDiv = document.getElementById('residentsTable');
 
-            if (residents.length === 0) {
-                tableDiv.innerHTML = isSearching
-                    ? '<div class="empty-state"><div>검색 결과가 없습니다</div></div>'
-                    : `<div class="empty-wide"><img src="assets/user_design/empty_residents.png" alt="">
+            if (isEmpty) {
+                tableDiv.innerHTML = residentsLoadedButEmpty()
+                    ? `<div class="empty-wide"><img src="assets/user_design/empty_residents.png" alt="">
                         <div><div class="empty-wide-title">등록된 이용자가 없습니다</div>
-                        <div class="empty-wide-desc">위의 "+ 이용자 추가" 버튼으로 이용자를 등록하세요.</div></div></div>`;
+                        <div class="empty-wide-desc">위의 "+ 이용자 등록" 버튼으로 이용자를 등록하세요.</div></div></div>`
+                    : '<div class="empty-state"><div>조건에 맞는 이용자가 없습니다</div></div>';
                 return;
             }
 
-            const healthLabels = { stable: '안정', warning: '주의', critical: '위험' };
-
             let html = `
-                <table class="table">
+                <table class="ptable">
                     <thead>
                         <tr>
-                            <th>이름</th>
-                            <th>성별 / 연령</th>
-                            <th>요양등급</th>
-                            <th>소득분류</th>
-                            <th>인정번호</th>
-                            <th>인정 기간</th>
-                            <th>보호자</th>
-                            <th>건강 상태</th>
-                            <th style="text-align: center;">작업</th>
+                            <th><input type="checkbox" disabled></th>
+                            <th>No.</th>
+                            <th>이용자 정보</th>
+                            <th>생년월일 / 성별</th>
+                            <th>장기요양등급</th>
+                            <th>서비스 종류</th>
+                            <th>서비스 상태</th>
+                            <th>담당 요양보호사</th>
+                            <th style="text-align: center;">관리</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
-            residents.forEach(r => {
+            residents.forEach((r, i) => {
                 const age = calculateAge(new Date(r.birth_date));
-                const period = r.recognition_start || r.recognition_end
-                    ? `${r.recognition_start || '-'} ~ ${r.recognition_end || '-'}`
-                    : '-';
-                const guardian = r.guardian_name ? `${r.guardian_name}${r.guardian_phone ? '<br>' + r.guardian_phone : ''}` : '-';
+                const statusBadge = r._active
+                    ? '<span class="p-health health-stable">진행중</span>'
+                    : '<span class="p-health" style="color:#94A3B8;">방문없음</span>';
                 html += `
                     <tr>
+                        <td><input type="checkbox"></td>
+                        <td>${(currentPage - 1) * (parseInt(document.getElementById('pageSize').value, 10) || 8) + i + 1}</td>
                         <td>
-                            <div style="display: flex; align-items: center; gap: 14px;">
-                                <img class="resident-avatar" src="assets/user_design/resident_avatar_${r.gender === '여' ? 'female' : 'male'}.png" alt="">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <img class="resident-avatar" style="width:38px;height:38px;" src="assets/user_design/resident_avatar_${r.gender === '여' ? 'female' : 'male'}.png" alt="">
                                 <div>
-                                    <div class="resident-name">${r.name}</div>
-                                    <div class="resident-info">${r.address || '주소 미등록'}</div>
+                                    <div class="resident-name" style="font-size:14px;">${escapeHtml(r.name)} 어르신</div>
+                                    <div class="resident-info" style="font-size:12px;">${escapeHtml(r.address || '주소 미등록')}</div>
                                 </div>
                             </div>
                         </td>
-                        <td>${r.gender || '-'} / ${age}세</td>
-                        <td><span class="grade-pill grade-${r.care_grade}">${r.care_grade}등급</span></td>
-                        <td>${r.client_type}</td>
-                        <td>${r.recognition_number || '-'}</td>
-                        <td>${period}</td>
-                        <td>${guardian}</td>
-                        <td><span class="health health-${r.health_status}">${healthLabels[r.health_status] || '-'}</span></td>
+                        <td>${(r.birth_date || '-').replaceAll('-', '.')} / ${r.gender || '-'} / ${age}세</td>
+                        <td><span class="p-grade grade-${r.care_grade}">${r.care_grade}등급</span></td>
+                        <td>${escapeHtml(r._serviceType || '-')}</td>
+                        <td>${statusBadge}</td>
+                        <td>${escapeHtml(r._caregiverName || '-')}</td>
                         <td style="text-align: center;">
                             <div class="action-buttons" style="justify-content: center; align-items: center;">
                                 <button class="btn-detail" onclick="editResident(${r.id})">상세보기</button>
@@ -792,6 +1092,10 @@
 
             html += `</tbody></table>`;
             tableDiv.innerHTML = html;
+        }
+
+        function residentsLoadedButEmpty() {
+            return residents.length === 0;
         }
 
         function calculateAge(birthDate) {
@@ -891,6 +1195,7 @@
             const panel = document.getElementById('myRequestPanel');
             panel.style.display = data.requests.length ? 'block' : 'none';
             document.getElementById('myRequestCount').textContent = `${data.requests.length}건`;
+            document.getElementById('pendingRequestCount').textContent = data.requests.filter(r => r.status === 'pending').length;
             document.getElementById('myRequestList').innerHTML = data.requests.map(r => `
                 <div style="padding: 8px 0; border-top: 1px solid #bae6fd;">
                     <div><b>${r.resident_name}</b> · ${CHANGE_LABELS[r.field] || r.field} → <b>${r.new_value}</b> ${CHANGE_STATUS[r.status] || r.status}</div>
@@ -910,6 +1215,7 @@
             panel.style.display = data.requests.length ? 'block' : 'none';
             document.getElementById('changeRequestCount').textContent = `(${data.requests.length}건)`;
             document.getElementById('approvalCount').textContent = `승인 대기 ${data.requests.length}건`;
+            document.getElementById('pendingRequestCount').textContent = data.requests.length;
             list.innerHTML = data.requests.map(r => `
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid #fde68a;">
                     <span><b>${r.resident_name}</b> · ${labels[r.field] || r.field} → <b>${r.new_value}</b> <span style="color:#6b7280;">(요청: ${r.requested_by})</span></span>
