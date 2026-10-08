@@ -7,18 +7,86 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
-        /* 배너: 원본 그림의 흰 테두리를 잘라 안쪽 그림만 보인다 */
-        .vr-banner { aspect-ratio: 4.71; overflow: hidden; border-radius: 16px; }
-        .vr-banner-img { display: block; width: 103.7%; max-width: none; height: auto; margin: -6.57% 0 0 -1.92%; }
-        /* 흰 바탕의 그림은 카드 색 위에 자연스럽게 녹인다 */
-        img[src^="assets/user_design/0"]:not(.vr-banner-img),
-        img[src^="assets/user_design/1"]:not([src*="19_sidebar"]) { mix-blend-mode: multiply; }
+        /* ===== Premium Healthcare Management SaaS 톤 (대시보드·이용자관리·보호자관리·직원관리와 동일) ===== */
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247;
+            --warn: #B45309; --danger: #DC2626; --line2: #E2E8F0;
+        }
+        html, body { background: var(--bg) !important; }
+        body { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .vr-sidebar { background: var(--navy) !important; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+        #navContent .side-item { color: #C9D6E3 !important; border-radius: 8px; }
+        #navContent .side-item:hover { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+        #navContent .side-item.active { background: var(--teal) !important; color: #fff !important; }
+
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .date-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line2); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--charcoal); white-space: nowrap; }
+        .bell-wrap { position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #F1F5F9; border-radius: 10px; flex: 0 0 auto; }
+        .bell-wrap svg { width: 17px; height: 17px; color: var(--charcoal); }
+
+        .vr-banner-wrap { border-radius: 12px; overflow: hidden; }
+        .vr-banner-wrap img { display: block; width: 100%; height: auto; }
+        .tip-card { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 12px 14px; }
+        .tip-ico { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .tip-ico svg { width: 17px; height: 17px; }
+        .tip-title { font-size: 13px; font-weight: 700; color: var(--charcoal); }
+        .tip-desc { font-size: 11px; color: #94A3B8; margin-top: 1px; }
+
+        .vr-tabs { display: flex; gap: 8px; background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 6px; }
+        .vr-tab { flex: 1; text-align: center; padding: 10px; border-radius: 9px; font-weight: 700; font-size: 14px; color: #64748B; cursor: pointer; }
+        .vr-tab.active { background: var(--teal); color: #fff; }
+
+        .panel2 { background: #fff; border: 1px solid var(--line2); border-radius: 12px; }
+        .side-panel3 { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; }
+        .side-panel3-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 14px; font-weight: 800; color: var(--navy); }
+        .side-panel3-head a { font-size: 12px; font-weight: 600; color: var(--teal); text-decoration: none; }
+        .visit-row3 { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F3F5F8; }
+        .visit-row3:last-child { border-bottom: none; }
+        .visit-row3 .vn { font-size: 13px; font-weight: 700; }
+        .visit-row3 .vd { font-size: 11px; color: #94A3B8; }
+        .visit-badge3 { margin-left: auto; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+        .badge-wait3 { background: #F1F5F9; color: #64748B; }
+        .badge-now3 { background: #E8F1FC; color: #1D4ED8; }
+        .badge-done3 { background: #E6F7EE; color: #15803D; }
+        .badge-incomplete3 { background: #FDE8E8; color: var(--danger); }
+        .status-bar-row3 { margin-bottom: 10px; font-size: 12px; }
+        .status-bar-row3 .sb-top { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--charcoal); }
+        .status-bar-row3 .sb-track { height: 6px; border-radius: 3px; background: #EEF2F6; overflow: hidden; }
+        .status-bar-row3 .sb-fill { height: 100%; border-radius: 3px; }
+        .vr-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+        @media (max-width: 1100px) { .vr-layout { grid-template-columns: 1fr; } }
+
+        .quick-tag { padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--line2); background: #fff; font-size: 13px; font-weight: 700; color: #64748B; cursor: pointer; transition: all .15s; }
+        .quick-tag:hover { border-color: var(--teal); color: var(--teal); }
+        .quick-tag.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+        .quick-tag-more { padding: 8px 16px; border-radius: 999px; border: 1.5px dashed var(--line2); background: #F8FAFC; font-size: 13px; font-weight: 700; color: #94A3B8; cursor: pointer; }
+        .quick-tag-more:hover { color: var(--teal); border-color: var(--teal); }
+
+        #voiceRecordBtn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; transition: all .15s; }
+        #voiceRecordBtn svg { width: 16px; height: 16px; }
+        #voiceRecordBtn.recording-pulse { animation: vr-pulse 1.4s infinite; }
+        #voiceRecordBtn:disabled { opacity: .5; cursor: not-allowed; }
+        @keyframes vr-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,.35); } 50% { box-shadow: 0 0 0 8px rgba(220,38,38,0); } }
+
+        .record-table { border-collapse: collapse; width: 100%; }
+        .record-table th { text-align: left; font-size: 12px; font-weight: 700; color: #64748B; padding: 10px 12px; background: #F8FAFC; border-bottom: 1px solid var(--line2); white-space: nowrap; }
+        .record-table td { padding: 12px; font-size: 13px; color: var(--charcoal); border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+        .record-table tr:hover td { background: #FAFBFC; }
+        .status-pill { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+        .sp-draft { background: #F1F5F9; color: #64748B; }
+        .sp-pending { background: #FDF1E3; color: #B45309; }
+        .sp-approved { background: #E6F7EE; color: #15803D; }
+        .sp-rejected { background: #FDE8E8; color: #DC2626; }
+        .filter-input { padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 13px; outline: none; }
+        .filter-input:focus { border-color: var(--teal); }
     </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
         <!-- 사이드바 -->
-        <aside class="w-72 bg-gradient-to-b from-gray-800 to-gray-900 text-white fixed h-screen overflow-hidden">
+        <aside class="vr-sidebar w-72 text-white fixed h-screen overflow-hidden">
             <div class="p-6 border-b border-gray-700 flex items-center gap-3">
                 <div class="text-3xl"></div>
                 <div>
@@ -33,33 +101,47 @@
         <main class="ml-72 w-full flex flex-col">
             <!-- 탑바 -->
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-bold text-gray-900">음성 기록</h1>
-                <div class="flex items-center gap-6">
-                    <img src="assets/user_design/28_top_notification_icon.png" alt="" style="width:28px;height:28px;object-fit:contain;">
-                    <span style="width:1px;height:36px;background:#E5E0D8;"></span>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">음성 기록</h1>
+                    <div class="breadcrumb">홈 › <b>음성 기록</b></div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="date-chip" id="headerDate"></div>
+                    <div class="bell-wrap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    </div>
                     <div class="text-right">
                         <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
                         <div class="text-xs text-gray-500" id="userRole">역할</div>
                     </div>
-                    <img src="assets/user_design/29_top_profile_icon.png" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;">
+                    <img src="assets/user_design/29_top_profile_icon.png" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
                     <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">
                         로그아웃
                     </button>
                 </div>
             </div>
 
-            <div class="px-8 pt-6"><div class="vr-banner"><img class="vr-banner-img" src="assets/user_design/01_top_banner_full.jpg" alt=""></div></div>
-            <!-- 메인 컨텐츠: 샘플 레이아웃 (위에서 아래로 배너, 탭, 입력, 제공 항목, 청부 금액, 월별 현황, 검토·승인, 전체 목록) -->
-            <div class="flex-1 overflow-y-auto px-8 pb-8 pt-4 space-y-8">
+            <div class="px-8 pt-6 flex gap-4 items-stretch flex-wrap xl:flex-nowrap">
+                <div class="vr-banner-wrap flex-1" style="min-width:320px;"><img src="assets/user_design/돌봄케어_음성기록_상단배너.png" alt=""></div>
+                <div class="flex flex-col gap-2" style="width:260px;flex:0 0 auto;">
+                    <div class="tip-card"><div class="tip-ico" style="background:#E6F7EE;color:#15803D;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></svg></div><div><div class="tip-title">음성으로 빠르게</div><div class="tip-desc">말로 기록하여 작성 시간을 줄입니다.</div></div></div>
+                    <div class="tip-card"><div class="tip-ico" style="background:#E8F1FC;color:#1D4ED8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div><div class="tip-title">정확한 서비스 기록</div><div class="tip-desc">서비스 항목을 빠짐없이 등록합니다.</div></div></div>
+                    <div class="tip-card"><div class="tip-ico" style="background:#FDF1E3;color:#B45309;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="tip-title">청구까지 한번에</div><div class="tip-desc">기록된 내용이 청구 데이터와 연동됩니다.</div></div></div>
+                </div>
+            </div>
+            <!-- 메인 컨텐츠: 배너, 탭, 입력, 제공 항목, 청부 금액, 월별 현황, 검토·승인, 전체 목록 + 우측 실데이터 패널 -->
+            <div class="flex-1 overflow-y-auto px-8 pb-8 pt-4">
                 <div id="message" class="hidden p-4 rounded-lg animate-in fade-in slide-in-from-top-2"></div>
 
-                <div class="flex gap-3 bg-white p-3 rounded-lg border border-gray-200 !mt-0">
-                    <button class="tab-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm active:bg-emerald-500 active:text-white" data-tab="today" onclick="switchTab(event)">
+                <div class="vr-layout">
+                <div class="space-y-8">
+                <div class="vr-tabs">
+                    <div class="vr-tab active" data-tab="today" onclick="switchTab(event)">
                         오늘 기록 (<span id="todayCount">0</span>)
-                    </button>
-                    <button class="tab-btn flex-1 py-2 px-4 rounded-md font-semibold text-sm hover:bg-gray-100" data-tab="all" onclick="switchTab(event)">
+                    </div>
+                    <div class="vr-tab" data-tab="all" onclick="switchTab(event)">
                         전체 기록 (<span id="allCount">0</span>)
-                    </button>
+                    </div>
                 </div>
 
                 <!-- 입력 카드 -->
@@ -72,7 +154,14 @@
                                 <p class="text-sm text-gray-500 mt-1">음성으로 간편하게 기록하고, 필요한 정보를 빠짐없이 입력하세요.</p>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="voiceRecordBtn" onclick="toggleVoiceRecording()" style="background:#FDE8E8;color:#DC2626;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></svg>
+                                음성 녹음 시작
+                            </button>
+                            <button type="submit" class="px-5 py-2.5 rounded-lg text-sm font-bold text-white transition" style="background:var(--teal);">내용 저장</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">이용자 선택 *</label>
                                 <select id="resident" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 outline-none transition" required onchange="onResidentChange()">
@@ -92,6 +181,14 @@
                                 </select>
                             </div>
                             <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">방문 일시 *</label>
+                                <input type="date" id="visitDate" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 outline-none transition" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">방문 시간 *</label>
+                                <input type="time" id="visitTime" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 outline-none transition" required>
+                            </div>
+                            <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">이용자 컨디션</label>
                                 <select id="condition" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 outline-none transition">
                                     <option value="">선택하세요</option><option value="good">좋음</option><option value="normal">보통</option><option value="poor">나쁨</option>
@@ -108,14 +205,20 @@
 
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-3">제공 항목 (해당하는 것을 선택)</label>
-                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <div class="flex flex-wrap items-center gap-2 mb-4">
+                            <button type="button" class="quick-tag" onclick="quickToggleGroup(0, this)">신체활동 지원</button>
+                            <button type="button" class="quick-tag" onclick="quickToggleGroup(1, this)">건강 관리</button>
+                            <button type="button" class="quick-tag" onclick="quickToggleGroup(2, this)">정서·인지 지원</button>
+                            <button type="button" class="quick-tag" onclick="quickToggleGroup(3, this)">가사 지원</button>
+                            <button type="button" class="quick-tag-more" onclick="toggleCareDetail()"><span id="careDetailToggleLabel">더보기 (세부 항목)</span></button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" id="careDetailGrid" style="display:none;">
                             <div class="care-group rounded-lg p-5 bg-orange-50/60 border border-orange-100 cursor-pointer transition" onclick="toggleCareGroup(this, event)"><div class="flex items-start gap-3 mb-3"><img src="assets/user_design/04_category_physical_support.jpg" alt="" style="width:72px;height:auto;object-fit:contain;"><div><div class="text-base font-bold text-gray-900">신체활동 지원</div><div class="text-xs text-gray-500 mt-1">식사, 이동, 목욕 등 일상 신체활동을 지원합니다.</div></div></div><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="meal_assist"> 식사 보조</label><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="toilet_assist"> 배설 보조</label><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="bath"> 목욕·세면</label><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="dressing"> 옷 갈아입기</label><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="mobility"> 이동 보조</label></div><div class="care-group rounded-lg p-5 bg-orange-50/60 border border-orange-100 cursor-pointer transition" onclick="toggleCareGroup(this, event)"><div class="flex items-start gap-3 mb-3"><img src="assets/user_design/05_category_health_care.jpg" alt="" style="width:72px;height:auto;object-fit:contain;"><div><div class="text-base font-bold text-gray-900">건강 관리</div><div class="text-xs text-gray-500 mt-1">투약, 건강 확인 등 건강 관리를 지원합니다.</div></div></div><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="medicine"> 투약 확인</label><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="vitals"> 체온·혈압 측정</label><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="symptom"> 이상 증상 관찰</label></div><div class="care-group rounded-lg p-5 bg-orange-50/60 border border-orange-100 cursor-pointer transition" onclick="toggleCareGroup(this, event)"><div class="flex items-start gap-3 mb-3"><img src="assets/user_design/06_category_emotional_cognitive.jpg" alt="" style="width:72px;height:auto;object-fit:contain;"><div><div class="text-base font-bold text-gray-900">정서·인지 지원</div><div class="text-xs text-gray-500 mt-1">말벗, 정서 지원, 인지활동 등 정신적 안정을 지원합니다.</div></div></div><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="emotional"> 말벗·정서 지원</label><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="cognitive"> 인지활동</label></div><div class="care-group rounded-lg p-5 bg-orange-50/60 border border-orange-100 cursor-pointer transition" onclick="toggleCareGroup(this, event)"><div class="flex items-start gap-3 mb-3"><img src="assets/user_design/07_category_housework_support.jpg" alt="" style="width:72px;height:auto;object-fit:contain;"><div><div class="text-base font-bold text-gray-900">가사 지원</div><div class="text-xs text-gray-500 mt-1">청소, 세탁, 장보기 등 가사 활동을 지원합니다.</div></div></div><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="cleaning"> 청소·정돈</label><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="laundry"> 세탁</label><label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" name="careItem" value="shopping"> 장보기·취사</label></div>
                         </div>
                     </div>
 
                     <div class="flex gap-3 justify-end">
-                        <button type="submit" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-lg hover:from-emerald-600 hover:to-emerald-700 shadow-lg transition">기록 저장</button>
-                        <button type="reset" class="px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition">초기화</button>
+                        <button type="reset" onclick="onFormReset()" class="px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition">초기화</button>
                     </div>
                 </form>
 
@@ -157,23 +260,58 @@
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
                     <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
                         <div class="flex items-center gap-3">
-                            <h2 class="text-2xl font-bold text-gray-900">전체 기록 목록</h2>
+                            <h2 class="text-2xl font-bold text-gray-900">음성 기록 목록</h2>
                             <span class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-bold" id="recordCountBadge">0건</span>
                         </div>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <input id="recordSearch" type="search" placeholder="기록 내용을 검색하세요 (이용자 이름)" class="px-4 py-2 border-2 border-gray-200 rounded-lg text-sm outline-none focus:border-emerald-500 w-64">
-                            <select id="recordSort" class="px-4 py-2 border-2 border-gray-200 rounded-lg text-sm outline-none focus:border-emerald-500">
-                                <option value="new">최신순</option>
-                                <option value="old">오래된순</option>
-                            </select>
-                        </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="recordsList">
-                        <div class="col-span-full text-center py-12 text-gray-400">
-                            <img src="assets/user_design/18_empty_all_records_illustration.jpg" alt="" style="width:200px;height:auto;margin:0 auto 12px;display:block;">
-                            <p>기록이 없습니다</p>
-                        </div>
+                    <div class="flex flex-wrap items-center gap-2 mb-5">
+                        <input id="recordSearch" type="search" placeholder="이용자 이름으로 검색" class="filter-input w-56">
+                        <input id="recordDateFrom" type="date" class="filter-input">
+                        <span class="text-gray-400 text-sm">~</span>
+                        <input id="recordDateTo" type="date" class="filter-input">
+                        <select id="recordServiceFilter" class="filter-input">
+                            <option value="">서비스 유형 전체</option>
+                            <option value="basic_care">기본 돌봄</option><option value="meal_service">식사 서빙</option><option value="medical_care">의료 관리</option><option value="emergency">응급</option>
+                        </select>
+                        <select id="recordStatusFilter" class="filter-input">
+                            <option value="">상태 전체</option>
+                            <option value="draft">작성중</option><option value="pending">검토중</option><option value="approved">승인</option><option value="rejected">보완요청</option>
+                        </select>
+                        <select id="recordSort" class="filter-input">
+                            <option value="new">최신순</option>
+                            <option value="old">오래된순</option>
+                        </select>
+                        <button type="button" onclick="resetRecordFilters()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold text-gray-600">초기화</button>
                     </div>
+                    <div class="overflow-x-auto">
+                        <table class="record-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th><th>방문일시</th><th>이용자</th><th>서비스유형</th><th>기록내용</th><th>상태</th><th>작성자</th><th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recordsTableBody">
+                                <tr><td colspan="8" style="text-align:center;padding:40px 0;color:#94A3B8;">기록이 없습니다</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                </div>
+
+                <div>
+                    <div class="side-panel3">
+                        <div class="side-panel3-head"><span>오늘 방문 예정</span><a href="javascript:void(0)" onclick="scrollToRecordsTable()">전체보기 ›</a></div>
+                        <div id="todayVisitsPanel"><div style="font-size:13px;color:#94A3B8;padding:6px 0;">불러오는 중...</div></div>
+                    </div>
+                    <div class="side-panel3">
+                        <div class="side-panel3-head"><span>미기록 방문</span><a href="javascript:void(0)" onclick="scrollToRecordsTable()">전체보기 ›</a></div>
+                        <div id="incompletePanel"><div style="font-size:13px;color:#94A3B8;padding:6px 0;">불러오는 중...</div></div>
+                    </div>
+                    <div class="side-panel3">
+                        <div class="side-panel3-head"><span>이번 달 기록 현황</span></div>
+                        <div id="monthStatusPanel"></div>
+                    </div>
+                </div>
                 </div>
             </div>
         </main>
@@ -309,9 +447,26 @@
 
         async function loadRecords() {
             try {
-                const r = await fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`);
-                const d = await r.json();
-                records = d.records || [];
+                let raw;
+                if (currentUser.role === 'center_manager') {
+                    const centerId = currentUser.center_id || 1;
+                    const r = await fetch(`${API_URL}/records/all/center?center_id=${centerId}`);
+                    const d = await r.json();
+                    if (!r.ok) throw new Error(d.detail || '기록 조회 실패');
+                    raw = d.records || [];
+                } else {
+                    const r = await fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`);
+                    const d = await r.json();
+                    if (!r.ok) throw new Error(d.detail || '기록 조회 실패');
+                    raw = d.records || [];
+                }
+                // 센터 전체 조회(/all/center)와 개인 조회(/all)의 응답 필드명이 달라 공통 형태로 정규화한다
+                records = raw.map(r => ({
+                    ...r,
+                    recorded_date: r.recorded_date || r.recorded_at,
+                    amount: r.amount ?? r.billing_amount ?? 0,
+                    caregiver_name: r.caregiver_name || (r.caregiver_id === currentUser.id ? currentUser.full_name : '-')
+                }));
                 document.getElementById('allCount').textContent = records.length;
                 document.getElementById('todayCount').textContent = getTodayCount();
                 updateDashboard();
@@ -358,42 +513,94 @@
             `).join('');
         }
 
+        const SERVICE_TYPE_LABELS = { basic_care: '기본 돌봄', meal_service: '식사 서빙', medical_care: '의료 관리', emergency: '응급' };
+        const STATUS_LABELS = {
+            draft: ['작성중', 'sp-draft'], pending: ['검토중', 'sp-pending'],
+            approved: ['승인', 'sp-approved'], rejected: ['보완요청', 'sp-rejected']
+        };
+        let currentTabMode = 'today';
+
         function visibleRecords() {
             const q = (document.getElementById('recordSearch').value || '').trim();
+            const from = document.getElementById('recordDateFrom').value;
+            const to = document.getElementById('recordDateTo').value;
+            const svc = document.getElementById('recordServiceFilter').value;
+            const status = document.getElementById('recordStatusFilter').value;
             const order = document.getElementById('recordSort').value;
+            const todayStr = new Date().toDateString();
             return records
+                .filter(r => currentTabMode !== 'today' || new Date(r.recorded_date).toDateString() === todayStr)
                 .filter(r => !q || (r.resident_name || '').includes(q))
+                .filter(r => !from || (r.recorded_date || '') >= from)
+                .filter(r => !to || (r.recorded_date || '') <= to + 'T23:59:59')
+                .filter(r => !svc || r.service_type === svc)
+                .filter(r => !status || r.approval_status === status)
                 .sort((a, b) => order === 'old' ? new Date(a.recorded_date) - new Date(b.recorded_date) : new Date(b.recorded_date) - new Date(a.recorded_date));
         }
 
         function renderRecords() {
-            const list = document.getElementById('recordsList');
+            const tbody = document.getElementById('recordsTableBody');
             const rows = visibleRecords();
             if (rows.length === 0) {
-                list.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400"><img src="assets/user_design/18_empty_all_records_illustration.jpg" alt="" style="width:200px;height:auto;margin:0 auto 12px;display:block;"><p>기록이 없습니다</p></div>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px 0;color:#94A3B8;">기록이 없습니다</td></tr>';
+                document.getElementById('recordCountBadge').textContent = '0건';
                 return;
             }
 
-            list.innerHTML = rows.map(r => `
-                <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-emerald-300 transition">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="font-bold text-gray-900 text-base">${r.resident_name}</div>
-                        <span class="text-xs px-2 py-1 rounded font-semibold ${r.approval_status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                            ${({ draft: '✏️ 작성중', pending: '⏳ 검토중', approved: '✅ 승인', rejected: '❗ 보완 요청' })[r.approval_status] || r.approval_status}
-                        </span>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-2">${new Date(r.recorded_date).toLocaleDateString('ko-KR')}</div>
-                    ${r.care_items ? `<div class="text-xs text-gray-600 mb-2">${r.care_items.split(',').map(c => CARE_ITEM_LABELS[c] || c).join(', ')}</div>` : ''}
-                    ${r.condition ? `<div class="text-xs text-gray-600 mb-2">컨디션: ${CONDITION_LABELS[r.condition] || r.condition}</div>` : ''}
-                    <div class="text-2xl font-bold text-emerald-600">₩${(r.amount || 0).toLocaleString()}</div>
-                </div>
-            `).join('');
+            tbody.innerHTML = rows.map((r, i) => {
+                const [label, cls] = STATUS_LABELS[r.approval_status] || ['-', 'sp-draft'];
+                const dt = new Date(r.recorded_date);
+                const notesText = (r.notes || '-').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return `<tr>
+                    <td>${i + 1}</td>
+                    <td>${dt.toLocaleDateString('ko-KR')} ${dt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</td>
+                    <td style="font-weight:700;">${r.resident_name || '-'}</td>
+                    <td>${SERVICE_TYPE_LABELS[r.service_type] || r.service_type}</td>
+                    <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${notesText}">${notesText}</td>
+                    <td><span class="status-pill ${cls}">${label}</span></td>
+                    <td>${r.caregiver_name || '-'}</td>
+                    <td><button type="button" onclick="deleteRecordRow(${r.id})" title="삭제" style="color:#94A3B8;background:none;border:none;cursor:pointer;padding:4px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button></td>
+                </tr>`;
+            }).join('');
 
             document.getElementById('recordCountBadge').textContent = `${rows.length}건`;
         }
 
-        document.getElementById('recordSearch').addEventListener('input', renderRecords);
-        document.getElementById('recordSort').addEventListener('change', renderRecords);
+        async function deleteRecordRow(id) {
+            if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+            try {
+                const r = await fetch(`${API_URL}/records/daily/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                });
+                if (r.ok) {
+                    showMessage('기록이 삭제되었습니다', 'success');
+                    loadRecords();
+                } else {
+                    const err = await r.json();
+                    showMessage('삭제 실패: ' + (err.detail || '오류 발생'), 'error');
+                }
+            } catch (e) { showMessage('오류: ' + e.message, 'error'); }
+        }
+
+        function resetRecordFilters() {
+            document.getElementById('recordSearch').value = '';
+            document.getElementById('recordDateFrom').value = '';
+            document.getElementById('recordDateTo').value = '';
+            document.getElementById('recordServiceFilter').value = '';
+            document.getElementById('recordStatusFilter').value = '';
+            document.getElementById('recordSort').value = 'new';
+            renderRecords();
+        }
+
+        function scrollToRecordsTable() {
+            document.getElementById('recordsTableBody').closest('.bg-white').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        ['recordSearch'].forEach(id => document.getElementById(id).addEventListener('input', renderRecords));
+        ['recordDateFrom', 'recordDateTo', 'recordServiceFilter', 'recordStatusFilter', 'recordSort'].forEach(id => document.getElementById(id).addEventListener('change', renderRecords));
 
         document.getElementById('recordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -402,11 +609,15 @@
             const notes = document.getElementById('notes').value;
             const careItems = Array.from(document.querySelectorAll('input[name="careItem"]:checked')).map(el => el.value).join(',');
             const condition = document.getElementById('condition').value;
+            const visitDate = document.getElementById('visitDate').value;
+            const visitTime = document.getElementById('visitTime').value;
 
-            if (!rid || !st || !notes) {
+            if (!rid || !st || !notes || !visitDate || !visitTime) {
                 showMessage('모든 필드를 입력하세요', 'error');
                 return;
             }
+
+            if (isRecording) toggleVoiceRecording();
 
             try {
                 const r = await fetch(`${API_URL}/records/create`, {
@@ -422,14 +633,15 @@
                         notes: notes,
                         care_items: careItems,
                         condition: condition || null,
-                        duration_minutes: parseInt(document.getElementById('durationMinutes').value)
+                        duration_minutes: parseInt(document.getElementById('durationMinutes').value),
+                        recorded_date: `${visitDate}T${visitTime}:00`
                     })
                 });
 
                 if (r.ok) {
                     showMessage('기록이 저장되었습니다 ✅', 'success');
                     document.getElementById('recordForm').reset();
-                    resetBillingDisplay();
+                    onFormReset();
                     loadRecords();
                 } else {
                     const err = await r.json();
@@ -440,11 +652,99 @@
             }
         });
 
+        function onFormReset() {
+            resetBillingDisplay();
+            setDefaultVisitDateTime();
+            if (isRecording) toggleVoiceRecording();
+            document.querySelectorAll('.quick-tag').forEach(b => b.classList.remove('active'));
+        }
+
+        function setDefaultVisitDateTime() {
+            const now = new Date();
+            document.getElementById('visitDate').value = now.toISOString().slice(0, 10);
+            document.getElementById('visitTime').value = now.toTimeString().slice(0, 5);
+        }
+
         function switchTab(e) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-emerald-500', 'text-white'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('hover:bg-gray-100'));
-            e.currentTarget.classList.add('active', 'bg-emerald-500', 'text-white');
-            e.currentTarget.classList.remove('hover:bg-gray-100');
+            document.querySelectorAll('.vr-tab').forEach(b => b.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            currentTabMode = e.currentTarget.dataset.tab;
+            renderRecords();
+        }
+
+        // 제공 항목 카테고리를 칩으로 한번에 선택/해제 (세부 체크박스와 동일한 데이터를 조작)
+        const CARE_GROUPS = [
+            ['meal_assist', 'toilet_assist', 'bath', 'dressing', 'mobility'],
+            ['medicine', 'vitals', 'symptom'],
+            ['emotional', 'cognitive'],
+            ['cleaning', 'laundry', 'shopping']
+        ];
+        function quickToggleGroup(idx, btn) {
+            const boxes = CARE_GROUPS[idx].map(v => document.querySelector(`input[name="careItem"][value="${v}"]`)).filter(Boolean);
+            const allChecked = boxes.every(b => b.checked);
+            boxes.forEach(b => { b.checked = !allChecked; });
+            btn.classList.toggle('active', !allChecked);
+        }
+
+        function toggleCareDetail() {
+            const grid = document.getElementById('careDetailGrid');
+            const shown = grid.style.display !== 'none';
+            grid.style.display = shown ? 'none' : 'grid';
+            document.getElementById('careDetailToggleLabel').textContent = shown ? '더보기 (세부 항목)' : '접기';
+        }
+
+        // 음성 녹음: 브라우저 내장 Web Speech API 사용 (서버 음성인식 없음, 크롬 계열에서만 동작)
+        let recognition = null;
+        let isRecording = false;
+        function toggleVoiceRecording() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const btn = document.getElementById('voiceRecordBtn');
+            if (!SR) {
+                showMessage('이 브라우저는 음성 인식을 지원하지 않습니다 (Chrome 권장)', 'error');
+                return;
+            }
+            if (isRecording) {
+                recognition && recognition.stop();
+                return;
+            }
+            const textarea = document.getElementById('notes');
+            let baseText = textarea.value ? textarea.value.trim() + ' ' : '';
+            recognition = new SR();
+            recognition.lang = 'ko-KR';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.onresult = (e) => {
+                let finalText = '';
+                let interim = '';
+                for (let i = e.resultIndex; i < e.results.length; i++) {
+                    const t = e.results[i][0].transcript;
+                    if (e.results[i].isFinal) finalText += t;
+                    else interim += t;
+                }
+                if (finalText) baseText += finalText;
+                textarea.value = (baseText + interim).slice(0, 1000);
+                document.getElementById('noteCount').textContent = textarea.value.length + ' / 1,000';
+            };
+            recognition.onerror = (e) => {
+                console.error('음성 인식 오류:', e.error);
+                if (e.error !== 'no-speech') showMessage('음성 인식 오류: ' + e.error, 'error');
+            };
+            recognition.onend = () => { stopRecordingUI(); };
+            recognition.start();
+            isRecording = true;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/></svg> 녹음 중지';
+            btn.style.background = '#DC2626';
+            btn.style.color = '#fff';
+            btn.classList.add('recording-pulse');
+        }
+
+        function stopRecordingUI() {
+            isRecording = false;
+            const btn = document.getElementById('voiceRecordBtn');
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></svg> 음성 녹음 시작';
+            btn.style.background = '#FDE8E8';
+            btn.style.color = '#DC2626';
+            btn.classList.remove('recording-pulse');
         }
 
         function showMessage(text, type) {
@@ -473,10 +773,93 @@
             currentUser = user;
             document.getElementById('userName').textContent = user.full_name || '사용자';
             document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
+            document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+            setDefaultVisitDateTime();
+            if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+                const btn = document.getElementById('voiceRecordBtn');
+                btn.disabled = true;
+                btn.title = '이 브라우저는 음성 인식을 지원하지 않습니다 (Chrome 권장)';
+            }
             renderSidebar();
+            groupSidebar();
             loadResidents();
             loadRecords();
+            loadSidePanels();
             return true;
+        }
+
+        // 대시보드·이용자관리·보호자관리·직원관리와 동일한 사이드바 그룹 라벨 (menu.js는 그대로 두고 이 페이지에서만 DOM 보정)
+        const SIDE_GROUPS_CG = [
+            ['매인', ['대시보드']],
+            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
+            ['방문 서비스 운영', ['음성 기록', '나의 일정', '방문계획 승인', '보호자 소통']],
+            ['청구 및 경영 관리', ['나의 청부', '나의 급여', '청부관리', '월별정산', '수익분석', '급여 확정']],
+        ];
+        function groupSidebar() {
+            const nav = document.getElementById('navContent');
+            const items = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+            if (!items.length) return;
+            const byLabel = {};
+            items.forEach(item => { byLabel[item.querySelector('span:last-child')?.textContent.trim()] = item; });
+            const frag = document.createDocumentFragment();
+            SIDE_GROUPS_CG.forEach(([groupLabel, labels]) => {
+                const found = labels.map(l => byLabel[l]).filter(Boolean);
+                if (!found.length) return;
+                const h = document.createElement('div');
+                h.className = 'side-group-label';
+                h.textContent = groupLabel;
+                frag.appendChild(h);
+                found.forEach(el => frag.appendChild(el));
+            });
+            items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
+            nav.innerHTML = '';
+            nav.appendChild(frag);
+        }
+
+        // 우측 패널: 오늘 방문 예정 / 미기록 방문 / 이번 달 기록 현황 — 전부 /schedule/caregiver-view 실데이터에서 파생한다
+        const VR_STATE_BADGE = {
+            '예정': ['badge-wait3', '대기'], '방문중': ['badge-now3', '진행 중'],
+            '완료': ['badge-done3', '완료'], '방문완료': ['badge-now3', '기록 작성 필요'],
+            '미기록': ['badge-incomplete3', '미기록'],
+        };
+
+        async function loadSidePanels() {
+            try {
+                const now = new Date();
+                const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                const r = await fetch(`${API_URL}/schedule/caregiver-view?caregiver_id=${currentUser.id}&year_month=${ym}&user_id=${currentUser.id}&user_role=${currentUser.role}`);
+                const data = await r.json();
+                const items = data.items || [];
+                const todayKey = now.toISOString().slice(0, 10);
+
+                const todays = items.filter(i => i.date === todayKey);
+                const todayEl = document.getElementById('todayVisitsPanel');
+                todayEl.innerHTML = todays.length
+                    ? todays.map(i => {
+                        const [cls, label] = VR_STATE_BADGE[i.state] || ['badge-wait3', i.state];
+                        return `<div class="visit-row3"><div><div class="vn">${(i.resident_name || '이용자')} 어르신</div><div class="vd">${i.time}</div></div><span class="visit-badge3 ${cls}">${label}</span></div>`;
+                    }).join('')
+                    : '<div style="font-size:13px;color:#94A3B8;padding:6px 0;">오늘 예정된 방문이 없습니다</div>';
+
+                const incomplete = items.filter(i => i.state === '미기록').slice(0, 5);
+                const incEl = document.getElementById('incompletePanel');
+                incEl.innerHTML = incomplete.length
+                    ? incomplete.map(i => `<div class="visit-row3"><div><div class="vn">${(i.resident_name || '이용자')} 어르신</div><div class="vd">${i.date} ${i.time}</div></div><span class="visit-badge3 badge-incomplete3">미기록</span></div>`).join('')
+                    : '<div style="font-size:13px;color:#94A3B8;padding:6px 0;">미기록 방문이 없습니다</div>';
+
+                const monthItems = items.filter(i => i.date.startsWith(ym));
+                const doneCount = monthItems.filter(i => i.state === '완료' || i.state === '방문완료').length;
+                const incompleteCount = monthItems.filter(i => i.state === '미기록').length;
+                const total = monthItems.length || 1;
+                const donePct = Math.round(doneCount / total * 100);
+                const incPct = Math.round(incompleteCount / total * 100);
+                document.getElementById('monthStatusPanel').innerHTML = `
+                    <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;">총 방문 일정 ${monthItems.length}건</div>
+                    <div class="status-bar-row3"><div class="sb-top"><span>완료</span><span>${doneCount}건 · ${donePct}%</span></div><div class="sb-track"><div class="sb-fill" style="width:${donePct}%;background:#15803D;"></div></div></div>
+                    <div class="status-bar-row3"><div class="sb-top"><span>미기록</span><span>${incompleteCount}건 · ${incPct}%</span></div><div class="sb-track"><div class="sb-fill" style="width:${incPct}%;background:#DC2626;"></div></div></div>`;
+            } catch (e) {
+                console.error('측면 패널 로드 실패:', e);
+            }
         }
 
         window.addEventListener('load', checkAuth);
@@ -507,15 +890,6 @@
                 const icon = a.querySelector('.side-icon');
                 if (file && icon) icon.innerHTML = `<img src="assets/user_design/${file}" alt="" style="width:24px;height:24px;object-fit:contain;">`;
             });
-            const nav = document.getElementById('navContent');
-            if (nav && !nav.querySelector('.side-land')) {
-                const land = document.createElement('img');
-                land.className = 'side-land';
-                land.src = 'assets/user_design/19_sidebar_bottom_landscape.jpg';
-                land.alt = '';
-                land.style.cssText = 'display:block;width:100%;margin-top:24px;pointer-events:none;';
-                nav.appendChild(land);
-            }
         });
     </script>
 </body>

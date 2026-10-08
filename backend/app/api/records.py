@@ -30,6 +30,7 @@ class CreateRecordRequest(BaseModel):
     care_items: str = ""
     condition: Optional[str] = None
     duration_minutes: Literal[30, 60, 90, 120, 180, 240] = 60
+    recorded_date: Optional[datetime] = None  # 소급 기록용 (미지정 시 현재 시각)
 
 class UpdateRecordRequest(BaseModel):
     service_type: Optional[str] = None
@@ -62,7 +63,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
 
         total_cost, _, amount = split_visit(request.duration_minutes, resident.client_type)
 
-        now = datetime.now()  # 로컬 시간 사용 (UTC 대신)
+        now = request.recorded_date or datetime.now()  # 소급 기록 시 선택한 시각, 아니면 현재 시각(로컬)
         linked_schedule = find_schedule(db, caregiver_id, request.resident_id, now)
         daily_record = DailyRecord(
             resident_id=request.resident_id,
@@ -501,13 +502,16 @@ async def get_all_center_records(
         BillingRecord.center_id == center_id
     ).all()
 
-    # daily_record_id별 청부액 매핑
+    # daily_record_id별 청부액/승인상태 매핑
     billing_map = {}
     billing_total = 0
     for b in billings:
         if b.daily_record_id:
-            billing_map[b.daily_record_id] = b.amount
+            billing_map[b.daily_record_id] = {"amount": b.amount, "approval_status": b.approval_status}
             billing_total += b.amount  # 음성 기록과 매칭된 것만 합산
+
+    resident_names = {rid: name for rid, name in db.query(Resident.id, Resident.name).filter(Resident.center_id == center_id).all()}
+    caregiver_names = {uid: name for uid, name in db.query(User.id, User.full_name).all()}
 
     return {
         "total_records": len(records),
@@ -516,11 +520,16 @@ async def get_all_center_records(
             {
                 "id": r.id,
                 "caregiver_id": r.caregiver_id,
+                "caregiver_name": caregiver_names.get(r.caregiver_id, "-"),
                 "resident_id": r.resident_id,
+                "resident_name": resident_names.get(r.resident_id, "-"),
                 "service_type": r.service_type or "basic_care",
                 "notes": r.notes,
+                "care_items": r.care_items,
+                "condition": r.condition,
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
-                "billing_amount": billing_map.get(r.id, 0)
+                "billing_amount": billing_map.get(r.id, {}).get("amount", 0),
+                "approval_status": billing_map.get(r.id, {}).get("approval_status", "draft")
             }
             for r in records
         ]
