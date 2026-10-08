@@ -40,13 +40,13 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-8">
-                <div class="rounded-2xl overflow-hidden mb-5">
+                <div class="rounded-xl overflow-hidden mb-4">
                     <img src="assets/user_design/statement_banner.jpg" alt="" class="w-full h-auto block">
                 </div>
 
                 <!-- 주의 안내 -->
-                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5 flex items-center gap-4">
-                    <img src="assets/user_design/statement_notice_megaphone.png" alt="" class="w-14 h-14 s-icon shrink-0">
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex items-center gap-3">
+                    <img src="assets/user_design/statement_notice_megaphone.png" alt="" class="w-9 h-9 s-icon shrink-0">
                     <div>
                         <p class="font-extrabold text-red-600">확정하면 그 시점의 금액이 명세로 저장되고, 요양사에게 보입니다.</p>
                         <p class="text-gray-700 text-sm mt-1">확정 후 청구가 바뀌어도 명세는 바뀌지 않습니다. 확정은 되돌릴 수 없습니다.</p>
@@ -56,35 +56,35 @@
                 <div id="message" class="hidden mb-5 p-4 rounded-xl text-base"></div>
 
                 <!-- 달 선택 -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-5 flex items-center gap-5 flex-wrap">
-                    <img src="assets/user_design/statement_month_icon.png" alt="" class="w-14 h-14 s-icon">
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4 flex items-center gap-4 flex-wrap">
+                    <img src="assets/user_design/statement_month_icon.png" alt="" class="w-9 h-9 s-icon">
                     <label class="text-lg font-extrabold text-gray-900 flex items-center gap-4">급여 대상 월
                         <input id="yearMonth" type="month" onchange="loadStatus()" class="border border-gray-300 rounded-xl px-4 py-3 text-lg bg-white">
                     </label>
                     <div class="flex items-center gap-3 bg-blue-50 rounded-xl px-4 py-3">
-                        <img src="assets/user_design/statement_info_icon.png" alt="" class="w-10 h-10 s-icon">
+                        <img src="assets/user_design/statement_info_icon.png" alt="" class="w-8 h-8 s-icon">
                         <div class="text-sm text-gray-700">해당 월의 승인된 청구를<br>확인하고 최종 금액을 확정합니다.</div>
                     </div>
-                    <img src="assets/user_design/statement_clipboard_art.png" alt="" class="ml-auto hidden lg:block h-24 w-auto s-icon">
+                    <img src="assets/user_design/statement_clipboard_art.png" alt="" class="ml-auto hidden lg:block h-14 w-auto s-icon">
                 </div>
 
                 <!-- 요약 카드 -->
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
-                    <div class="rounded-2xl border border-blue-100 bg-blue-50/60 p-5 flex items-center gap-4">
-                        <img src="assets/user_design/statement_metric_total.png" alt="" class="w-16 h-16 s-icon">
-                        <div><div class="text-sm font-bold text-gray-700">전체 요양사</div><div id="metricTotal" class="text-3xl font-extrabold text-gray-900">0명</div></div>
+                    <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-3.5 flex items-center gap-3">
+                        <img src="assets/user_design/statement_metric_total.png" alt="" class="w-11 h-11 s-icon">
+                        <div><div class="text-sm font-bold text-gray-700">전체 요양사</div><div id="metricTotal" class="text-2xl font-extrabold text-gray-900">0명</div></div>
                     </div>
-                    <div class="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5 flex items-center gap-4">
-                        <img src="assets/user_design/statement_metric_confirmed.png" alt="" class="w-16 h-16 s-icon">
-                        <div><div class="text-sm font-bold text-emerald-700">확정 완료</div><div id="metricConfirmed" class="text-3xl font-extrabold text-emerald-700">0명</div></div>
+                    <div class="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3.5 flex items-center gap-3">
+                        <img src="assets/user_design/statement_metric_confirmed.png" alt="" class="w-11 h-11 s-icon">
+                        <div><div class="text-sm font-bold text-emerald-700">확정 완료</div><div id="metricConfirmed" class="text-2xl font-extrabold text-emerald-700">0명</div></div>
                     </div>
-                    <div class="rounded-2xl border border-orange-100 bg-orange-50/60 p-5 flex items-center gap-4">
-                        <img src="assets/user_design/statement_metric_pending.png" alt="" class="w-16 h-16 s-icon">
-                        <div><div class="text-sm font-bold text-red-600">미확정</div><div id="metricPending" class="text-3xl font-extrabold text-red-600">0명</div></div>
+                    <div class="rounded-xl border border-orange-100 bg-orange-50/60 p-3.5 flex items-center gap-3">
+                        <img src="assets/user_design/statement_metric_pending.png" alt="" class="w-11 h-11 s-icon">
+                        <div><div class="text-sm font-bold text-red-600">미확정</div><div id="metricPending" class="text-2xl font-extrabold text-red-600">0명</div></div>
                     </div>
-                    <div class="rounded-2xl border border-purple-100 bg-purple-50/60 p-5 flex items-center gap-4">
-                        <img src="assets/user_design/statement_metric_amount.png" alt="" class="w-16 h-16 s-icon">
-                        <div><div class="text-sm font-bold text-purple-700">총 승인 청구액</div><div id="metricAmount" class="text-3xl font-extrabold text-indigo-900">₩0</div></div>
+                    <div class="rounded-xl border border-purple-100 bg-purple-50/60 p-3.5 flex items-center gap-3">
+                        <img src="assets/user_design/statement_metric_amount.png" alt="" class="w-11 h-11 s-icon">
+                        <div><div class="text-sm font-bold text-purple-700">총 승인 청구액</div><div id="metricAmount" class="text-2xl font-extrabold text-indigo-900">₩0</div></div>
                     </div>
                 </div>
 

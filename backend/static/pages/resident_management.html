@@ -204,13 +204,12 @@
             color: #B5532F;
         }
 
-        .stat-with-art { display: flex; align-items: center; gap: 18px; background: #E9F7F1; }
-        .stat-art { width: 120px; height: auto; flex: 0 0 auto; mix-blend-mode: multiply; }
+        .stat-with-art { display: flex; align-items: center; gap: 14px; background: #E9F7F1; }
+        .stat-art { width: 44px; height: auto; flex: 0 0 auto; mix-blend-mode: multiply; }
         .section-title-row { display: flex; align-items: center; gap: 12px; }
         .section-title-row img { width: 40px; height: 40px; object-fit: contain; }
-        .resident-banner-wrap { height: 260px; overflow: hidden; border-radius: 16px; margin-bottom: 24px; }
-        /* 원본 그림의 흰 여백을 잘라 낸다 */
-        .resident-banner { display: block; width: 102.5%; max-width: none; height: auto; margin: -3.75% 0 0 -1.25%; }
+        .resident-banner-wrap { overflow: hidden; border-radius: 12px; margin-bottom: 24px; }
+        .resident-banner { display: block; width: 100%; height: auto; }
         .top-bell { width: 28px; height: 28px; object-fit: contain; display: block; }
         .avatar-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .side-icon img { display: block; }
@@ -236,19 +235,21 @@
         .user-menu .avatar-img { width: 48px; height: 48px; }
         .logout-btn { background: #fff; }
         .content { padding: 28px 36px; }
-        .resident-banner-wrap { height: 260px; margin-bottom: 28px; }
-        .stats-grid { grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
-        .stat-card.stat-with-art { min-height: 150px; padding: 22px 28px; border: none; box-shadow: none; border-radius: 16px; background: #EAF6F0; }
+        .resident-banner-wrap { margin-bottom: 28px; }
+        .stats-grid { grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .stat-card.stat-with-art { padding: 14px 18px; border: none; box-shadow: none; border-radius: 12px; background: #EAF6F0; }
         .stat-card.stat-with-art:nth-child(2) { background: #EAF6F0; }
-        .stat-with-art .stat-art { width: 150px; }
-        .stat-with-art .stat-label { font-size: 17px; font-weight: 700; color: #1F2937; text-transform: none; letter-spacing: 0; margin-bottom: 4px; }
-        .stat-with-art .stat-value { font-size: 52px; font-weight: 800; color: #1F2937; line-height: 1.1; display: inline-block; }
-        .stat-unit { font-size: 24px; font-weight: 700; color: #1F2937; margin-left: 6px; }
-        .stat-deco { margin-left: auto; width: 150px; height: 90px; flex: 0 0 auto; color: #9CCBB3; opacity: 0.55; }
-        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
-        .action-card { display: flex; align-items: center; gap: 22px; padding: 22px 28px; border-radius: 16px; background: #FDF6EC; color: #1F2937; text-decoration: none; }
-        .action-card.approve { background: #EAF6F0; }
-        .action-card img { width: 96px; height: 96px; object-fit: contain; flex: 0 0 auto; mix-blend-mode: multiply; }
+        .stat-with-art .stat-art { width: 44px; }
+        .stat-with-art .stat-label { font-size: 14px; font-weight: 700; color: #1F2937; text-transform: none; letter-spacing: 0; margin-bottom: 2px; }
+        .stat-with-art .stat-value { font-size: 32px; font-weight: 800; color: #1F2937; line-height: 1.1; display: inline-block; }
+        .stat-unit { font-size: 16px; font-weight: 700; color: #1F2937; margin-left: 4px; }
+        .stat-deco { margin-left: auto; width: 64px; height: 40px; flex: 0 0 auto; color: #9CCBB3; opacity: 0.55; }
+        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .action-card, .action-card:visited { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 12px; background: #FDF6EC; color: #1F2937; text-decoration: none; }
+        .action-card.approve, .action-card.approve:visited { background: #EAF6F0; }
+        .action-title, .action-card:visited .action-title { color: #1F2937; text-decoration: none; }
+        .action-desc, .action-card:visited .action-desc { text-decoration: none; }
+        .action-card img { width: 40px; height: 40px; object-fit: contain; flex: 0 0 auto; mix-blend-mode: multiply; }
         .action-title { font-size: 20px; font-weight: 800; }
         .action-desc { font-size: 15px; color: #4B5563; margin-top: 6px; line-height: 1.5; }
         .action-count { font-size: 15px; font-weight: 700; color: #B5532F; margin-top: 6px; }
@@ -731,8 +732,7 @@
                     ? '<div class="empty-state"><div>검색 결과가 없습니다</div></div>'
                     : `<div class="empty-wide"><img src="assets/user_design/empty_residents.png" alt="">
                         <div><div class="empty-wide-title">등록된 이용자가 없습니다</div>
-                        <div class="empty-wide-desc">이용자를 추가하면 이곳에서 관리할 수 있습니다.</div>
-                        <button class="add-btn" onclick="showAddModal()">+ 이용자 추가</button></div></div>`;
+                        <div class="empty-wide-desc">위의 "+ 이용자 추가" 버튼으로 이용자를 등록하세요.</div></div></div>`;
                 return;
             }
 

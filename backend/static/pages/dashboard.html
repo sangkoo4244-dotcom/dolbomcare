@@ -16,27 +16,26 @@
             margin-bottom: 32px;
         }
         .summary-row > div {
-            padding: 26px 28px;
-            border-radius: 16px;
-            min-height: 182px;
+            padding: 18px 20px;
+            border-radius: 12px;
         }
         .summary-row > div:nth-child(1) { background: #EAF6F0; }
         .summary-row > div:nth-child(2) { background: #FDF1E7; }
         .summary-row > div:nth-child(3) { background: #E8F2FC; }
         .summary-row > div:nth-child(4) { background: #F0ECFB; }
-        .summary-label { font-size: 16px; color: var(--ink-soft); }
-        .summary-cell { display: flex; align-items: center; gap: 18px; }
+        .summary-label { font-size: 13px; color: var(--ink-soft); }
+        .summary-cell { display: flex; align-items: center; gap: 16px; }
         .summary-icon { flex: 0 0 auto; color: var(--ink); }
         .summary-text { min-width: 0; }
-        .metric-art { width: 44px; height: 44px; display: block; }
+        .metric-art { width: 64px; height: 64px; display: block; }
         .summary-value {
-            font-size: 44px;
+            font-size: 34px;
             font-weight: 700;
-            margin-top: 6px;
+            margin-top: 2px;
             font-variant-numeric: tabular-nums;
             line-height: 1.15;
         }
-        .summary-note { font-size: 15px; color: var(--ink-soft); margin-top: 6px; line-height: 1.5; }
+        .summary-note { font-size: 12px; color: var(--ink-soft); margin-top: 2px; line-height: 1.4; }
 
         .section-title {
             font-family: 'Gowun Batang', serif;
@@ -100,34 +99,33 @@
         .task-count { font-variant-numeric: tabular-nums; font-weight: 700; }
         .task-main { display: flex; align-items: center; gap: 16px; }
         .task-ico svg { width: 56px; height: 56px; display: block; }
-        .metric-art, .illus-art, .metric-img { width: 84px; height: 84px; display: block; }
+        .metric-art, .illus-art, .metric-img { width: 64px; height: 64px; display: block; }
         .metric-img { object-fit: contain; }
         .task-ico img { width: 44px; height: 44px; display: block; object-fit: contain; }
         .task-ico svg { width: 44px; height: 44px; display: block; }
-        .dash-banner-wrap { height: 300px; overflow: hidden; border-radius: 16px; margin-bottom: 28px; }
-        /* 원본 그림에 흰 여백이 있어 그림을 키우고 위·왼쪽으로 밀어서 여백을 잘라 낸다 (위쪽 하늘과 아래쪽 잔디는 함께 잘린다) */
-        .dash-banner { display: block; width: 102.5%; max-width: none; height: auto; margin: -5.5% 0 0 -1.25%; }
-        .design-metric { width: 130px; height: auto; display: block; mix-blend-mode: multiply; }
+        .dash-banner-wrap { overflow: hidden; border-radius: 12px; margin-bottom: 28px; }
+        .dash-banner { display: block; width: 100%; height: auto; }
+        .design-metric { width: 64px; height: 64px; object-fit: contain; display: block; }
         .section-icon { width: 44px; height: 44px; object-fit: contain; flex: 0 0 auto; }
-        .task-cards { border-top: none; display: flex; flex-direction: column; gap: 16px; }
-        .task-cards li { border-bottom: none; border-radius: 16px; }
+        .task-cards { border-top: none; display: flex; flex-direction: column; gap: 10px; }
+        .task-cards li { border-bottom: none; border-radius: 12px; }
         .task-cards li:nth-child(1) { background: #FDF1E7; }
         .task-cards li:nth-child(2) { background: #E8F2FC; }
         .task-cards li:nth-child(3) { background: #EAF6F0; }
-        .task-cards a { padding: 26px 28px; min-height: 130px; }
+        .task-cards a { padding: 12px 16px; }
         .task-cards a:hover { background: transparent; opacity: 0.85; }
-        .task-cards .task-main { gap: 22px; }
-        .task-cards .task-main > span:last-child { font-size: 22px; font-weight: 700; }
+        .task-cards .task-main { gap: 12px; }
+        .task-cards .task-main > span:last-child { font-size: 15px; font-weight: 700; }
         .task-cards .task-ico img,
-        .task-cards .task-ico svg { width: 100px; height: 100px; mix-blend-mode: multiply; }
-        .task-cards .task-count { font-size: 44px; line-height: 1; }
-        .task-cards .task-chev { font-size: 26px; }
+        .task-cards .task-ico svg { width: 28px; height: 28px; mix-blend-mode: multiply; }
+        .task-cards .task-count { font-size: 24px; line-height: 1; }
+        .task-cards .task-chev { font-size: 18px; }
         .task-cards li:nth-child(1) .task-count { color: #E0622B; }
         .task-cards li:nth-child(2) .task-count { color: #2F74C0; }
         .task-cards li:nth-child(3) .task-count { color: #2E7D4F; }
         .side-bottom { margin-top: auto; padding: 0 0 0; }
         .side-bottom img { width: 100%; height: auto; display: block; object-fit: contain; }
-        .panel { background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; padding: 24px 28px; }
+        .panel { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; padding: 24px 28px; }
         .hero { display: flex; justify-content: space-between; align-items: center; gap: 24px; background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; padding: 28px 32px; margin-bottom: 32px; }
         .hero-kicker { font-size: 14px; color: var(--ink-soft); margin: 0 0 8px; }
         .hero-title { font-family: 'Gowun Batang', serif; font-size: 32px; line-height: 1.3; margin: 0 0 10px; }
@@ -144,7 +142,7 @@
         .section-head .section-title { margin: 0; }
         .section-head img { width: 40px; height: 40px; object-fit: contain; flex: 0 0 auto; }
         .empty-box { border: 1px dashed var(--line); border-radius: 8px; padding: 32px 16px; text-align: center; color: var(--ink-soft); background: var(--sheet); }
-        .empty-scene { width: min(380px, 100%); height: auto; display: block; margin: 0 auto; }
+        .empty-scene { width: min(160px, 100%); height: auto; display: block; margin: 0 auto; }
         .header-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: var(--sheet); border: 1px solid var(--line); }
         .header-bell { width: 28px; height: 28px; object-fit: contain; display: block; }
         .side-icon img { display: block; }
