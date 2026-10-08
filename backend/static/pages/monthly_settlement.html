@@ -9,66 +9,24 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: var(--font-family); background: #f5f7fa; color: var(--text-primary); }
 
-        /* 사이드바: 직원 관리 시안과 동일 */
         .sidebar { width: 288px; background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); z-index: 1000; display: flex; flex-direction: column; }
-        .sidebar-landscape { display: block; width: 100%; height: auto; margin-top: auto; }
         .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
         .side-icon img { display: block; }
 
         .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
         .topbar { background: white; border-bottom: 1px solid #e5e7eb; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
         .topbar-title h1 { margin: 0; font-size: 26px; font-weight: 800; color: #1E3A5F; }
-        .topbar-sub { font-size: 13px; color: #6B7280; margin-top: 4px; }
         .user-menu { display: flex; align-items: center; gap: 16px; }
         .user-info { display: flex; align-items: center; gap: 6px; font-weight: 700; color: #1F2937; font-size: 14px; }
-        .user-info .chev { width: 14px; height: 14px; color: #6B7280; }
         .logout-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: white; border: 1px solid #D6D0C4; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #374151; }
         .logout-btn:hover { border-color: #dc2626; color: #dc2626; }
 
         .content { flex: 1; padding: 30px 32px; }
 
-        .ms-banner { border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
-        .ms-banner img { width: 100%; height: auto; display: block; }
-
-        .ms-controls { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px 18px; margin-bottom: 20px; }
-        .ms-field { display: flex; flex-direction: column; gap: 6px; }
-        .ms-label { font-size: 12px; font-weight: 700; color: #374151; }
-        .ms-field select, .ms-field input { height: 44px; padding: 0 12px; border: 1px solid #D6D0C4; border-radius: 10px; font-size: 14px; background: white; min-width: 150px; color: #1F2937; }
-        .ms-month { display: flex; gap: 6px; align-items: center; }
-        .ms-month input { width: 110px; min-width: 0; }
-        .ms-month select { min-width: 96px; }
-        .ms-spacer { flex: 1; }
-        .ms-btn { height: 46px; padding: 0 22px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; color: white; }
-        .ms-btn-search { background: #2E7D4F; }
-        .ms-btn-create { background: #B5532F; }
-        .ms-btn-excel { height: 44px; padding: 0 18px; border: 1px solid #D6D0C4; border-radius: 10px; background: white; color: #1F2937; font-size: 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-        .ms-btn-excel:hover { border-color: #2E7D4F; }
-
-        .ms-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
-        .ms-metric { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; }
-        .ms-metric img { width: 44px; height: 44px; object-fit: contain; flex: 0 0 auto; mix-blend-mode: multiply; }
-        .ms-metric-label { font-size: 13px; font-weight: 700; }
-        .ms-metric-value { font-size: 22px; font-weight: 800; line-height: 1.2; margin-top: 2px; }
-        .ms-metric-sub { font-size: 12px; color: #6B7280; margin-top: 1px; }
-
-        .ms-panel { background: white; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
-        .ms-panel-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
-        .ms-tabs { display: flex; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
-        .ms-tab { padding: 12px 22px; border: none; border-right: 1px solid #e5e7eb; background: white; font-size: 14px; font-weight: 600; color: #374151; cursor: pointer; }
-        .ms-tab:last-child { border-right: none; }
-        .ms-tab.active { color: #B5532F; box-shadow: inset 0 -3px 0 #B5532F; font-weight: 800; }
-        .ms-search-box { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; border: 1px solid #D6D0C4; border-radius: 10px; color: #6B7280; width: 340px; }
-        .ms-search-box input { flex: 1; border: none; outline: none; font-size: 14px; background: transparent; min-width: 0; }
-
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { padding: 14px 10px; text-align: center; background: #f9fafb; border-bottom: 1px solid #e5e7eb; font-weight: 700; color: #1F2937; white-space: nowrap; }
         td { padding: 14px 10px; border-bottom: 1px solid #f3f4f6; text-align: center; white-space: nowrap; color: #1F2937; }
         tr:hover td { background: #f9fafb; }
-        .ms-num { text-align: right !important; font-variant-numeric: tabular-nums; }
-        .ms-pill { display: inline-block; padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; }
-        .ms-pill.done { background: #DCFCE7; color: #15803D; }
-        .ms-pill.pending { background: #FEF3C7; color: #C2410C; }
-        .ms-pill.suspended { background: #FBEAEA; color: #B91C1C; }
         .ms-muted { color: #9CA3AF; }
         .ms-act { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid #D6D0C4; border-radius: 8px; background: white; font-size: 12px; font-weight: 700; color: #374151; cursor: not-allowed; opacity: 0.85; }
         .ms-act.create { border-color: #F59E0B; color: #C2410C; }
@@ -77,22 +35,80 @@
         input[type="checkbox"] { width: 16px; height: 16px; }
 
         .ms-section-title { font-size: 15px; font-weight: 800; color: #1F2937; padding: 16px 16px 0; }
-
-        .ms-features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
-        .ms-feature { display: flex; align-items: center; gap: 14px; padding: 18px 20px; background: white; border: 1px solid #e5e7eb; border-radius: 16px; }
-        .ms-feature img { width: 64px; height: 64px; object-fit: contain; flex: 0 0 auto; }
-        .ms-feature-title { font-size: 15px; font-weight: 700; color: #1F2937; }
-        .ms-feature-desc { font-size: 13px; color: #6B7280; margin-top: 4px; line-height: 1.5; }
-
         .error { background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
 
-        @media (max-width: 1100px) { .ms-metrics, .ms-features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        /* ===== Premium Healthcare Management SaaS 톤 (대시보드·청구관리 등과 동일, 사이드바 색상만 통일) ===== */
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247;
+            --warn: #B45309; --danger2: #DC2626; --line2: #E2E8F0;
+        }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .date-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line2); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--charcoal); white-space: nowrap; }
+        .bell-wrap { position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #F1F5F9; border-radius: 10px; flex: 0 0 auto; }
+        .bell-wrap svg { width: 17px; height: 17px; color: var(--charcoal); }
+        .bell-badge { position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--danger2); color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+        .summary-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .summary-row > div { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); display: flex; align-items: center; gap: 14px; }
+        .summary-icon { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .summary-icon svg { width: 21px; height: 21px; }
+        .summary-label { font-size: 13px; font-weight: 700; color: #64748B; }
+        .summary-value { font-size: 24px; font-weight: 800; color: var(--navy); line-height: 1.2; font-variant-numeric: tabular-nums; }
+        .summary-note { font-size: 12px; color: #94A3B8; margin-top: 1px; }
+        @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+        .filter-bar { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .filter-input { padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 13px; outline: none; }
+        .filter-input:focus { border-color: var(--teal); }
+        .btn-outline { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .btn-solid { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
+        .btn-solid:hover { background: #0C756C; }
+
+        .cm-chips2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+        .cm-chip2 { padding: 9px 16px; border: 1.5px solid var(--line2); border-radius: 10px; background: #fff; font-size: 13px; font-weight: 700; color: #64748B; cursor: pointer; }
+        .cm-chip2.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+        .cm-spacer2 { flex: 1 1 auto; }
+
+        .ms-table th { text-align: left; font-size: 12px; font-weight: 700; color: #64748B; padding: 10px 12px; background: #F8FAFC; border-bottom: 1px solid var(--line2); white-space: nowrap; text-align: left; }
+        .ms-table td { padding: 12px; font-size: 13px; color: var(--charcoal); border-bottom: 1px solid #F1F5F9; vertical-align: middle; text-align: left; }
+        .ms-table tr:hover td { background: #FAFBFC; }
+        .ms-num2 { text-align: right !important; font-variant-numeric: tabular-nums; }
+        .status-pill2 { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; display: inline-block; }
+        .sp-reimbursed { background: #E6F7EE; color: #15803D; }
+        .sp-processing { background: #E8F1FC; color: #1D4ED8; }
+        .sp-pending { background: #FDF1E3; color: #B45309; }
+        .sp-rejected { background: #FDE8E8; color: #DC2626; }
+        .sp-other { background: #F1F5F9; color: #64748B; }
+        .staff-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--teal); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; vertical-align: middle; margin-right: 8px; }
+
+        .panel2 { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .panel2-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 14px; font-weight: 800; color: var(--navy); }
+        .stat-row2 { margin-bottom: 12px; font-size: 12px; }
+        .stat-row2:last-child { margin-bottom: 0; }
+        .stat-row2 .sr-top { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--charcoal); font-weight: 600; }
+        .stat-row2 .sr-track { height: 6px; border-radius: 3px; background: #EEF2F6; overflow: hidden; }
+        .stat-row2 .sr-fill { height: 100%; border-radius: 3px; }
+        .svc-row { margin-bottom: 10px; font-size: 12px; }
+        .svc-row:last-child { margin-bottom: 0; }
+        .svc-row .sv-top { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--charcoal); font-weight: 600; }
+        .svc-row .sv-track { height: 6px; border-radius: 3px; background: #EEF2F6; overflow: hidden; }
+        .svc-row .sv-fill { height: 100%; border-radius: 3px; background: var(--teal); }
+        .notice-list2 { list-style: none; margin: 0; padding: 0; }
+        .notice-list2 li { display: flex; gap: 8px; font-size: 12px; color: #64748B; padding: 6px 0; line-height: 1.4; }
+        .notice-list2 li svg { width: 14px; height: 14px; color: var(--teal); flex: 0 0 auto; margin-top: 2px; }
+
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
             .main-layout { margin-left: 0; }
             .content { padding: 16px; }
-            .ms-metrics, .ms-features { grid-template-columns: 1fr; }
-            .ms-search-box { width: 100%; }
         }
     </style>
     <script src="menu.js"></script>
@@ -103,7 +119,6 @@
     <aside class="sidebar">
         <div class="side-brand"><div class="side-logo"></div><div><div class="side-title">돌봄케어</div><div class="side-sub">Care Management</div></div></div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <img class="sidebar-landscape" src="assets/user_design/sidebar_care_landscape.jpg" alt="">
     </aside>
 
     <!-- Main Layout -->
@@ -112,14 +127,17 @@
         <div class="topbar">
             <div class="topbar-title">
                 <h1>월별 정산</h1>
-                <div class="topbar-sub">서비스 제공 내역을 기반으로 월별 정산을 관리합니다.</div>
+                <div class="breadcrumb">홈 › 청구 및 경영 관리 › <b>월별 정산</b></div>
             </div>
             <div class="user-menu">
-                <img src="assets/user_design/28_top_notification_icon.png" alt="" style="width:28px;height:28px;object-fit:contain;">
+                <div class="date-chip" id="headerDate"></div>
+                <div class="bell-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <span class="bell-badge" id="bellBadge" style="display:none;">0</span>
+                </div>
                 <div class="user-info">
-                    <img id="userAvatar" src="assets/user_design/29_top_profile_icon.png" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+                    <img id="userAvatar" src="assets/user_design/29_top_profile_icon.png" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
                     <span id="currentUserName">사용자</span>
-                    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
                 </div>
                 <button class="logout-btn" onclick="logout()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
@@ -130,143 +148,124 @@
 
         <!-- Content -->
         <div class="content">
-            <div class="ms-banner"><img src="assets/user_design/01_settlement_banner_ref.jpg" alt=""></div>
-
-            <!-- Error Message -->
             <div id="errorContainer"></div>
 
-            <!-- Controls -->
-            <div class="ms-controls">
-                <div class="ms-field">
-                    <span class="ms-label">정산년월</span>
-                    <div class="ms-month">
-                        <input type="number" id="yearSelect" min="2020" max="2099" aria-label="연도">
-                        <select id="monthSelect" aria-label="월">
-                            <option value="1">1월</option>
-                            <option value="2">2월</option>
-                            <option value="3">3월</option>
-                            <option value="4">4월</option>
-                            <option value="5">5월</option>
-                            <option value="6">6월</option>
-                            <option value="7">7월</option>
-                            <option value="8">8월</option>
-                            <option value="9">9월</option>
-                            <option value="10">10월</option>
-                            <option value="11">11월</option>
-                            <option value="12">12월</option>
-                        </select>
+            <!-- 핵심 정산 현황 -->
+            <div class="summary-row">
+                <div>
+                    <div class="summary-icon" style="background:#E8F1FC;color:#1D4ED8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+                    <div><div class="summary-label">이번 달 정산 대상</div><div class="summary-value" id="cardTargetCount">0건</div><div class="summary-note" id="cardTargetNote">반려 제외 전체 건수</div></div>
+                </div>
+                <div>
+                    <div class="summary-icon" style="background:#E6F3F1;color:#0F8B80;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                    <div><div class="summary-label">정산 대상 금액</div><div class="summary-value" id="cardTargetAmount">₩0</div><div class="summary-note">반려 제외 청구액 합계</div></div>
+                </div>
+                <div>
+                    <div class="summary-icon" style="background:#E6F7EE;color:#15803D;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
+                    <div><div class="summary-label">정산 완료</div><div class="summary-value" id="cardDoneCount">0건</div><div class="summary-note" id="cardDoneAmount">₩0 (환급 확인됨)</div></div>
+                </div>
+                <div>
+                    <div class="summary-icon" style="background:#FDF1E3;color:#B45309;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+                    <div><div class="summary-label">검토 필요</div><div class="summary-value" id="cardPendingCount">0건</div><div class="summary-note" id="cardPendingAmount">₩0</div></div>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;">
+                <div style="min-width:0;">
+                    <!-- 조회 필터 -->
+                    <div class="filter-bar">
+                        <div class="ms-month" style="display:flex;gap:6px;align-items:center;">
+                            <input type="number" id="yearSelect" min="2020" max="2099" class="filter-input" style="width:90px;" aria-label="연도">
+                            <select id="monthSelect" class="filter-input" aria-label="월">
+                                <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option>
+                                <option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option>
+                                <option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+                            </select>
+                        </div>
+                        <select id="staffFilter" class="filter-input" onchange="renderRecords()"><option value="">직원 전체</option></select>
+                        <select id="residentFilter" class="filter-input" onchange="renderRecords()"><option value="">이용자 전체</option></select>
+                        <input id="recordSearch" type="search" placeholder="직원명 또는 이용자명 검색" class="filter-input" style="width:200px;" oninput="renderRecords()">
+                        <button class="btn-solid" onclick="loadSettlementData()">조회</button>
+                        <button class="btn-outline" onclick="exportCsv()">엑셀 다운로드</button>
+                    </div>
+
+                    <!-- 상태 탭 -->
+                    <div class="cm-chips2" id="statusTabs"></div>
+
+                    <!-- 목록 -->
+                    <div style="background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+                        <div style="padding:14px 16px;border-bottom:1px solid var(--line2);">
+                            <div style="font-size:15px;font-weight:800;color:var(--navy);">월별 정산 목록</div>
+                            <div style="font-size:12px;color:#94A3B8;margin-top:2px;">요양사별 방문 기록을 기반으로 생성된 청구 내역입니다 (청구 승인 단위 · 1건 = 1회 방문 기록).</div>
+                        </div>
+                        <div style="overflow-x:auto;">
+                        <table class="ms-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:36px;"><input type="checkbox" aria-label="전체 선택" disabled></th>
+                                    <th>No</th>
+                                    <th>직원 정보</th>
+                                    <th>정산년월</th>
+                                    <th>이용자</th>
+                                    <th>서비스 시간</th>
+                                    <th>방문 횟수</th>
+                                    <th style="text-align:right;">청구 금액</th>
+                                    <th>정산 상태</th>
+                                    <th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recordBody">
+                                <tr><td colspan="10" class="ms-muted" style="padding:40px;">데이터를 조회해주세요.</td></tr>
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+
+                    <!-- 요양사별 실적 (기존 기능 유지) -->
+                    <div style="background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+                        <div class="ms-section-title">요양사별 실적</div>
+                        <table class="ms-table" id="caregiverStatsTable" style="margin-top:12px;">
+                            <thead>
+                                <tr><th>요양사</th><th>청구 건수</th><th style="text-align:right;">승인 이후 금액 합계</th><th>승인</th><th>대기</th></tr>
+                            </thead>
+                            <tbody id="caregiverStatsBody">
+                                <tr><td colspan="5" class="ms-muted" style="padding:30px;">데이터를 조회해주세요.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 서비스별 수익 (기존 기능 유지) -->
+                    <div style="background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden;">
+                        <div class="ms-section-title">서비스별 수익</div>
+                        <table class="ms-table" id="serviceStatsTable" style="margin-top:12px;">
+                            <thead><tr><th>서비스</th><th>건수</th><th style="text-align:right;">승인 이후 금액 합계</th></tr></thead>
+                            <tbody id="serviceStatsBody">
+                                <tr><td colspan="3" class="ms-muted" style="padding:30px;">데이터를 조회해주세요.</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <div class="ms-field">
-                    <span class="ms-label">직원</span>
-                    <select id="staffFilter" onchange="renderRecords()"><option value="">전체</option></select>
-                </div>
-                <div class="ms-field">
-                    <span class="ms-label">이용자</span>
-                    <select id="residentFilter" onchange="renderRecords()"><option value="">전체</option></select>
-                </div>
-                <div class="ms-field">
-                    <span class="ms-label">정산 상태</span>
-                    <select id="statusFilter" onchange="setTab(this.value)">
-                        <option value="all">전체</option>
-                        <option value="done">정산 완료</option>
-                        <option value="pending">정산 대기</option>
-                        <option value="suspended">정산 중단</option>
-                    </select>
-                </div>
-                <div class="ms-spacer"></div>
-                <button class="ms-btn ms-btn-search" onclick="loadSettlementData()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-                    조회하기
-                </button>
-                <button class="ms-btn ms-btn-create" disabled title="준비 중인 기능입니다">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M12 12v6M9 15h6"/></svg>
-                    정산 내역 생성
-                </button>
-            </div>
 
-            <!-- Summary Cards -->
-            <div class="ms-metrics" id="summaryCards"></div>
-
-            <!-- Record List -->
-            <div class="ms-panel">
-                <div class="ms-panel-bar">
-                    <div class="ms-tabs" id="statusTabs"></div>
-                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                        <label class="ms-search-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-                            <input id="recordSearch" type="search" placeholder="이용자명 또는 직원명으로 검색하세요" oninput="renderRecords()"></label>
-                        <button class="ms-btn-excel" onclick="exportCsv()">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" fill="#1D7A46"/><path d="M8 8l4 4-4 4M16 8l-4 4 4 4" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-                            엑셀 다운로드
-                        </button>
+                <!-- 우측 분석 영역 -->
+                <div>
+                    <div class="panel2">
+                        <div class="panel2-head"><span>이번 달 정산 현황</span></div>
+                        <div id="monthStatusPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
+                    </div>
+                    <div class="panel2">
+                        <div class="panel2-head"><span>서비스 유형별 정산 현황</span></div>
+                        <div id="serviceStatsPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
+                    </div>
+                    <div class="panel2">
+                        <div class="panel2-head"><span>월별 정산 안내</span></div>
+                        <ul class="notice-list2">
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>반려된 청구를 제외한 건만 정산 대상에 포함됩니다.</li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>"정산 완료"는 공단 환급까지 확인된 건만을 의미합니다. 승인·공단청구 중인 건은 아직 지급되지 않았습니다.</li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>검토 필요 항목은 청구관리 메뉴에서 승인·반려를 진행해 주세요.</li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>급여 확정 전 정산 완료 여부를 다시 확인해 주세요.</li>
+                        </ul>
                     </div>
                 </div>
-                <div style="overflow-x:auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width:44px;"><input type="checkbox" aria-label="전체 선택" disabled></th>
-                            <th>번호</th>
-                            <th>정산년월</th>
-                            <th>이용자명</th>
-                            <th>직원명</th>
-                            <th>서비스 시간</th>
-                            <th>총 금액</th>
-                            <th>본인부담금</th>
-                            <th>공단청구금액</th>
-                            <th>정산 상태</th>
-                            <th>작업</th>
-                        </tr>
-                    </thead>
-                    <tbody id="recordBody">
-                        <tr><td colspan="11" class="ms-muted" style="padding:40px;">데이터를 조회해주세요.</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- Caregiver Stats Table -->
-            <div class="ms-panel">
-                <div class="ms-section-title">요양사별 실적</div>
-                <table id="caregiverStatsTable" style="margin-top:12px;">
-                    <thead>
-                        <tr>
-                            <th>요양사</th>
-                            <th>청부 건수</th>
-                            <th style="text-align: right;">총 금액</th>
-                            <th>승인</th>
-                            <th>대기</th>
-                        </tr>
-                    </thead>
-                    <tbody id="caregiverStatsBody">
-                        <tr><td colspan="5" class="ms-muted" style="padding:30px;">데이터를 조회해주세요.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Service Stats Table -->
-            <div class="ms-panel">
-                <div class="ms-section-title">서비스별 수익</div>
-                <table id="serviceStatsTable" style="margin-top:12px;">
-                    <thead>
-                        <tr>
-                            <th>서비스</th>
-                            <th>건수</th>
-                            <th style="text-align: right;">수익</th>
-                        </tr>
-                    </thead>
-                    <tbody id="serviceStatsBody">
-                        <tr><td colspan="3" class="ms-muted" style="padding:30px;">데이터를 조회해주세요.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Feature Cards -->
-            <div class="ms-features">
-                <div class="ms-feature"><img src="assets/user_design/06_icon_auto_calculation.png" alt=""><div><div class="ms-feature-title">자동 정산 계산</div><div class="ms-feature-desc">서비스 제공 내역을 기반으로 정산 금액을 자동으로 계산합니다.</div></div></div>
-                <div class="ms-feature"><img src="assets/user_design/07_icon_statement_output.png" alt=""><div><div class="ms-feature-title">정산서 출력</div><div class="ms-feature-desc">월별 정산서를 간편하게 생성하고 출력할 수 있습니다.</div></div></div>
-                <div class="ms-feature"><img src="assets/user_design/08_icon_statistics.png" alt=""><div><div class="ms-feature-title">정산 통계 조회</div><div class="ms-feature-desc">월별, 직원별, 이용자별 정산 현황을 한눈에 확인합니다.</div></div></div>
-                <div class="ms-feature"><img src="assets/user_design/09_icon_excel_export.png" alt=""><div><div class="ms-feature-title">엑셀 내보내기</div><div class="ms-feature-desc">정산 내역을 엑셀 파일로 다운로드하여 관리할 수 있습니다.</div></div></div>
             </div>
         </div>
     </div>
@@ -285,169 +284,221 @@
         let allRecords = [];
         let currentTab = 'all';
 
-        // 한글 서비스명 매핑
-        const serviceNameMap = {
-            'basic_care': '기본요양',
-            'meal_service': '식사지원',
-            'medical_care': '의료관리',
-            'emergency': '응급'
-        };
+        const serviceNameMap = { 'basic_care': '기본요양', 'meal_service': '식사지원', 'medical_care': '의료관리', 'emergency': '응급' };
 
+        // 정산 상태는 실제 청구 상태값을 그대로 구분한다 (승인=아직 미지급, 공단청구=아직 미지급, 환급확인=실제 정산 완료)
         const TABS = [
             { key: 'all', label: '전체' },
-            { key: 'done', label: '정산 완료' },
-            { key: 'pending', label: '정산 대기' },
-            { key: 'suspended', label: '정산 중단' }
+            { key: 'reimbursed', label: '정산 완료' },
+            { key: 'processing', label: '승인·공단청구 중' },
+            { key: 'pending', label: '검토 필요' },
+            { key: 'rejected', label: '반려' },
         ];
-
-        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
-        const NAV_ICON_FILES = {
-            '대시보드': '20_nav_dashboard_icon.png',
-            '이용자관리': '21_nav_user_icon.png',
-            '음성 기록': '22_nav_voice_icon.png',
-            '방문계획 승인': '23_nav_service_plan_icon.png',
-            '청부관리': '24_nav_billing_icon.png',
-            '수익분석': '25_nav_statistics_icon.png',
-            '알림': '26_nav_notice_icon.png',
-            '설정': '27_nav_settings_icon.png',
+        const STATUS_META = {
+            reimbursed: ['정산 완료', 'sp-reimbursed'],
+            processing: ['승인·청구중', 'sp-processing'],
+            pending: ['검토 필요', 'sp-pending'],
+            rejected: ['반려', 'sp-rejected'],
+            other: ['-', 'sp-other'],
         };
+        function tabOf(r) {
+            if (r.approval_status === 'reimbursed') return 'reimbursed';
+            if (r.approval_status === 'approved' || r.approval_status === 'submitted_to_nhis') return 'processing';
+            if (r.approval_status === 'pending') return 'pending';
+            if (r.approval_status === 'rejected') return 'rejected';
+            return 'other';
+        }
 
+        const NAV_ICON_FILES = {
+            '대시보드': '20_nav_dashboard_icon.png', '이용자관리': '21_nav_user_icon.png', '음성 기록': '22_nav_voice_icon.png',
+            '방문계획 승인': '23_nav_service_plan_icon.png', '청부관리': '24_nav_billing_icon.png', '수익분석': '25_nav_statistics_icon.png',
+            '알림': '26_nav_notice_icon.png', '설정': '27_nav_settings_icon.png',
+        };
         function applyNavIcons() {
             document.querySelectorAll('.sidebar-nav .side-item').forEach(item => {
                 const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
                 if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
             });
         }
-
-        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const won = v => `${Number(v || 0).toLocaleString()}원`;
-
-        // 청구 상태 → 정산 탭 키
-        function tabOf(r) {
-            if (['approved', 'submitted_to_nhis', 'reimbursed'].includes(r.approval_status)) return 'done';
-            if (r.approval_status === 'pending') return 'pending';
-            if (r.approval_status === 'rejected') return 'suspended';
-            return 'other';
+        const SIDE_GROUPS2 = [
+            ['매인', ['대시보드']],
+            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
+            ['방문 서비스 운영', ['음성 기록', '방문계획 승인', '보호자 소통']],
+            ['청구 및 경영 관리', ['청부관리', '월별정산', '수익분석', '급여 확정']],
+        ];
+        function groupSidebar() {
+            const nav = document.getElementById('sidebarNav');
+            const items = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+            if (!items.length) return;
+            const byLabel = {};
+            items.forEach(item => { byLabel[item.querySelector('span:last-child')?.textContent.trim()] = item; });
+            const frag = document.createDocumentFragment();
+            SIDE_GROUPS2.forEach(([groupLabel, labels]) => {
+                const found = labels.map(l => byLabel[l]).filter(Boolean);
+                if (!found.length) return;
+                const h = document.createElement('div');
+                h.className = 'side-group-label';
+                h.textContent = groupLabel;
+                frag.appendChild(h);
+                found.forEach(el => frag.appendChild(el));
+            });
+            items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
+            nav.innerHTML = '';
+            nav.appendChild(frag);
         }
 
-        const TAB_PILL = { done: ['done', '정산 완료'], pending: ['pending', '정산 대기'], suspended: ['suspended', '정산 중단'], other: ['pending', '확인 필요'] };
+        async function loadBellBadge() {
+            try {
+                const r = await fetch(`${API_URL}/notifications/mine`);
+                if (!r.ok) return;
+                const d = await r.json();
+                const n = d.unread_count || 0;
+                if (n > 0) {
+                    const badge = document.getElementById('bellBadge');
+                    badge.textContent = n > 99 ? '99+' : n;
+                    badge.style.display = 'flex';
+                }
+            } catch (e) { /* 부가 기능이므로 실패해도 무시 */ }
+        }
 
-        // Initialize
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const won = v => `₩${Number(v || 0).toLocaleString()}`;
+
         async function init() {
             try {
-                // Load current user
                 const userStr = localStorage.getItem('user');
-                if (!userStr) {
-                    window.location.href = './login.html';
-                    return;
-                }
+                if (!userStr) { window.location.href = './login.html'; return; }
 
                 currentUser = JSON.parse(userStr);
                 document.getElementById('currentUserName').textContent = currentUser.full_name || '사용자';
-                document.getElementById('userAvatar').alt = currentUser.full_name || '';
+                document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
 
                 renderSidebar();
                 applyNavIcons();
+                groupSidebar();
+                loadBellBadge();
 
-                // Set default month/year
                 const today = new Date();
                 document.getElementById('yearSelect').value = today.getFullYear();
                 document.getElementById('monthSelect').value = today.getMonth() + 1;
 
                 renderTabs();
-
-                // Load data
                 await loadSettlementData();
             } catch (error) {
-                console.error('❌ 초기화 오류:', error);
+                console.error('초기화 오류:', error);
                 showError('초기화 중 오류가 발생했습니다');
             }
+        }
+
+        async function fetchMonthlyStats(year, month) {
+            const centerId = currentUser.center_id;
+            const r = await fetch(`${API_URL}/records/monthly-statistics?center_id=${centerId}&year=${year}&month=${month}`);
+            if (!r.ok) throw new Error('정산 데이터 조회 실패');
+            const d = await r.json();
+            if (d.status !== 'success') throw new Error(d.detail || '조회 실패');
+            return d;
         }
 
         async function loadSettlementData() {
             try {
                 const year = parseInt(document.getElementById('yearSelect').value);
                 const month = parseInt(document.getElementById('monthSelect').value);
-                const centerId = currentUser.center_id;
 
-                // Fetch statistics
-                const response = await fetch(
-                    `${API_URL}/records/monthly-statistics?center_id=${centerId}&year=${year}&month=${month}`
-                );
-
-                if (!response.ok) {
-                    throw new Error('정산 데이터 조회 실패');
-                }
-
-                const data = await response.json();
-                if (data.status !== 'success') {
-                    throw new Error(data.detail || '조회 실패');
-                }
-
+                const data = await fetchMonthlyStats(year, month);
                 allRecords = data.records || [];
 
-                // Update summary cards
-                updateSummaryCards(data.status_amounts || {});
+                // 전월 대비는 실제 전월 데이터로 계산한다 (가상 증가율 없음)
+                let prevCount = null;
+                try {
+                    const prevDate = new Date(year, month - 2, 1);
+                    const prevData = await fetchMonthlyStats(prevDate.getFullYear(), prevDate.getMonth() + 1);
+                    prevCount = (prevData.records || []).filter(r => r.approval_status !== 'rejected').length;
+                } catch (e) { /* 전월 데이터 없으면 비교 생략 */ }
 
-                // Update record list
+                updateSummaryCards(prevCount);
                 refreshFilterOptions();
                 renderTabs();
                 renderRecords();
-
-                // Update caregiver stats
                 updateCaregiverStats(data.by_caregiver);
-
-                // Update service stats
                 updateServiceStats(data.by_service);
+                renderServiceStatsPanel(data.by_service);
 
                 hideError();
             } catch (error) {
-                console.error('❌ 정산 데이터 조회 오류:', error);
+                console.error('정산 데이터 조회 오류:', error);
                 showError(`정산 데이터 조회 중 오류: ${error.message}`);
                 allRecords = [];
-                document.getElementById('summaryCards').innerHTML = '';
                 renderTabs();
-                document.getElementById('recordBody').innerHTML = '<tr><td colspan="11" class="ms-muted" style="padding:40px;">데이터를 조회할 수 없습니다.</td></tr>';
+                document.getElementById('recordBody').innerHTML = '<tr><td colspan="10" class="ms-muted" style="padding:40px;">데이터를 조회할 수 없습니다.</td></tr>';
                 document.getElementById('caregiverStatsBody').innerHTML = '<tr><td colspan="5" class="ms-muted" style="padding:30px;">데이터를 조회할 수 없습니다.</td></tr>';
                 document.getElementById('serviceStatsBody').innerHTML = '<tr><td colspan="3" class="ms-muted" style="padding:30px;">데이터를 조회할 수 없습니다.</td></tr>';
             }
         }
 
-        function updateSummaryCards(amounts) {
-            const target = amounts.target || 0;
-            const pct = value => target ? `${((value || 0) / target * 100).toFixed(1)}%` : '0.0%';
-            const cards = [
-                { bg: '#EEF4FC', color: '#1D4ED8', icon: '02_icon_total_records.png', label: '정산 대상 금액', value: amounts.target, sub: '서비스 제공 총 금액' },
-                { bg: '#EAF8F0', color: '#15803D', icon: '04_icon_approved.png', label: '정산 완료 금액', value: amounts.completed, sub: `정산 완료 (${pct(amounts.completed)})` },
-                { bg: '#FFF4E8', color: '#DC2626', icon: '05_icon_pending.png', label: '정산 대기 금액', value: amounts.pending, sub: `정산 대기 (${pct(amounts.pending)})` },
-                { bg: '#F3F0FD', color: '#6D28D9', icon: '10_icon_suspended.png', label: '정산 중단 금액', value: amounts.suspended, sub: `중단·보류 (${pct(amounts.suspended)})` }
+        function updateSummaryCards(prevCount) {
+            const active = allRecords.filter(r => r.approval_status !== 'rejected');
+            const reimbursed = allRecords.filter(r => tabOf(r) === 'reimbursed');
+            const pending = allRecords.filter(r => tabOf(r) === 'pending');
+            const sum = list => list.reduce((s, r) => s + (r.amount || 0), 0);
+
+            document.getElementById('cardTargetCount').textContent = `${active.length}건`;
+            document.getElementById('cardTargetNote').textContent = prevCount != null
+                ? `전월 대비 ${active.length - prevCount >= 0 ? '+' : ''}${active.length - prevCount}건`
+                : '반려 제외 전체 건수';
+            document.getElementById('cardTargetAmount').textContent = won(sum(active));
+
+            document.getElementById('cardDoneCount').textContent = `${reimbursed.length}건`;
+            document.getElementById('cardDoneAmount').textContent = `${won(sum(reimbursed))} (환급 확인됨)`;
+
+            document.getElementById('cardPendingCount').textContent = `${pending.length}건`;
+            document.getElementById('cardPendingAmount').textContent = won(sum(pending));
+
+            renderMonthStatusPanel(active, reimbursed, pending);
+        }
+
+        function renderMonthStatusPanel(active, reimbursed, pending) {
+            const processing = allRecords.filter(r => tabOf(r) === 'processing');
+            const rejected = allRecords.filter(r => tabOf(r) === 'rejected');
+            const sum = list => list.reduce((s, r) => s + (r.amount || 0), 0);
+            const total = sum(active) || 1;
+            const rows = [
+                ['정산 완료', reimbursed.length, sum(reimbursed), '#15803D'],
+                ['승인·공단청구 중', processing.length, sum(processing), '#1D4ED8'],
+                ['검토 필요', pending.length, sum(pending), '#B45309'],
             ];
-            document.getElementById('summaryCards').innerHTML = cards.map(c => `
-                <div class="ms-metric" style="background:${c.bg};">
-                    <img src="assets/user_design/${c.icon}" alt="">
-                    <div>
-                        <div class="ms-metric-label" style="color:${c.color};">${c.label}</div>
-                        <div class="ms-metric-value" style="color:${c.color};">${won(c.value)}</div>
-                        <div class="ms-metric-sub">${c.sub}</div>
-                    </div>
-                </div>`).join('');
+            document.getElementById('monthStatusPanel').innerHTML =
+                `<div style="font-size:22px;font-weight:800;color:var(--navy);margin-bottom:10px;">${won(sum(active))}<span style="font-size:12px;color:#94A3B8;font-weight:600;"> (반려 제외)</span></div>` +
+                rows.map(([label, count, amount, color]) => {
+                    const pct = Math.round(amount / total * 100);
+                    return `<div class="stat-row2"><div class="sr-top"><span>${label}</span><span>${count}건 · ${won(amount)} (${pct}%)</span></div><div class="sr-track"><div class="sr-fill" style="width:${pct}%;background:${color};"></div></div></div>`;
+                }).join('') +
+                (rejected.length ? `<div style="font-size:11px;color:#94A3B8;margin-top:10px;">반려 ${rejected.length}건 (${won(sum(rejected))})은 정산 대상에서 제외됨</div>` : '');
+        }
+
+        function renderServiceStatsPanel(stats) {
+            const panel = document.getElementById('serviceStatsPanel');
+            if (!stats || !stats.length) { panel.innerHTML = '<div style="font-size:13px;color:#94A3B8;">이번 달 데이터가 없습니다</div>'; return; }
+            const total = stats.reduce((s, x) => s + x.total_amount, 0) || 1;
+            const sorted = [...stats].sort((a, b) => b.total_amount - a.total_amount);
+            panel.innerHTML = sorted.map(s => {
+                const pct = Math.round(s.total_amount / total * 100);
+                return `<div class="svc-row"><div class="sv-top"><span>${serviceNameMap[s.service_type] || s.service_type}</span><span>${won(s.total_amount)} (${pct}%)</span></div><div class="sv-track"><div class="sv-fill" style="width:${pct}%;"></div></div></div>`;
+            }).join('');
         }
 
         function renderTabs() {
             const count = key => key === 'all' ? allRecords.length : allRecords.filter(r => tabOf(r) === key).length;
             document.getElementById('statusTabs').innerHTML = TABS.map(t =>
-                `<button class="ms-tab ${t.key === currentTab ? 'active' : ''}" onclick="setTab('${t.key}')">${t.label} (${count(t.key)})</button>`
+                `<button class="cm-chip2 ${t.key === currentTab ? 'active' : ''}" onclick="setTab('${t.key}')">${t.label} (${count(t.key)})</button>`
             ).join('');
         }
 
         function setTab(key) {
             currentTab = key;
-            document.getElementById('statusFilter').value = key;
             renderTabs();
             renderRecords();
         }
 
-        // 직원·이용자 선택지는 조회된 기록에서 만든다
         function refreshFilterOptions() {
             const fill = (id, names, label) => {
                 const select = document.getElementById(id);
@@ -456,8 +507,8 @@
                 select.innerHTML = `<option value="">${label}</option>` + unique.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
                 select.value = unique.includes(prev) ? prev : '';
             };
-            fill('staffFilter', allRecords.map(r => r.caregiver_name), '전체');
-            fill('residentFilter', allRecords.map(r => r.resident_name), '전체');
+            fill('staffFilter', allRecords.map(r => r.caregiver_name), '직원 전체');
+            fill('residentFilter', allRecords.map(r => r.resident_name), '이용자 전체');
         }
 
         function currentRecordView() {
@@ -471,35 +522,39 @@
                 (!q || (r.resident_name || '').includes(q) || (r.caregiver_name || '').includes(q)));
         }
 
-        // 작업 버튼: 상태별 이름만 맞추고, 동작은 아직 연결하지 않아 비활성으로 둔다
-        function actionButtons(status) {
-            const detail = '<button class="ms-act" disabled title="준비 중인 기능입니다"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>상세보기</button>';
-            if (status === 'pending') return detail + '<button class="ms-act create" disabled title="준비 중인 기능입니다">정산하기</button>';
-            if (status === 'suspended') return detail + '<button class="ms-act redo" disabled title="준비 중인 기능입니다">재정산</button>';
-            return detail + '<button class="ms-act" disabled title="준비 중인 기능입니다">정산서</button>';
+        // 같은 직원·같은 달의 청구 건수를 방문 횟수로 본다 (billing_management.html과 동일한 파생 방식)
+        function visitCount(record) {
+            return allRecords.filter(r => r.caregiver_name === record.caregiver_name && r.year_month === record.year_month).length;
+        }
+
+        function actionButtons(tabKey) {
+            const detail = '<button class="ms-act" disabled title="추가 개발 필요">상세보기</button>';
+            if (tabKey === 'pending') return detail + '<button class="ms-act create" disabled title="추가 개발 필요">정산하기</button>';
+            if (tabKey === 'rejected') return detail + '<button class="ms-act redo" disabled title="추가 개발 필요">재정산</button>';
+            return detail + '<button class="ms-act" disabled title="추가 개발 필요">정산서</button>';
         }
 
         function renderRecords() {
             const rows = currentRecordView();
             const tbody = document.getElementById('recordBody');
             if (rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" class="ms-muted" style="padding:40px;">조건에 맞는 정산 내역이 없습니다.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="ms-muted" style="padding:40px;">조건에 맞는 정산 내역이 없습니다.</td></tr>';
                 return;
             }
             tbody.innerHTML = rows.map((r, i) => {
-                const [pillClass, pillLabel] = TAB_PILL[tabOf(r)];
+                const [label, cls] = STATUS_META[tabOf(r)];
+                const initial = esc((r.caregiver_name || '?').slice(0, 1));
                 return `
                     <tr>
                         <td><input type="checkbox" aria-label="${esc(r.resident_name)} 선택" disabled></td>
                         <td>${i + 1}</td>
+                        <td style="text-align:left;"><span class="staff-avatar">${initial}</span>${esc(r.caregiver_name || '-')}</td>
                         <td>${esc(r.year_month)}</td>
-                        <td><strong>${esc(r.resident_name || '-')}</strong></td>
-                        <td>${esc(r.caregiver_name || '-')}</td>
+                        <td>${esc(r.resident_name || '-')}</td>
                         <td class="ms-muted">-</td>
-                        <td class="ms-num">${won(r.amount)}</td>
-                        <td class="ms-muted">-</td>
-                        <td class="ms-muted">-</td>
-                        <td><span class="ms-pill ${pillClass}">${pillLabel}</span></td>
+                        <td>${visitCount(r)}회</td>
+                        <td class="ms-num2">${won(r.amount)}</td>
+                        <td><span class="status-pill2 ${cls}">${label}</span></td>
                         <td>${actionButtons(tabOf(r))}</td>
                     </tr>`;
             }).join('');
@@ -508,17 +563,18 @@
         function exportCsv() {
             const rows = currentRecordView();
             if (rows.length === 0) { alert('내려받을 정산 내역이 없습니다'); return; }
-            const header = ['번호', '정산년월', '이용자명', '직원명', '서비스', '총 금액', '정산 상태'];
+            const header = ['번호', '직원명', '정산년월', '이용자명', '방문횟수', '서비스', '청구금액', '정산상태'];
             const lines = rows.map((r, i) => [
-                i + 1, r.year_month, r.resident_name || '', r.caregiver_name || '',
-                serviceNameMap[r.service_type] || r.service_type, r.amount || 0, TAB_PILL[tabOf(r)][1]
+                i + 1, r.caregiver_name || '', r.year_month, r.resident_name || '', visitCount(r),
+                serviceNameMap[r.service_type] || r.service_type, r.amount || 0, STATUS_META[tabOf(r)][0]
             ]);
             const csv = [header, ...lines].map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
             const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `정산내역_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.download = `월별정산_${new Date().toISOString().slice(0, 10)}.csv`;
             a.click();
+            URL.revokeObjectURL(a.href);
         }
 
         function updateCaregiverStats(stats) {
@@ -526,18 +582,15 @@
                 document.getElementById('caregiverStatsBody').innerHTML = '<tr><td colspan="5" class="ms-muted" style="padding:30px;">데이터 없음</td></tr>';
                 return;
             }
-
-            const html = stats.map(stat => `
+            document.getElementById('caregiverStatsBody').innerHTML = stats.map(s => `
                 <tr>
-                    <td><strong>${stat.caregiver_name}</strong></td>
-                    <td>${stat.total_records}</td>
-                    <td class="ms-num">${stat.total_amount.toLocaleString()}</td>
-                    <td><span class="ms-pill done">${stat.approved_count}</span></td>
-                    <td><span class="ms-pill pending">${stat.pending_count}</span></td>
+                    <td style="text-align:left;"><strong>${esc(s.caregiver_name)}</strong></td>
+                    <td>${s.total_records}</td>
+                    <td class="ms-num2">${won(s.total_amount)}</td>
+                    <td><span class="status-pill2 sp-reimbursed">${s.approved_count}</span></td>
+                    <td><span class="status-pill2 sp-pending">${s.pending_count}</span></td>
                 </tr>
             `).join('');
-
-            document.getElementById('caregiverStatsBody').innerHTML = html;
         }
 
         function updateServiceStats(stats) {
@@ -545,28 +598,22 @@
                 document.getElementById('serviceStatsBody').innerHTML = '<tr><td colspan="3" class="ms-muted" style="padding:30px;">데이터 없음</td></tr>';
                 return;
             }
-
-            const html = stats.map(stat => `
+            document.getElementById('serviceStatsBody').innerHTML = stats.map(s => `
                 <tr>
-                    <td><strong>${serviceNameMap[stat.service_type] || stat.service_type}</strong></td>
-                    <td>${stat.total_records}</td>
-                    <td class="ms-num">${stat.total_amount.toLocaleString()}</td>
+                    <td style="text-align:left;"><strong>${serviceNameMap[s.service_type] || s.service_type}</strong></td>
+                    <td>${s.total_records}</td>
+                    <td class="ms-num2">${won(s.total_amount)}</td>
                 </tr>
             `).join('');
-
-            document.getElementById('serviceStatsBody').innerHTML = html;
         }
 
         function showError(message) {
-            const container = document.getElementById('errorContainer');
-            container.innerHTML = `<div class="error">${message}</div>`;
+            document.getElementById('errorContainer').innerHTML = `<div class="error">${message}</div>`;
         }
-
         function hideError() {
             document.getElementById('errorContainer').innerHTML = '';
         }
 
-        // Init on load
         document.addEventListener('DOMContentLoaded', init);
     </script>
     <script src="art.js"></script>
