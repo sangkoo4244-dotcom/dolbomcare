@@ -7,102 +7,195 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
-        .s-sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
-        .s-icon { object-fit: contain; mix-blend-mode: multiply; }
-        .s-pill { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 10px; font-size: 14px; font-weight: 700; }
+        /* ===== Premium Healthcare Management SaaS 톤 (대시보드·청구관리 등과 동일) ===== */
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247;
+            --warn: #B45309; --danger: #DC2626; --line2: #E2E8F0;
+        }
+        html, body { background: var(--bg) !important; }
+        body { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .s-sidebar { background: var(--navy) !important; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+        #navContent .side-item { color: #C9D6E3 !important; border-radius: 8px; }
+        #navContent .side-item:hover { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+        #navContent .side-item.active { background: var(--teal) !important; color: #fff !important; }
+
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .date-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line2); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--charcoal); white-space: nowrap; }
+        .bell-wrap { position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #F1F5F9; border-radius: 10px; flex: 0 0 auto; }
+        .bell-wrap svg { width: 17px; height: 17px; color: var(--charcoal); }
+        .bell-badge { position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+        .warn-banner { background: #FFF4EC; border: 1px solid #FCDCC0; border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 14px; align-items: flex-start; }
+        .warn-ico { width: 38px; height: 38px; border-radius: 10px; background: #F7A560; color: #fff; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .warn-ico svg { width: 20px; height: 20px; }
+        .warn-banner b { color: var(--danger); font-size: 14px; display: block; margin-bottom: 3px; }
+        .warn-banner p { font-size: 12.5px; color: #7A5230; margin: 0; line-height: 1.5; }
+
+        .filter-bar { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .filter-input { padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 13px; outline: none; }
+        .filter-input:focus { border-color: var(--teal); }
+        .btn-outline { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .btn-solid { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
+        .btn-solid:hover { background: #0C756C; }
+
+        .summary-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .summary-row > div { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); display: flex; align-items: center; gap: 14px; }
+        .summary-icon { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .summary-icon svg { width: 21px; height: 21px; }
+        .summary-label { font-size: 13px; font-weight: 700; color: #64748B; }
+        .summary-value { font-size: 24px; font-weight: 800; color: var(--navy); line-height: 1.2; font-variant-numeric: tabular-nums; }
+        .summary-note { font-size: 12px; color: #94A3B8; margin-top: 1px; }
+        @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+        .stmt-table { border-collapse: collapse; width: 100%; }
+        .stmt-table th { text-align: left; font-size: 12px; font-weight: 700; color: #64748B; padding: 10px 12px; background: #F8FAFC; border-bottom: 1px solid var(--line2); white-space: nowrap; }
+        .stmt-table td { padding: 12px; font-size: 13px; color: var(--charcoal); border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+        .stmt-table tr:hover td { background: #FAFBFC; }
+        .stmt-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+        tr.total-row td { background: #F8FAFC; font-weight: 800; }
+        .status-pill2 { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; display: inline-block; }
+        .sp-confirmed { background: #E6F7EE; color: #15803D; }
+        .sp-review { background: #FDF1E3; color: #B45309; }
+        .sp-pending { background: #FDE8E8; color: #DC2626; }
+        .staff-avatar2 { width: 32px; height: 32px; border-radius: 50%; background: var(--teal); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; vertical-align: middle; margin-right: 8px; }
+
+        .panel2 { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .panel2-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 14px; font-weight: 800; color: var(--navy); }
+        .stat-row2 { margin-bottom: 12px; font-size: 12px; }
+        .stat-row2:last-child { margin-bottom: 0; }
+        .stat-row2 .sr-top { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--charcoal); font-weight: 600; }
+        .stat-row2 .sr-track { height: 6px; border-radius: 3px; background: #EEF2F6; overflow: hidden; }
+        .stat-row2 .sr-fill { height: 100%; border-radius: 3px; }
+        .notice-list2 { list-style: none; margin: 0; padding: 0; }
+        .notice-list2 li { display: flex; gap: 8px; font-size: 12px; color: #64748B; padding: 6px 0; line-height: 1.4; }
+        .notice-list2 li svg { width: 14px; height: 14px; color: var(--teal); flex: 0 0 auto; margin-top: 2px; }
     </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
-        <aside class="s-sidebar w-72 text-white fixed h-screen overflow-hidden flex flex-col">
-            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
-                <div class="text-lg font-bold">돌봄케어</div>
-                <div class="text-xs text-white/60 ml-1">Care Management</div>
+        <aside class="s-sidebar w-72 text-white fixed h-screen overflow-hidden">
+            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
+                <div><div class="text-lg font-bold">돌봄케어</div><div class="text-xs text-gray-400">Care Management</div></div>
             </div>
             <nav id="navContent" class="p-4"></nav>
-            <img src="assets/user_design/sidebar_care_landscape.jpg" alt="" class="w-full h-auto mt-auto">
         </aside>
         <main class="ml-72 w-full flex flex-col">
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-extrabold text-[#1E3A5F]">급여 확정</h1>
-                <div class="flex items-center gap-6">
-                    <img src="assets/user_design/28_top_notification_icon.png" alt="" class="w-7 h-7 object-contain">
-                    <div class="flex items-center gap-3">
-                        <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
-                        <span id="userName" class="text-base font-bold text-gray-900">센터장</span>
-                        <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">급여 확정</h1>
+                    <div class="breadcrumb">홈 › 청구 및 경영 관리 › <b>급여 확정</b></div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="date-chip" id="headerDate"></div>
+                    <div class="bell-wrap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <span class="bell-badge" id="bellBadge" style="display:none;">0</span>
                     </div>
-                    <button onclick="logout()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:border-red-500 hover:text-red-600 transition">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
-                        로그아웃
-                    </button>
+                    <div class="text-right">
+                        <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
+                        <div class="text-xs text-gray-500">센터장</div>
+                    </div>
+                    <img src="assets/user_design/29_top_profile_icon.png" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+                    <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-8">
-                <div class="rounded-xl overflow-hidden mb-4">
-                    <img src="assets/user_design/statement_banner.jpg" alt="" class="w-full h-auto block">
-                </div>
-
+            <div class="flex-1 overflow-y-auto px-8 py-8">
                 <!-- 주의 안내 -->
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex items-center gap-3">
-                    <img src="assets/user_design/statement_notice_megaphone.png" alt="" class="w-9 h-9 s-icon shrink-0">
+                <div class="warn-banner">
+                    <div class="warn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.6 10A8.6 8.6 0 1 0 2 10c0 4.75 3.85 8.6 8.6 8.6"/><path d="m22 17-3-3m0 3 3-3"/></svg></div>
                     <div>
-                        <p class="font-extrabold text-red-600">확정하면 그 시점의 금액이 명세로 저장되고, 요양사에게 보입니다.</p>
-                        <p class="text-gray-700 text-sm mt-1">확정 후 청구가 바뀌어도 명세는 바뀌지 않습니다. 확정은 되돌릴 수 없습니다.</p>
+                        <b>급여를 확정하면 그 시점의 금액이 명세로 저장되고, 요양사에게 보입니다.</b>
+                        <p>확정 후 청구가 바뀌어도 명세는 바뀌지 않습니다. 확정은 되돌릴 수 없으니 최종 금액을 확인한 뒤 진행해 주세요.</p>
                     </div>
                 </div>
 
-                <div id="message" class="hidden mb-5 p-4 rounded-xl text-base"></div>
+                <div id="message" class="hidden mb-5 p-4 rounded-lg text-sm"></div>
 
-                <!-- 달 선택 -->
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4 flex items-center gap-4 flex-wrap">
-                    <img src="assets/user_design/statement_month_icon.png" alt="" class="w-9 h-9 s-icon">
-                    <label class="text-lg font-extrabold text-gray-900 flex items-center gap-4">급여 대상 월
-                        <input id="yearMonth" type="month" onchange="loadStatus()" class="border border-gray-300 rounded-xl px-4 py-3 text-lg bg-white">
-                    </label>
-                    <div class="flex items-center gap-3 bg-blue-50 rounded-xl px-4 py-3">
-                        <img src="assets/user_design/statement_info_icon.png" alt="" class="w-8 h-8 s-icon">
-                        <div class="text-sm text-gray-700">해당 월의 승인된 청구를<br>확인하고 최종 금액을 확정합니다.</div>
-                    </div>
-                    <img src="assets/user_design/statement_clipboard_art.png" alt="" class="ml-auto hidden lg:block h-14 w-auto s-icon">
-                </div>
-
-                <!-- 요약 카드 -->
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
-                    <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-3.5 flex items-center gap-3">
-                        <img src="assets/user_design/statement_metric_total.png" alt="" class="w-11 h-11 s-icon">
-                        <div><div class="text-sm font-bold text-gray-700">전체 요양사</div><div id="metricTotal" class="text-2xl font-extrabold text-gray-900">0명</div></div>
-                    </div>
-                    <div class="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3.5 flex items-center gap-3">
-                        <img src="assets/user_design/statement_metric_confirmed.png" alt="" class="w-11 h-11 s-icon">
-                        <div><div class="text-sm font-bold text-emerald-700">확정 완료</div><div id="metricConfirmed" class="text-2xl font-extrabold text-emerald-700">0명</div></div>
-                    </div>
-                    <div class="rounded-xl border border-orange-100 bg-orange-50/60 p-3.5 flex items-center gap-3">
-                        <img src="assets/user_design/statement_metric_pending.png" alt="" class="w-11 h-11 s-icon">
-                        <div><div class="text-sm font-bold text-red-600">미확정</div><div id="metricPending" class="text-2xl font-extrabold text-red-600">0명</div></div>
-                    </div>
-                    <div class="rounded-xl border border-purple-100 bg-purple-50/60 p-3.5 flex items-center gap-3">
-                        <img src="assets/user_design/statement_metric_amount.png" alt="" class="w-11 h-11 s-icon">
-                        <div><div class="text-sm font-bold text-purple-700">총 승인 청구액</div><div id="metricAmount" class="text-2xl font-extrabold text-indigo-900">₩0</div></div>
+                <!-- 대상 월 선택 -->
+                <div class="filter-bar">
+                    <span style="font-size:13px;font-weight:700;color:var(--charcoal);">급여 대상 월</span>
+                    <input id="yearMonth" type="month" class="filter-input">
+                    <span style="font-size:12px;color:#94A3B8;">해당 월의 승인된 청구를 확인하고 최종 금액을 확정합니다.</span>
+                    <div style="margin-left:auto;display:flex;gap:8px;">
+                        <button class="btn-solid" onclick="loadStatus()">조회</button>
+                        <button class="btn-outline" onclick="exportCsv()">엑셀 다운로드</button>
+                        <button class="btn-outline" onclick="window.print()">급여명세서 인쇄</button>
                     </div>
                 </div>
 
-                <!-- 요양사별 표 -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                    <table class="w-full text-base">
-                        <thead class="bg-gray-50">
-                            <tr class="border-b border-gray-200">
-                                <th class="text-left py-4 px-6 font-extrabold text-gray-800">요양사</th>
-                                <th class="text-left py-4 px-6 font-extrabold text-gray-800">승인 청구액</th>
-                                <th class="text-left py-4 px-6 font-extrabold text-gray-800">상태</th>
-                                <th class="text-left py-4 px-6 font-extrabold text-gray-800">관리</th>
-                            </tr>
-                        </thead>
-                        <tbody id="statusBody">
-                            <tr><td colspan="4" class="py-10 text-center text-gray-400">달을 고르세요</td></tr>
-                        </tbody>
-                    </table>
+                <!-- 현황 카드 -->
+                <div class="summary-row">
+                    <div>
+                        <div class="summary-icon" style="background:#E8F1FC;color:#1D4ED8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                        <div><div class="summary-label">전체 요양사</div><div class="summary-value" id="metricTotal">0명</div><div class="summary-note">이번 달 대상</div></div>
+                    </div>
+                    <div>
+                        <div class="summary-icon" style="background:#E6F7EE;color:#15803D;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
+                        <div><div class="summary-label">확정 완료</div><div class="summary-value" id="metricConfirmed">0명</div><div class="summary-note" id="metricConfirmedPct">확정율 0%</div></div>
+                    </div>
+                    <div>
+                        <div class="summary-icon" style="background:#FDF1E3;color:#B45309;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+                        <div><div class="summary-label">검토 필요</div><div class="summary-value" id="metricReview">0명</div><div class="summary-note">검토 중 청구 보유</div></div>
+                    </div>
+                    <div>
+                        <div class="summary-icon" style="background:#FDE8E8;color:#DC2626;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+                        <div><div class="summary-label">미확정</div><div class="summary-value" id="metricPending">0명</div><div class="summary-note">확정 필요</div></div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;">
+                    <div style="min-width:0;">
+                        <!-- 요양사별 급여 현황 -->
+                        <div style="background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden;">
+                            <div style="padding:14px 16px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                                <div>
+                                    <div style="font-size:15px;font-weight:800;color:var(--navy);">요양사별 급여 현황</div>
+                                    <div style="font-size:12px;color:#94A3B8;margin-top:2px;">선택한 월의 승인된 청구를 기준으로 집계한 내역입니다.</div>
+                                </div>
+                                <select id="sortSelect" class="filter-input" onchange="renderTable()">
+                                    <option value="name">이름순</option>
+                                    <option value="amount">승인청구액순</option>
+                                </select>
+                            </div>
+                            <div style="overflow-x:auto;">
+                            <table class="stmt-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th><th>요양사</th><th>근무 일수</th><th>방문 횟수</th>
+                                        <th style="text-align:right;">총 청구금액</th><th style="text-align:right;">승인 청구액(공단)</th>
+                                        <th style="text-align:right;">본인부담금</th><th style="text-align:right;">지급 예정액</th>
+                                        <th>확정 상태</th><th>관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="statusBody">
+                                    <tr><td colspan="10" style="text-align:center;padding:40px;color:#94A3B8;">달을 고르세요</td></tr>
+                                </tbody>
+                            </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 우측 패널 -->
+                    <div>
+                        <div class="panel2">
+                            <div class="panel2-head"><span>확정 진행 현황</span></div>
+                            <div id="progressPanel"><div style="font-size:13px;color:#94A3B8;">달을 고르세요</div></div>
+                        </div>
+                        <div class="panel2">
+                            <div class="panel2-head"><span>급여 확정 안내</span></div>
+                            <ul class="notice-list2">
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>확정 전 최종 금액과 승인 상태를 다시 확인해 주세요.</li>
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>검토 필요 표시가 있으면 청구관리에서 먼저 승인·반려를 진행해 주세요.</li>
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>확정 후에는 청구가 바뀌어도 명세가 자동으로 수정되지 않습니다.</li>
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>"승인 청구액"은 센터가 공단에 청구하는 금액이며, 요양사 실수령 급여와는 다를 수 있습니다.</li>
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>"지급 예정액"은 현재 공제율 기준 추정치이며, 확정 시 저장되는 값과 다를 수 있습니다.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -111,6 +204,17 @@
     <script>
         let currentUser = null;
         const API_URL = '/api/v1';
+        let statusRows = [];     // /statements/status 원본
+        let billingByCaregiver = {}; // 파생 집계: 근무일수/방문횟수/공단금액/본인부담금
+        let confirmInFlight = new Set();
+
+        // calc_deductions()와 동일한 공제율 (app/salary_rules.py 그대로 복사 — 산식을 바꾸지 않고 미리보기만 한다)
+        const DEDUCTION_RATES = { income_tax: 0.033, pension: 0.09, health: 0.0349, employment: 0.0065 };
+        // calc_deductions()와 동일하게 항목별로 반올림한 뒤 합산한다 (전체 요율을 한 번에 곱해 반올림하면 몇 원 단위로 어긋날 수 있음)
+        function estimateNet(amount) {
+            const totalDeduction = Object.values(DEDUCTION_RATES).reduce((sum, rate) => sum + Math.floor(amount * rate + 0.5), 0);
+            return amount - totalDeduction;
+        }
 
         function checkAuth() {
             const token = localStorage.getItem('access_token');
@@ -118,17 +222,73 @@
             if (!token || !user.id) { window.location.href = './login.html'; return; }
             if (user.role !== 'center_manager') { window.location.href = './dashboard.html'; return; }
             currentUser = user;
-            document.getElementById('userName').textContent = `${user.full_name || '센터장'}님`;
+            document.getElementById('userName').textContent = user.full_name || '센터장';
+            document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
             renderSidebar();
+            groupSidebar();
+            loadBellBadge();
             const now = new Date();
             document.getElementById('yearMonth').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             loadStatus();
         }
 
+        const SIDE_GROUPS2 = [
+            ['매인', ['대시보드']],
+            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
+            ['방문 서비스 운영', ['음성 기록', '방문계획 승인', '보호자 소통']],
+            ['청구 및 경영 관리', ['청부관리', '월별정산', '수익분석', '급여 확정']],
+        ];
+        function groupSidebar() {
+            const nav = document.getElementById('navContent');
+            const items = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+            if (!items.length) return;
+            const byLabel = {};
+            items.forEach(item => { byLabel[item.querySelector('span:last-child')?.textContent.trim()] = item; });
+            const frag = document.createDocumentFragment();
+            SIDE_GROUPS2.forEach(([groupLabel, labels]) => {
+                const found = labels.map(l => byLabel[l]).filter(Boolean);
+                if (!found.length) return;
+                const h = document.createElement('div');
+                h.className = 'side-group-label';
+                h.textContent = groupLabel;
+                frag.appendChild(h);
+                found.forEach(el => frag.appendChild(el));
+            });
+            items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
+            nav.innerHTML = '';
+            nav.appendChild(frag);
+
+            const map = {
+                '대시보드': '20_nav_dashboard_icon.png', '이용자관리': '21_nav_user_icon.png', '음성 기록': '22_nav_voice_icon.png',
+                '방문계획 승인': '23_nav_service_plan_icon.png', '청부관리': '24_nav_billing_icon.png', '수익분석': '25_nav_statistics_icon.png',
+                '알림': '26_nav_notice_icon.png', '설정': '27_nav_settings_icon.png'
+            };
+            nav.querySelectorAll('a').forEach(a => {
+                const file = map[a.textContent.trim()];
+                const icon = a.querySelector('.side-icon');
+                if (file && icon) icon.innerHTML = `<img src="assets/user_design/${file}" alt="" style="width:24px;height:24px;object-fit:contain;">`;
+            });
+        }
+
+        async function loadBellBadge() {
+            try {
+                const r = await fetch(`${API_URL}/notifications/mine`);
+                if (!r.ok) return;
+                const d = await r.json();
+                const n = d.unread_count || 0;
+                if (n > 0) {
+                    const badge = document.getElementById('bellBadge');
+                    badge.textContent = n > 99 ? '99+' : n;
+                    badge.style.display = 'flex';
+                }
+            } catch (e) { /* 부가 기능이므로 실패해도 무시 */ }
+        }
+
         function showMessage(text, ok) {
             const el = document.getElementById('message');
             el.textContent = text;
-            el.className = `mb-5 p-4 rounded-xl text-base ${ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}`;
+            el.className = `mb-5 p-4 rounded-lg text-sm ${ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}`;
+            el.classList.remove('hidden');
         }
 
         function escapeHtml(text) {
@@ -137,55 +297,149 @@
             return div.innerHTML;
         }
 
+        // 급여 집계와 동일한 승인 이후 상태만 "승인 청구액"에 포함한다 (app/salary_rules.py SALARY_STATUSES와 동일)
+        const SALARY_STATUSES = ['approved', 'submitted_to_nhis', 'reimbursed'];
+
+        // /statements/status에는 근무일수·방문횟수·본인부담금이 없어, 같은 달의 /billing/ 원본에서 파생한다
+        async function loadBillingDerivedStats(ym) {
+            const centerId = currentUser?.center_id || 1;
+            const r = await fetch(`${API_URL}/billing/?center_id=${centerId}&include_archived=true`);
+            const records = r.ok ? (await r.json()).records || [] : [];
+            const byCaregiver = {};
+            records.forEach(rec => {
+                if (rec.year_month !== ym) return;
+                if (!byCaregiver[rec.caregiver_id]) byCaregiver[rec.caregiver_id] = { days: new Set(), visits: 0, insurance: 0, patient: 0, reviewCount: 0, totalCount: 0 };
+                const cell = byCaregiver[rec.caregiver_id];
+                cell.totalCount += 1;
+                if (rec.approval_status === 'pending') cell.reviewCount += 1;
+                if (!SALARY_STATUSES.includes(rec.approval_status)) return;
+                cell.visits += 1;
+                cell.insurance += rec.amount || 0;
+                cell.patient += Math.max(0, (rec.total_cost || 0) - (rec.amount || 0));
+                if (rec.recorded_date) cell.days.add(rec.recorded_date.slice(0, 10));
+            });
+            billingByCaregiver = byCaregiver;
+        }
+
         function updateMetrics(caregivers) {
             const confirmed = caregivers.filter(c => c.confirmed).length;
-            const amount = caregivers.reduce((sum, c) => sum + (c.billing_total || 0), 0);
+            const review = caregivers.filter(c => !c.confirmed && (billingByCaregiver[c.caregiver_id]?.reviewCount || 0) > 0).length;
             document.getElementById('metricTotal').textContent = `${caregivers.length}명`;
             document.getElementById('metricConfirmed').textContent = `${confirmed}명`;
+            document.getElementById('metricConfirmedPct').textContent = `확정율 ${caregivers.length ? Math.round(confirmed / caregivers.length * 100) : 0}%`;
+            document.getElementById('metricReview').textContent = `${review}명`;
             document.getElementById('metricPending').textContent = `${caregivers.length - confirmed}명`;
-            document.getElementById('metricAmount').textContent = `₩${amount.toLocaleString()}`;
+
+            const total = caregivers.length || 1;
+            const pct = confirmed / total * 100;
+            document.getElementById('progressPanel').innerHTML = `
+                <div style="font-size:22px;font-weight:800;color:var(--navy);margin-bottom:10px;">${confirmed} / ${caregivers.length}명</div>
+                <div class="stat-row2"><div class="sr-top"><span>확정 완료</span><span>${confirmed}명 · ${pct.toFixed(1)}%</span></div><div class="sr-track"><div class="sr-fill" style="width:${pct}%;background:#15803D;"></div></div></div>
+                <div class="stat-row2"><div class="sr-top"><span>미확정</span><span>${caregivers.length - confirmed}명 · ${(100 - pct).toFixed(1)}%</span></div><div class="sr-track"><div class="sr-fill" style="width:${100 - pct}%;background:#DC2626;"></div></div></div>
+            `;
         }
 
         async function loadStatus() {
             const ym = document.getElementById('yearMonth').value;
             if (!ym) return;
-            const r = await fetch(`${API_URL}/statements/status?year_month=${ym}`);
             const body = document.getElementById('statusBody');
+            body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:#94A3B8;">불러오는 중...</td></tr>';
+            const r = await fetch(`${API_URL}/statements/status?year_month=${ym}`);
             if (!r.ok) {
-                body.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-gray-400">불러올 수 없습니다</td></tr>';
+                body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:#94A3B8;">불러올 수 없습니다</td></tr>';
                 updateMetrics([]);
                 return;
             }
             const d = await r.json();
-            updateMetrics(d.caregivers);
-            body.innerHTML = d.caregivers.length ? d.caregivers.map(c => `
-                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="py-4 px-6">
-                        <div class="flex items-center gap-3">
-                            <img src="assets/user_design/statement_avatar_female.png" alt="" class="w-11 h-11 rounded-full object-cover">
-                            <span class="font-bold text-gray-900">${escapeHtml(c.caregiver_name)} <span class="text-gray-500 font-normal">요양사</span></span>
-                        </div>
-                    </td>
-                    <td class="py-4 px-6 font-bold text-gray-900">₩${c.billing_total.toLocaleString()}</td>
-                    <td class="py-4 px-6">${c.confirmed
-                        ? '<span class="s-pill bg-emerald-100 text-emerald-800">확정됨</span>'
-                        : '<span class="s-pill bg-gray-100 text-gray-700">미확정</span>'}</td>
-                    <td class="py-4 px-6">${c.confirmed || c.billing_total <= 0 ? '<span class="text-gray-400">-</span>' :
-                        `<button onclick="confirmStatement(${c.caregiver_id})" class="inline-flex items-center gap-2 px-5 py-2 bg-[#2E7D4F] text-white text-sm font-bold rounded-lg hover:bg-[#256a40]">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>확정</button>`}</td>
-                </tr>`).join('') : '<tr><td colspan="4" class="py-10 text-center text-gray-400">요양사가 없습니다</td></tr>';
+            statusRows = d.caregivers || [];
+            await loadBillingDerivedStats(ym);
+            updateMetrics(statusRows);
+            renderTable();
         }
 
-        async function confirmStatement(caregiverId) {
+        function renderTable() {
+            const sortBy = document.getElementById('sortSelect').value;
+            const rows = [...statusRows].sort((a, b) =>
+                sortBy === 'amount' ? b.billing_total - a.billing_total : a.caregiver_name.localeCompare(b.caregiver_name, 'ko'));
+            const body = document.getElementById('statusBody');
+            if (!rows.length) {
+                body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:#94A3B8;">요양사가 없습니다</td></tr>';
+                return;
+            }
+            let sumDays = 0, sumVisits = 0, sumTotal = 0, sumInsurance = 0, sumPatient = 0, sumNet = 0;
+            body.innerHTML = rows.map((c, i) => {
+                const stat = billingByCaregiver[c.caregiver_id] || { days: new Set(), visits: 0, insurance: 0, patient: 0, reviewCount: 0 };
+                const totalBilled = stat.insurance + stat.patient;
+                const net = estimateNet(c.billing_total);
+                sumDays += stat.days.size; sumVisits += stat.visits; sumTotal += totalBilled;
+                sumInsurance += c.billing_total; sumPatient += stat.patient; sumNet += net;
+
+                const [label, cls] = c.confirmed ? ['확정 완료', 'sp-confirmed'] : (stat.reviewCount > 0 ? ['검토 필요', 'sp-review'] : ['미확정', 'sp-pending']);
+                const initial = escapeHtml((c.caregiver_name || '?').slice(0, 1));
+                const actionDisabled = c.confirmed || c.billing_total <= 0;
+                const inFlight = confirmInFlight.has(c.caregiver_id);
+                return `<tr>
+                    <td>${i + 1}</td>
+                    <td><span class="staff-avatar2">${initial}</span>${escapeHtml(c.caregiver_name)} 요양사</td>
+                    <td>${stat.days.size}일</td>
+                    <td>${stat.visits}회</td>
+                    <td class="num">₩${totalBilled.toLocaleString()}</td>
+                    <td class="num">₩${c.billing_total.toLocaleString()}</td>
+                    <td class="num">₩${stat.patient.toLocaleString()}</td>
+                    <td class="num">₩${net.toLocaleString()}</td>
+                    <td><span class="status-pill2 ${cls}">${label}</span></td>
+                    <td>${actionDisabled
+                        ? '<span style="color:#94A3B8;">-</span>'
+                        : `<button onclick="confirmStatement(${c.caregiver_id}, this)" ${inFlight ? 'disabled' : ''} style="padding:6px 14px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-size:12px;font-weight:700;cursor:pointer;">${inFlight ? '처리 중…' : '확정'}</button>`}</td>
+                </tr>`;
+            }).join('') + `
+                <tr class="total-row">
+                    <td colspan="2">합계 (${rows.length}명)</td>
+                    <td>${sumDays}일</td><td>${sumVisits}회</td>
+                    <td class="num">₩${sumTotal.toLocaleString()}</td>
+                    <td class="num">₩${sumInsurance.toLocaleString()}</td>
+                    <td class="num">₩${sumPatient.toLocaleString()}</td>
+                    <td class="num">₩${sumNet.toLocaleString()}</td>
+                    <td colspan="2">-</td>
+                </tr>`;
+        }
+
+        async function confirmStatement(caregiverId, btn) {
             const ym = document.getElementById('yearMonth').value;
-            if (!confirm(`${ym} 급여를 확정할까요? 확정 후에는 되돌릴 수 없습니다.`)) return;
-            const r = await fetch(`${API_URL}/statements/confirm`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ caregiver_id: caregiverId, year_month: ym }),
+            const row = statusRows.find(c => c.caregiver_id === caregiverId);
+            const amountText = row ? `₩${row.billing_total.toLocaleString()}` : '';
+            if (!confirm(`${row?.caregiver_name || ''} 요양사의 ${ym} 급여를 ${amountText}(승인 청구액 기준)으로 확정할까요?\n확정 후에는 되돌릴 수 없습니다.`)) return;
+            if (confirmInFlight.has(caregiverId)) return;
+            confirmInFlight.add(caregiverId);
+            if (btn) { btn.disabled = true; btn.textContent = '처리 중…'; }
+            try {
+                const r = await fetch(`${API_URL}/statements/confirm`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ caregiver_id: caregiverId, year_month: ym }),
+                });
+                const d = await r.json().catch(() => ({}));
+                showMessage(r.ok ? '확정했습니다. 요양사에게 알림이 갑니다.' : (d.detail || '확정하지 못했습니다'), r.ok);
+            } finally {
+                confirmInFlight.delete(caregiverId);
+                loadStatus();
+            }
+        }
+
+        function exportCsv() {
+            if (!statusRows.length) { alert('내려받을 급여 내역이 없습니다'); return; }
+            const header = ['요양사', '근무일수', '방문횟수', '총청구금액', '승인청구액', '본인부담금', '지급예정액(추정)', '확정상태'];
+            const lines = statusRows.map(c => {
+                const stat = billingByCaregiver[c.caregiver_id] || { days: new Set(), visits: 0, insurance: 0, patient: 0, reviewCount: 0 };
+                const [label] = c.confirmed ? ['확정 완료'] : (stat.reviewCount > 0 ? ['검토 필요'] : ['미확정']);
+                return [c.caregiver_name, stat.days.size, stat.visits, stat.insurance + stat.patient, c.billing_total, stat.patient, estimateNet(c.billing_total), label];
             });
-            const d = await r.json().catch(() => ({}));
-            showMessage(r.ok ? '확정했습니다. 요양사에게 알림이 갑니다.' : (d.detail || '확정하지 못했습니다'), r.ok);
-            loadStatus();
+            const csv = [header, ...lines].map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `급여확정_${document.getElementById('yearMonth').value}.csv`;
+            a.click();
+            URL.revokeObjectURL(a.href);
         }
 
         function logout() { if (confirm('로그아웃하시겠습니까?')) { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; } }
