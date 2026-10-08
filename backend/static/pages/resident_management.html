@@ -208,8 +208,6 @@
         .stat-art { width: 44px; height: auto; flex: 0 0 auto; mix-blend-mode: multiply; }
         .section-title-row { display: flex; align-items: center; gap: 12px; }
         .section-title-row img { width: 40px; height: 40px; object-fit: contain; }
-        .resident-banner-wrap { overflow: hidden; border-radius: 12px; margin-bottom: 24px; }
-        .resident-banner { display: block; width: 100%; height: auto; }
         .top-bell { width: 28px; height: 28px; object-fit: contain; display: block; }
         .avatar-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .side-icon img { display: block; }
@@ -235,7 +233,6 @@
         .user-menu .avatar-img { width: 48px; height: 48px; }
         .logout-btn { background: #fff; }
         .content { padding: 28px 36px; }
-        .resident-banner-wrap { margin-bottom: 28px; }
         .stats-grid { grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
         .stat-card.stat-with-art { padding: 14px 18px; border: none; box-shadow: none; border-radius: 12px; background: #EAF6F0; }
         .stat-card.stat-with-art:nth-child(2) { background: #EAF6F0; }
@@ -1361,12 +1358,5 @@
         });
     </script>
     <script src="art.js"></script>
-    <script>
-        // 상단 배너: 디자인 시안 그림 (assets/user_design/)
-        const banner = document.createElement('div');
-        banner.className = 'resident-banner-wrap';
-        banner.innerHTML = '<img class="resident-banner" src="assets/user_design/resident_banner.jpg" alt="">';
-        document.querySelector('.content').prepend(banner);
-    </script>
 </body>
 </html>
