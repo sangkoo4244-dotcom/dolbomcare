@@ -5,159 +5,139 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>돌봄케어 - 대시보드</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
-        /* 대시보드는 일지 줄무늬 없이 깨끗한 바탕에 둔다 (줄이 제목과 그림을 가로지르는 문제) */
-        html, body { background-image: none !important; }
-        .summary-row {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
+        /* ===== Premium Healthcare Management SaaS 톤 (이 페이지에만 적용, 다른 페이지는 영향 없음) ===== */
+        :root {
+            --navy: #14283F;
+            --navy-soft: #1C3450;
+            --teal: #0F8B80;
+            --bg: #F5F7FA;
+            --charcoal: #243247;
+            --warn: #D97706;
+            --danger: #DC2626;
         }
-        .summary-row > div {
-            padding: 18px 20px;
-            border-radius: 12px;
-        }
-        .summary-row > div:nth-child(1) { background: #EAF6F0; }
-        .summary-row > div:nth-child(2) { background: #FDF1E7; }
-        .summary-row > div:nth-child(3) { background: #E8F2FC; }
-        .summary-row > div:nth-child(4) { background: #F0ECFB; }
-        .summary-label { font-size: 13px; color: var(--ink-soft); }
-        .summary-cell { display: flex; align-items: center; gap: 16px; }
-        .summary-icon { flex: 0 0 auto; color: var(--ink); }
-        .summary-text { min-width: 0; }
-        .metric-art { width: 64px; height: 64px; display: block; }
-        .summary-value {
-            font-size: 34px;
-            font-weight: 700;
-            margin-top: 2px;
-            font-variant-numeric: tabular-nums;
-            line-height: 1.15;
-        }
-        .summary-note { font-size: 12px; color: var(--ink-soft); margin-top: 2px; line-height: 1.4; }
+        html, body { background: var(--bg) !important; background-image: none !important; }
+        body { color: var(--charcoal); }
 
-        .section-title {
-            font-family: 'Gowun Batang', serif;
-            font-size: 22px;
-            margin: 0 0 4px;
-        }
-        .section-sub { font-size: 14px; color: var(--ink-soft); margin: 0 0 24px; }
+        /* 사이드바: 네이비 + 그룹 라벨 + 청록 활성 상태 (menu.js는 건드리지 않고 이 페이지에서만 덮어쓴다) */
+        .sidebar, aside.w-72 { background: var(--navy) !important; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+        #navContent .side-item { color: #C9D6E3; border-radius: 8px; }
+        #navContent .side-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+        #navContent .side-item.active, #navContent a[href="dashboard.html"].side-item { background: var(--teal) !important; color: #fff !important; }
 
-        /* 타임라인: 시간, 선, 내용 세 열 */
-        .timeline { position: relative; list-style: none; margin: 0; padding: 0; }
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 96px;
-            top: 8px;
-            bottom: 8px;
-            width: 1px;
-            background: var(--line);
-        }
-        .tl-item {
-            display: grid;
-            grid-template-columns: 72px 48px 1fr;
-            align-items: start;
-            padding: 14px 0;
-        }
-        .tl-time {
-            font-size: 15px;
-            font-weight: 500;
-            font-variant-numeric: tabular-nums;
-            color: var(--ink);
-            padding-top: 2px;
-        }
-        .tl-stamp {
-            position: relative;
-            z-index: 1;
-            margin-left: 9px;
-            margin-top: -2px;
-            transform: rotate(-4deg);
-        }
-        .tl-body { padding-left: 4px; }
-        .tl-name { font-size: 16px; font-weight: 700; }
-        .tl-meta { font-size: 13px; color: var(--ink-soft); margin-top: 3px; line-height: 1.6; }
-        .tl-state { font-size: 13px; font-weight: 500; margin-top: 6px; }
-        .tl-item.now .tl-state { color: var(--persimmon); }
+        /* 상단 헤더 */
+        .dash-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+        .dash-head h1 { font-size: 26px; font-weight: 800; color: var(--navy); margin: 0 0 4px; }
+        .dash-head .dash-sub { font-size: 14px; color: #64748B; }
+        .dash-date-chip { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--charcoal); }
 
-        .empty { padding: 32px 0; color: var(--ink-soft); font-size: 15px; }
-        .empty p { margin: 12px 0 0; }
-        .empty-art { width: 96px; height: auto; display: block; }
+        /* 지표 카드 4개 */
+        .summary-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .summary-row > div { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .summary-cell { display: flex; flex-direction: column; gap: 10px; }
+        .summary-top { display: flex; align-items: center; justify-content: space-between; }
+        .summary-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .summary-icon svg { width: 20px; height: 20px; }
+        .summary-row > div:nth-child(1) .summary-icon { background: #E6F7EE; color: #15803D; }
+        .summary-row > div:nth-child(2) .summary-icon { background: #E8F1FC; color: #1D4ED8; }
+        .summary-row > div:nth-child(3) .summary-icon { background: #FDF1E3; color: #B45309; }
+        .summary-row > div:nth-child(4) .summary-icon { background: #F1ECFB; color: #6D28D9; }
+        .summary-label { font-size: 13px; font-weight: 600; color: #64748B; }
+        .summary-value { font-size: 28px; font-weight: 800; color: var(--navy); line-height: 1.1; font-variant-numeric: tabular-nums; }
+        .summary-note { font-size: 12px; color: #94A3B8; }
+        .summary-bar { height: 6px; border-radius: 3px; background: #EEF2F6; overflow: hidden; margin-top: 2px; }
+        .summary-bar > span { display: block; height: 100%; background: var(--teal); border-radius: 3px; }
+        .summary-trend { font-size: 12px; font-weight: 700; }
+        .summary-trend.up { color: #15803D; }
+        .summary-trend.down { color: var(--danger); }
 
-        .task-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-        .task-list li { border-bottom: 1px solid var(--line); }
-        .task-list a {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 4px;
-            color: var(--ink);
-            text-decoration: none;
-        }
-        .task-list a:hover { background: #EEF2EE; }
-        .task-count { font-variant-numeric: tabular-nums; font-weight: 700; }
-        .task-main { display: flex; align-items: center; gap: 16px; }
-        .task-ico svg { width: 56px; height: 56px; display: block; }
-        .metric-art, .illus-art, .metric-img { width: 64px; height: 64px; display: block; }
-        .metric-img { object-fit: contain; }
-        .task-ico img { width: 44px; height: 44px; display: block; object-fit: contain; }
-        .task-ico svg { width: 44px; height: 44px; display: block; }
-        .dash-banner-wrap { overflow: hidden; border-radius: 12px; margin-bottom: 28px; }
-        .dash-banner { display: block; width: 100%; height: auto; }
-        .design-metric { width: 64px; height: 64px; object-fit: contain; display: block; }
-        .section-icon { width: 44px; height: 44px; object-fit: contain; flex: 0 0 auto; }
-        .task-cards { border-top: none; display: flex; flex-direction: column; gap: 10px; }
-        .task-cards li { border-bottom: none; border-radius: 12px; }
-        .task-cards li:nth-child(1) { background: #FDF1E7; }
-        .task-cards li:nth-child(2) { background: #E8F2FC; }
-        .task-cards li:nth-child(3) { background: #EAF6F0; }
-        .task-cards a { padding: 12px 16px; }
-        .task-cards a:hover { background: transparent; opacity: 0.85; }
-        .task-cards .task-main { gap: 12px; }
-        .task-cards .task-main > span:last-child { font-size: 15px; font-weight: 700; }
-        .task-cards .task-ico img,
-        .task-cards .task-ico svg { width: 28px; height: 28px; mix-blend-mode: multiply; }
-        .task-cards .task-count { font-size: 24px; line-height: 1; }
-        .task-cards .task-chev { font-size: 18px; }
-        .task-cards li:nth-child(1) .task-count { color: #E0622B; }
-        .task-cards li:nth-child(2) .task-count { color: #2F74C0; }
-        .task-cards li:nth-child(3) .task-count { color: #2E7D4F; }
-        .side-bottom { margin-top: auto; padding: 0 0 0; }
-        .side-bottom img { width: 100%; height: auto; display: block; object-fit: contain; }
-        .panel { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; padding: 24px 28px; }
-        .hero { display: flex; justify-content: space-between; align-items: center; gap: 24px; background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; padding: 28px 32px; margin-bottom: 32px; }
-        .hero-kicker { font-size: 14px; color: var(--ink-soft); margin: 0 0 8px; }
-        .hero-title { font-family: 'Gowun Batang', serif; font-size: 32px; line-height: 1.3; margin: 0 0 10px; }
-        .hero-sub { font-size: 15px; color: var(--ink-soft); margin: 0; }
-        .hero-img { width: 300px; max-width: 42%; height: auto; display: block; }
-        .cg-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.9fr); gap: 24px; }
-        @media (max-width: 900px) {
-            .hero { flex-direction: column-reverse; align-items: flex-start; }
-            .hero-img { max-width: 100%; width: 100%; }
-            .cg-grid { grid-template-columns: 1fr; }
-        }
-        .task-chev { display: inline-block; margin-left: 14px; color: var(--ink-soft); font-size: 22px; line-height: 1; }
-        .section-head { display: flex; align-items: center; gap: 12px; margin: 0 0 4px; }
-        .section-head .section-title { margin: 0; }
-        .section-head img { width: 40px; height: 40px; object-fit: contain; flex: 0 0 auto; }
-        .empty-box { border: 1px dashed var(--line); border-radius: 8px; padding: 32px 16px; text-align: center; color: var(--ink-soft); background: var(--sheet); }
-        .empty-scene { width: min(160px, 100%); height: auto; display: block; margin: 0 auto; }
-        .header-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: var(--sheet); border: 1px solid var(--line); }
-        .header-bell { width: 28px; height: 28px; object-fit: contain; display: block; }
+        /* 가운데 2단 레이아웃 */
+        .cg-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr); gap: 16px; margin-bottom: 16px; }
+        .panel { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 20px 22px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .section-head-left { display: flex; align-items: center; gap: 8px; }
+        .section-head-left svg { width: 18px; height: 18px; color: var(--teal); }
+        .section-title { font-size: 16px; font-weight: 800; color: var(--navy); margin: 0; }
+        .section-link { font-size: 13px; font-weight: 600; color: var(--teal); text-decoration: none; display: flex; align-items: center; gap: 2px; }
+
+        /* 오늘의 방문 서비스 표 */
+        .visit-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .visit-table th { text-align: left; font-weight: 700; color: #64748B; font-size: 12px; padding: 8px 10px; border-bottom: 1px solid #EEF2F6; }
+        .visit-table td { padding: 10px 10px; border-bottom: 1px solid #F3F5F8; color: var(--charcoal); }
+        .visit-table tr:last-child td { border-bottom: none; }
+        .visit-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .visit-badge.done { background: #E6F7EE; color: #15803D; }
+        .visit-badge.now { background: #E8F1FC; color: #1D4ED8; }
+        .visit-badge.wait { background: #F1F5F9; color: #64748B; }
+        .visit-badge.no-show { background: #FDE8E8; color: var(--danger); }
+
+        /* 우선 처리 업무 */
+        .priority-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+        .priority-list a { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; background: #F8FAFC; text-decoration: none; color: var(--charcoal); transition: background 0.15s; }
+        .priority-list a:hover { background: #EEF2F6; }
+        .priority-ico { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .priority-ico svg { width: 18px; height: 18px; }
+        .priority-list li:nth-child(1) .priority-ico { background: #FDF1E3; color: #B45309; }
+        .priority-list li:nth-child(2) .priority-ico { background: #E8F1FC; color: #1D4ED8; }
+        .priority-list li:nth-child(3) .priority-ico { background: #F1ECFB; color: #6D28D9; }
+        .priority-title { font-size: 14px; font-weight: 700; }
+        .priority-desc { font-size: 12px; color: #94A3B8; margin-top: 1px; }
+        .priority-count { margin-left: auto; font-size: 18px; font-weight: 800; color: var(--navy); font-variant-numeric: tabular-nums; }
+
+        /* 하단 분석 영역 */
+        .analytics-grid { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .chart-box { position: relative; height: 220px; }
+        .donut-wrap { display: flex; align-items: center; gap: 16px; }
+        .donut-canvas-wrap { position: relative; width: 120px; height: 120px; flex: 0 0 auto; }
+        .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .donut-center b { font-size: 18px; color: var(--navy); }
+        .donut-center span { font-size: 11px; color: #94A3B8; }
+        .donut-legend { list-style: none; margin: 0; padding: 0; font-size: 12px; flex: 1; }
+        .donut-legend li { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+        .donut-legend .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+        .donut-legend .lbl { flex: 1; color: var(--charcoal); }
+        .donut-legend .pct { font-weight: 700; color: var(--navy); }
+
+        /* 빠른 이동 */
+        .quick-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+        .quick-card { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #E8ECF1; border-radius: 12px; padding: 14px; text-decoration: none; color: var(--charcoal); transition: border-color 0.15s, transform 0.15s; }
+        .quick-card:hover { border-color: var(--teal); transform: translateY(-1px); }
+        .quick-ico { width: 34px; height: 34px; border-radius: 9px; background: #E6F7EE; color: var(--teal); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .quick-ico svg { width: 17px; height: 17px; }
+        .quick-title { font-size: 13px; font-weight: 700; }
+        .quick-desc { font-size: 11px; color: #94A3B8; }
+
+        .empty { padding: 32px 0; color: #94A3B8; font-size: 14px; text-align: center; }
+        .header-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #fff; border: 1px solid #E2E8F0; }
+        .header-bell-wrap { position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #F1F5F9; border-radius: 10px; }
+        .header-bell-wrap svg { width: 18px; height: 18px; color: var(--charcoal); }
+        .header-bell-badge { position: absolute; top: -4px; right: -4px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
         .side-icon img { display: block; }
+        .side-bottom { display: none; }
 
-        /* 한 번만 나타나는 움직임 (동작 줄이기 설정이면 생략) */
-        @keyframes tl-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-        .tl-item { animation: tl-in 0.4s ease both; }
-        .tl-item:nth-child(2) { animation-delay: 0.05s; }
-        .tl-item:nth-child(3) { animation-delay: 0.1s; }
-        .tl-item:nth-child(4) { animation-delay: 0.15s; }
-        .tl-item:nth-child(5) { animation-delay: 0.2s; }
-        @media (prefers-reduced-motion: reduce) { .tl-item { animation: none; } }
+        /* 요양사용 카드(성격이 다른 역할이라 같은 카드 톤만 공유) */
+        .task-list { list-style: none; margin: 0; padding: 0; }
+        .task-list li { border-bottom: 1px solid #F3F5F8; }
+        .task-list li:last-child { border-bottom: none; }
+        .task-list a { display: flex; justify-content: space-between; align-items: center; padding: 12px 4px; color: var(--charcoal); text-decoration: none; }
+        .task-list a:hover { background: #F8FAFC; }
+        .task-main { display: flex; align-items: center; gap: 12px; }
+        .task-ico { width: 32px; height: 32px; border-radius: 9px; background: #E8F1FC; color: #1D4ED8; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .task-ico svg { width: 16px; height: 16px; }
+        .task-count { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--navy); }
+        .task-chev { display: inline-block; margin-left: 10px; color: #94A3B8; font-size: 18px; line-height: 1; }
 
+        @media (max-width: 1100px) {
+            .analytics-grid { grid-template-columns: 1fr; }
+            .quick-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
         @media (max-width: 900px) {
             .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .cg-grid { grid-template-columns: 1fr; }
+            .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
     </style>
 </head>
@@ -173,16 +153,22 @@
                 </div>
             </div>
             <nav id="navContent" class="p-4"></nav>
-            <div class="side-bottom"><img src="assets/user_design/sidebar_care_landscape.jpg" alt=""></div>
         </aside>
 
         <!-- 메인 컨텐츠 -->
         <main class="ml-72 w-full flex flex-col">
             <!-- 탑바 -->
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center sticky top-0 z-40">
-                <h1 class="text-3xl font-bold text-gray-900" id="pageTitle"></h1>
-                <div class="flex items-center gap-6">
-                    <img class="header-bell" src="assets/user_design/28_top_notification_icon.png" alt="">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900" id="pageTitle"></h1>
+                    <div class="dash-sub" id="pageSub"></div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="dash-date-chip" id="headerDate"></div>
+                    <div class="header-bell-wrap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <span class="header-bell-badge" id="headerBellBadge" style="display:none;">0</span>
+                    </div>
                     <div class="text-right">
                         <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
                         <div class="text-xs text-gray-500" id="userRole">역할</div>
@@ -228,8 +214,10 @@
             currentUser = user;
             document.getElementById('userName').textContent = user.full_name || '사용자';
             document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
+            document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
             renderSidebar();
             applyNavIcons();
+            if (user.role !== 'caregiver') groupSidebar();
             if (user.role === 'caregiver') {
                 renderCaregiverDashboard();
             } else {
@@ -256,55 +244,76 @@
             });
         }
 
-        function emptyState(text, art = ART.sprout) {
-            return `<div class="empty">${art}<p>${text}</p></div>`;
+        function emptyState(text) {
+            return `<div class="empty">${escapeHtml(text)}</div>`;
         }
 
-        // 직접 그린 그림 파일 (assets/)을 아이콘 자리에 넣는다
-        function imgIcon(file, cls = 'metric-img') {
-            return `<img class="${cls}" src="assets/hd/${file}" alt="">`;
-        }
+        // Lucide 선형 아이콘 (ISC license, assets/icons/) — 색은 부모 요소의 color를 따른다
+        const ICO = {
+            users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg>',
+            house: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+            wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>',
+            clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>',
+            fileText: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
+            calendarCheck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="m9 15 2 2 4-4"/></svg>',
+            userRound: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>',
+            trendingUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/></svg>',
+            banknote: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>',
+            idCard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 19a4 4 0 00-8 0"/><path d="M16 10h2"/><path d="M16 14h2"/><circle cx="9" cy="12" r="3"/><rect x="2" y="5" width="20" height="14" rx="2"/></svg>',
+            receipt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17V7"/><path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"/><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"/></svg>',
+            pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>',
+            clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+        };
 
-        // 디자인 시안 그림 (assets/user_design/): 요약 칸에서 더 크게 쓴다
-        function designImg(file) {
-            return `<img class="design-metric" src="assets/user_design/${file}" alt="">`;
-        }
-
-        function summaryRow(items) {
-            return `<div class="summary-row">${items.map(([label, id, note, icon]) => `
-                <div class="summary-cell">
-                    ${icon ? `<div class="summary-icon">${icon}</div>` : ''}
-                    <div class="summary-text">
-                        <div class="summary-label">${label}</div>
-                        <div class="summary-value" id="${id}">0</div>
-                        <div class="summary-note">${note}</div>
-                    </div>
-                </div>`).join('')}</div>`;
+        // 사이드바에 섹션 그룹 라벨을 넣는다 (menu.js는 그대로 두고, 이 페이지에서만 DOM을 보정)
+        const SIDE_GROUPS = [
+            ['매인', ['대시보드']],
+            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
+            ['방문 서비스 운영', ['음성 기록', '방문계획 승인', '보호자 소통']],
+            ['청구 및 경영 관리', ['청부관리', '월별정산', '수익분석', '급여 확정']],
+        ];
+        function groupSidebar() {
+            const nav = document.getElementById('navContent');
+            const items = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+            if (!items.length) return;
+            const byLabel = {};
+            items.forEach(item => { byLabel[item.querySelector('span:last-child')?.textContent.trim()] = item; });
+            const frag = document.createDocumentFragment();
+            SIDE_GROUPS.forEach(([groupLabel, labels]) => {
+                const found = labels.map(l => byLabel[l]).filter(Boolean);
+                if (!found.length) return;
+                const h = document.createElement('div');
+                h.className = 'side-group-label';
+                h.textContent = groupLabel;
+                frag.appendChild(h);
+                found.forEach(el => frag.appendChild(el));
+            });
+            items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
+            nav.innerHTML = '';
+            nav.appendChild(frag);
         }
 
         function renderCaregiverDashboard() {
             document.getElementById('pageTitle').textContent = '대시보드';
+            document.getElementById('pageSub').textContent = '오늘의 방문과 기록 현황을 확인하세요.';
             document.getElementById('dashboardContent').innerHTML = `
-                <div class="dash-banner-wrap"><img class="dash-banner" src="assets/user_design/dashboard_banner.jpg" alt=""></div>
                 ${summaryRow([
-                    ['오늘 방문', 'todayVisits', '계획된 방문', ART.illus.clock],
-                    ['기록 필요', 'needRecord', '방문을 마치고 기록 전', ART.illus.checklist],
-                    ['이번 달 청부', 'monthlyBilling', '반려 제외 금액', designImg('icon_metric_payment.png')],
-                    ['검토 대기 청부', 'pendingBilling', '센터장 승인 전', ART.illus.doc],
+                    ['오늘 방문', 'todayVisits', '계획된 방문', ICO.calendarCheck, 'b'],
+                    ['기록 필요', 'needRecord', '방문을 마치고 기록 전', ICO.clipboard, 'c'],
+                    ['이번 달 청부', 'monthlyBilling', '반려 제외 금액', ICO.wallet, 'a'],
+                    ['검토 대기 청부', 'pendingBilling', '센터장 승인 전', ICO.fileText, 'd'],
                 ])}
                 <div class="cg-grid">
-                    <section>
-                        <h2 class="section-title">오늘의 방문 순서</h2>
-                        <p class="section-sub">시간 순서대로 보여 줍니다. 도착과 퇴실은 나의 일정에서 누릅니다.</p>
+                    <section class="panel">
+                        <div class="section-head"><div class="section-head-left">${ICO.calendarCheck}<h2 class="section-title">오늘의 방문 순서</h2></div></div>
                         <div id="timeline"><div class="empty">불러오는 중입니다</div></div>
                     </section>
-                    <section>
-                        <h2 class="section-title">나의 할 일</h2>
-                        <p class="section-sub">눌러서 해당 화면으로 이동합니다.</p>
+                    <section class="panel">
+                        <div class="section-head"><div class="section-head-left"><h2 class="section-title">나의 할 일</h2></div></div>
                         <ul class="task-list">
-                            <li><a href="./voice_record.html"><span class="task-main"><span class="task-ico">${ART.illus.checklist}</span><span>기록 작성</span></span><span class="task-count" id="taskRecord">0건<span class="task-chev">›</span></span></a></li>
-                            <li><a href="./caregiver_billing.html"><span class="task-main"><span class="task-ico">${ART.illus.doc}</span><span>청부 확인</span></span><span class="task-count" id="taskBilling">0건<span class="task-chev">›</span></span></a></li>
-                            <li><a href="./my_schedule.html"><span class="task-main"><span class="task-ico">${ART.illus.clock}</span><span>나의 일정</span></span><span class="task-count" id="taskSchedule">0건<span class="task-chev">›</span></span></a></li>
+                            <li><a href="./voice_record.html"><span class="task-main"><span class="task-ico">${ICO.clipboard}</span><span>기록 작성</span></span><span class="task-count" id="taskRecord">0건<span class="task-chev">›</span></span></a></li>
+                            <li><a href="./caregiver_billing.html"><span class="task-main"><span class="task-ico">${ICO.fileText}</span><span>청부 확인</span></span><span class="task-count" id="taskBilling">0건<span class="task-chev">›</span></span></a></li>
+                            <li><a href="./my_schedule.html"><span class="task-main"><span class="task-ico">${ICO.clock}</span><span>나의 일정</span></span><span class="task-count" id="taskSchedule">0건<span class="task-chev">›</span></span></a></li>
                         </ul>
                     </section>
                 </div>
@@ -312,45 +321,89 @@
             loadCaregiverData();
         }
 
+        function summaryRow(items) {
+            // items: [label, id, note, icon, tone] — tone a~d는 카드 색 계열
+            return `<div class="summary-row">${items.map(([label, id, note, icon]) => `
+                <div class="summary-cell">
+                    <div class="summary-top">
+                        <div class="summary-label">${label}</div>
+                        <div class="summary-icon">${icon}</div>
+                    </div>
+                    <div class="summary-value" id="${id}">0</div>
+                    <div class="summary-note" id="${id}Note">${note}</div>
+                </div>`).join('')}</div>`;
+        }
+
         function renderManagerDashboard() {
             document.getElementById('pageTitle').textContent = '대시보드';
+            document.getElementById('pageSub').textContent = '센터장의 오늘도 따뜻한 돌봄을 응원합니다.';
             document.getElementById('dashboardContent').innerHTML = `
-                <div class="dash-banner-wrap"><img class="dash-banner" src="assets/user_design/dashboard_banner.jpg" alt=""></div>
                 ${summaryRow([
-                    ['요양사', 'totalStaff', '명', designImg('icon_metric_caregiver.png')],
-                    ['이용자', 'totalResidents', '명', designImg('icon_metric_user.png')],
-                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 이후 청부 합계', designImg('icon_metric_payment.png')],
-                    ['처리할 일', 'pendingApprovals', '승인·확정이 필요한 항목', designImg('icon_metric_task.png')],
+                    ['요양보호사 수', 'totalStaff', '재직 인원', ICO.users],
+                    ['등록 이용자 수', 'totalResidents', '관리 대상', ICO.house],
+                    ['이번 달 승인 금액', 'monthlyRevenue', '승인 기준', ICO.wallet],
+                    ['처리 대기 업무', 'pendingApprovals', '승인 및 확인 대기', ICO.clipboard],
                 ])}
                 <div class="cg-grid">
                     <section class="panel">
-                        <div class="section-head"><img class="section-icon" src="assets/user_design/section_today_records.jpg" alt=""><h2 class="section-title">오늘 들어온 방문 기록</h2></div>
-                        <p class="section-sub">요양사가 오늘 저장한 기록을 시간 순서로 보여 줍니다.</p>
-                        <div id="timeline"><div class="empty">불러오는 중입니다</div></div>
+                        <div class="section-head">
+                            <div class="section-head-left">${ICO.calendarCheck}<h2 class="section-title">오늘의 방문 서비스</h2></div>
+                            <a class="section-link" href="./schedule_approval.html">전체 보기 ›</a>
+                        </div>
+                        <div id="visitTable"><div class="empty">불러오는 중입니다</div></div>
                     </section>
                     <section class="panel">
-                        <div class="section-head"><h2 class="section-title">처리할 일</h2></div>
-                        <p class="section-sub">눌러서 해당 화면으로 이동합니다.</p>
-                        <ul class="task-list task-cards" id="taskList"></ul>
+                        <div class="section-head">
+                            <div class="section-head-left">${ICO.clipboard}<h2 class="section-title">우선 처리 업무</h2></div>
+                        </div>
+                        <ul class="priority-list" id="taskList"></ul>
                     </section>
                 </div>
+                <div class="analytics-grid">
+                    <section class="panel">
+                        <div class="section-head"><div class="section-head-left">${ICO.trendingUp}<h2 class="section-title">월별 방문 서비스 현황</h2></div></div>
+                        <div class="chart-box"><canvas id="chartMonthly"></canvas></div>
+                    </section>
+                    <section class="panel">
+                        <div class="section-head"><h2 class="section-title">서비스 종류별 비율</h2></div>
+                        <div class="donut-wrap">
+                            <div class="donut-canvas-wrap"><canvas id="chartService"></canvas><div class="donut-center"><b id="serviceCenterNum">-</b><span>이번 달</span></div></div>
+                            <ul class="donut-legend" id="serviceLegend"></ul>
+                        </div>
+                    </section>
+                    <section class="panel">
+                        <div class="section-head"><h2 class="section-title">이용자 건강 상태</h2></div>
+                        <div class="donut-wrap">
+                            <div class="donut-canvas-wrap"><canvas id="chartHealth"></canvas><div class="donut-center"><b id="healthCenterNum">-</b><span>전체 이용자</span></div></div>
+                            <ul class="donut-legend" id="healthLegend"></ul>
+                        </div>
+                    </section>
+                </div>
+                <section class="panel">
+                    <div class="section-head"><h2 class="section-title">빠른 이동</h2></div>
+                    <div class="quick-grid">
+                        <a class="quick-card" href="./resident_management.html"><div class="quick-ico">${ICO.userRound}</div><div><div class="quick-title">이용자 관리</div><div class="quick-desc">이용자 정보 확인</div></div></a>
+                        <a class="quick-card" href="./voice_record.html"><div class="quick-ico">${ICO.pencil}</div><div><div class="quick-title">방문기록 작성</div><div class="quick-desc">오늘 기록 등록</div></div></a>
+                        <a class="quick-card" href="./billing_management.html"><div class="quick-ico">${ICO.receipt}</div><div><div class="quick-title">청구 관리</div><div class="quick-desc">청구 내역 확인</div></div></a>
+                        <a class="quick-card" href="./staff_management.html"><div class="quick-ico">${ICO.idCard}</div><div><div class="quick-title">직원 관리</div><div class="quick-desc">직원 정보 관리</div></div></a>
+                        <a class="quick-card" href="./monthly_settlement.html"><div class="quick-ico">${ICO.banknote}</div><div><div class="quick-title">월별 정산</div><div class="quick-desc">정산 내역 확인</div></div></a>
+                        <a class="quick-card" href="./profit_analysis.html"><div class="quick-ico">${ICO.trendingUp}</div><div><div class="quick-title">수익 분석</div><div class="quick-desc">운영 현황 분석</div></div></a>
+                    </div>
+                </section>
             `;
             loadManagerData();
         }
 
-        // 도장: 완료(완)는 채운 도장, 진행 중(중)은 채운 칸, 예정(예)은 빈 칸
-        function timelineItem(time, name, meta, state, cls, glyph = '예') {
-            const seal = cls === 'done' ? 'filled' : (cls === 'now' ? 'filled' : 'empty');
-            return `
-                <li class="tl-item ${cls}">
-                    <div class="tl-time">${time}</div>
-                    <div><span class="seal tl-stamp ${seal}">${glyph}</span></div>
-                    <div class="tl-body">
-                        <div class="tl-name">${escapeHtml(name)}</div>
-                        <div class="tl-meta">${escapeHtml(meta)}</div>
-                        <div class="tl-state">${escapeHtml(state)}</div>
-                    </div>
-                </li>`;
+        function visitBadge(state) {
+            const map = {
+                '완료': ['done', '완료'], '방문완료': ['done', '완료'], '기록 저장됨': ['done', '완료'],
+                '방문중': ['now', '진행 중'],
+                '예정': ['wait', '대기'],
+                '미기록': ['no-show', '미방문'],
+                '승인 대기': ['wait', '승인 대기'], '반려': ['no-show', '반려'],
+            };
+            const [cls, label] = map[state] || ['wait', state];
+            return `<span class="visit-badge ${cls}">${label}</span>`;
         }
 
         async function loadCaregiverData() {
@@ -386,74 +439,162 @@
                     list.innerHTML = emptyState('오늘 예정된 방문이 없습니다. 나의 일정에서 방문 계획을 제안할 수 있습니다.');
                     return;
                 }
-                list.innerHTML = `<ul class="timeline">${todays.map(i => {
-                    const done = i.state === '완료' || i.state === '방문완료';
-                    const now_ = i.state === '방문중';
-                    const cls = done ? 'done' : (now_ ? 'now' : '');
+                list.innerHTML = `<table class="visit-table"><thead><tr><th>시간</th><th>이용자</th><th>내용</th><th>상태</th></tr></thead><tbody>${todays.map(i => {
                     const meta = `${i.duration_minutes || 60}분 · 계획 항목 ${i.planned_items.length ? i.planned_items.length : 0}개`;
-                    const glyph = done ? '완' : (now_ ? '중' : '예');
-                    return timelineItem(i.time, i.resident_name || '이용자', meta, STATE_LABEL[i.state] || i.state, cls, glyph);
-                }).join('')}</ul>`;
+                    return `<tr><td>${i.time}</td><td>${escapeHtml(i.resident_name || '이용자')}</td><td>${escapeHtml(meta)}</td><td>${visitBadge(i.state)}</td></tr>`;
+                }).join('')}</tbody></table>`;
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
-                document.getElementById('timeline').innerHTML = '<div class="empty">오늘 일정을 불러오지 못했습니다.</div>';
+                document.getElementById('timeline').innerHTML = emptyState('오늘 일정을 불러오지 못했습니다.');
             }
+        }
+
+        let charts = {};
+        function donutChart(canvasId, centerEl, legendEl, data, colors) {
+            const ctx = document.getElementById(canvasId);
+            if (charts[canvasId]) charts[canvasId].destroy();
+            const total = data.reduce((s, d) => s + d.value, 0);
+            document.getElementById(centerEl).textContent = total ? `${total}` : '-';
+            if (!total) {
+                document.getElementById(legendEl).innerHTML = `<li class="lbl" style="color:#94A3B8;">데이터 없음</li>`;
+                charts[canvasId] = new Chart(ctx, { type: 'doughnut', data: { labels: ['없음'], datasets: [{ data: [1], backgroundColor: ['#EEF2F6'] }] }, options: { cutout: '72%', plugins: { legend: { display: false }, tooltip: { enabled: false } } } });
+                return;
+            }
+            charts[canvasId] = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: data.map(d => d.label), datasets: [{ data: data.map(d => d.value), backgroundColor: colors, borderWidth: 0 }] },
+                options: { cutout: '72%', plugins: { legend: { display: false } } }
+            });
+            document.getElementById(legendEl).innerHTML = data.map((d, i) => `
+                <li><span class="dot" style="background:${colors[i]};"></span><span class="lbl">${escapeHtml(d.label)}</span><span class="pct">${total ? Math.round(d.value / total * 100) : 0}%</span></li>`).join('');
+        }
+
+        function barChart(canvasId, labels, values) {
+            const ctx = document.getElementById(canvasId);
+            if (charts[canvasId]) charts[canvasId].destroy();
+            charts[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets: [{ label: '방문 건수', data: values, backgroundColor: '#0F8B80', borderRadius: 4, maxBarThickness: 28 }] },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#EEF2F6' } }, x: { grid: { display: false } } },
+                    maintainAspectRatio: false,
+                }
+            });
         }
 
         async function loadManagerData() {
             try {
                 const centerId = currentUser.center_id || 1;
-                const [users, residents, bills, today, requests, plans] = await Promise.all([
+                const [users, residents, bills, requests, plans, schedulesToday] = await Promise.all([
                     fetch(`${API_URL}/users/?center_id=${centerId}`).then(r => r.json()),
                     fetch(`${API_URL}/residents/?center_id=${centerId}`).then(r => r.json()),
                     fetch(`${API_URL}/billing/?center_id=${centerId}&include_archived=true`).then(r => r.json()),
-                    fetch(`${API_URL}/records/today/center?center_id=${centerId}`).then(r => r.json()),
                     fetch(`${API_URL}/guardian/requests`).then(r => r.json()).catch(() => ({ requests: [] })),
                     fetch(`${API_URL}/schedule/proposals?center_id=${centerId}`).then(r => r.json()).catch(() => ({})),
+                    fetch(`${API_URL}/schedule/?center_id=${centerId}`).then(r => r.json()).catch(() => ({ schedules: [] })),
                 ]);
 
                 const now = new Date();
-                const monthBills = (bills.records || []).filter(b => {
-                    const d = new Date(b.recorded_date);
-                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                });
+                const bRecords = bills.records || [];
+                const monthKey = (d) => { const x = new Date(d); return `${x.getFullYear()}-${x.getMonth()}`; };
+                const thisMonthKey = monthKey(now);
+                const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const prevMonthKey = monthKey(prevMonth);
+                const monthBills = bRecords.filter(b => monthKey(b.recorded_date) === thisMonthKey);
+                const prevMonthBills = bRecords.filter(b => monthKey(b.recorded_date) === prevMonthKey);
                 const revenue = monthBills.filter(b => DASH_APPROVED.includes(b.approval_status)).reduce((s, b) => s + (b.amount || 0), 0);
-                const pendingClaims = (bills.records || []).filter(b => b.approval_status === 'pending').length;
+                const prevRevenue = prevMonthBills.filter(b => DASH_APPROVED.includes(b.approval_status)).reduce((s, b) => s + (b.amount || 0), 0);
+                const pendingClaims = bRecords.filter(b => b.approval_status === 'pending').length;
                 const pendingPlans = (Array.isArray(plans) ? plans : (plans.proposals || plans.items || [])).length;
                 const pendingGuardians = (requests.requests || []).length;
-                const staff = (users.users || []).filter(u => u.role === 'caregiver').length;
+                const allStaff = (users.users || []).filter(u => u.role === 'caregiver');
+                const activeStaff = allStaff.filter(u => u.employment_status === 'active' || !u.employment_status);
                 const names = {};
                 (users.users || []).forEach(u => names[u.id] = u.full_name);
+                const residentList = residents.residents || [];
                 const residentNames = {};
-                (residents.residents || []).forEach(r => residentNames[r.id] = r.name);
+                residentList.forEach(r => residentNames[r.id] = r.name);
 
-                document.getElementById('totalStaff').textContent = staff;
-                document.getElementById('totalResidents').textContent = residents.total_residents ?? (residents.residents || []).length;
+                // 지표 카드
+                document.getElementById('totalStaff').textContent = allStaff.length;
+                document.getElementById('totalStaffNote').innerHTML = allStaff.length
+                    ? `재직 인원 · <span style="color:#15803D;font-weight:700;">활동 중 ${activeStaff.length}명 (${Math.round(activeStaff.length / allStaff.length * 100)}%)</span>` : '재직 인원';
+                document.getElementById('totalResidents').textContent = residents.total_residents ?? residentList.length;
                 document.getElementById('monthlyRevenue').textContent = `₩${revenue.toLocaleString()}`;
+                if (prevRevenue > 0) {
+                    const diff = Math.round((revenue - prevRevenue) / prevRevenue * 100);
+                    document.getElementById('monthlyRevenueNote').innerHTML = `승인 기준 · <span class="summary-trend ${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '▲' : '▼'} 전월 대비 ${Math.abs(diff)}%</span>`;
+                }
                 document.getElementById('pendingApprovals').textContent = pendingClaims + pendingPlans + pendingGuardians;
 
-                const records = today.records || [];
-                const list = document.getElementById('timeline');
-                list.innerHTML = records.length
-                    ? `<ul class="timeline">${records.map(r => {
-                        const time = r.recorded_at ? r.recorded_at.slice(11, 16) : '--:--';
-                        const meta = `${names[r.caregiver_id] || '요양사'} · ${r.service_type || ''} · 청부 ₩${(r.billing_amount || 0).toLocaleString()}`;
-                        return timelineItem(time, residentNames[r.resident_id] || '이용자', meta, '기록 저장됨', 'done', '기');
-                    }).join('')}</ul>`
-                    : `<div class="empty-box"><img class="empty-scene" src="assets/user_design/empty_today_records.jpg" alt=""><p>오늘 저장된 방문 기록이 없습니다.</p></div>`;
+                // 오늘의 방문 서비스 표: /schedule/caregiver-view를 요양사별로 모아 오늘 날짜만 뽑는다 (API 추가 변경 없음)
+                const today = todayKey();
+                const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                const todaySchedules = (schedulesToday.schedules || []).filter(s => s.scheduled_date && s.scheduled_date.slice(0, 10) === today && s.status !== 'cancelled');
+                const caregiverIds = [...new Set(todaySchedules.map(s => s.caregiver_id))];
+                const perCaregiver = await Promise.all(caregiverIds.map(cid =>
+                    fetch(`${API_URL}/schedule/caregiver-view?caregiver_id=${cid}&year_month=${ym}&user_id=${currentUser.id}&user_role=${currentUser.role}`).then(r => r.json()).catch(() => ({ items: [] }))
+                ));
+                const itemsById = {};
+                perCaregiver.forEach(p => (p.items || []).forEach(it => { if (it.schedule_id) itemsById[it.schedule_id] = it; }));
 
+                const visitRows = todaySchedules.map(s => {
+                    const detail = itemsById[s.id];
+                    return {
+                        time: detail ? detail.time : new Date(s.scheduled_date).toTimeString().slice(0, 5),
+                        resident: residentNames[s.resident_id] || '이용자',
+                        caregiver: names[s.caregiver_id] || '요양사',
+                        serviceType: SERVICE_LABEL[s.service_type] || s.service_type || '-',
+                        state: detail ? detail.state : (s.status === 'completed' ? '완료' : '예정'),
+                    };
+                }).sort((a, b) => a.time.localeCompare(b.time));
+
+                const visitTable = document.getElementById('visitTable');
+                visitTable.innerHTML = visitRows.length
+                    ? `<table class="visit-table"><thead><tr><th>시간</th><th>이용자</th><th>담당 요양보호사</th><th>서비스 종류</th><th>상태</th></tr></thead><tbody>${visitRows.map(v => `
+                        <tr><td>${v.time}</td><td>${escapeHtml(v.resident)}</td><td>${escapeHtml(v.caregiver)}</td><td>${escapeHtml(v.serviceType)}</td><td>${visitBadge(v.state)}</td></tr>`).join('')}</tbody></table>`
+                    : emptyState('오늘 예정된 방문 서비스가 없습니다.');
+
+                // 우선 처리 업무
                 const tasks = [
-                    ['청부 승인 대기', pendingClaims, './billing_management.html', '<img src="assets/user_design/task_billing_approval.jpg" alt="">'],
-                    ['방문 계획 승인 대기', pendingPlans, './schedule_approval.html', ART.illus.clock],
-                    ['보호자 가입 요청', pendingGuardians, './guardian_management.html', ART.illus.group],
+                    ['청구 승인 대기', pendingClaims, './billing_management.html', ICO.fileText, '방문기록 기반 청구 승인'],
+                    ['방문 계획 승인', pendingPlans, './schedule_approval.html', ICO.calendarCheck, '신규 및 변경 방문 계획'],
+                    ['보호자 가입 요청', pendingGuardians, './guardian_management.html', ICO.userRound, '보호자 계정 승인'],
                 ];
-                document.getElementById('taskList').innerHTML = tasks.map(([label, count, href, icon]) => `
-                    <li><a href="${href}"><span class="task-main"><span class="task-ico">${icon}</span><span>${label}</span></span><span class="task-count">${count}건<span class="task-chev">›</span></span></a></li>`).join('');
+                document.getElementById('taskList').innerHTML = tasks.map(([label, count, href, icon, desc]) => `
+                    <li><a href="${href}"><span class="priority-ico">${icon}</span><div><div class="priority-title">${label}</div><div class="priority-desc">${desc}</div></div><span class="priority-count">${count}건</span></a></li>`).join('');
+
+                // 서비스 종류별 비율 (이번 달 청구 기준, 실제 service_type)
+                const svcCounts = {};
+                monthBills.forEach(b => { const k = SERVICE_LABEL[b.service_type] || '기타'; svcCounts[k] = (svcCounts[k] || 0) + 1; });
+                const svcData = Object.entries(svcCounts).map(([label, value]) => ({ label, value }));
+                donutChart('chartService', 'serviceCenterNum', 'serviceLegend', svcData, ['#0F8B80', '#1D4ED8', '#B45309', '#DC2626', '#64748B']);
+
+                // 이용자 건강 상태 (실제 health_status 필드)
+                const healthCounts = {};
+                residentList.forEach(r => { const k = HEALTH_LABEL[r.health_status] || '미등록'; healthCounts[k] = (healthCounts[k] || 0) + 1; });
+                const healthData = Object.entries(healthCounts).map(([label, value]) => ({ label, value }));
+                donutChart('chartHealth', 'healthCenterNum', 'healthLegend', healthData, ['#15803D', '#B45309', '#DC2626', '#94A3B8']);
+
+                // 월별 방문 건수 추이 (최근 6개월, 승인 청구 건수 = 실제 방문 수 근사치)
+                const monthLabels = [];
+                const monthCounts = [];
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const key = monthKey(d);
+                    monthLabels.push(`${d.getMonth() + 1}월`);
+                    monthCounts.push(bRecords.filter(b => monthKey(b.recorded_date) === key).length);
+                }
+                barChart('chartMonthly', monthLabels, monthCounts);
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
-                document.getElementById('timeline').innerHTML = '<div class="empty">데이터를 불러오지 못했습니다.</div>';
+                document.getElementById('visitTable').innerHTML = emptyState('데이터를 불러오지 못했습니다.');
             }
         }
+
+        const SERVICE_LABEL = { basic_care: '기본 돌봄', meal_service: '식사 지원', medical_care: '의료 돌봄', emergency: '응급 대응' };
+        const HEALTH_LABEL = { stable: '안정', warning: '주의', critical: '위험' };
 
         function logout() {
             if (confirm('로그아웃하시겠습니까?')) {
