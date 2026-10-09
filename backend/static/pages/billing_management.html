@@ -10,7 +10,6 @@
 
         .sidebar {
             width: 288px;
-            background: linear-gradient(180deg, #1E2B26 0%, #16201C 100%);
             color: white;
             position: fixed;
             left: 0;
@@ -280,7 +279,10 @@
 <body>
     <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="side-brand"><div class="side-logo"></div><div><div class="side-title">돌봄케어</div><div class="side-sub">Care Management</div></div></div>
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
         <nav class="sidebar-nav"></nav>
     </aside>
 
@@ -654,7 +656,6 @@
             // 메뉴 필터링
             if (typeof renderSidebar === 'function') {
                 renderSidebar();
-                applyNavIcons();
                 groupSidebar();
             }
             loadBellBadge();
@@ -672,26 +673,6 @@
                     badge.style.display = 'flex';
                 }
             } catch (e) { /* 부가 기능이므로 실패해도 무시 */ }
-        }
-
-        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
-        const NAV_ICON_FILES = {
-            '대시보드': '20_nav_dashboard_icon.png',
-            '이용자관리': '21_nav_user_icon.png',
-            '음성 기록': '22_nav_voice_icon.png',
-            '방문계획 승인': '23_nav_service_plan_icon.png',
-            '청부관리': '24_nav_billing_icon.png',
-            '나의 청부': '24_nav_billing_icon.png',
-            '수익분석': '25_nav_statistics_icon.png',
-            '알림': '26_nav_notice_icon.png',
-            '설정': '27_nav_settings_icon.png',
-        };
-
-        function applyNavIcons() {
-            document.querySelectorAll('.sidebar-nav .side-item').forEach(item => {
-                const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
-                if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
-            });
         }
 
         // 사이드바 구조/메뉴/링크는 menu.js 그대로, 라벨만 그룹으로 DOM 재배치 (센터장 메뉴 기준)

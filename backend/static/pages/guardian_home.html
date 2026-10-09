@@ -7,26 +7,32 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
+        /* ===== Premium Healthcare Management SaaS 톤 (대시보드·보호자 소통 등과 동일, 모든 역할 공통) ===== */
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247;
+            --warn: #B45309; --danger: #DC2626; --line2: #E2E8F0;
+        }
+        aside.w-72 { background: var(--navy) !important; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+        #navContent .side-item { color: #C9D6E3 !important; border-radius: 8px; }
+        #navContent .side-item:hover { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+        #navContent .side-item.active { background: var(--teal) !important; color: #fff !important; }
+
         /* 보호자 화면: 고령 사용자를 위해 글자를 키운다 (스타일 가이드 4장) */
         main { font-size: 18px; }
         main .text-xs { font-size: 15px !important; }
         main .text-sm { font-size: 17px !important; }
-        .g-sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
-        .g-nav-item { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-radius: 12px; color: rgba(255,255,255,0.85); font-size: 16px; font-weight: 600; }
-        .g-nav-item.active { background: #B5532F; color: #fff; }
         .g-pill { display: inline-block; padding: 6px 14px; border-radius: 10px; font-size: 15px; font-weight: 700; }
         .g-icon { object-fit: contain; mix-blend-mode: multiply; }
     </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
-        <aside class="g-sidebar w-72 text-white fixed h-screen overflow-y-auto flex flex-col">
-            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
-                <div class="text-lg font-bold">돌봄케어</div>
-                <div class="text-xs text-white/60 ml-1">Care Management</div>
+        <aside class="w-72 text-white fixed h-screen overflow-hidden">
+            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
+                <div><div class="text-lg font-bold">돌봄케어</div><div class="text-xs text-gray-400">Care Management</div></div>
             </div>
             <nav id="navContent" class="p-4"></nav>
-            <img src="assets/user_design/sidebar_care_landscape.jpg" alt="" class="w-full h-auto mt-auto">
         </aside>
         <main class="ml-72 w-full flex flex-col">
             <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
@@ -115,29 +121,36 @@
             currentUser = user;
             document.getElementById('userName').textContent = `${user.full_name || '보호자'}님`;
             renderSidebar();
-            applyNavIcons();
+            groupSidebar();
             loadResidents();
         }
 
-        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
-        const NAV_ICON_FILES = {
-            '대시보드': '20_nav_dashboard_icon.png',
-            '이용자관리': '21_nav_user_icon.png',
-            '음성 기록': '22_nav_voice_icon.png',
-            '방문계획 승인': '23_nav_service_plan_icon.png',
-            '청부관리': '24_nav_billing_icon.png',
-            '수익분석': '25_nav_statistics_icon.png',
-            '알림': '26_nav_notice_icon.png',
-            '설정': '27_nav_settings_icon.png',
-        };
-
-        function applyNavIcons() {
-            document.querySelectorAll('#navContent a, #navContent .side-item, #navContent [class*="item"]').forEach(item => {
-                const label = item.querySelector('span:last-child')?.textContent.trim() || item.textContent.trim();
-                const file = NAV_ICON_FILES[label];
-                const icon = item.querySelector('.side-icon');
-                if (file && icon) icon.innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
+        // 대시보드·보호자 소통과 동일한 사이드바 그룹 라벨 (menu.js는 그대로 두고 이 페이지에서만 DOM 보정)
+        const SIDE_GROUPS = [
+            ['매인', ['대시보드']],
+            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
+            ['방문 서비스 운영', ['음성 기록', '나의 일정', '방문계획 승인', '보호자 소통']],
+            ['청구 및 경영 관리', ['나의 청부', '나의 급여', '청부관리', '월별정산', '수익분석', '급여 확정']],
+        ];
+        function groupSidebar() {
+            const nav = document.getElementById('navContent');
+            const items = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+            if (items.length <= 2) return; // 보호자 메뉴(2개)는 그룹핑하지 않는다
+            const byLabel = {};
+            items.forEach(item => { byLabel[item.querySelector('span:last-child')?.textContent.trim()] = item; });
+            const frag = document.createDocumentFragment();
+            SIDE_GROUPS.forEach(([groupLabel, labels]) => {
+                const found = labels.map(l => byLabel[l]).filter(Boolean);
+                if (!found.length) return;
+                const h = document.createElement('div');
+                h.className = 'side-group-label';
+                h.textContent = groupLabel;
+                frag.appendChild(h);
+                found.forEach(el => frag.appendChild(el));
             });
+            items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
+            nav.innerHTML = '';
+            nav.appendChild(frag);
         }
 
         function escapeHtml(text) {

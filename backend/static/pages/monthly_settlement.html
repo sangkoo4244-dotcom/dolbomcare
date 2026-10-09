@@ -9,8 +9,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: var(--font-family); background: #f5f7fa; color: var(--text-primary); }
 
-        .sidebar { width: 288px; background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); z-index: 1000; display: flex; flex-direction: column; }
-        .sidebar .side-item.active { background: #4E7D5E; color: #fff; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); z-index: 1000; display: flex; flex-direction: column; }
         .side-icon img { display: block; }
 
         .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
@@ -117,7 +116,10 @@
 <body>
     <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="side-brand"><div class="side-logo"></div><div><div class="side-title">돌봄케어</div><div class="side-sub">Care Management</div></div></div>
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
     </aside>
 
@@ -309,17 +311,6 @@
             return 'other';
         }
 
-        const NAV_ICON_FILES = {
-            '대시보드': '20_nav_dashboard_icon.png', '이용자관리': '21_nav_user_icon.png', '음성 기록': '22_nav_voice_icon.png',
-            '방문계획 승인': '23_nav_service_plan_icon.png', '청부관리': '24_nav_billing_icon.png', '수익분석': '25_nav_statistics_icon.png',
-            '알림': '26_nav_notice_icon.png', '설정': '27_nav_settings_icon.png',
-        };
-        function applyNavIcons() {
-            document.querySelectorAll('.sidebar-nav .side-item').forEach(item => {
-                const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
-                if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
-            });
-        }
         const SIDE_GROUPS2 = [
             ['매인', ['대시보드']],
             ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
@@ -374,7 +365,6 @@
                 document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
 
                 renderSidebar();
-                applyNavIcons();
                 groupSidebar();
                 loadBellBadge();
 

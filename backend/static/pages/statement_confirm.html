@@ -257,17 +257,6 @@
             items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
             nav.innerHTML = '';
             nav.appendChild(frag);
-
-            const map = {
-                '대시보드': '20_nav_dashboard_icon.png', '이용자관리': '21_nav_user_icon.png', '음성 기록': '22_nav_voice_icon.png',
-                '방문계획 승인': '23_nav_service_plan_icon.png', '청부관리': '24_nav_billing_icon.png', '수익분석': '25_nav_statistics_icon.png',
-                '알림': '26_nav_notice_icon.png', '설정': '27_nav_settings_icon.png'
-            };
-            nav.querySelectorAll('a').forEach(a => {
-                const file = map[a.textContent.trim()];
-                const icon = a.querySelector('.side-icon');
-                if (file && icon) icon.innerHTML = `<img src="assets/user_design/${file}" alt="" style="width:24px;height:24px;object-fit:contain;">`;
-            });
         }
 
         async function loadBellBadge() {
