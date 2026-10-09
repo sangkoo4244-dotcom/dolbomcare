@@ -13,12 +13,14 @@
         html, body { height: 100%; margin: 0; background: var(--bg); overflow: hidden; }
         body { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif; color: var(--charcoal); }
 
-        /* PC에서는 화면 높이에 딱 맞춰서 스크롤 없이 한 화면에 다 보이게 한다 */
-        .login-shell { height: 100vh; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(380px, 560px); }
+        /* PC에서는 화면 높이에 딱 맞춰서 스크롤 없이 한 화면에 다 보이게 한다.
+           배너 칸은 auto로 이미지 너비에 맞춰 줄어들게 해서, contain 때문에 생기던
+           이미지와 폼 사이의 빈 여백을 없앤다. 화면이 아주 넓으면 남는 공간은 양옆으로 고르게 둔다. */
+        .login-shell { height: 100vh; display: grid; grid-template-columns: auto minmax(380px, 560px); justify-content: center; }
 
-        /* 왼쪽: 배너 이미지 전체를 보여준다 (글자·로고가 잘리지 않도록 contain + 여백은 배경색으로) */
+        /* 왼쪽: 배너 이미지 전체를 보여준다 (글자·로고가 잘리지 않도록 contain + 패널이 이미지 너비만큼만 차지) */
         .login-banner { height: 100%; background: #EFF4F0; display: flex; align-items: center; justify-content: center; padding: 24px; overflow: hidden; }
-        .login-banner img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 12px; }
+        .login-banner img { height: 100%; width: auto; max-width: 100%; object-fit: contain; border-radius: 12px; }
 
         .login-form-wrap { height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 32px; background: #fff; }
         .login-card { width: 100%; max-width: 420px; }
