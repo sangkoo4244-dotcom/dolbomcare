@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.models import Schedule, User, Resident, Center, DailyRecord
+from app.models import Schedule, User, Resident, Center, DailyRecord, Notification
 from app.api.notifications import notify
 from app.review import record_fits_schedule
 from app.database import get_db
@@ -250,6 +250,20 @@ def caregiver_schedule_view(
     for it in items:
         summary[it["state"]] = summary.get(it["state"], 0) + 1
 
+    # 오늘 방문 계획이 있으면 하루 한 번만 리마인더 알림을 보낸다 (이 화면을 열 때마다 중복 발송하지 않는다)
+    today_key = now.date().isoformat()
+    today_planned = [it for it in items if it["date"] == today_key and it["planned"]]
+    if today_planned:
+        day_start = datetime.combine(now.date(), datetime.min.time())
+        already_sent = db.query(Notification).filter(
+            Notification.user_id == caregiver_id,
+            Notification.kind == "schedule_today",
+            Notification.created_at >= day_start,
+        ).first()
+        if not already_sent:
+            notify(db, caregiver_id, "schedule_today", f"오늘 {len(today_planned)}건의 방문 일정이 있습니다")
+            db.commit()
+
     return {"year_month": year_month, "items": items, "summary": summary}
 
 @router.post("/{schedule_id}/arrive")
@@ -268,7 +282,7 @@ def mark_arrived(schedule_id: int, db: Session = Depends(get_db), actor: User = 
 
 @router.post("/{schedule_id}/depart")
 def mark_left(schedule_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
-    """퇴실 시각 기록 (도착 기록 이후에만 가능)"""
+    """퇴실 시각 기록 (도착 기록 이후에만 가능). 처음 퇴실 기록 시 방문 기록 작성 알림을 보낸다."""
     schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
@@ -279,6 +293,9 @@ def mark_left(schedule_id: int, db: Session = Depends(get_db), actor: User = Dep
         raise HTTPException(status_code=400, detail="도착 기록 후 퇴실을 기록할 수 있습니다")
     if schedule.left_at is None:
         schedule.left_at = datetime.now()
+        resident = db.query(Resident).filter(Resident.id == schedule.resident_id).first()
+        resident_label = f"{resident.name} " if resident else ""
+        notify(db, schedule.caregiver_id, "record_needed", f"{resident_label}방문 기록을 작성해 주세요")
         db.commit()
     return {"status": "success", "left_at": schedule.left_at.isoformat()}
 class ProposalRequest(BaseModel):
