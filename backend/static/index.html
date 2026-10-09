@@ -151,31 +151,44 @@
         @media (max-width: 560px) { .grid-4 { grid-template-columns: 1fr; } }
 
         /* ===== Solutions ===== */
-        .sol-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-        .sol-card { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; text-decoration: none; transition: transform .2s, box-shadow .2s; }
+        .sol-feature { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; background: var(--card); box-shadow: 0 20px 44px rgba(7,27,53,0.07); margin-bottom: 22px; }
+        .sol-feature-visual { background: linear-gradient(160deg, var(--navy) 0%, var(--navy2) 100%); padding: 36px; display: flex; align-items: center; justify-content: center; }
+        .sol-feature-visual .mock-browser { max-width: 360px; }
+        .sol-feature-body { padding: 44px 48px; display: flex; flex-direction: column; justify-content: center; }
+        .sol-feature-body h3 { font-size: 26px; font-weight: 800; color: var(--navy); margin-bottom: 10px; }
+        .sol-feature-body > p { font-size: 14.5px; color: var(--text-soft); line-height: 1.7; max-width: 440px; margin-bottom: 22px; }
+        .sol-feature-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 11px 20px; margin-bottom: 28px; }
+        .sol-feature-list li { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--text); }
+        .sol-feature-list li svg { width: 16px; height: 16px; color: var(--teal); flex: 0 0 auto; }
+        .sol-feature-actions { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+        .sol-feature-actions .sub-link { font-size: 13.5px; font-weight: 700; color: var(--text-soft); text-decoration: none; }
+        .sol-feature-actions .sub-link:hover { color: var(--teal); }
+
+        .sol-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+        .sol-card { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 26px 26px 24px; display: flex; flex-direction: column; text-decoration: none; transition: transform .2s, box-shadow .2s; }
         .sol-card.linkable:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(7,27,53,0.08); }
-        .sol-thumb { height: 108px; background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%); position: relative; }
-        .sol-thumb.alt { background: linear-gradient(135deg, #1D3A5F 0%, #2C5280 100%); }
-        .sol-thumb-mock { position: absolute; inset: 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 6px; padding: 10px; }
-        .sol-thumb-mock i { display: block; border-radius: 3px; background: rgba(255,255,255,0.18); }
-        .sol-thumb-mock i:nth-child(1) { width: 18px; height: 42px; background: var(--teal); opacity: .8; }
-        .sol-thumb-mock i:nth-child(2) { flex: 1; height: 28px; }
-        .sol-thumb-mock i:nth-child(3) { width: 24px; height: 24px; border-radius: 50%; background: conic-gradient(var(--teal) 0% 70%, rgba(255,255,255,0.2) 70% 100%); }
-        .sol-body { padding: 22px 24px 24px; flex: 1; display: flex; flex-direction: column; }
         .sol-badge { align-self: flex-start; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; }
         .sol-badge.live { background: #E6F3F1; color: var(--teal-dark); }
         .sol-badge.custom { background: #EAF1FE; color: #3B82F6; }
         .sol-badge.soon { background: #F1F5F9; color: var(--text-soft); }
-        .sol-body h3 { font-size: 17px; font-weight: 800; color: var(--navy); margin-bottom: 8px; }
-        .sol-body p { font-size: 13.5px; color: var(--text-soft); line-height: 1.6; margin-bottom: 14px; flex: 1; }
+        .sol-card h3 { font-size: 17px; font-weight: 800; color: var(--navy); margin-bottom: 8px; }
+        .sol-card p { font-size: 13.5px; color: var(--text-soft); line-height: 1.6; margin-bottom: 14px; flex: 1; }
+        .sol-mini-list { list-style: none; margin-bottom: 16px; }
+        .sol-mini-list li { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-soft); margin-bottom: 6px; }
+        .sol-mini-list li svg { width: 13px; height: 13px; color: var(--teal); flex: 0 0 auto; }
         .sol-link-row { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: var(--teal); }
         .sol-link-row .sub-link { color: var(--text-faint); font-weight: 600; text-decoration: none; }
         .sol-link-row .sub-link:hover { color: var(--teal); }
         .sol-card.ghost { border-style: dashed; justify-content: center; align-items: center; text-align: center; padding: 30px 24px; color: var(--text-faint); background: transparent; }
         .sol-card.ghost svg { width: 26px; height: 26px; margin-bottom: 10px; color: var(--text-faint); }
-        .sol-card.ghost p { font-size: 13px; }
+        .sol-card.ghost p { font-size: 13px; margin-bottom: 0; }
 
-        @media (max-width: 980px) { .sol-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 900px) {
+            .sol-feature { grid-template-columns: 1fr; }
+            .sol-feature-body { padding: 32px 28px; }
+            .sol-feature-list { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) { .sol-grid { grid-template-columns: 1fr; } }
 
         /* ===== Process ===== */
         .process-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; position: relative; }
@@ -191,14 +204,6 @@
             .proc-step { text-align: left; display: flex; gap: 16px; align-items: flex-start; }
             .proc-num { margin: 0; flex: 0 0 auto; }
         }
-
-        /* ===== Tech stack ===== */
-        .tech-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-        .tech-card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-        .tech-card h4 { font-size: 13.5px; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
-        .tech-card p { font-size: 12.5px; color: var(--text-soft); line-height: 1.6; }
-        @media (max-width: 760px) { .tech-grid { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 480px) { .tech-grid { grid-template-columns: 1fr; } }
 
         /* ===== Contact ===== */
         .contact-shell { background: var(--navy); border-radius: 20px; padding: 56px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 48px; color: #fff; }
@@ -361,31 +366,45 @@
                 <h2>솔루션 &amp; 프로젝트</h2>
                 <p>이음로직이 직접 설계·개발한 소프트웨어와 진행 중인 프로젝트입니다.</p>
             </div>
-            <div class="sol-grid">
-                <a href="/pages/login.html" class="sol-card linkable">
-                    <div class="sol-thumb">
-                        <div class="sol-thumb-mock"><i></i><i></i><i></i></div>
-                    </div>
-                    <div class="sol-body">
-                        <span class="sol-badge live">자체 개발 솔루션</span>
-                        <h3>돌봄케어</h3>
-                        <p>요양보호사의 음성 기록부터 센터의 청구·정산까지 지원하는 방문요양 업무관리 솔루션입니다.</p>
-                        <div class="sol-link-row">
-                            <span>로그인 바로가기 →</span>
-                            <a href="/pricing.html" class="sub-link" onclick="event.stopPropagation()">요금제 보기</a>
+            <div class="sol-feature">
+                <div class="sol-feature-visual">
+                    <div class="mock-browser">
+                        <div class="mock-browser-bar"><span></span><span></span><span></span></div>
+                        <div class="mock-browser-body">
+                            <div class="mock-side"><i></i><i></i><i></i><i></i><i></i></div>
+                            <div>
+                                <div class="mock-stats"><div><i></i><b></b></div><div><i></i><b></b></div><div><i></i><b></b></div></div>
+                                <div class="mock-chart"><i style="height:40%"></i><i style="height:65%"></i><i style="height:35%"></i><i style="height:80%"></i><i style="height:55%"></i><i style="height:70%"></i></div>
+                            </div>
                         </div>
                     </div>
-                </a>
+                </div>
+                <div class="sol-feature-body">
+                    <span class="sol-badge live">자체 개발 솔루션</span>
+                    <h3>돌봄케어</h3>
+                    <p>요양보호사의 음성 기록부터 센터의 청구·정산까지 지원하는 방문요양 업무관리 솔루션입니다. 이음로직이 기획부터 개발, 운영까지 직접 담당합니다.</p>
+                    <ul class="sol-feature-list">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>음성 기반 방문 기록</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>자동 청구·정산 계산</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>방문 일정·직원 관리</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>보호자 실시간 소통</li>
+                    </ul>
+                    <div class="sol-feature-actions">
+                        <a href="/pages/login.html" class="btn btn-primary">로그인 바로가기 →</a>
+                        <a href="/pricing.html" class="sub-link">요금제 보기</a>
+                    </div>
+                </div>
+            </div>
+            <div class="sol-grid">
                 <div class="sol-card">
-                    <div class="sol-thumb alt">
-                        <div class="sol-thumb-mock"><i style="background:rgba(255,255,255,0.3);"></i><i></i><i style="background:conic-gradient(#fff 0 40%, rgba(255,255,255,0.15) 40% 100%);"></i></div>
-                    </div>
-                    <div class="sol-body">
-                        <span class="sol-badge custom">프로젝트별 설계</span>
-                        <h3>맞춤형 비즈니스 시스템</h3>
-                        <p>기업과 기관의 업무 요구에 따라 설계부터 개발까지 진행하는 맞춤형 소프트웨어입니다.</p>
-                        <div class="sol-link-row"><a href="#contact" class="sub-link">프로젝트 상담하기 →</a></div>
-                    </div>
+                    <span class="sol-badge custom">프로젝트별 설계</span>
+                    <h3>맞춤형 비즈니스 시스템</h3>
+                    <p>기업과 기관의 업무 요구에 따라 설계부터 개발까지 진행하는 맞춤형 소프트웨어입니다.</p>
+                    <ul class="sol-mini-list">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>업무 프로세스 분석 및 시스템 설계</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>기존 시스템 연동 및 데이터 자동화</li>
+                    </ul>
+                    <div class="sol-link-row"><a href="#contact" class="sub-link">프로젝트 상담하기 →</a></div>
                 </div>
                 <div class="sol-card ghost">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -408,24 +427,6 @@
                 <div class="proc-step"><div class="proc-num">3</div><h4>개발 및 구현</h4><p>설계에 따라 실제 소프트웨어를 구현합니다.</p></div>
                 <div class="proc-step"><div class="proc-num">4</div><h4>테스트 및 검증</h4><p>기능과 데이터 흐름을 꼼꼼히 검증합니다.</p></div>
                 <div class="proc-step"><div class="proc-num">5</div><h4>배포 및 운영 지원</h4><p>실제 서비스로 배포하고 운영을 지원합니다.</p></div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section section-alt">
-        <div class="wrap">
-            <div class="section-header">
-                <span class="eyebrow">Tech</span>
-                <h2>기술 역량</h2>
-                <p>프로젝트에서 실제로 사용하는 기술입니다.</p>
-            </div>
-            <div class="tech-grid">
-                <div class="tech-card"><h4>Frontend</h4><p>HTML5·CSS3·JavaScript 기반 반응형 웹 인터페이스</p></div>
-                <div class="tech-card"><h4>Backend</h4><p>Python·FastAPI 기반 REST API 서버</p></div>
-                <div class="tech-card"><h4>Database</h4><p>PostgreSQL 기반 데이터 설계 및 운영</p></div>
-                <div class="tech-card"><h4>API Integration</h4><p>JWT 인증 및 공공데이터 Open API 연동</p></div>
-                <div class="tech-card"><h4>Cloud Deployment</h4><p>Docker 기반 컨테이너 배포 및 운영</p></div>
-                <div class="tech-card"><h4>Data Processing</h4><p>업무 규칙에 따른 자동 계산·정산 로직 구현</p></div>
             </div>
         </div>
     </section>
