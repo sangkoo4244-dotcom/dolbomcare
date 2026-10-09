@@ -711,7 +711,10 @@
 
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">주소</label>
-                    <input type="text" id="residentAddress" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="residentAddress" placeholder="주소 검색을 눌러 입력하세요" style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                        <button type="button" onclick="openJusoPopup()" style="padding: 10px 16px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer;">주소 검색</button>
+                    </div>
                 </div>
 
                 <div style="margin-bottom: 16px;">
@@ -753,6 +756,26 @@
         let currentUser = null;
         let residents = [];
         let currentResidentId = null;
+
+        // 행정안전부 주소기반산업지원서비스(juso.go.kr) 도로명주소 팝업 API 승인키.
+        // 도메인(seniorcareinfo.kr)에 묶여 발급된 키라 프런트에 그대로 둬도 다른 도메인에서는 쓸 수 없다.
+        const JUSO_CONFM_KEY = 'U01TX0FVVEgyMDI2MTAwOTExMDg1MjEyMDYzODk=';
+
+        // 주소 검색 팝업을 띄운다. 사용자가 주소를 고르면 juso.go.kr이 juso_popup_return.html로
+        // 리다이렉트하고, 그 페이지가 window.opener.fillJusoAddress(결과)를 호출해 여기로 돌아온다.
+        function openJusoPopup() {
+            const returnUrl = `${location.origin}/pages/juso_popup_return.html`;
+            const url = `https://business.juso.go.kr/addrlink/addrLinkUrl.do?confmKey=${encodeURIComponent(JUSO_CONFM_KEY)}&returnUrl=${encodeURIComponent(returnUrl)}`;
+            window.open(url, 'jusoPopup', 'width=570,height=420,scrollbars=yes');
+        }
+
+        function fillJusoAddress(result) {
+            const road = result.roadFullAddr || result.jibunAddr || '';
+            const detail = result.addrDetail ? ` ${result.addrDetail}` : '';
+            document.getElementById('residentAddress').value = (road + detail).trim();
+            document.getElementById('residentAddress').focus();
+        }
+        window.fillJusoAddress = fillJusoAddress;
 
         function navigateTo(url) { window.location.href = url; }
 

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>주소 선택</title>
+</head>
+<body>
+<script>
+    // 도로명주소 팝업 API(addrLinkUrl.do)가 주소 선택 후 이 페이지로 리다이렉트하며
+    // 결과를 쿼리 파라미터로 넘긴다. 부모창(opener)의 fillJusoAddress로 전달하고 팝업을 닫는다.
+    const params = new URLSearchParams(location.search);
+    const result = Object.fromEntries(params.entries());
+    if (window.opener && typeof window.opener.fillJusoAddress === 'function') {
+        window.opener.fillJusoAddress(result);
+    }
+    window.close();
+</script>
+</body>
+</html>
