@@ -209,6 +209,7 @@ def caregiver_schedule_view(
             "address": resident.address if resident else None,
             "care_notes": resident.care_notes if resident else None,
             "duration_minutes": s.duration_minutes or (match.duration_minutes if match else None),
+            "service_type": s.service_type,
             "planned_items": planned,
             "done_items": [c for c in _codes(match.care_items) if c in planned] if match else [],
             "state": state,
@@ -233,6 +234,7 @@ def caregiver_schedule_view(
             "address": resident.address if resident else None,
             "care_notes": resident.care_notes if resident else None,
             "duration_minutes": r.duration_minutes,
+            "service_type": r.service_type,
             "planned_items": [],
             "done_items": _codes(r.care_items),
             "state": "완료",
@@ -287,6 +289,7 @@ class ProposalRequest(BaseModel):
     scheduled_date: str
     duration_minutes: int = None
     planned_items: str = None
+    service_type: str = "basic_care"
     notes: str = None
 
 class ReviewRequest(BaseModel):
@@ -300,6 +303,7 @@ class ResubmitRequest(BaseModel):
     scheduled_date: str = None
     duration_minutes: int = None
     planned_items: str = None
+    service_type: str = None
 
 @router.post("/propose")
 def propose_schedule(req: ProposalRequest, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
@@ -316,6 +320,7 @@ def propose_schedule(req: ProposalRequest, db: Session = Depends(get_db), actor:
         scheduled_date=datetime.fromisoformat(req.scheduled_date),
         duration_minutes=req.duration_minutes,
         planned_items=req.planned_items or None,
+        service_type=req.service_type or "basic_care",
         notes=req.notes,
         status="proposed",
     )
@@ -406,6 +411,8 @@ def resubmit_schedule(schedule_id: int, req: ResubmitRequest, db: Session = Depe
         schedule.duration_minutes = req.duration_minutes
     if req.planned_items is not None:
         schedule.planned_items = req.planned_items or None
+    if req.service_type:
+        schedule.service_type = req.service_type
     schedule.status = "proposed"
     schedule.review_note = None
     db.commit()

@@ -7,126 +7,248 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
-        .sc-sidebar { background: linear-gradient(180deg, #1F3A2D 0%, #14261D 100%); }
-        .sc-icon { object-fit: contain; mix-blend-mode: multiply; }
+        /* ===== Premium Healthcare Management SaaS 톤 (대시보드·나의 청구·나의 급여 등과 동일) ===== */
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247;
+            --warn: #B45309; --danger: #DC2626; --line2: #E2E8F0;
+        }
+        html, body { background: var(--bg) !important; }
+        body { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .ms-sidebar { background: var(--navy) !important; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+        #navContent .side-item { color: #C9D6E3 !important; border-radius: 8px; }
+        #navContent .side-item:hover { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+        #navContent .side-item.active { background: var(--teal) !important; color: #fff !important; }
+
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .date-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line2); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--charcoal); white-space: nowrap; }
+        .bell-wrap { position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #F1F5F9; border-radius: 10px; flex: 0 0 auto; }
+        .bell-wrap svg { width: 17px; height: 17px; color: var(--charcoal); }
+        .bell-badge { position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+        .summary-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+        .summary-row > div { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); display: flex; align-items: center; gap: 14px; }
+        .summary-icon { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .summary-icon svg { width: 21px; height: 21px; }
+        .summary-label { font-size: 13px; font-weight: 700; color: #64748B; }
+        .summary-value { font-size: 24px; font-weight: 800; color: var(--navy); line-height: 1.2; font-variant-numeric: tabular-nums; }
+        .summary-note { font-size: 12px; color: #94A3B8; margin-top: 1px; }
+        @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+        .panel2 { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .panel2-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 14px; font-weight: 800; color: var(--navy); }
+        .notice-list2 { list-style: none; margin: 0; padding: 0; }
+        .notice-list2 li { display: flex; gap: 8px; font-size: 12px; color: #64748B; padding: 6px 0; line-height: 1.4; }
+        .notice-list2 li svg { width: 14px; height: 14px; color: var(--teal); flex: 0 0 auto; margin-top: 2px; }
+
+        .btn-outline { padding: 7px 14px; border-radius: 9px; font-size: 12.5px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .btn-solid { padding: 7px 14px; border-radius: 9px; font-size: 12.5px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
+        .btn-solid:hover { background: #0C756C; }
+        .btn-outline:disabled, .btn-solid:disabled { opacity: .45; cursor: not-allowed; }
+
+        /* 보기 전환: 월간/주간/일간/목록 */
+        .view-toggle { display: inline-flex; background: #F1F5F9; border-radius: 10px; padding: 3px; gap: 2px; }
+        .view-toggle button { padding: 6px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; border: none; background: transparent; color: #64748B; cursor: pointer; white-space: nowrap; }
+        .view-toggle button.active { background: #fff; color: var(--navy); box-shadow: 0 1px 2px rgba(20,40,63,0.08); }
+
         .cal-cell { min-height: 78px; border: 1px solid #F3F4F6; border-radius: 10px; padding: 6px; cursor: pointer; }
         .cal-cell:hover { background: #F9FAFB; }
-        .cal-cell.today { border-color: #2E7D4F; border-width: 2px; }
+        .cal-cell.today { border-color: var(--teal); border-width: 2px; }
+        .cal-cell.selected { box-shadow: 0 0 0 2px rgba(15,139,128,0.35) inset; }
         .cal-pill { border-radius: 6px; padding: 3px 5px; font-size: 11px; font-weight: 700; line-height: 1.3; margin-bottom: 3px; }
         .legend-dot { width: 10px; height: 10px; border-radius: 999px; display: inline-block; }
+
+        .status-pill2 { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; display: inline-block; }
+        .sp-draft { background: #E8F1FC; color: #1D4ED8; }
+        .sp-pending { background: #FDF1E3; color: #B45309; }
+        .sp-approved { background: #E6F3F1; color: #0F8B80; }
+        .sp-rejected { background: #FDE8E8; color: #DC2626; }
+        .sp-neutral { background: #F1F5F9; color: #64748B; }
+
+        .sl-table { border-collapse: collapse; width: 100%; }
+        .sl-table th { text-align: left; font-size: 12px; font-weight: 700; color: #64748B; padding: 10px 12px; background: #F8FAFC; border-bottom: 1px solid var(--line2); white-space: nowrap; }
+        .sl-table td { padding: 12px; font-size: 13px; color: var(--charcoal); border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+        .sl-table tr:hover td { background: #FAFBFC; }
+
+        .attn-row { width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line2); background: #fff; cursor: pointer; margin-bottom: 8px; }
+        .attn-row:hover { border-color: var(--teal); }
+        .attn-row:last-child { margin-bottom: 0; }
+        .attn-main { font-size: 12.5px; font-weight: 700; color: var(--charcoal); }
+        .attn-sub { font-size: 11px; color: #94A3B8; margin-top: 1px; }
+
+        /* 주간 보기 */
+        .week-col { border: 1px solid #F3F4F6; border-radius: 10px; padding: 8px 6px; min-height: 200px; cursor: pointer; }
+        .week-col:hover { background: #F9FAFB; }
+        .week-col.today { border-color: var(--teal); border-width: 2px; }
+        .week-col.selected { box-shadow: 0 0 0 2px rgba(15,139,128,0.35) inset; }
+        .week-col-head { text-align: center; font-size: 12px; font-weight: 800; color: var(--charcoal); margin-bottom: 6px; }
+        .week-col-body { display: flex; flex-direction: column; gap: 4px; }
+        .week-item { display: block; width: 100%; text-align: left; border: none; border-radius: 6px; padding: 4px 6px; font-size: 11px; font-weight: 700; line-height: 1.3; cursor: pointer; }
+        .week-empty { font-size: 11px; color: #CBD5E1; text-align: center; padding: 10px 0; }
+
+        /* 일간 보기 */
+        .day-row { display: flex; align-items: center; gap: 12px; padding: 12px 4px; border-bottom: 1px solid #F1F5F9; }
+        .day-row:last-child { border-bottom: none; }
+        .day-row-time { width: 92px; flex: 0 0 auto; font-size: 12.5px; font-weight: 700; color: var(--navy); }
+        .day-row-main { flex: 1; min-width: 0; }
+        .day-row-name { font-size: 13.5px; font-weight: 700; color: var(--charcoal); display: flex; align-items: center; gap: 8px; }
+        .day-row-sub { font-size: 12px; color: #94A3B8; margin-top: 2px; }
+        .day-row-actions { flex: 0 0 auto; }
+
+        /* 캘린더 인쇄: 사이드바·상단바·요약·우측패널·목록은 숨기고 캘린더만 출력 */
+        @media print {
+            .ms-sidebar, .app-header, .summary-row, #sideColumn, #listSection, .view-toggle, #message,
+            #calCard .btn-outline, #calCard .btn-solid { display: none !important; }
+            main { margin-left: 0 !important; }
+            #scheduleGrid { display: block !important; }
+            #calCard { border: none !important; box-shadow: none !important; padding: 0 !important; }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
-        <aside class="sc-sidebar w-72 text-white fixed h-screen overflow-y-auto flex flex-col">
-            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
-                <div class="text-lg font-bold">돌봄케어</div>
-                <div class="text-xs text-white/60 ml-1">Care Management</div>
+        <aside class="ms-sidebar w-72 text-white fixed h-screen overflow-hidden">
+            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
+                <div>
+                    <div class="text-lg font-bold">돌봄케어</div>
+                    <div class="text-xs text-gray-400">Care Management</div>
+                </div>
             </div>
             <nav id="navContent" class="p-4"></nav>
-            <img src="assets/user_design/sidebar_care_landscape.jpg" alt="" class="w-full h-auto mt-auto">
         </aside>
         <main class="ml-72 w-full flex flex-col">
-            <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-extrabold text-[#1E3A5F]">나의 일정</h1>
-                <div class="flex items-center gap-6">
-                    <img src="assets/user_design/28_top_notification_icon.png" alt="" class="w-7 h-7 object-contain">
-                    <div class="flex items-center gap-3">
-                        <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
-                        <span id="userName" class="text-base font-bold text-gray-900">사용자</span>
-                        <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+            <div class="app-header bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">나의 일정</h1>
+                    <div class="breadcrumb">홈 › <b>나의 일정</b></div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="date-chip" id="headerDate"></div>
+                    <div class="bell-wrap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <span class="bell-badge" id="bellBadge" style="display:none;">0</span>
                     </div>
-                    <button onclick="logout()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:border-red-500 hover:text-red-600 transition">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
-                        로그아웃
-                    </button>
+                    <div class="text-right">
+                        <div class="text-sm font-semibold text-gray-900" id="userName">사용자</div>
+                        <div class="text-xs text-gray-500">요양보호사</div>
+                    </div>
+                    <img src="assets/user_design/29_top_profile_icon.png" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+                    <button onclick="logout()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition">로그아웃</button>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-8">
-                <div class="rounded-2xl overflow-hidden mb-5">
-                    <img src="assets/user_design/sch_banner.jpg" alt="" class="w-full h-auto block">
+            <div class="flex-1 overflow-y-auto px-8 py-8">
+                <div id="message" class="hidden mb-5 p-4 rounded-lg text-sm"></div>
+
+                <!-- 일정 현황 요약 -->
+                <div class="summary-row">
+                    <div>
+                        <div class="summary-icon" style="background:#E6F3F1;color:#0F8B80;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+                        <div><div class="summary-label">오늘 방문 예정</div><div class="summary-value" id="statTodayPlanned">0건</div></div>
+                    </div>
+                    <div>
+                        <div class="summary-icon" style="background:#E8F1FC;color:#1D4ED8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
+                        <div><div class="summary-label">오늘 방문 완료</div><div class="summary-value" id="statTodayDone">0건</div></div>
+                    </div>
+                    <div>
+                        <div class="summary-icon" style="background:#FDE8E8;color:#DC2626;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg></div>
+                        <div><div class="summary-label">기록 작성 필요</div><div class="summary-value" id="statNeedRecord">0건</div></div>
+                    </div>
+                    <div>
+                        <div class="summary-icon" style="background:#FDF1E3;color:#B45309;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21l7.78-7.55 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/></svg></div>
+                        <div><div class="summary-label">이번 달 방문 계획</div><div class="summary-value" id="statMonthPlanned">0건</div></div>
+                    </div>
                 </div>
 
-                <div id="message" class="hidden mb-5 p-4 rounded-xl text-base"></div>
-
-                <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-5 mb-5">
-                    <!-- 월간 캘린더 -->
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                <div id="scheduleGrid" class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-5 mb-5">
+                    <!-- 캘린더 -->
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6" id="calCard">
                         <div class="flex justify-between items-center mb-5 flex-wrap gap-3">
-                            <div class="flex items-center gap-3">
-                                <img src="assets/user_design/sch_title_cal.png" alt="" class="w-9 h-9 sc-icon">
-                                <h2 class="text-2xl font-extrabold text-gray-900" id="currentMonth">10월 2026</h2>
-                            </div>
+                            <h2 class="text-xl font-extrabold text-gray-900" id="currentMonth">10월 2026</h2>
                             <div class="flex gap-2 items-center flex-wrap">
-                                <button onclick="prevMonth()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50">‹ 이전</button>
-                                <button onclick="nextMonth()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50">다음 ›</button>
-                                <button onclick="goToday()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50">오늘</button>
-                                <button onclick="openPropose()" class="inline-flex items-center gap-2 px-4 py-2 bg-[#2E7D4F] text-white text-sm font-bold rounded-lg hover:bg-[#256a40]">+ 방문 계획 제안</button>
+                                <div class="view-toggle">
+                                    <button id="viewCalBtn" class="active" onclick="setView('cal')">월간</button>
+                                    <button id="viewWeekBtn" onclick="setView('week')">주간</button>
+                                    <button id="viewDayBtn" onclick="setView('day')">일간</button>
+                                    <button id="viewListBtn" onclick="setView('list')">목록</button>
+                                </div>
+                                <button onclick="prevPeriod()" class="btn-outline">‹ 이전</button>
+                                <button onclick="nextPeriod()" class="btn-outline">다음 ›</button>
+                                <button onclick="goToday()" class="btn-outline">오늘</button>
+                                <button onclick="printCalendar()" class="btn-outline" title="캘린더 인쇄">인쇄</button>
+                                <button onclick="openPropose()" class="btn-solid">+ 방문 계획 제안</button>
                             </div>
                         </div>
-                        <div id="calendar" class="grid grid-cols-7 gap-2"></div>
-                        <div id="legend" class="flex flex-wrap gap-4 mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600"></div>
+                        <div id="calendarView">
+                            <div id="calendar" class="grid grid-cols-7 gap-2"></div>
+                            <div id="legend" class="flex flex-wrap gap-4 mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600"></div>
+                        </div>
+                        <div id="weekView" style="display:none;"></div>
+                        <div id="dayView" style="display:none;"></div>
                     </div>
 
-                    <!-- 오른쪽: 오늘의 일정 + 확인사항 -->
-                    <div class="space-y-5">
-                        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                            <div class="flex items-center justify-between mb-4 flex-wrap gap-1">
-                                <div class="flex items-center gap-2">
-                                    <img src="assets/user_design/sch_title_today.png" alt="" class="w-8 h-8 sc-icon">
-                                    <h2 class="text-lg font-extrabold text-gray-900">오늘의 일정</h2>
-                                </div>
-                                <span id="todayDateLabel" class="text-sm text-gray-500"></span>
+                    <!-- 오른쪽: 오늘의 일정 + 확인 필요한 일정 + 안내 -->
+                    <div class="space-y-5" id="sideColumn">
+                        <div class="panel2" style="margin-bottom:0;">
+                            <div class="panel2-head">
+                                <span>오늘의 일정</span>
+                                <span id="todayDateLabel" style="font-size:12px;color:#94A3B8;font-weight:600;"></span>
                             </div>
-                            <div id="todayList" class="space-y-3"></div>
+                            <div id="todayList" class="space-y-2"></div>
                         </div>
-                        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-                            <div class="flex items-center gap-2 mb-3">
-                                <img src="assets/user_design/sch_title_checklist.png" alt="" class="w-7 h-7 sc-icon">
-                                <h2 class="text-base font-extrabold text-amber-800">오늘의 확인사항</h2>
+                        <div class="panel2" style="margin-bottom:0;">
+                            <div class="panel2-head">
+                                <span>확인 필요한 일정</span>
+                                <span id="attentionCount" class="status-pill2 sp-pending">0건</span>
                             </div>
-                            <ul class="space-y-2 text-sm text-gray-700">
-                                <li class="flex items-center gap-2"><svg class="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>방문 전 준비물 확인하기</li>
-                                <li class="flex items-center gap-2"><svg class="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>서비스 제공 기록은 당일 작성하기</li>
-                                <li class="flex items-center gap-2"><svg class="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>이용자 컨디션 변화가 있으면 센터에 공유하기</li>
+                            <div id="attentionList"></div>
+                        </div>
+                        <div class="panel2" style="margin-bottom:0;">
+                            <div class="panel2-head"><span>일정 관리 안내</span></div>
+                            <ul class="notice-list2">
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>방문 전 이용자 컨디션과 준비물을 확인해 주세요.</li>
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>방문 완료 후에는 당일 중으로 서비스 기록을 작성해 주세요.</li>
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>일정 변경이 필요하면 센터장에게 미리 연락해 주세요.</li>
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>새 방문 계획을 제안하면 센터장 승인 후 반영됩니다.</li>
                             </ul>
                         </div>
                     </div>
                 </div>
 
                 <!-- 월별 일정 목록 -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-7">
-                    <div class="flex items-center justify-between flex-wrap gap-4 mb-2">
-                        <div class="flex items-center gap-3">
-                            <img src="assets/user_design/sch_title_monthlist.png" alt="" class="w-9 h-9 sc-icon">
-                            <h2 class="text-2xl font-extrabold text-gray-900">월별 일정 목록</h2>
+                <div id="listSection" style="background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden;">
+                    <div style="padding:14px 16px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                        <div>
+                            <div style="font-size:15px;font-weight:800;color:var(--navy);">월별 일정 목록</div>
+                            <div style="font-size:12px;color:#94A3B8;margin-top:2px;">방문 계획과 실제 기록을 날짜 기준으로 맞춘 목록입니다.</div>
                         </div>
-                        <div class="flex gap-3 flex-wrap">
-                            <label class="flex items-center gap-2 border border-gray-300 rounded-xl px-3 h-11">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2E7D4F" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                                <input id="monthPicker" type="month" onchange="onMonthPicker()" class="text-sm font-bold text-gray-800 bg-transparent">
+                        <div class="flex gap-2 flex-wrap items-center">
+                            <label class="date-chip" style="cursor:pointer;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F8B80" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                                <input id="monthPicker" type="month" onchange="onMonthPicker()" style="border:none;background:transparent;font-size:13px;font-weight:600;color:var(--charcoal);">
                             </label>
-                            <select id="residentFilter" onchange="renderTable()" class="border border-gray-300 rounded-xl px-3 h-11 text-sm font-bold text-gray-700"><option value="">전체 이용자</option></select>
-                            <select id="statusFilter" onchange="renderTable()" class="border border-gray-300 rounded-xl px-3 h-11 text-sm font-bold text-gray-700"><option value="">전체 상태</option></select>
+                            <select id="residentFilter" onchange="renderTable()" class="btn-outline" style="padding:7px 10px;"><option value="">전체 이용자</option></select>
+                            <select id="serviceFilter" onchange="renderTable()" class="btn-outline" style="padding:7px 10px;">
+                                <option value="">전체 유형</option>
+                                <option value="basic_care">기본 요양</option>
+                                <option value="meal_service">식사 서비스</option>
+                                <option value="medical_care">의료 처치</option>
+                                <option value="emergency">응급 대응</option>
+                            </select>
+                            <select id="statusFilter" onchange="renderTable()" class="btn-outline" style="padding:7px 10px;"><option value="">전체 상태</option></select>
                         </div>
                     </div>
-                    <div id="summaryLine" class="text-sm text-gray-600 mb-4"></div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-base">
+                    <div style="overflow-x:auto;">
+                        <table class="sl-table">
                             <thead>
-                                <tr class="border-b border-gray-200 bg-gray-50">
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">날짜</th>
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">시간</th>
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">이용자</th>
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">제공 시간</th>
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">계획 항목 이행</th>
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">상태</th>
-                                    <th class="text-left py-3 px-4 font-extrabold text-gray-700">관리</th>
+                                <tr>
+                                    <th>날짜</th><th>시간</th><th>이용자</th><th>서비스 유형</th><th>제공 시간</th><th>계획 항목 이행</th><th>상태</th><th>관리</th>
                                 </tr>
                             </thead>
                             <tbody id="scheduleTableBody">
-                                <tr><td colspan="7" class="py-10 text-center text-gray-400">일정이 없습니다</td></tr>
+                                <tr><td colspan="8" style="text-align:center;padding:40px;color:#94A3B8;">일정이 없습니다</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -154,22 +276,20 @@
         currentMonth.setDate(1);
         let selectedDate = null;
         let items = [];
+        let viewMode = 'cal'; // 'cal' | 'week' | 'day' (목록은 별도 상태 없이 스크롤만 함)
 
+        // 청구 관련 화면(나의 청구·나의 급여)과 같은 서비스 유형 분류 (billing_rules 기준)
+        const SERVICE_LABELS = { basic_care: '기본 요양', meal_service: '식사 서비스', medical_care: '의료 처치', emergency: '응급 대응' };
         const CARE_ITEM_LABELS = {
             meal_assist: '식사 보조', toilet_assist: '배설 보조', bath: '목욕·세면', dressing: '옷 갈아입기', mobility: '이동 보조',
             medicine: '투약 확인', vitals: '체온·혈압 측정', symptom: '이상 증상 관찰',
             emotional: '말벗·정서 지원', cognitive: '인지활동',
             cleaning: '청소·정돈', laundry: '세탁', shopping: '장보기·취사'
         };
-        const stateStyle = {
-            '예정': 'bg-blue-100 text-blue-800',
-            '방문중': 'bg-amber-100 text-amber-800',
-            '완료': 'bg-emerald-100 text-emerald-800',
-            '방문완료': 'bg-violet-100 text-violet-800',
-            '미기록': 'bg-red-600 text-white',
-            '계획 외': 'bg-gray-100 text-gray-700',
-            '승인 대기': 'bg-amber-100 text-amber-800',
-            '반려': 'bg-red-100 text-red-800'
+        // 앱 전체에서 쓰는 4색 상태 배지 체계(draft=파랑, pending=주황, approved=청록, rejected=빨강)에 맞춘다
+        const STATE_PILL = {
+            '예정': 'sp-draft', '방문중': 'sp-pending', '완료': 'sp-approved', '방문완료': 'sp-pending',
+            '미기록': 'sp-rejected', '계획 외': 'sp-neutral', '승인 대기': 'sp-pending', '반려': 'sp-rejected',
         };
         const OPEN_STATES = ['예정', '방문중', '미기록'];
 
@@ -187,8 +307,16 @@
         function pad(n) { return String(n).padStart(2, '0'); }
         function dateKey(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
         function ymKey(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; }
+        // "YYYY-MM-DD" 문자열을 UTC 해석 없이 로컬 자정으로 변환 (new Date(string) 사용 시 생기는 하루 밀림 방지)
+        function parseLocalDate(key) { const [y, m, d] = key.split('-').map(Number); return new Date(y, m - 1, d); }
+        function weekRangeOf(key) {
+            const d = parseLocalDate(key);
+            const start = new Date(d); start.setDate(d.getDate() - d.getDay());
+            const end = new Date(start); end.setDate(start.getDate() + 6);
+            return { start, end };
+        }
         function hm(iso) { return iso ? new Date(iso).toTimeString().slice(0, 5) : null; }
-        function badge(state) { return `<span class="px-3 py-1 rounded-full text-xs font-bold ${stateStyle[state] || 'bg-gray-100 text-gray-700'}">${state}</span>`; }
+        function badge(state) { return `<span class="status-pill2 ${STATE_PILL[state] || 'sp-neutral'}">${state}</span>`; }
         function labels(codes) { return codes.map(c => CARE_ITEM_LABELS[c] || c).join(', '); }
         function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text ?? ''; return div.innerHTML; }
         function coverage(it) {
@@ -223,16 +351,16 @@
         }
 
         function actions(it) {
-            if (it.state === '승인 대기') return '<span class="text-sm text-amber-700">센터장 승인을 기다리는 중입니다</span>';
-            if (it.state === '반려') return `<button onclick="openResubmit(${it.schedule_id})" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">수정 후 다시 제안</button>`;
-            if (!it.planned) return `<a href="${recordUrl(it)}" class="text-xs font-bold text-emerald-700 underline">기록 보기</a>`;
-            if (it.state === '예정') return `<button onclick="markArrived(${it.schedule_id})" class="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700">도착</button>`;
-            if (it.state === '방문중') return `<button onclick="markLeft(${it.schedule_id})" class="px-4 py-2 bg-amber-500 text-white text-sm font-bold rounded-lg hover:bg-amber-600">퇴실</button>
-                <a href="${recordUrl(it)}" class="ml-2 px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">기록 작성</a>`;
-            if (it.state === '방문완료') return `<a href="${recordUrl(it)}" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">기록 작성</a>`;
+            if (it.state === '승인 대기') return '<span class="text-sm" style="color:var(--warn);">센터장 승인을 기다리는 중입니다</span>';
+            if (it.state === '반려') return `<button onclick="openResubmit(${it.schedule_id})" class="btn-solid">수정 후 다시 제안</button>`;
+            if (!it.planned) return `<a href="${recordUrl(it)}" class="text-xs font-bold" style="color:var(--teal);text-decoration:underline;">기록 보기</a>`;
+            if (it.state === '예정') return `<button onclick="markArrived(${it.schedule_id})" class="btn-outline">도착</button>`;
+            if (it.state === '방문중') return `<button onclick="markLeft(${it.schedule_id})" class="btn-outline">퇴실</button>
+                <a href="${recordUrl(it)}" class="btn-solid" style="margin-left:8px;display:inline-block;">기록 작성</a>`;
+            if (it.state === '방문완료') return `<a href="${recordUrl(it)}" class="btn-solid" style="display:inline-block;">기록 작성</a>`;
             if (it.state === '미기록') {
-                const arrive = !it.arrived_at ? `<button onclick="markArrived(${it.schedule_id})" class="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 mr-2">도착</button>` : '';
-                return arrive + `<a href="${recordUrl(it)}" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">기록 작성</a>`;
+                const arrive = !it.arrived_at ? `<button onclick="markArrived(${it.schedule_id})" class="btn-outline" style="margin-right:8px;">도착</button>` : '';
+                return arrive + `<a href="${recordUrl(it)}" class="btn-solid" style="display:inline-block;">기록 작성</a>`;
             }
             return '';
         }
@@ -242,70 +370,213 @@
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (!token || !user.id) { window.location.href = './login.html'; return; }
             currentUser = user;
-            document.getElementById('userName').textContent = `${user.full_name || '사용자'}님`;
+            document.getElementById('userName').textContent = user.full_name || '사용자';
+            document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
             renderSidebar();
-            applyNavIcons();
+            groupSidebar();
+            loadBellBadge();
             document.getElementById('monthPicker').value = ymKey(currentMonth);
             selectedDate = dateKey(new Date());
             loadSchedules();
         }
 
-        // 시안의 메뉴 아이콘 (assets/user_design/20~27_nav_*): 이 화면의 사이드바에만 적용한다
-        const NAV_ICON_FILES = {
-            '대시보드': '20_nav_dashboard_icon.png',
-            '이용자관리': '21_nav_user_icon.png',
-            '음성 기록': '22_nav_voice_icon.png',
-            '방문계획 승인': '23_nav_service_plan_icon.png',
-            '청부관리': '24_nav_billing_icon.png',
-            '수익분석': '25_nav_statistics_icon.png',
-            '알림': '26_nav_notice_icon.png',
-            '설정': '27_nav_settings_icon.png',
-        };
-        function applyNavIcons() {
-            document.querySelectorAll('.sidebar-nav .side-item, #navContent .side-item').forEach(item => {
-                const file = NAV_ICON_FILES[item.querySelector('span:last-child')?.textContent.trim()];
-                if (file) item.querySelector('.side-icon').innerHTML = `<img src="assets/user_design/${file}" width="24" height="24" alt="">`;
+        // 대시보드·나의 청구·나의 급여와 동일한 사이드바 그룹 라벨 (menu.js는 그대로 두고 이 페이지에서만 DOM 보정)
+        const SIDE_GROUPS_CG = [
+            ['매인', ['대시보드']],
+            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리']],
+            ['방문 서비스 운영', ['음성 기록', '나의 일정', '방문계획 승인', '보호자 소통']],
+            ['청구 및 경영 관리', ['나의 청부', '나의 급여', '청부관리', '월별정산', '수익분석', '급여 확정']],
+        ];
+        function groupSidebar() {
+            const nav = document.getElementById('navContent');
+            const items = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+            if (!items.length) return;
+            const byLabel = {};
+            items.forEach(item => { byLabel[item.querySelector('span:last-child')?.textContent.trim()] = item; });
+            const frag = document.createDocumentFragment();
+            SIDE_GROUPS_CG.forEach(([groupLabel, labels]) => {
+                const found = labels.map(l => byLabel[l]).filter(Boolean);
+                if (!found.length) return;
+                const h = document.createElement('div');
+                h.className = 'side-group-label';
+                h.textContent = groupLabel;
+                frag.appendChild(h);
+                found.forEach(el => frag.appendChild(el));
             });
+            items.forEach(el => { if (!frag.contains(el)) frag.appendChild(el); });
+            nav.innerHTML = '';
+            nav.appendChild(frag);
         }
+
+        async function loadBellBadge() {
+            try {
+                const r = await fetch(`${API_URL}/notifications/mine`);
+                if (!r.ok) return;
+                const d = await r.json();
+                const n = d.unread_count || 0;
+                if (n > 0) {
+                    const badgeEl = document.getElementById('bellBadge');
+                    badgeEl.textContent = n > 99 ? '99+' : n;
+                    badgeEl.style.display = 'flex';
+                }
+            } catch (e) { /* 부가 기능이므로 실패해도 무시 */ }
+        }
+
+        // 월간/주간/일간/목록 보기 전환. 목록은 별도 화면이 아니라 하단 테이블로 스크롤만 한다
+        const VIEW_BTN_IDS = { cal: 'viewCalBtn', week: 'viewWeekBtn', day: 'viewDayBtn' };
+        function setView(mode) {
+            if (mode === 'list') {
+                document.getElementById('listSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                return;
+            }
+            viewMode = mode;
+            Object.entries(VIEW_BTN_IDS).forEach(([k, id]) => document.getElementById(id).classList.toggle('active', k === mode));
+            document.getElementById('viewListBtn').classList.remove('active');
+            document.getElementById('calendarView').style.display = mode === 'cal' ? '' : 'none';
+            document.getElementById('weekView').style.display = mode === 'week' ? '' : 'none';
+            document.getElementById('dayView').style.display = mode === 'day' ? '' : 'none';
+            renderPeriodTitle();
+            if (mode === 'week') renderWeekView();
+            if (mode === 'day') renderDayView();
+        }
+
+        function renderPeriodTitle() {
+            const el = document.getElementById('currentMonth');
+            if (viewMode === 'day') {
+                el.textContent = parseLocalDate(selectedDate || dateKey(new Date())).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+            } else if (viewMode === 'week') {
+                const { start, end } = weekRangeOf(selectedDate || dateKey(new Date()));
+                el.textContent = `${start.getFullYear()}년 ${start.getMonth() + 1}.${start.getDate()} - ${end.getMonth() + 1}.${end.getDate()}`;
+            } else {
+                el.textContent = `${currentMonth.getMonth() + 1}월 ${currentMonth.getFullYear()}`;
+            }
+        }
+
+        // 주간 보기: 선택된 날짜가 속한 일~토 7일을 컬럼으로 보여 준다 (달력과 같은 items를 그대로 사용)
+        function renderWeekView() {
+            const base = selectedDate || dateKey(new Date());
+            const { start } = weekRangeOf(base);
+            const todayKey = dateKey(new Date());
+            const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(start); d.setDate(start.getDate() + i); return d; });
+            document.getElementById('weekView').innerHTML = `<div class="grid grid-cols-7 gap-2">` + days.map(d => {
+                const key = dateKey(d);
+                const dayItems = items.filter(it => it.date === key).sort((a, b) => a.time.localeCompare(b.time));
+                const rows = dayItems.length
+                    ? dayItems.map(it => { const c = colorOf(it); return `<button onclick="openItemDetail(${it._idx})" class="week-item" style="background:${c.bg};color:${c.text};"><b>${it.time}</b> ${escapeHtml(it.resident_name || '기타')}</button>`; }).join('')
+                    : '<div class="week-empty">일정 없음</div>';
+                return `<div class="week-col ${key === todayKey ? 'today' : ''} ${key === selectedDate ? 'selected' : ''}" onclick="selectDayFromWeek('${key}')">
+                    <div class="week-col-head">${'일월화수목금토'[d.getDay()]} ${d.getDate()}</div>
+                    <div class="week-col-body">${rows}</div>
+                </div>`;
+            }).join('') + `</div>`;
+        }
+        function selectDayFromWeek(key) { selectedDate = key; renderWeekView(); renderPeriodTitle(); }
+
+        // 일간 보기: 선택된 날짜 하루치 일정을 액션 버튼까지 포함해 자세히 보여 준다
+        function renderDayView() {
+            const key = selectedDate || dateKey(new Date());
+            const dayItems = items.filter(it => it.date === key).sort((a, b) => a.time.localeCompare(b.time));
+            const box = document.getElementById('dayView');
+            if (dayItems.length === 0) {
+                box.innerHTML = '<div class="text-center py-10 text-gray-400 text-sm">해당 날짜에 일정이 없습니다</div>';
+                return;
+            }
+            box.innerHTML = dayItems.map(it => `
+                <div class="day-row">
+                    <div class="day-row-time">${timeRange(it)}</div>
+                    <img src="assets/user_design/${avatarOf(it)}" alt="" class="w-10 h-10 rounded-full object-cover shrink-0">
+                    <div class="day-row-main">
+                        <div class="day-row-name">${escapeHtml(it.resident_name || '기타 일정')} ${badge(it.state)}</div>
+                        <div class="day-row-sub">${SERVICE_LABELS[it.service_type] || it.service_type || ''}${it.planned_items.length ? ' · ' + labels(it.planned_items) : ''}</div>
+                    </div>
+                    <div class="day-row-actions">${actions(it)}</div>
+                </div>`).join('');
+        }
+
+        // 월간은 월 단위, 주간·일간은 선택 날짜 기준으로 이동한다. 월이 바뀌면 해당 월 데이터를 새로 받아온다
+        function shiftSelected(deltaDays) {
+            const base = parseLocalDate(selectedDate || dateKey(new Date()));
+            base.setDate(base.getDate() + deltaDays);
+            selectedDate = dateKey(base);
+            const newMonth = new Date(base.getFullYear(), base.getMonth(), 1);
+            if (ymKey(newMonth) !== ymKey(currentMonth)) {
+                currentMonth = newMonth;
+                document.getElementById('monthPicker').value = ymKey(currentMonth);
+                loadSchedules();
+            } else {
+                renderCalendar();
+                renderPeriodTitle();
+                if (viewMode === 'week') renderWeekView();
+                if (viewMode === 'day') renderDayView();
+            }
+        }
+
+        function prevPeriod() {
+            if (viewMode === 'week') { shiftSelected(-7); return; }
+            if (viewMode === 'day') { shiftSelected(-1); return; }
+            currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+            selectedDate = null;
+            document.getElementById('monthPicker').value = ymKey(currentMonth);
+            loadSchedules();
+        }
+        function nextPeriod() {
+            if (viewMode === 'week') { shiftSelected(7); return; }
+            if (viewMode === 'day') { shiftSelected(1); return; }
+            currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+            selectedDate = null;
+            document.getElementById('monthPicker').value = ymKey(currentMonth);
+            loadSchedules();
+        }
+
+        // 캘린더만 보이게 하고(사이드바·요약·우측패널·목록은 CSS로 숨김) 브라우저 인쇄창을 띄운다
+        function printCalendar() { window.print(); }
 
         async function loadSchedules() {
             try {
                 const r = await fetch(`${API_URL}/schedule/caregiver-view?caregiver_id=${currentUser.id}&year_month=${ymKey(currentMonth)}&user_id=${currentUser.id}&user_role=${currentUser.role}`);
                 const d = await r.json();
                 items = (d.items || []).map((it, i) => ({ ...it, _idx: i }));
-                renderSummary(d);
             } catch (e) {
                 items = [];
-                document.getElementById('summaryLine').textContent = '일정을 불러오지 못했습니다';
+                showMessage('일정을 불러오지 못했습니다: ' + e.message, 'error');
             }
-            document.getElementById('currentMonth').textContent = `${currentMonth.getMonth() + 1}월 ${currentMonth.getFullYear()}`;
             buildResidentColors();
+            renderStats();
+            renderPeriodTitle();
             renderCalendar();
             renderLegend();
+            if (viewMode === 'week') renderWeekView();
+            if (viewMode === 'day') renderDayView();
             renderTodayList();
+            renderAttention();
             fillFilterOptions();
             renderTable();
         }
 
         async function markArrived(id) {
-            await fetch(`${API_URL}/schedule/${id}/arrive?user_id=${currentUser.id}&user_role=${currentUser.role}`, { method: 'POST' });
+            const r = await fetch(`${API_URL}/schedule/${id}/arrive?user_id=${currentUser.id}&user_role=${currentUser.role}`, { method: 'POST' });
+            if (!r.ok) { const e = await r.json().catch(() => ({})); showMessage(e.detail || '도착 기록에 실패했습니다', 'error'); return; }
             loadSchedules();
         }
 
         async function markLeft(id) {
             const r = await fetch(`${API_URL}/schedule/${id}/depart?user_id=${currentUser.id}&user_role=${currentUser.role}`, { method: 'POST' });
-            if (!r.ok) { const e = await r.json().catch(() => ({})); alert(e.detail || '퇴실 기록에 실패했습니다'); return; }
+            if (!r.ok) { const e = await r.json().catch(() => ({})); showMessage(e.detail || '퇴실 기록에 실패했습니다', 'error'); return; }
             loadSchedules();
         }
 
-        function renderSummary(d) {
-            const s = d.summary || {};
-            const parts = [`방문 계획 ${d.items.filter(it => it.planned).length}건`, `완료 ${s['완료'] || 0}건`];
-            const needRecord = (s['방문완료'] || 0) + (s['미기록'] || 0);
-            if (needRecord) parts.push(`기록 필요 ${needRecord}건`);
-            const unplanned = d.items.filter(it => !it.planned).length;
-            if (unplanned) parts.push(`계획 외 ${unplanned}건`);
-            document.getElementById('summaryLine').textContent = parts.join(' · ');
+        // 상단 요약 카드: 오늘 방문 예정/완료, 기록 작성 필요(이번 달 누적), 이번 달 방문 계획
+        function renderStats() {
+            const todayKey = dateKey(new Date());
+            const todayItems = items.filter(it => it.date === todayKey);
+            const todayPlanned = todayItems.filter(it => it.planned).length;
+            const todayDone = todayItems.filter(it => it.state === '완료').length;
+            const needRecord = items.filter(it => it.state === '방문완료' || it.state === '미기록').length;
+            const monthPlanned = items.filter(it => it.planned).length;
+            document.getElementById('statTodayPlanned').textContent = `${todayPlanned}건`;
+            document.getElementById('statTodayDone').textContent = `${todayDone}건`;
+            document.getElementById('statNeedRecord').textContent = `${needRecord}건`;
+            document.getElementById('statMonthPlanned').textContent = `${monthPlanned}건`;
         }
 
         function renderCalendar() {
@@ -328,7 +599,7 @@
                 const key = `${year}-${pad(month + 1)}-${pad(day)}`;
                 const dayItems = items.filter(it => it.date === key);
                 const cell = document.createElement('div');
-                cell.className = `cal-cell ${key === todayKey ? 'today' : ''} ${key === selectedDate ? 'ring-2 ring-emerald-400' : ''}`;
+                cell.className = `cal-cell ${key === todayKey ? 'today' : ''} ${key === selectedDate ? 'selected' : ''}`;
                 const pills = dayItems.slice(0, 2).map(it => {
                     const c = colorOf(it);
                     return `<div class="cal-pill" style="background:${c.bg};color:${c.text};">${escapeHtml(it.resident_name || '기타')}<br>${timeRange(it)}</div>`;
@@ -349,25 +620,46 @@
 
         function renderTodayList() {
             const todayKey = dateKey(new Date());
-            document.getElementById('todayDateLabel').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+            document.getElementById('todayDateLabel').textContent = new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
             const todayItems = items.filter(it => it.date === todayKey).sort((a, b) => a.time.localeCompare(b.time));
             const list = document.getElementById('todayList');
             if (todayItems.length === 0) {
-                list.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">오늘의 일정이 없습니다</div>';
+                list.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">오늘의 일정이 없습니다</div>';
                 return;
             }
             list.innerHTML = todayItems.map(it => {
                 const c = colorOf(it);
                 return `
-                <button onclick="openItemDetail(${it._idx})" class="w-full text-left flex items-center gap-3 p-3 rounded-xl border-l-4 bg-gray-50 hover:bg-gray-100" style="border-color:${c.dot}">
-                    <img src="assets/user_design/${avatarOf(it)}" alt="" class="w-10 h-10 rounded-full object-cover shrink-0">
+                <button onclick="openItemDetail(${it._idx})" class="w-full text-left flex items-center gap-3 p-2.5 rounded-xl border-l-4 bg-gray-50 hover:bg-gray-100" style="border-color:${c.dot}">
+                    <img src="assets/user_design/${avatarOf(it)}" alt="" class="w-9 h-9 rounded-full object-cover shrink-0">
                     <div class="flex-1 min-w-0">
-                        <div class="font-bold text-gray-900 truncate">${escapeHtml(it.resident_name || '기타 일정')}</div>
+                        <div class="font-bold text-gray-900 text-sm truncate">${escapeHtml(it.resident_name || '기타 일정')}</div>
                         <div class="text-xs text-gray-500 truncate">${timeRange(it)} · ${it.planned_items.length ? labels(it.planned_items) : '계획 외'}</div>
                     </div>
                     ${badge(it.state)}
                 </button>`;
             }).join('');
+        }
+
+        // 확인이 필요한 일정: 미기록·반려·승인 대기 상태만 모아 보여 준다 (지연 예상 등 추정 데이터는 만들지 않는다)
+        const ATTENTION_LABEL = { '미기록': '기록 필요', '반려': '반려 사유 확인', '승인 대기': '승인 대기 중' };
+        function renderAttention() {
+            const rows = items.filter(it => it.state in ATTENTION_LABEL)
+                .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+            document.getElementById('attentionCount').textContent = `${rows.length}건`;
+            const box = document.getElementById('attentionList');
+            if (rows.length === 0) {
+                box.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">확인이 필요한 일정이 없습니다</div>';
+                return;
+            }
+            box.innerHTML = rows.slice(0, 6).map(it => `
+                <button class="attn-row" onclick="openItemDetail(${it._idx})">
+                    <div>
+                        <div class="attn-main">${escapeHtml(it.resident_name || '기타 일정')}</div>
+                        <div class="attn-sub">${it.date} ${it.time}</div>
+                    </div>
+                    ${badge(it.state)}
+                </button>`).join('') + (rows.length > 6 ? `<div class="text-xs text-gray-400 text-center mt-1">외 ${rows.length - 6}건 더 있음</div>` : '');
         }
 
         function fillFilterOptions() {
@@ -386,28 +678,32 @@
 
         function renderTable() {
             const residentF = document.getElementById('residentFilter').value;
+            const serviceF = document.getElementById('serviceFilter').value;
             const statusF = document.getElementById('statusFilter').value;
             const filtered = items.filter(it =>
-                (!residentF || it.resident_name === residentF) && (!statusF || it.state === statusF));
+                (!residentF || it.resident_name === residentF) &&
+                (!serviceF || it.service_type === serviceF) &&
+                (!statusF || it.state === statusF));
             const tbody = document.getElementById('scheduleTableBody');
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="py-10 text-center text-gray-400">조건에 맞는 일정이 없습니다</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#94A3B8;">조건에 맞는 일정이 없습니다</td></tr>';
                 return;
             }
             tbody.innerHTML = filtered.map(it => `
-                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="py-4 px-4 text-gray-900 font-semibold">${it.date}</td>
-                    <td class="py-4 px-4 text-gray-700">${it.time}${it.arrived_at ? `<div class="text-xs text-gray-500">도착 ${hm(it.arrived_at)}</div>` : ''}</td>
-                    <td class="py-4 px-4">
+                <tr>
+                    <td style="font-weight:700;color:var(--navy);">${it.date}</td>
+                    <td>${it.time}${it.arrived_at ? `<div style="font-size:11px;color:#94A3B8;">도착 ${hm(it.arrived_at)}</div>` : ''}</td>
+                    <td>
                         <div class="flex items-center gap-2">
-                            <img src="assets/user_design/${avatarOf(it)}" alt="" class="w-8 h-8 rounded-full object-cover">
-                            <span class="font-semibold text-gray-900">${escapeHtml(it.resident_name || '-')}${it.planned ? '' : ' <span class="text-xs text-gray-500">(계획 외)</span>'}</span>
+                            <img src="assets/user_design/${avatarOf(it)}" alt="" class="w-7 h-7 rounded-full object-cover">
+                            <span style="font-weight:600;">${escapeHtml(it.resident_name || '-')}${it.planned ? '' : ' <span style="font-size:11px;color:#94A3B8;">(계획 외)</span>'}</span>
                         </div>
                     </td>
-                    <td class="py-4 px-4 text-sm text-gray-700">${it.duration_minutes ? `${it.duration_minutes}분` : '-'}</td>
-                    <td class="py-4 px-4 text-sm text-gray-700">${coverage(it)}</td>
-                    <td class="py-4 px-4">${badge(it.state)}</td>
-                    <td class="py-4 px-4"><button onclick="openItemDetail(${it._idx})" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50">상세보기</button></td>
+                    <td>${SERVICE_LABELS[it.service_type] || it.service_type || '-'}</td>
+                    <td>${it.duration_minutes ? `${it.duration_minutes}분` : '-'}</td>
+                    <td>${coverage(it)}</td>
+                    <td>${badge(it.state)}</td>
+                    <td><button onclick="openItemDetail(${it._idx})" class="btn-outline">상세보기</button></td>
                 </tr>`).join('');
         }
 
@@ -427,16 +723,17 @@
             const address = it.address ? `<div class="text-sm text-gray-700 mt-2">주소: ${escapeHtml(it.address)}</div>` : '';
             const notes = it.care_notes ? `<div class="text-sm text-gray-600 mt-1">메모: ${escapeHtml(it.care_notes.slice(0, 120))}</div>` : '';
             const rejected = it.state === '반려' && it.review_note
-                ? `<div class="text-sm text-red-600 font-semibold mt-2">반려 사유: ${escapeHtml(it.review_note)}</div>` : '';
+                ? `<div class="text-sm font-semibold mt-2" style="color:var(--danger);">반려 사유: ${escapeHtml(it.review_note)}</div>` : '';
             const hint = it.state === '방문완료'
-                ? '<div class="text-sm text-violet-700 font-semibold mt-2">퇴실했습니다. 방문 기록을 작성해 주세요.</div>'
+                ? '<div class="text-sm font-semibold mt-2" style="color:var(--warn);">퇴실했습니다. 방문 기록을 작성해 주세요.</div>'
                 : it.state === '미기록'
-                ? '<div class="text-sm text-red-600 font-semibold mt-2">방문 후 기록이 없습니다. 기록을 작성해 주세요.</div>' : '';
+                ? '<div class="text-sm font-semibold mt-2" style="color:var(--danger);">방문 후 기록이 없습니다. 기록을 작성해 주세요.</div>' : '';
             document.getElementById('detailBody').innerHTML = `
                 <div class="flex justify-between items-start gap-4">
                     <div>
                         <div class="text-lg font-bold text-gray-900">${escapeHtml(it.resident_name || '-')}${it.planned ? '' : ' <span class="text-xs text-gray-500">(계획 외)</span>'}</div>
                         <div class="text-sm text-gray-600 mt-1">${it.date} · ${timeInfo}</div>
+                        <div class="text-xs mt-1" style="color:#94A3B8;">${SERVICE_LABELS[it.service_type] || it.service_type || ''}</div>
                         ${address}${notes}
                     </div>
                     <div class="text-right">
@@ -466,8 +763,8 @@
             wrap.id = 'proposeModal';
             wrap.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;';
             wrap.innerHTML = `
-                <div class="bg-white rounded-xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                    <h2 id="proposeTitle" class="text-xl font-bold mb-4">방문 계획 제안</h2>
+                <div class="bg-white rounded-2xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                    <h2 id="proposeTitle" class="text-xl font-extrabold text-gray-900 mb-4">방문 계획 제안</h2>
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-bold mb-1">이용자</label>
@@ -482,13 +779,17 @@
                             <select id="proposeDuration" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${[30, 60, 90, 120, 180, 240].map(m => `<option value="${m}" ${m === 60 ? 'selected' : ''}>${m}분</option>`).join('')}</select>
                         </div>
                         <div>
+                            <label class="block text-sm font-bold mb-1">서비스 유형</label>
+                            <select id="proposeServiceType" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${Object.entries(SERVICE_LABELS).map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>
+                        </div>
+                        <div>
                             <label class="block text-sm font-bold mb-1">계획 제공 항목</label>
                             <div class="grid grid-cols-2 gap-2 text-sm">${Object.entries(CARE_ITEM_LABELS).map(([v, l]) => `<label class="flex items-center gap-2"><input type="checkbox" name="proposeItem" value="${v}"> ${l}</label>`).join('')}</div>
                         </div>
                     </div>
                     <div class="flex gap-3 mt-6">
-                        <button onclick="saveProposal()" class="flex-1 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700">제안하기</button>
-                        <button onclick="closePropose()" class="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200">취소</button>
+                        <button onclick="saveProposal()" class="btn-solid" style="flex:1;padding:10px;">제안하기</button>
+                        <button onclick="closePropose()" class="btn-outline" style="flex:1;padding:10px;">취소</button>
                     </div>
                 </div>`;
             document.body.appendChild(wrap);
@@ -505,6 +806,7 @@
             const base = item ? new Date(item.date + 'T' + item.time) : new Date((selectedDate || dateKey(new Date())) + 'T09:00');
             document.getElementById('proposeDate').value = `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}T${pad(base.getHours())}:${pad(base.getMinutes())}`;
             document.getElementById('proposeDuration').value = item && item.duration_minutes ? item.duration_minutes : 60;
+            document.getElementById('proposeServiceType').value = item && item.service_type ? item.service_type : 'basic_care';
             const planned = item ? item.planned_items : [];
             document.querySelectorAll('input[name="proposeItem"]').forEach(cb => { cb.checked = planned.includes(cb.value); });
             if (item) sel.value = item.resident_id;
@@ -528,6 +830,7 @@
                 user_role: 'caregiver',
                 scheduled_date: date,
                 duration_minutes: parseInt(document.getElementById('proposeDuration').value),
+                service_type: document.getElementById('proposeServiceType').value,
                 planned_items: Array.from(document.querySelectorAll('input[name="proposeItem"]:checked')).map(cb => cb.value).join(',')
             };
             let r;
@@ -542,9 +845,15 @@
             loadSchedules();
         }
 
-        function prevMonth() { currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1); selectedDate = null; document.getElementById('monthPicker').value = ymKey(currentMonth); loadSchedules(); }
-        function nextMonth() { currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1); selectedDate = null; document.getElementById('monthPicker').value = ymKey(currentMonth); loadSchedules(); }
         function goToday() { currentMonth = new Date(); currentMonth.setDate(1); selectedDate = dateKey(new Date()); document.getElementById('monthPicker').value = ymKey(currentMonth); loadSchedules(); }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `mb-5 p-4 rounded-lg text-sm ${type === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-800'}`;
+            msg.classList.remove('hidden');
+        }
+
         function logout() { if (confirm('로그아웃하시겠습니까?')) { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; } }
         window.addEventListener('load', checkAuth);
     </script>
