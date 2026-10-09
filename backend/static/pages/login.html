@@ -6,168 +6,116 @@
     <title>돌봄케어 - 로그인</title>
     <link rel="stylesheet" href="theme.css">
     <style>
-        body { min-height: 100vh; margin: 0; }
-        .login-shell {
-            min-height: 100vh;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0;
         }
-        .login-brand {
-            padding: 64px;
-            background: var(--ink);
-            color: #EEF3EF;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .login-wordmark {
-            font-family: 'Gowun Batang', serif;
-            font-size: 44px;
-            font-weight: 700;
-            line-height: 1.15;
-            margin-top: 20px;
-        }
-        .login-seal {
-            width: 56px;
-            height: 56px;
-            font-size: 18px;
-            border-color: #F0B49B;
-            color: #F0B49B;
-            background: transparent;
-            transform: rotate(-5deg);
-            border-width: 2px;
-        }
-        .login-art {
-            width: 100%;
-            max-width: 420px;
-            height: auto;
-            margin: 8px 0;
-        }
-        .login-lede {
-            max-width: 34ch;
-            font-size: 17px;
-            line-height: 1.8;
-            color: #C9D6CE;
-        }
-        .login-brand-foot {
-            font-size: 13px;
-            color: #9FB1A7;
-            line-height: 1.7;
-        }
-        .login-form-wrap {
-            padding: 64px 48px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background: var(--sheet);
-        }
-        .login-form-wrap h1 { font-size: 30px; margin: 0 0 6px; }
-        .login-form-wrap .sub { color: var(--ink-soft); font-size: 15px; margin: 0 0 32px; }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; background: var(--bg); overflow: hidden; }
+        body { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif; color: var(--charcoal); }
+
+        /* PC에서는 화면 높이에 딱 맞춰서 스크롤 없이 한 화면에 다 보이게 한다 */
+        .login-shell { height: 100vh; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(380px, 560px); }
+
+        /* 왼쪽: 배너 이미지 전체를 보여준다 (글자·로고가 잘리지 않도록 contain + 여백은 배경색으로) */
+        .login-banner { height: 100%; background: #EFF4F0; display: flex; align-items: center; justify-content: center; padding: 24px; overflow: hidden; }
+        .login-banner img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 12px; }
+
+        .login-form-wrap { height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 32px; background: #fff; }
+        .login-card { width: 100%; max-width: 420px; }
+
+        .login-logo { text-align: center; margin-bottom: 28px; }
+        .login-logo .name { font-size: 24px; font-weight: 800; color: var(--navy); letter-spacing: -0.01em; }
+        .login-logo .en { font-size: 12px; color: #94A3B8; font-weight: 600; margin-top: 2px; }
+        .login-logo .sub { font-size: 14px; color: #64748B; margin-top: 14px; }
+
         .field { margin-bottom: 18px; }
-        .field label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+        .field label { display: block; font-size: 13px; font-weight: 700; color: var(--charcoal); margin-bottom: 7px; }
         .field input {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 12px 14px;
-            border: 1px solid #C5CFC8;
-            border-radius: 6px;
-            font-size: 16px;
-            background: #FBFCFA;
-            color: var(--ink);
+            width: 100%; height: 50px; padding: 0 16px; border: 1.5px solid var(--line2); border-radius: 10px;
+            font-size: 15px; background: #fff; color: var(--charcoal); font-family: inherit;
         }
-        .field input:focus { border-color: var(--ink); outline: none; box-shadow: 0 0 0 3px #DCE6DF; }
+        .field input:focus { border-color: var(--teal); outline: none; box-shadow: 0 0 0 3px rgba(15,139,128,0.12); }
+
         .password-wrap { position: relative; }
         .password-toggle {
-            position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; color: var(--ink-soft);
-            font-size: 13px; padding: 6px 8px; cursor: pointer; text-decoration: underline;
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #64748B; font-size: 13px; font-weight: 600;
+            padding: 6px 4px; cursor: pointer;
         }
-        .check-row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-soft); margin: 4px 0 24px; }
+
+        .check-row { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #64748B; margin: 2px 0 22px; }
+        .check-row input { width: 16px; height: 16px; accent-color: var(--teal); }
+
         .login-button {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 6px;
-            background: var(--persimmon);
-            color: #fff;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
+            width: 100%; height: 52px; border: none; border-radius: 10px; background: var(--teal);
+            color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; font-family: inherit;
         }
-        .login-button:hover:not(:disabled) { background: var(--persimmon-hover); }
+        .login-button:hover:not(:disabled) { background: #0C756C; }
         .login-button:disabled { opacity: 0.6; cursor: not-allowed; }
-        .notice {
-            display: none;
-            padding: 12px 14px;
-            border-radius: 6px;
-            font-size: 14px;
-            margin-bottom: 18px;
-        }
+
+        .notice { display: none; padding: 12px 14px; border-radius: 8px; font-size: 13.5px; margin-bottom: 16px; }
         .notice.show { display: block; }
-        .notice.error { background: #FBEDE7; color: #7A2E14; border: 1px solid #F0C9B6; }
-        .notice.ok { background: #E8F0EA; color: #1E2B26; border: 1px solid #C5D8CB; }
-        .login-help { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 14px; color: var(--ink-soft); line-height: 1.8; }
-        .login-help a { color: var(--persimmon); font-weight: 700; }
-        @media (max-width: 860px) {
-            .login-shell { grid-template-columns: 1fr; }
-            .login-brand { padding: 32px 24px; min-height: 0; gap: 20px; }
-            .login-art, .login-brand-foot { display: none; }
-            .login-wordmark { font-size: 30px; }
-            .login-form-wrap { padding: 36px 24px 56px; }
+        .notice.error { background: #FDE8E8; color: #B91C1C; border: 1px solid #FBD5D5; }
+        .notice.ok { background: #E6F3F1; color: #0C756C; border: 1px solid #CDEAE5; }
+
+        .login-help { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line2); font-size: 13.5px; color: #64748B; line-height: 1.7; }
+        .login-help a { color: var(--teal); font-weight: 700; text-decoration: none; }
+        .login-help a:hover { text-decoration: underline; }
+        .login-help p + p { margin-top: 8px; }
+
+        @media (max-width: 900px) {
+            html, body { overflow: auto; }
+            .login-shell { height: auto; min-height: 100vh; grid-template-columns: 1fr; }
+            .login-banner { display: none; }
+            .login-form-wrap { height: auto; padding: 40px 24px; }
         }
     </style>
 </head>
 <body>
     <div class="login-shell">
-        <section class="login-brand">
-            <div>
-                <span class="seal login-seal">돌봄</span>
-                <div class="login-wordmark">돌봄케어</div>
-            </div>
-            <div id="brandArt" class="login-art" aria-hidden="true"></div>
-            <div>
-                <p class="login-lede">방문 기록은 빠르게, 돌봄의 내용은 정확하게 남깁니다. 요양사의 일정과 청부, 보호자와의 소통을 한곳에서 확인합니다.</p>
-            </div>
-            <div class="login-brand-foot">
-                직원 계정은 센터장이 만듭니다. 비밀번호를 잊었다면 센터장에게 요청해 주세요.
-            </div>
+        <section class="login-banner">
+            <img src="assets/user_design/login_banner.png" alt="돌봄케어 - 사람을 위한 따뜻한 돌봄, 더 편리한 업무">
         </section>
 
         <section class="login-form-wrap">
-            <h1>로그인</h1>
-            <p class="sub">계정 이메일과 비밀번호를 입력하세요.</p>
-
-            <div id="errorMessage" class="notice error" role="alert"></div>
-            <div id="successMessage" class="notice ok" role="status"></div>
-
-            <form id="loginForm" novalidate>
-                <div class="field">
-                    <label for="email">이메일</label>
-                    <input type="email" id="email" placeholder="you@example.com" autocomplete="username" required>
+            <div class="login-card">
+                <div class="login-logo">
+                    <div class="name">돌봄케어</div>
+                    <div class="en">Care Management</div>
+                    <p class="sub">로그인하여 계정 이메일과 비밀번호를 입력하세요.</p>
                 </div>
-                <div class="field">
-                    <label for="password">비밀번호</label>
-                    <div class="password-wrap">
-                        <input type="password" id="password" autocomplete="current-password" required>
-                        <button type="button" id="togglePassword" class="password-toggle" aria-label="비밀번호 보기">보기</button>
+
+                <div id="errorMessage" class="notice error" role="alert"></div>
+                <div id="successMessage" class="notice ok" role="status"></div>
+
+                <form id="loginForm" novalidate>
+                    <div class="field">
+                        <label for="email">이메일</label>
+                        <input type="email" id="email" placeholder="you@example.com" autocomplete="username" required>
                     </div>
-                </div>
-                <label class="check-row">
-                    <input type="checkbox" id="rememberMe">
-                    이메일 기억하기
-                </label>
-                <button type="submit" id="loginButton" class="login-button">로그인</button>
-            </form>
+                    <div class="field">
+                        <label for="password">비밀번호</label>
+                        <div class="password-wrap">
+                            <input type="password" id="password" autocomplete="current-password" required>
+                            <button type="button" id="togglePassword" class="password-toggle" aria-label="비밀번호 보기">보기</button>
+                        </div>
+                    </div>
+                    <label class="check-row">
+                        <input type="checkbox" id="rememberMe">
+                        이메일 기억하기
+                    </label>
+                    <button type="submit" id="loginButton" class="login-button">로그인</button>
+                </form>
 
-            <div class="login-help">
-                <p>보호자이신가요? 센터에서 받은 초대 코드로 <a href="./guardian_signup.html">보호자 가입</a>을 해 주세요.</p>
+                <div class="login-help">
+                    <p>보호자이신가요? 센터에서 받은 초대 코드로 <a href="./guardian_signup.html">보호자 가입</a>을 해 주세요.</p>
+                    <p>직원 계정은 센터장이 만듭니다. 비밀번호를 잊었다면 센터장에게 요청해 주세요.</p>
+                </div>
             </div>
         </section>
     </div>
 
-    <script src="art.js"></script>
     <script>
-        document.getElementById('brandArt').innerHTML = ART.visitScene;
         const loginForm = document.getElementById('loginForm');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
