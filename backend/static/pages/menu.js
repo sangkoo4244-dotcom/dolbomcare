@@ -100,6 +100,9 @@ function renderSidebar() {
     const current = window.location.pathname.split('/').pop();
     const nav = document.querySelector('#navContent, .sidebar-nav');
     nav.style.padding = '16px';
+    nav.style.overflowY = 'auto';
+    nav.style.flex = '1 1 auto';
+    nav.style.minHeight = '0';
     nav.innerHTML = items.map(item => `
         <a href="./${item.href}" class="side-item ${item.href === current ? 'active' : ''}">
             <span class="side-icon">${MENU_ICONS[item.icon] || item.icon}</span>
@@ -112,6 +115,18 @@ function renderSidebar() {
         </a>
     `;
     showUnreadMessageBadge();
+
+    // groupSidebar()가 #navContent 안쪽을 통째로 다시 그리므로, 거기 휩쓸리지 않게 nav 바깥(aside)에 따로 붙인다
+    if (!document.getElementById('sideCredit') && nav.parentElement) {
+        const credit = document.createElement('div');
+        credit.id = 'sideCredit';
+        credit.style.cssText = 'flex: 0 0 auto; padding: 12px 16px 16px; border-top: 1px solid #374151; font-size: 11px; line-height: 1.8;';
+        credit.innerHTML = `
+            <a href="/" target="_blank" rel="noopener" style="display:block; color: #9ca3af; text-decoration: none; font-weight: 700;">이음로직</a>
+            <a href="mailto:contact@eeum-logic.com" style="display:block; color: #6b7280; text-decoration: none;">contact@eeum-logic.com</a>
+        `;
+        nav.parentElement.appendChild(credit);
+    }
 }
 
 // 보호자 소통 메뉴에 안 읽은 메시지 개수를 표시한다 (실패해도 메뉴는 그대로 둔다)
