@@ -69,7 +69,7 @@ async def create_billing_record(
         raise HTTPException(status_code=404, detail="Resident not found")
 
     # 청구액 계산: 등급 기반
-    care_grade = resident.care_grade if resident.care_grade else 1
+    care_grade = resident.care_grade  # None = 인지지원등급 (CARE_GRADE_LIMITS에 None 키가 있다)
     client_type = resident.client_type if resident.client_type else "일반"
 
     # 월 인정급여액을 기준으로 청부액 계산 (공단 기준: 월 1회 청구)

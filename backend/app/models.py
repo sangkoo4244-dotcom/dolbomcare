@@ -43,7 +43,7 @@ class Resident(Base):
     admission_date = Column(DateTime)
     health_status = Column(String)  # 'stable', 'warning', 'critical'
     guardian_id = Column(Integer, ForeignKey("users.id"))
-    care_grade = Column(Integer, default=1)  # 1~5등급, null=인지지원등급
+    care_grade = Column(Integer, nullable=True)  # 1~5등급, null=인지지원등급 (default를 두면 SQLAlchemy가 명시적 None도 1로 바꿔버린다)
     client_type = Column(String, default="일반")  # '일반', '차상위계층', '기초생활보장', '의료급여'
     gender = Column(String, nullable=True)  # '남', '여'
     address = Column(String, nullable=True)

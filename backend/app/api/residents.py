@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from typing import Optional
 from app.models import Resident, Center, User
 from app.schemas import ResidentCreate
 from app.database import get_db
@@ -15,7 +16,7 @@ class ResidentUpdate(BaseModel):
     name: str = None
     birth_date: str = None
     age: int = None
-    care_grade: int = None
+    care_grade: Optional[int] = None  # 필드를 아예 안 보내면 유지, None을 명시하면 인지지원등급으로 설정 (exclude_unset으로 구분)
     client_type: str = None
     health_status: str = None
     gender: str = None
@@ -161,8 +162,8 @@ async def get_resident(
 @router.put("/{resident_id}/update-grade")
 async def update_resident_grade(
     resident_id: int,
-    care_grade: int,
     client_type: str,
+    care_grade: Optional[int] = None,  # None = 인지지원등급
     db: Session = Depends(get_db),
     _: User = Depends(require_manager)
 ):
@@ -172,7 +173,7 @@ async def update_resident_grade(
         raise HTTPException(status_code=404, detail="Resident not found")
 
     # 유효성 검증
-    if care_grade not in [1, 2, 3, 4, 5]:
+    if care_grade is not None and care_grade not in [1, 2, 3, 4, 5]:
         raise HTTPException(status_code=400, detail="Invalid care grade")
 
     if client_type not in ["일반", "차상위계층", "기초생활보장", "의료급여"]:
@@ -290,11 +291,14 @@ async def update_resident(
         raise HTTPException(status_code=404, detail="Resident not found")
 
     try:
+        # care_grade는 None 자체가 유효한 값(인지지원등급)이라, "값을 안 보냄"과 "null로 보냄"을 구분해야 한다
+        provided = update_data.model_dump(exclude_unset=True)
+
         # 요양사는 건강상태 외에는 수정할 수 없다 (청구 금액에 영향을 주는 정보 보호)
         caregiver_locked = [
             name for name in ("name", "birth_date", "age", "care_grade", "client_type", "gender",
                               "recognition_number", "recognition_start", "recognition_end")
-            if getattr(update_data, name) is not None
+            if (name in provided if name == "care_grade" else getattr(update_data, name) is not None)
         ]
         if actor.role == "caregiver" and caregiver_locked:
             raise HTTPException(status_code=403, detail="요양사는 이 항목을 직접 수정할 수 없습니다. 센터장에게 변경을 요청하세요")
@@ -306,10 +310,10 @@ async def update_resident(
             resident.birth_date = date.fromisoformat(update_data.birth_date)
         if update_data.age is not None:
             resident.age = update_data.age
-        if update_data.care_grade is not None:
-            if update_data.care_grade not in [1, 2, 3, 4, 5]:
+        if "care_grade" in provided:
+            if provided["care_grade"] is not None and provided["care_grade"] not in [1, 2, 3, 4, 5]:
                 raise HTTPException(status_code=400, detail="Invalid care grade")
-            resident.care_grade = update_data.care_grade
+            resident.care_grade = provided["care_grade"]  # None = 인지지원등급
         if update_data.client_type is not None:
             if update_data.client_type not in ["일반", "차상위계층", "기초생활보장", "의료급여"]:
                 raise HTTPException(status_code=400, detail="Invalid client type")

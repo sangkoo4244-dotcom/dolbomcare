@@ -36,8 +36,10 @@ def _validate(resident: Resident, field: str, value: str):
         except ValueError:
             raise HTTPException(status_code=400, detail="생년월일은 YYYY-MM-DD 형식으로 입력해 주세요")
     if field == "care_grade":
+        if value in ("인지지원등급", "인지지원", "0"):
+            return None
         if not value.isdigit() or int(value) not in range(1, 6):
-            raise HTTPException(status_code=400, detail="등급은 1~5 사이여야 합니다")
+            raise HTTPException(status_code=400, detail="등급은 1~5 사이이거나 인지지원등급이어야 합니다")
         return int(value)
     if field == "client_type":
         if value not in CLIENT_TYPES:

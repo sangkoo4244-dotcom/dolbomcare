@@ -340,6 +340,7 @@
         };
         const CONDITION_LABELS = { good: '좋음', normal: '보통', poor: '나쁨' };
 
+        const COGNITIVE_SUPPORT_LIMIT = 676320; // 인지지원등급(care_grade 없음) 월한도
         const MONTHLY_LIMITS = {
             1: 2512900, 2: 2331200, 3: 1528200, 4: 1409700, 5: 1208900
         };
@@ -368,7 +369,7 @@
                 residents.forEach(res => {
                     const opt = document.createElement('option');
                     opt.value = res.id;
-                    opt.text = `${res.name} (${res.care_grade}등급 · ${res.client_type})`;
+                    opt.text = `${res.name} (${res.care_grade ? res.care_grade + '등급' : '인지지원등급'} · ${res.client_type})`;
                     sel.appendChild(opt);
                 });
                 const params = new URLSearchParams(window.location.search);
@@ -417,13 +418,13 @@
             const res = residents.find(r => r.id == resId);
             if (!res) return;
 
-            const grade = res.care_grade || 1;
+            const grade = res.care_grade || null; // null = 인지지원등급 (1등급으로 둔갑시키지 않는다)
             const clientType = res.client_type || '일반';
             const minutes = parseInt(document.getElementById('durationMinutes').value);
             const { total, patient, insurance } = splitVisit(minutes, clientType);
             const patientRate = PATIENT_PAY_RATE[clientType] ?? PATIENT_PAY_RATE["일반"];
             const insuranceRate = 1 - patientRate;
-            const monthlyLimit = MONTHLY_LIMITS[grade];
+            const monthlyLimit = grade ? MONTHLY_LIMITS[grade] : COGNITIVE_SUPPORT_LIMIT;
 
             const cumulativeThisMonth = records
                 .filter(r => r.resident_id == resId && new Date(r.recorded_date).getMonth() === new Date().getMonth())
@@ -434,7 +435,7 @@
             const usagePercent = Math.round((newCumulative / monthlyLimit) * 100);
 
             document.getElementById('baseAmount').textContent = `₩${total.toLocaleString()}`;
-            document.getElementById('careGradeDisplay').textContent = `${grade}등급`;
+            document.getElementById('careGradeDisplay').textContent = grade ? `${grade}등급` : '인지지원등급';
             document.getElementById('clientTypeDisplay').textContent = clientType;
             document.getElementById('patientRateDisplay').textContent = `${Math.round(patientRate * 100)}%`;
             document.getElementById('patientPaymentDisplay').textContent = `₩${patient.toLocaleString()}`;

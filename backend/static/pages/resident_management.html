@@ -264,6 +264,7 @@
         .grade-3 { background: #FEF3C7; color: #B45309; }
         .grade-4 { background: #EDE9FE; color: #6D28D9; }
         .grade-5 { background: #E0F2FE; color: #0369A1; }
+        .grade-cognitive { background: #F1F5F9; color: #475569; }
         .health { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; }
         .health::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
         .health-stable { color: #15803D; }
@@ -586,7 +587,7 @@
                         <select id="gradeFilter" onchange="filterResidents()">
                             <option value="">장기요양등급 전체</option>
                             <option value="1">1등급</option><option value="2">2등급</option><option value="3">3등급</option>
-                            <option value="4">4등급</option><option value="5">5등급</option>
+                            <option value="4">4등급</option><option value="5">5등급</option><option value="null">인지지원등급</option>
                         </select>
                         <select id="serviceTypeFilter" onchange="filterResidents()">
                             <option value="">서비스 종류 전체</option>
@@ -636,7 +637,7 @@
                 <div style="font-weight: 700; margin-bottom: 6px;">센터장 확인이 필요한 정보 변경 요청</div>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
                     <select id="changeField" style="padding: 6px; border: 1px solid #d1d5db; border-radius: 6px;">
-                        <option value="care_grade">요양등급 (1~5)</option>
+                        <option value="care_grade">요양등급 (1~5, 인지지원등급)</option>
                         <option value="client_type">소득분류</option>
                         <option value="recognition_number">인정번호</option>
                         <option value="recognition_start">인정 시작일</option>
@@ -644,7 +645,7 @@
                         <option value="name">이름</option>
                         <option value="birth_date">생년월일</option>
                     </select>
-                    <input id="changeValue" placeholder="새 값" style="padding: 6px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 150px;">
+                    <input id="changeValue" placeholder="새 값 (요양등급은 1~5 또는 인지지원등급)" style="padding: 6px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 150px;">
                     <button type="button" onclick="submitChangeRequest()" style="padding: 6px 12px; background: #0284c7; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">요청 보내기</button>
                 </div>
             </div>
@@ -669,6 +670,7 @@
                         <option value="3">3등급 (중증~중등증) - ₩1,528,200</option>
                         <option value="4">4등급 (중등증) - ₩1,409,700</option>
                         <option value="5">5등급 (경증) - ₩1,208,900</option>
+                        <option value="cognitive">인지지원등급 - ₩676,320</option>
                     </select>
                 </div>
 
@@ -937,7 +939,7 @@
                 <div class="recent-row">
                     <img src="assets/user_design/resident_avatar_${r.gender === '여' ? 'female' : 'male'}.png" alt="">
                     <div><div class="rn">${escapeHtml(r.name)} 어르신</div><div class="rd">${(r.admission_date || '').slice(0, 10)}</div></div>
-                    <span class="rg" style="background:${gradeColor[r.care_grade]}1A;color:${gradeColor[r.care_grade] || '#64748B'};">${r.care_grade || '-'}등급</span>
+                    <span class="rg" style="background:${gradeColor[r.care_grade] || '#475569'}1A;color:${gradeColor[r.care_grade] || '#475569'};">${gradeLabel(r.care_grade)}</span>
                 </div>`).join('');
         }
 
@@ -945,6 +947,14 @@
             const div = document.createElement('div');
             div.textContent = text ?? '';
             return div.innerHTML;
+        }
+
+        // care_grade가 null이면 인지지원등급 (1등급으로 둔갑시키지 않는다)
+        function gradeLabel(careGrade) {
+            return careGrade ? `${careGrade}등급` : '인지지원등급';
+        }
+        function gradeClass(careGrade) {
+            return careGrade ? `grade-${careGrade}` : 'grade-cognitive';
         }
 
         function setListTab(tab) {
@@ -1002,7 +1012,7 @@
             if (!filteredList.length) { alert('내려받을 이용자 정보가 없습니다'); return; }
             const header = ['이름', '성별', '생년월일', '요양등급', '소득분류', '인정번호', '인정기간', '보호자', '보호자연락처', '건강상태', '서비스종류', '담당요양보호사'];
             const rows = filteredList.map(r => [
-                r.name, r.gender || '', r.birth_date || '', r.care_grade || '', r.client_type || '',
+                r.name, r.gender || '', r.birth_date || '', r.care_grade ?? '인지지원등급', r.client_type || '',
                 r.recognition_number || '', `${r.recognition_start || ''}~${r.recognition_end || ''}`,
                 r.guardian_name || '', r.guardian_phone || '', HEALTH_LABEL[r.health_status] || '',
                 r._serviceType || '', r._caregiverName || '',
@@ -1069,7 +1079,7 @@
                             </div>
                         </td>
                         <td>${(r.birth_date || '-').replaceAll('-', '.')} / ${r.gender || '-'} / ${age}세</td>
-                        <td><span class="p-grade grade-${r.care_grade}">${r.care_grade}등급</span></td>
+                        <td><span class="p-grade ${gradeClass(r.care_grade)}">${gradeLabel(r.care_grade)}</span></td>
                         <td>${escapeHtml(r._serviceType || '-')}</td>
                         <td>${statusBadge}</td>
                         <td>${escapeHtml(r._caregiverName || '-')}</td>
@@ -1116,7 +1126,7 @@
             document.getElementById('modalTitle').textContent = '이용자 편집';
             document.getElementById('residentName').value = resident.name;
             document.getElementById('residentBirthDate').value = resident.birth_date;
-            document.getElementById('careGrade').value = resident.care_grade || '';
+            document.getElementById('careGrade').value = resident.care_grade == null ? 'cognitive' : resident.care_grade;
             document.getElementById('clientType').value = resident.client_type || '';
             document.getElementById('healthStatus').value = resident.health_status;
             document.getElementById('residentGender').value = resident.gender || '';
@@ -1258,7 +1268,8 @@
 
             const name = document.getElementById('residentName').value;
             const birthDate = document.getElementById('residentBirthDate').value;
-            const careGrade = parseInt(document.getElementById('careGrade').value);
+            const careGradeRaw = document.getElementById('careGrade').value;
+            const careGrade = careGradeRaw === 'cognitive' ? null : parseInt(careGradeRaw);
             const clientType = document.getElementById('clientType').value;
             const healthStatus = document.getElementById('healthStatus').value;
             const gender = document.getElementById('residentGender').value;
