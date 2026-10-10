@@ -50,6 +50,7 @@ ADDITIVE_COLUMNS = [
     ("schedules", "review_note", "VARCHAR"),
     ("daily_records", "schedule_id", "INTEGER"),
     ("billing_records", "review_note", "VARCHAR"),
+    ("daily_records", "signature", "TEXT"),
 ]
 
 def run_migrations():

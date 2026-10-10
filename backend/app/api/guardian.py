@@ -205,5 +205,6 @@ def resident_visits(resident_id: int, days: int = 14, db: Session = Depends(get_
             "care_items": [CARE_ITEM_LABELS.get(c, c) for c in codes],
             "condition": CONDITION_LABELS.get(r.condition, None),
             "notes": r.notes,
+            "has_signature": bool(r.signature),
         })
     return {"resident_name": resident.name, "visits": visits}

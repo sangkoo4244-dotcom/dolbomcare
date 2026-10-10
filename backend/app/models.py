@@ -72,6 +72,7 @@ class DailyRecord(Base):
     condition = Column(String, nullable=True)  # 'good', 'normal', 'poor'
     service_type = Column(String, default="basic_care")  # 'basic_care', 'meal_service', 'medical_care'
     audio_file_url = Column(String, nullable=True)
+    signature = Column(Text, nullable=True)  # 방문 확인 서명 (base64 PNG data URL)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class HealthMetric(Base):

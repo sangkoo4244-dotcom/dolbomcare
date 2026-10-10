@@ -54,6 +54,7 @@ class CreateRecordRequest(BaseModel):
     condition: Optional[str] = None
     duration_minutes: Literal[30, 60, 90, 120, 180, 240] = 60
     recorded_date: Optional[datetime] = None  # 소급 기록용 (미지정 시 현재 시각)
+    signature: Optional[str] = None  # 방문 확인 서명 (base64 PNG data URL)
 
 class UpdateRecordRequest(BaseModel):
     service_type: Optional[str] = None
@@ -101,7 +102,8 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
             duration_minutes=request.duration_minutes,
             schedule_id=linked_schedule.id if linked_schedule else None,
             service_type=request.service_type,
-            audio_file_url=None
+            audio_file_url=None,
+            signature=request.signature
         )
         db.add(daily_record)
         db.flush()
