@@ -538,11 +538,19 @@
                         <tr><td>${v.time}</td><td>${escapeHtml(v.resident)}</td><td>${escapeHtml(v.caregiver)}</td><td>${escapeHtml(v.serviceType)}</td><td>${visitBadge(v.state)}</td></tr>`).join('')}</tbody></table>`
                     : emptyState('오늘 예정된 방문 서비스가 없습니다.');
 
+                // 담당자 미배정 이용자: 방문 일정이 한 건도 없는 이용자 (하이케어의 "구인중" 상태와 같은 개념 -
+                // 공단 계약 여부까지는 우리 시스템에 없어 "일정이 없다"로 근사한다)
+                const residentIdsWithSchedule = new Set(
+                    (schedulesToday.schedules || []).filter(s => s.status !== 'cancelled').map(s => s.resident_id)
+                );
+                const unassignedResidents = residentList.filter(r => !residentIdsWithSchedule.has(r.id));
+
                 // 우선 처리 업무
                 const tasks = [
                     ['청구 승인 대기', pendingClaims, './billing_management.html', ICO.fileText, '방문기록 기반 청구 승인'],
                     ['방문 계획 승인', pendingPlans, './schedule_approval.html', ICO.calendarCheck, '신규 및 변경 방문 계획'],
                     ['보호자 가입 요청', pendingGuardians, './guardian_management.html', ICO.userRound, '보호자 계정 승인'],
+                    ['담당자 미배정 이용자', unassignedResidents.length, './resident_management.html', ICO.users, '방문 일정이 없는 이용자'],
                 ];
                 document.getElementById('taskList').innerHTML = tasks.map(([label, count, href, icon, desc]) => `
                     <li><a href="${href}"><span class="priority-ico">${icon}</span><div><div class="priority-title">${label}</div><div class="priority-desc">${desc}</div></div><span class="priority-count">${count}건</span></a></li>`).join('');
