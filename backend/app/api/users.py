@@ -203,6 +203,25 @@ async def reset_password(
     db.commit()
     return {"status": "success", "message": "비밀번호가 재설정되었습니다"}
 
+class NotificationSettingsUpdate(BaseModel):
+    alimtalk_opt_in: bool
+
+@router.get("/me/notification-settings")
+async def get_my_notification_settings(actor: User = Depends(get_current_user)):
+    """본인의 알림톡 수신 설정 조회"""
+    return {"alimtalk_opt_in": bool(actor.alimtalk_opt_in), "has_phone": bool(actor.phone)}
+
+@router.patch("/me/notification-settings")
+async def update_my_notification_settings(
+    body: NotificationSettingsUpdate,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
+):
+    """본인의 알림톡 수신 여부를 직접 켜고 끈다 (인앱 알림은 이 설정과 무관하게 항상 온다)"""
+    actor.alimtalk_opt_in = body.alimtalk_opt_in
+    db.commit()
+    return {"status": "success", "alimtalk_opt_in": actor.alimtalk_opt_in}
+
 @router.delete("/{user_id}")
 async def delete_user(user_id: int, db: Session = Depends(get_db), _: User = Depends(require_manager)):
     """사용자 삭제"""

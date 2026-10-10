@@ -18,6 +18,7 @@ class User(Base):
     emergency_contact = Column(String, nullable=True)  # 긴급 연락처
     employment_status = Column(String, default="active")  # 'active', 'inactive', 'leave'
     is_active = Column(Boolean, default=True)
+    alimtalk_opt_in = Column(Boolean, default=True)  # 카카오 알림톡 수신 여부 (끄면 인앱 알림만 받음)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Center(Base):
@@ -278,4 +279,20 @@ class StaffCertificate(Base):
     grade = Column(String, nullable=True)  # 등급 (예: 1급)
     issued_on = Column(Date, nullable=True)
     expires_on = Column(Date, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class NeedsAssessment(Base):
+    """욕구조사 (공단 표준 욕구사정 서식의 핵심 영역). 방문마다가 아니라 주기적으로(보통 월 1회) 작성한다."""
+    __tablename__ = "needs_assessments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    assessed_by = Column(Integer, ForeignKey("users.id"))
+    assessed_date = Column(DateTime, default=datetime.utcnow)
+    diseases = Column(String, nullable=True)  # 보유질환 코드 (쉼표 구분, care_items와 동일한 저장 방식)
+    nutrition_status = Column(String, nullable=True)  # 'good', 'poor'
+    nutrition_detail = Column(String, nullable=True)  # 쉼표 구분: appetite_loss, weight_loss, weight_gain
+    mobility_status = Column(String, nullable=True)  # 'independent', 'independent_with_device', 'assisted', 'assisted_with_device', 'unable'
+    function_status = Column(Text, nullable=True)  # JSON 문자열: {"stand_up": "alone", "eating": "guided", ...}
+    notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

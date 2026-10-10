@@ -16,7 +16,8 @@ from app.api import guardian
 from app.api import messages
 from app.api import statements
 from app.api import certificates
-from app.models import StaffCertificate, SalaryStatement, GuardianInvite, Notification, ResidentMessage, ResidentThreadRead
+from app.api import needs_assessments
+from app.models import StaffCertificate, SalaryStatement, GuardianInvite, Notification, ResidentMessage, ResidentThreadRead, NeedsAssessment
 from app.database import Base, engine, SessionLocal
 import os
 from pathlib import Path
@@ -51,6 +52,7 @@ ADDITIVE_COLUMNS = [
     ("daily_records", "schedule_id", "INTEGER"),
     ("billing_records", "review_note", "VARCHAR"),
     ("daily_records", "signature", "TEXT"),
+    ("users", "alimtalk_opt_in", "BOOLEAN DEFAULT TRUE"),
 ]
 
 def run_migrations():
@@ -62,6 +64,7 @@ def run_migrations():
         Notification.__table__.create(bind=engine, checkfirst=True)  # 없을 때만 알림 테이블을 만든다 (없으면 방문계획 승인/반려가 500 에러)
         ResidentMessage.__table__.create(bind=engine, checkfirst=True)  # 없을 때만 보호자-센터 메시지 테이블을 만든다
         ResidentThreadRead.__table__.create(bind=engine, checkfirst=True)  # 없을 때만 메시지 읽음 추적 테이블을 만든다 (없으면 메시지 기능 전체가 500 에러)
+        NeedsAssessment.__table__.create(bind=engine, checkfirst=True)  # 없을 때만 욕구조사 테이블을 만든다
         db = SessionLocal()
         db_url = str(engine.url)
 
@@ -164,6 +167,7 @@ app.include_router(guardian.router, prefix="/api/v1/guardian", tags=["guardian"]
 app.include_router(messages.router, prefix="/api/v1/messages", tags=["messages"], dependencies=[Depends(get_current_user)])
 app.include_router(statements.router, prefix="/api/v1/statements", tags=["statements"], dependencies=[Depends(get_current_user)])
 app.include_router(certificates.router, prefix="/api/v1/certificates", tags=["certificates"])
+app.include_router(needs_assessments.router, prefix="/api/v1/needs-assessments", tags=["needs_assessments"], dependencies=[Depends(get_current_user)])
 
 @app.middleware("http")
 async def revalidate_pages(request, call_next):

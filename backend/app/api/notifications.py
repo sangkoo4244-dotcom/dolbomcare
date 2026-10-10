@@ -15,7 +15,7 @@ def notify(db: Session, user_id: int, kind: str, message: str) -> None:
 
     if TEMPLATE_IDS.get(kind):
         user = db.query(User).filter(User.id == user_id).first()
-        if user and user.phone:
+        if user and user.phone and user.alimtalk_opt_in:
             send_alimtalk(user.phone, kind, message)
 
 

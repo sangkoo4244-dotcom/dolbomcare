@@ -745,6 +745,54 @@
         </div>
     </div>
 
+    <!-- 욕구조사 (공단 표준 욕구사정 서식 핵심 영역) -->
+    <div id="needsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 32px; width: 92%; max-width: 820px; max-height: 90vh; overflow-y: auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0;">욕구조사 <span id="needsResidentName" style="font-weight:400;color:#6b7280;font-size:14px;"></span></h2>
+                <button type="button" onclick="closeNeedsModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9ca3af;">&times;</button>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+                <div>
+                    <label style="display:block;font-weight:700;margin-bottom:8px;">보유질환 (해당 항목 선택)</label>
+                    <div id="needsDiseaseBox" style="display:flex;flex-wrap:wrap;gap:6px;max-height:140px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:10px;font-size:13px;"></div>
+                </div>
+                <div>
+                    <label style="display:block;font-weight:700;margin-bottom:8px;">영양상태</label>
+                    <div style="display:flex;gap:16px;margin-bottom:8px;">
+                        <label><input type="radio" name="nutritionStatus" value="good"> 양호</label>
+                        <label><input type="radio" name="nutritionStatus" value="poor"> 불량</label>
+                    </div>
+                    <div id="needsNutritionDetailBox" style="display:flex;flex-wrap:wrap;gap:6px;font-size:13px;"></div>
+
+                    <label style="display:block;font-weight:700;margin:16px 0 8px;">보행상태</label>
+                    <div id="needsMobilityBox" style="display:flex;flex-direction:column;gap:4px;font-size:13px;"></div>
+                </div>
+            </div>
+
+            <label style="display:block;font-weight:700;margin:20px 0 8px;">기능상태 (혼자 수행 가능한 정도)</label>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead><tr style="background:#f9fafb;"><th style="text-align:left;padding:6px;border:1px solid #e5e7eb;">항목</th><th style="padding:6px;border:1px solid #e5e7eb;" colspan="4">평가</th></tr></thead>
+                <tbody id="needsFunctionBody"></tbody>
+            </table>
+
+            <div style="margin-top:16px;">
+                <label style="display:block;font-weight:700;margin-bottom:6px;">비고</label>
+                <textarea id="needsNotes" rows="2" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;"></textarea>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:20px;">
+                <button type="button" onclick="submitNeedsAssessment()" style="flex:1;padding:10px;background:#B5532F;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;">저장</button>
+            </div>
+
+            <div style="margin-top:24px;border-top:1px solid #e5e7eb;padding-top:16px;">
+                <label style="display:block;font-weight:700;margin-bottom:8px;">이전 평가 이력</label>
+                <div id="needsHistory" style="font-size:13px;color:#6b7280;">이력 없음</div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = '/api/v1';
         let currentUser = null;
@@ -1086,6 +1134,7 @@
                         <td style="text-align: center;">
                             <div class="action-buttons" style="justify-content: center; align-items: center;">
                                 <button class="btn-detail" onclick="editResident(${r.id})">상세보기</button>
+                                <button class="btn-detail" onclick="openNeedsAssessment(${r.id})">욕구조사</button>
                                 <button class="btn-kebab" title="삭제" onclick="deleteResident(${r.id})">⋮</button>
                             </div>
                         </td>
@@ -1261,6 +1310,101 @@
             const box = document.getElementById('caregiverRequestBox');
             if (box) box.style.display = 'none';
             currentResidentId = null;
+        }
+
+        // ===== 욕구조사 (공단 표준 욕구사정 핵심 영역) =====
+        let needsOptions = null;
+        let needsResidentId = null;
+
+        async function loadNeedsOptions() {
+            if (needsOptions) return needsOptions;
+            const r = await fetch(`${API_URL}/needs-assessments/options`);
+            needsOptions = await r.json();
+            document.getElementById('needsDiseaseBox').innerHTML = Object.entries(needsOptions.diseases)
+                .map(([code, label]) => `<label style="white-space:nowrap;"><input type="checkbox" name="needsDisease" value="${code}"> ${escapeHtml(label)}</label>`).join('');
+            document.getElementById('needsNutritionDetailBox').innerHTML = Object.entries(needsOptions.nutrition_detail)
+                .map(([code, label]) => `<label style="white-space:nowrap;"><input type="checkbox" name="needsNutritionDetail" value="${code}"> ${escapeHtml(label)}</label>`).join('');
+            document.getElementById('needsMobilityBox').innerHTML = Object.entries(needsOptions.mobility_status)
+                .map(([code, label]) => `<label><input type="radio" name="needsMobility" value="${code}"> ${escapeHtml(label)}</label>`).join('');
+            const levelCols = Object.entries(needsOptions.function_levels)
+                .map(([code, label]) => `<th style="padding:4px;border:1px solid #e5e7eb;font-weight:400;">${escapeHtml(label)}</th>`).join('');
+            document.getElementById('needsFunctionBody').innerHTML = Object.entries(needsOptions.function_items).map(([itemCode, itemLabel]) => `
+                <tr>
+                    <td style="padding:6px;border:1px solid #e5e7eb;">${escapeHtml(itemLabel)}</td>
+                    ${Object.keys(needsOptions.function_levels).map(levelCode => `
+                        <td style="text-align:center;padding:6px;border:1px solid #e5e7eb;"><input type="radio" name="needsFn_${itemCode}" value="${levelCode}"></td>
+                    `).join('')}
+                </tr>`).join('');
+            // 평가 단계 이름을 표 머리글에도 보여준다 (매번 다시 그리지 않도록 헤더 행을 한 번만 덧붙인다)
+            const thead = document.querySelector('#needsModal thead tr');
+            if (thead && thead.children.length === 2) thead.innerHTML = `<th style="text-align:left;padding:6px;border:1px solid #e5e7eb;">항목</th>${levelCols}`;
+            return needsOptions;
+        }
+
+        function resetNeedsForm() {
+            document.querySelectorAll('#needsModal input[type=checkbox], #needsModal input[type=radio]').forEach(el => el.checked = false);
+            document.getElementById('needsNotes').value = '';
+        }
+
+        async function openNeedsAssessment(residentId) {
+            needsResidentId = residentId;
+            const resident = residents.find(r => r.id === residentId);
+            document.getElementById('needsResidentName').textContent = resident ? `- ${resident.name} 어르신` : '';
+            await loadNeedsOptions();
+            resetNeedsForm();
+            document.getElementById('needsModal').style.display = 'flex';
+            loadNeedsHistory(residentId);
+        }
+
+        function closeNeedsModal() {
+            document.getElementById('needsModal').style.display = 'none';
+            needsResidentId = null;
+        }
+
+        async function loadNeedsHistory(residentId) {
+            const box = document.getElementById('needsHistory');
+            box.textContent = '불러오는 중...';
+            try {
+                const r = await fetch(`${API_URL}/needs-assessments/resident/${residentId}`);
+                const d = await r.json();
+                if (!d.assessments.length) { box.textContent = '이력 없음'; return; }
+                box.innerHTML = d.assessments.map(a => `
+                    <div style="padding:8px 0;border-bottom:1px solid #f3f4f6;">
+                        <b>${(a.assessed_date || '').slice(0, 10)}</b> · 작성: ${escapeHtml(a.assessed_by_name || '-')}
+                        ${a.diseases_label.length ? ` · 질환: ${a.diseases_label.map(escapeHtml).join(', ')}` : ''}
+                        ${a.mobility_status_label ? ` · 보행: ${escapeHtml(a.mobility_status_label)}` : ''}
+                    </div>`).join('');
+            } catch (e) { box.textContent = '이력을 불러올 수 없습니다'; }
+        }
+
+        async function submitNeedsAssessment() {
+            const diseases = Array.from(document.querySelectorAll('input[name=needsDisease]:checked')).map(el => el.value).join(',');
+            const nutritionStatus = document.querySelector('input[name=nutritionStatus]:checked')?.value || null;
+            const nutritionDetail = Array.from(document.querySelectorAll('input[name=needsNutritionDetail]:checked')).map(el => el.value).join(',');
+            const mobilityStatus = document.querySelector('input[name=needsMobility]:checked')?.value || null;
+            const functionStatus = {};
+            Object.keys(needsOptions.function_items).forEach(itemCode => {
+                const picked = document.querySelector(`input[name=needsFn_${itemCode}]:checked`);
+                if (picked) functionStatus[itemCode] = picked.value;
+            });
+            const notes = document.getElementById('needsNotes').value;
+
+            try {
+                const r = await fetch(`${API_URL}/needs-assessments/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resident_id: needsResidentId, diseases, nutrition_status: nutritionStatus,
+                        nutrition_detail: nutritionDetail, mobility_status: mobilityStatus,
+                        function_status: functionStatus, notes,
+                    })
+                });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok) { alert(`저장 실패: ${d.detail || '오류'}`); return; }
+                resetNeedsForm();
+                loadNeedsHistory(needsResidentId);
+                alert('욕구조사가 저장되었습니다');
+            } catch (e) { alert('오류: ' + e.message); }
         }
 
         async function saveResident(event) {
