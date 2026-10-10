@@ -748,11 +748,19 @@
     <!-- 기초평가 (공단 표준 욕구사정 서식 핵심 영역) -->
     <div id="needsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
         <div style="background: white; border-radius: 12px; padding: 32px; width: 92%; max-width: 820px; max-height: 90vh; overflow-y: auto;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <h2 style="margin:0;">기초평가 <span id="needsResidentName" style="font-weight:400;color:#6b7280;font-size:14px;"></span></h2>
                 <button type="button" onclick="closeNeedsModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9ca3af;">&times;</button>
             </div>
 
+            <div style="display:flex;gap:6px;border-bottom:1px solid #e5e7eb;margin-bottom:20px;">
+                <button type="button" class="needs-tab-btn active" data-tab="core" onclick="switchNeedsTab('core')" style="padding:8px 14px;border:none;background:none;cursor:pointer;font-weight:600;font-size:13px;border-bottom:2px solid #B5532F;color:#B5532F;">욕구사정</button>
+                <button type="button" class="needs-tab-btn" data-tab="fall_risk" onclick="switchNeedsTab('fall_risk')" style="padding:8px 14px;border:none;background:none;cursor:pointer;font-weight:600;font-size:13px;border-bottom:2px solid transparent;color:#6b7280;">낙상위험도 <span id="needsBadge-fall_risk"></span></button>
+                <button type="button" class="needs-tab-btn" data-tab="pressure_sore_risk" onclick="switchNeedsTab('pressure_sore_risk')" style="padding:8px 14px;border:none;background:none;cursor:pointer;font-weight:600;font-size:13px;border-bottom:2px solid transparent;color:#6b7280;">욕창위험도 <span id="needsBadge-pressure_sore_risk"></span></button>
+                <button type="button" class="needs-tab-btn" data-tab="cognitive_function" onclick="switchNeedsTab('cognitive_function')" style="padding:8px 14px;border:none;background:none;cursor:pointer;font-weight:600;font-size:13px;border-bottom:2px solid transparent;color:#6b7280;">인지기능평가 <span id="needsBadge-cognitive_function"></span></button>
+            </div>
+
+            <div id="needsCorePanel">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
                 <div>
                     <label style="display:block;font-weight:700;margin-bottom:8px;">보유질환 (해당 항목 선택)</label>
@@ -789,6 +797,35 @@
             <div style="margin-top:24px;border-top:1px solid #e5e7eb;padding-top:16px;">
                 <label style="display:block;font-weight:700;margin-bottom:8px;">이전 평가 이력</label>
                 <div id="needsHistory" style="font-size:13px;color:#6b7280;">이력 없음</div>
+            </div>
+            </div>
+
+            <!-- 낙상위험도/욕창위험도/인지기능평가 공용 패널 (반기 1회, 공식 문항·배점표는 아직 없어 점수/위험군만 직접 입력) -->
+            <div id="riskPanel" style="display:none;">
+                <div id="riskStatusBox" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:16px;font-size:13px;"></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;">
+                    <div>
+                        <label style="display:block;font-weight:700;margin-bottom:6px;">점수 (선택)</label>
+                        <input type="number" id="riskScore" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:700;margin-bottom:6px;">위험군</label>
+                        <select id="riskLevel" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;">
+                            <option value="">미분류</option>
+                            <option value="low">저위험</option>
+                            <option value="high">고위험</option>
+                        </select>
+                    </div>
+                </div>
+                <label style="display:block;font-weight:700;margin-bottom:6px;">비고</label>
+                <textarea id="riskNotes" rows="2" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;"></textarea>
+                <div style="display:flex;gap:12px;margin-top:16px;">
+                    <button type="button" onclick="submitRiskAssessment()" style="flex:1;padding:10px;background:#B5532F;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;">평가 저장</button>
+                </div>
+                <div style="margin-top:24px;border-top:1px solid #e5e7eb;padding-top:16px;">
+                    <label style="display:block;font-weight:700;margin-bottom:8px;">이전 평가 이력</label>
+                    <div id="riskHistory" style="font-size:13px;color:#6b7280;">이력 없음</div>
+                </div>
             </div>
         </div>
     </div>
@@ -1354,6 +1391,8 @@
             resetNeedsForm();
             document.getElementById('needsModal').style.display = 'flex';
             loadNeedsHistory(residentId);
+            switchNeedsTab('core');
+            loadRiskOverview(residentId);
         }
 
         function closeNeedsModal() {
@@ -1404,6 +1443,92 @@
                 resetNeedsForm();
                 loadNeedsHistory(needsResidentId);
                 alert('기초평가가 저장되었습니다');
+            } catch (e) { alert('오류: ' + e.message); }
+        }
+
+        // ===== 낙상위험도 / 욕창위험도 / 인지기능평가 (반기 1회, 공용 패널) =====
+        const RISK_TYPE_LABELS = { fall_risk: '낙상위험도', pressure_sore_risk: '욕창위험도', cognitive_function: '인지기능평가' };
+        let riskOverview = null;  // 이 이용자의 3종 평가 현황 (탭 전환 때마다 다시 불러오지 않도록 캐시)
+        let currentRiskType = null;
+
+        function switchNeedsTab(tab) {
+            document.querySelectorAll('.needs-tab-btn').forEach(btn => {
+                const active = btn.dataset.tab === tab;
+                btn.style.borderBottomColor = active ? '#B5532F' : 'transparent';
+                btn.style.color = active ? '#B5532F' : '#6b7280';
+            });
+            if (tab === 'core') {
+                document.getElementById('needsCorePanel').style.display = '';
+                document.getElementById('riskPanel').style.display = 'none';
+            } else {
+                document.getElementById('needsCorePanel').style.display = 'none';
+                document.getElementById('riskPanel').style.display = '';
+                currentRiskType = tab;
+                renderRiskPanel();
+            }
+        }
+
+        async function loadRiskOverview(residentId) {
+            try {
+                const r = await fetch(`${API_URL}/risk-assessments/resident/${residentId}`);
+                const d = await r.json();
+                riskOverview = d.assessments;
+                Object.keys(RISK_TYPE_LABELS).forEach(type => {
+                    const badge = document.getElementById(`needsBadge-${type}`);
+                    if (!badge) return;
+                    badge.innerHTML = riskOverview[type]?.is_overdue
+                        ? '<span style="background:#FDE8E8;color:#DC2626;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:700;">기한초과</span>' : '';
+                });
+                if (currentRiskType) renderRiskPanel();
+            } catch (e) { riskOverview = null; }
+        }
+
+        function renderRiskPanel() {
+            const type = currentRiskType;
+            const label = RISK_TYPE_LABELS[type];
+            const info = riskOverview ? riskOverview[type] : null;
+            const statusBox = document.getElementById('riskStatusBox');
+            document.getElementById('riskScore').value = '';
+            document.getElementById('riskLevel').value = '';
+            document.getElementById('riskNotes').value = '';
+
+            if (!info || !info.latest) {
+                statusBox.innerHTML = `<b>${label}</b> · 평가 이력이 없습니다 (반기 1회 평가 대상)`;
+            } else {
+                const levelLabel = { low: '저위험', high: '고위험' }[info.latest.risk_level] || '미분류';
+                const overdueTag = info.is_overdue ? ' <span style="color:#DC2626;font-weight:700;">(평가 기한 초과)</span>' : '';
+                statusBox.innerHTML = `<b>${label}</b> · 최근 평가: ${(info.latest.assessed_date || '').slice(0, 10)} · 점수 ${info.latest.score ?? '-'} · ${levelLabel}${overdueTag}<br>다음 평가 예정일: ${info.next_due_date || '-'}`;
+            }
+
+            const histBox = document.getElementById('riskHistory');
+            if (!info || !info.history.length) { histBox.textContent = '이력 없음'; return; }
+            histBox.innerHTML = info.history.map(a => {
+                const levelLabel = { low: '저위험', high: '고위험' }[a.risk_level] || '미분류';
+                return `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;">
+                    <b>${(a.assessed_date || '').slice(0, 10)}</b> · 작성: ${escapeHtml(a.assessed_by_name || '-')} · 점수 ${a.score ?? '-'} · ${levelLabel}
+                    ${a.notes ? `<div style="color:#9ca3af;">${escapeHtml(a.notes)}</div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        async function submitRiskAssessment() {
+            const score = document.getElementById('riskScore').value;
+            const riskLevel = document.getElementById('riskLevel').value;
+            const notes = document.getElementById('riskNotes').value;
+            try {
+                const r = await fetch(`${API_URL}/risk-assessments/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resident_id: needsResidentId, assessment_type: currentRiskType,
+                        score: score === '' ? null : parseInt(score, 10),
+                        risk_level: riskLevel || null, notes,
+                    })
+                });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok) { alert(`저장 실패: ${d.detail || '오류'}`); return; }
+                await loadRiskOverview(needsResidentId);
+                alert(`${RISK_TYPE_LABELS[currentRiskType]} 평가가 저장되었습니다`);
             } catch (e) { alert('오류: ' + e.message); }
         }
 

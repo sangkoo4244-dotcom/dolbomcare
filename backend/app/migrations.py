@@ -2,6 +2,7 @@ from app.database import engine, SessionLocal
 from app.models import (
     StaffCertificate, SalaryStatement, GuardianInvite, Notification,
     ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
+    RiskAssessment,
 )
 from sqlalchemy import text
 
@@ -44,7 +45,8 @@ def run_migrations():
     실행하고, 하나가 실패해도 롤백 후 다음 것을 계속 시도한다 (한 항목의 실패가 나머지를 막지 않는다).
     """
     for table_cls in (StaffCertificate, SalaryStatement, GuardianInvite, Notification,
-                       ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice):
+                       ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
+                       RiskAssessment):
         try:
             table_cls.__table__.create(bind=engine, checkfirst=True)
         except Exception as e:

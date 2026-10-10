@@ -317,3 +317,19 @@ class CopayInvoice(Base):
     recorded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class RiskAssessment(Base):
+    """낙상위험도·욕창위험도·인지기능평가 등, 공단이 표준 체크리스트/배점 기준을 정해둔 반기별 평가의 틀.
+    구체적인 문항과 배점표는 공식 서식을 확보하기 전까지 반영하지 않았다 - 점수와 위험군만
+    센터가 직접 판단해 입력한다 (문항은 나중에 추가 가능)."""
+    __tablename__ = "risk_assessments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    assessment_type = Column(String, index=True)  # 'fall_risk', 'pressure_sore_risk', 'cognitive_function'
+    assessed_by = Column(Integer, ForeignKey("users.id"))
+    assessed_date = Column(DateTime, default=datetime.utcnow)
+    score = Column(Integer, nullable=True)
+    risk_level = Column(String, nullable=True)  # 'low', 'high'
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

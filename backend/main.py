@@ -18,6 +18,7 @@ from app.api import statements
 from app.api import certificates
 from app.api import needs_assessments
 from app.api import copay
+from app.api import risk_assessments
 from app.database import Base, engine, SessionLocal
 from app.migrations import run_migrations
 import os
@@ -62,6 +63,7 @@ app.include_router(statements.router, prefix="/api/v1/statements", tags=["statem
 app.include_router(certificates.router, prefix="/api/v1/certificates", tags=["certificates"])
 app.include_router(needs_assessments.router, prefix="/api/v1/needs-assessments", tags=["needs_assessments"], dependencies=[Depends(get_current_user)])
 app.include_router(copay.router, prefix="/api/v1/copay", tags=["copay"], dependencies=[Depends(get_current_user)])
+app.include_router(risk_assessments.router, prefix="/api/v1/risk-assessments", tags=["risk_assessments"], dependencies=[Depends(get_current_user)])
 
 @app.middleware("http")
 async def revalidate_pages(request, call_next):
