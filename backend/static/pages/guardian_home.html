@@ -24,6 +24,29 @@
         main .text-sm { font-size: 17px !important; }
         .g-pill { display: inline-block; padding: 6px 14px; border-radius: 10px; font-size: 15px; font-weight: 700; }
         .g-icon { object-fit: contain; mix-blend-mode: multiply; }
+
+        .g-breadcrumb { font-size: 13px; color: #94A3B8; }
+        .g-breadcrumb b { color: var(--charcoal); font-weight: 700; }
+        .g-date-chip { display: inline-flex; align-items: center; gap: 6px; background: #F1F5F9; border: 1px solid var(--line2); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--charcoal); white-space: nowrap; }
+        .g-info-box { background: #EDF8F6; border: 1px solid #CDEAE5; border-radius: 12px; padding: 16px 18px; }
+        .g-info-box .g-info-title { font-size: 15px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
+        .g-info-box .g-info-desc { font-size: 14px; color: #2E6B61; line-height: 1.5; }
+        .g-resident-info { display: flex; align-items: center; gap: 12px; }
+
+        .g-stat-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .g-stat-card { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); display: flex; align-items: center; gap: 14px; }
+        .g-stat-icon { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .g-stat-label { font-size: 13px; font-weight: 700; color: #64748B; }
+        .g-stat-value { font-size: 22px; font-weight: 800; color: var(--navy); line-height: 1.3; }
+        .g-stat-caption { font-size: 12px; color: #94A3B8; margin-top: 1px; }
+        @media (max-width: 1100px) { .g-stat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+        /* 헤더: 좁은 화면에서는 줄바꿈 허용 + 덜 중요한 날짜칩은 숨겨서 이름이 세로로 쪼개지는 것을 막는다 */
+        #userName { white-space: nowrap; }
+        @media (max-width: 640px) {
+            .g-header-row { flex-wrap: wrap; row-gap: 10px; }
+            .g-date-chip { display: none; }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -35,9 +58,14 @@
             <nav id="navContent" class="p-4"></nav>
         </aside>
         <main class="ml-72 w-full flex flex-col">
-            <div class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
-                <h1 class="text-3xl font-bold text-[#1E3A5F]">이용자 방문 기록</h1>
+            <div class="g-header-row bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
+                <div>
+                    <div class="g-breadcrumb">홈 › <b>이용자 방문 기록</b></div>
+                    <h1 class="text-3xl font-bold text-[#1E3A5F] mt-1">이용자 방문 기록</h1>
+                    <p class="text-sm text-gray-500 mt-1">소중한 가족의 방문요양 기록을 한눈에 확인하실 수 있습니다.</p>
+                </div>
                 <div class="flex items-center gap-6">
+                    <div class="g-date-chip" id="headerDate"></div>
                     <a href="./notifications.html"><img src="assets/user_design/28_top_notification_icon.png" alt="알림" class="w-7 h-7 object-contain"></a>
                     <div class="flex items-center gap-3">
                         <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
@@ -51,39 +79,44 @@
                 </div>
             </div>
             <div class="flex-1 overflow-y-auto p-8">
-                <div class="rounded-2xl overflow-hidden mb-5">
-                    <img src="assets/user_design/guardian_banner.jpg" alt="" class="w-full h-auto block">
-                </div>
-
-                <!-- 초대 코드 입력 -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-5">
-                    <div class="flex items-center gap-4 flex-wrap">
-                        <label for="inviteInput" class="text-lg font-bold text-gray-800">초대 코드</label>
-                        <input id="inviteInput" maxlength="8" placeholder="센터에서 받은 코드 8자리" class="border border-gray-300 rounded-xl px-4 py-3 text-lg uppercase tracking-widest w-72">
-                        <button onclick="redeemInvite()" class="px-6 py-3 bg-[#2E7D4F] text-white rounded-xl text-lg font-bold hover:bg-[#256a40] transition">등록</button>
+                <!-- 이용자 선택 + 초대 코드 등록 -->
+                <div class="grid md:grid-cols-2 gap-5 mb-5">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5">
+                        <label class="text-lg font-bold text-gray-800 flex items-center gap-3 mb-4">
+                            <img src="assets/user_design/guardian_select_people.png" alt="" class="w-10 h-10 g-icon">
+                            이용자 선택
+                        </label>
+                        <select id="residentSelect" onchange="onResidentChange()" class="border border-gray-300 rounded-xl px-4 py-3 text-lg w-full bg-white mb-4"></select>
+                        <div id="residentInfo" class="g-resident-info"></div>
                     </div>
-                    <p id="inviteMessage" class="mt-3 text-base text-gray-600" aria-live="polite"></p>
-                </div>
-
-                <!-- 이용자 선택 -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-5 flex items-center gap-5 flex-wrap">
-                    <img src="assets/user_design/guardian_select_people.png" alt="" class="w-20 h-20 g-icon">
-                    <label class="text-lg font-bold text-gray-800 flex items-center gap-4">이용자 선택
-                        <select id="residentSelect" onchange="loadVisits()" class="border border-gray-300 rounded-xl px-4 py-3 text-lg min-w-[260px] bg-white"></select>
-                    </label>
-                    <div class="ml-auto hidden md:flex items-center gap-3">
-                        <img src="assets/user_design/guardian_family_art.png" alt="" class="h-20 w-auto g-icon">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5">
+                        <label for="inviteInput" class="text-lg font-bold text-gray-800 block mb-4">초대 코드 등록</label>
+                        <div class="flex items-center gap-4 flex-wrap mb-3">
+                            <input id="inviteInput" maxlength="8" placeholder="센터에서 받은 코드 8자리 (예: ABCD1234)" class="border border-gray-300 rounded-xl px-4 py-3 text-lg uppercase tracking-widest flex-1 min-w-[220px]">
+                            <button onclick="redeemInvite()" class="px-6 py-3 bg-[#2E7D4F] text-white rounded-xl text-lg font-bold hover:bg-[#256a40] transition">등록</button>
+                        </div>
+                        <p id="inviteMessage" class="text-base text-gray-600 mb-3" aria-live="polite"></p>
+                        <div class="g-info-box">
+                            <div class="g-info-title">초대 코드란?</div>
+                            <div class="g-info-desc">센터에서 제공한 코드로 가족의 방문 기록을 확인할 수 있습니다.</div>
+                        </div>
                     </div>
                 </div>
                 <div id="emptyNotice" class="hidden bg-white rounded-2xl border border-gray-200 p-8 mb-5 text-center text-gray-500 text-lg">
                     연결된 이용자가 없습니다. 센터에서 승인이 완료되면 여기에 표시됩니다.
                 </div>
 
+                <!-- 방문 현황 요약 (실제 조회된 14일치 기록으로만 계산) -->
+                <div class="g-stat-row" id="statRow"></div>
+
                 <!-- 최근 방문 기록 -->
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-                    <div class="flex items-center gap-3 mb-2">
-                        <svg class="w-8 h-8 text-[#F97316]" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2zm13 8H4v10h16V10z"/></svg>
-                        <h2 class="text-2xl font-extrabold text-gray-900">최근 14일 방문 기록</h2>
+                    <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-8 h-8 text-[#F97316]" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2zm13 8H4v10h16V10z"/></svg>
+                            <h2 class="text-2xl font-extrabold text-gray-900">최근 14일 방문 기록</h2>
+                        </div>
+                        <div class="g-date-chip" id="rangeChip"></div>
                     </div>
                     <p class="text-base text-gray-500 mb-6 ml-11">방문 시각, 제공 내용, 컨디션, 요양보호사 메모를 보여 줍니다. 비용 정보는 보이지 않습니다.</p>
                     <ul id="visitList" class="space-y-4"></ul>
@@ -94,6 +127,7 @@
     <script src="menu.js"></script>
     <script>
         let currentUser = null;
+        let residentsCache = [];
         const API_URL = '/api/v1';
 
         // 제공 내용 태그 색 (시안 순서)
@@ -120,9 +154,19 @@
             if (user.role !== 'guardian') { window.location.href = './dashboard.html'; return; }
             currentUser = user;
             document.getElementById('userName').textContent = `${user.full_name || '보호자'}님`;
+            document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
             renderSidebar();
             groupSidebar();
+            renderDateRangeChip();
             loadResidents();
+        }
+
+        // "최근 14일" 조회 범위를 실제 조회 기준(오늘 기준 -13일 ~ 오늘)으로 보여준다 - 임의의 날짜가 아니다
+        function renderDateRangeChip() {
+            const fmt = (d) => `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+            const end = new Date();
+            const start = new Date(); start.setDate(end.getDate() - 13);
+            document.getElementById('rangeChip').textContent = `${fmt(start)} ~ ${fmt(end)}`;
         }
 
         // 대시보드·보호자 소통과 동일한 사이드바 그룹 라벨 (menu.js는 그대로 두고 이 페이지에서만 DOM 보정)
@@ -192,11 +236,51 @@
 
         async function loadResidents() {
             const d = await (await fetch(`${API_URL}/guardian/my-residents`)).json();
+            residentsCache = d.residents || [];
             const select = document.getElementById('residentSelect');
-            const residents = d.residents || [];
-            document.getElementById('emptyNotice').classList.toggle('hidden', residents.length > 0);
-            select.innerHTML = residents.map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
-            if (residents.length) loadVisits();
+            document.getElementById('emptyNotice').classList.toggle('hidden', residentsCache.length > 0);
+            select.innerHTML = residentsCache.map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
+            if (residentsCache.length) {
+                renderResidentInfo(residentsCache[0]);
+                loadVisits();
+            } else {
+                renderResidentInfo(null);
+            }
+        }
+
+        function onResidentChange() {
+            const id = Number(document.getElementById('residentSelect').value);
+            renderResidentInfo(residentsCache.find(r => r.id === id) || null);
+            loadVisits();
+        }
+
+        // "1938-05-12" -> "1938.05.12" (서버에 없으면 표시하지 않는다 - 임의로 만들지 않는다)
+        function formatBirth(iso) {
+            if (!iso) return null;
+            return iso.split('-').join('.');
+        }
+
+        function renderResidentInfo(r) {
+            const box = document.getElementById('residentInfo');
+            if (!r) { box.innerHTML = ''; return; }
+            const bits = [];
+            if (r.gender) bits.push(r.gender);
+            const birth = formatBirth(r.birth_date);
+            if (birth) bits.push(r.age ? `${birth} (${r.age}세)` : birth);
+            else if (r.age) bits.push(`${r.age}세`);
+            const avatar = r.gender === '남' ? 'gm_avatar_guardian_m.png' : 'gm_avatar_guardian_f.png';
+            box.innerHTML = `
+                <img src="assets/user_design/${avatar}" alt="" class="w-12 h-12 rounded-full object-cover g-icon">
+                <div>
+                    <div class="text-lg font-bold text-gray-900">${escapeHtml(r.name)} 어르신</div>
+                    ${bits.length ? `<div class="text-sm text-gray-500">${bits.map(b => escapeHtml(b)).join(' · ')}</div>` : ''}
+                </div>`;
+        }
+
+        // 60분 단위면 "N시간", 아니면 "N분"
+        function durationLabel(min) {
+            if (!min) return '';
+            return min % 60 === 0 ? `${min / 60}시간` : `${min}분`;
         }
 
         function visitCard(v) {
@@ -208,17 +292,20 @@
                 `<span class="g-pill ${CHIP_STYLES[i % CHIP_STYLES.length]}">${escapeHtml(c)}</span>`).join('') || '<span class="text-gray-400">-</span>';
             const cond = CONDITION_STYLE[v.condition] || { icon: 'guardian_cond_neutral.png', cls: 'bg-gray-100 text-gray-500' };
             return `
-                <li class="grid grid-cols-[120px_1fr] gap-4 items-stretch">
-                    <div class="${dayBox} border rounded-xl flex flex-col items-center justify-center py-4">
+                <li class="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-4 sm:items-stretch">
+                    <div class="${dayBox} border rounded-xl flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-0 py-3 sm:py-4">
                         <span class="text-base font-semibold text-gray-700">${d.getMonth() + 1}월</span>
                         <span class="text-3xl font-extrabold text-gray-900">${String(d.getDate()).padStart(2, '0')}일</span>
                         <span class="text-sm font-semibold ${dayColor}">${weekday}</span>
                     </div>
                     <div class="border border-gray-200 rounded-xl p-5">
-                        <div class="grid grid-cols-[170px_1fr_120px_220px] gap-4 items-center">
-                            <div class="flex items-center gap-3 border-r border-gray-200 pr-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-[170px_1fr_120px_220px] gap-4 sm:items-center">
+                            <div class="flex items-center gap-3 sm:border-r border-gray-200 sm:pr-4">
                                 <img src="assets/user_design/guardian_clock.png" alt="" class="w-9 h-9 g-icon">
-                                <div class="text-lg font-bold text-gray-900">${timeLabel(v.time)}</div>
+                                <div>
+                                    <div class="text-lg font-bold text-gray-900">${timeLabel(v.time)}</div>
+                                    ${v.duration_minutes ? `<div class="text-sm text-gray-500">${durationLabel(v.duration_minutes)}</div>` : ''}
+                                </div>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 mb-2">
@@ -227,14 +314,14 @@
                                 </div>
                                 <div class="flex flex-wrap gap-2">${chips}</div>
                             </div>
-                            <div class="flex items-center gap-3 border-l border-gray-200 pl-4">
+                            <div class="flex items-center gap-3 sm:border-l border-gray-200 sm:pl-4">
                                 <img src="assets/user_design/${cond.icon}" alt="" class="w-10 h-10 g-icon">
                                 <div>
                                     <div class="text-sm font-semibold text-gray-600">컨디션</div>
-                                    <span class="g-pill ${cond.cls}">${escapeHtml(v.condition) || '-'}</span>
+                                    <span class="g-pill ${cond.cls}">${v.condition ? escapeHtml(v.condition) : '확인되지 않음'}</span>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3 border-l border-gray-200 pl-4">
+                            <div class="flex items-center gap-3 sm:border-l border-gray-200 sm:pl-4">
                                 <img src="assets/user_design/${v.caregiver_name ? (v.visit_index % 2 ? 'guardian_caregiver_orange.png' : 'guardian_caregiver_purple.png') : 'guardian_caregiver_purple.png'}" alt="" class="w-10 h-10 g-icon">
                                 <div>
                                     <div class="text-sm font-semibold text-gray-600 whitespace-nowrap">담당 요양보호사</div>
@@ -244,19 +331,63 @@
                         </div>
                         <div class="mt-4 bg-gray-50 rounded-lg p-4 flex gap-3 items-start">
                             <img src="assets/user_design/guardian_memo.png" alt="" class="w-7 h-7 g-icon shrink-0">
-                            <div class="text-base text-gray-700"><span class="font-bold text-gray-900 mr-2">메모</span>${escapeHtml(v.notes) || '메모 없음'}</div>
+                            <div class="text-base text-gray-700"><span class="font-bold text-gray-900 mr-2">메모</span>${escapeHtml(v.notes) || '등록된 메모가 없습니다.'}</div>
                         </div>
                     </div>
                 </li>`;
         }
 
+        // 분을 "N시간" / "N시간 M분" / "N분"으로 표시 (총합·평균 공용)
+        function hoursLabel(totalMin) {
+            if (!totalMin) return '0시간';
+            const h = Math.floor(totalMin / 60), m = totalMin % 60;
+            if (h && m) return `${h}시간 ${m}분`;
+            if (h) return `${h}시간`;
+            return `${m}분`;
+        }
+
+        const STAT_ICON = {
+            calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+            clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+            heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>',
+            user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>',
+        };
+        const COND_STAT_COLOR = { '좋음': ['#E6F3F1', '#0F8B80'], '보통': ['#FDF1E3', '#B45309'], '나쁨': ['#FDE8E8', '#DC2626'] };
+
+        // 실제로 조회된 visits 배열로만 계산한다 (추측·임의 수치 없음)
+        function renderStats(visits) {
+            const row = document.getElementById('statRow');
+            const count = visits.length;
+            const totalMin = visits.reduce((sum, v) => sum + (v.duration_minutes || 0), 0);
+            const avgMin = count ? Math.round(totalMin / count) : 0;
+            const latest = visits[0];
+            const condColor = latest && COND_STAT_COLOR[latest.condition] || ['#F1F5F9', '#64748B'];
+
+            const cards = [
+                { icon: 'calendar', bg: '#E8F1FC', fg: '#1D4ED8', label: '최근 14일 방문 기록', value: `${count}건`, caption: document.getElementById('rangeChip').textContent },
+                { icon: 'clock', bg: '#EDE9FE', fg: '#6D28D9', label: '총 방문 시간', value: hoursLabel(totalMin), caption: count ? `평균 ${hoursLabel(avgMin)}` : '-' },
+                { icon: 'heart', bg: condColor[0], fg: condColor[1], label: '최근 컨디션', value: (latest && latest.condition) || '확인되지 않음', caption: '가장 최근 방문 기준' },
+                { icon: 'user', bg: '#E6F3F1', fg: '#0F8B80', label: '담당 요양보호사', value: (latest && latest.caregiver_name) || '-', caption: '최근 방문 기준' },
+            ];
+            row.innerHTML = cards.map(c => `
+                <div class="g-stat-card">
+                    <div class="g-stat-icon" style="background:${c.bg};color:${c.fg};"><span style="width:21px;height:21px;display:block;">${STAT_ICON[c.icon]}</span></div>
+                    <div>
+                        <div class="g-stat-label">${c.label}</div>
+                        <div class="g-stat-value">${escapeHtml(c.value)}</div>
+                        <div class="g-stat-caption">${escapeHtml(c.caption)}</div>
+                    </div>
+                </div>`).join('');
+        }
+
         async function loadVisits() {
             const id = document.getElementById('residentSelect').value;
             const list = document.getElementById('visitList');
-            if (!id) { list.innerHTML = ''; return; }
+            if (!id) { list.innerHTML = ''; renderStats([]); return; }
             const r = await fetch(`${API_URL}/guardian/residents/${id}/visits?days=14`);
-            if (!r.ok) { list.innerHTML = '<li class="py-8 text-center text-gray-400">기록을 불러올 수 없습니다</li>'; return; }
+            if (!r.ok) { list.innerHTML = '<li class="py-8 text-center text-gray-400">기록을 불러올 수 없습니다</li>'; renderStats([]); return; }
             const d = await r.json();
+            renderStats(d.visits);
             if (!d.visits.length) { list.innerHTML = '<li class="py-8 text-center text-gray-400">최근 14일 기록이 없습니다</li>'; return; }
             list.innerHTML = d.visits.map((v, i) => visitCard({ ...v, visit_index: i })).join('');
         }

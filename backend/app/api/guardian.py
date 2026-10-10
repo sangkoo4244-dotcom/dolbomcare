@@ -172,7 +172,13 @@ def reject_request(request_id: int, db: Session = Depends(get_db), manager: User
 @router.get("/my-residents")
 def my_residents(db: Session = Depends(get_db), guardian: User = Depends(require_guardian)):
     rows = db.query(Resident).filter(Resident.guardian_id == guardian.id).all()
-    return {"residents": [{"id": r.id, "name": r.name} for r in rows]}
+    return {"residents": [
+        {
+            "id": r.id, "name": r.name, "gender": r.gender, "age": r.age,
+            "birth_date": r.birth_date.isoformat() if r.birth_date else None,
+        }
+        for r in rows
+    ]}
 
 
 @router.get("/residents/{resident_id}/visits")
@@ -194,6 +200,7 @@ def resident_visits(resident_id: int, days: int = 14, db: Session = Depends(get_
         visits.append({
             "date": r.recorded_date.date().isoformat(),
             "time": r.recorded_date.strftime("%H:%M"),
+            "duration_minutes": r.duration_minutes,
             "caregiver_name": caregivers.get(r.caregiver_id),
             "care_items": [CARE_ITEM_LABELS.get(c, c) for c in codes],
             "condition": CONDITION_LABELS.get(r.condition, None),
