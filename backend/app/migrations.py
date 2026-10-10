@@ -2,7 +2,7 @@ from app.database import engine, SessionLocal
 from app.models import (
     StaffCertificate, SalaryStatement, GuardianInvite, Notification,
     ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
-    RiskAssessment,
+    RiskAssessment, StaffRecord,
 )
 from sqlalchemy import text
 
@@ -47,7 +47,7 @@ def run_migrations():
     """
     for table_cls in (StaffCertificate, SalaryStatement, GuardianInvite, Notification,
                        ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
-                       RiskAssessment):
+                       RiskAssessment, StaffRecord):
         try:
             table_cls.__table__.create(bind=engine, checkfirst=True)
         except Exception as e:

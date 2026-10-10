@@ -779,6 +779,117 @@
             }
         }
 
+        // 직원 규정준수 기록: 고충처리/건강검진/보수교육/연차·유급휴일/퇴직적립금
+        const RECORD_TYPE_LABELS = {
+            grievance: '고충처리', health_checkup: '건강검진', continuing_education: '보수교육',
+            annual_leave: '연차·유급휴일', retirement_reserve: '퇴직적립금',
+        };
+        let recordsStaffId = null;
+        let recordsCache = null;
+        let currentRecordType = 'grievance';
+
+        function openRecordsModal(id) {
+            recordsStaffId = id;
+            currentRecordType = 'grievance';
+            loadRecords();
+        }
+
+        async function loadRecords() {
+            const s = staffList.find(x => x.id === recordsStaffId);
+            if (!s) return;
+            document.getElementById('staffModalTitle').textContent = `${s.full_name || s.email} · 규정준수 기록`;
+            document.getElementById('staffModalBody').innerHTML = `
+                <div class="st-muted" style="margin-bottom:10px;">연차 일수·퇴직금 등은 자동 계산하지 않습니다. 날짜·내용을 직접 기록해두는 대장입니다.</div>
+                <select id="recordTypeSelect" onchange="switchRecordType(this.value)" style="width:100%;margin-bottom:12px;">
+                    ${Object.entries(RECORD_TYPE_LABELS).map(([code, label]) => `<option value="${code}">${label}</option>`).join('')}
+                </select>
+                <div id="recordFormBox"></div>
+                <div id="recordListBox" class="st-muted" style="margin-top:14px;">불러오는 중...</div>
+                <div class="st-form-actions"><button class="st-act" onclick="closeStaffModal()">닫기</button></div>`;
+            document.getElementById('staffModal').hidden = false;
+
+            try {
+                const r = await fetch(`${API_URL}/staff-records/staff/${recordsStaffId}`);
+                if (!r.ok) throw new Error('조회 실패');
+                recordsCache = (await r.json()).records;
+            } catch (e) {
+                recordsCache = null;
+            }
+            document.getElementById('recordTypeSelect').value = currentRecordType;
+            renderRecordType();
+        }
+
+        function switchRecordType(code) {
+            currentRecordType = code;
+            document.getElementById('recordTypeSelect').value = code;
+            renderRecordType();
+        }
+
+        function renderRecordType() {
+            const type = currentRecordType;
+            const statusField = type === 'grievance'
+                ? `<label>처리 상태<select id="rStatus"><option value="open">접수</option><option value="resolved">해결됨</option></select></label>` : '';
+            const amountLabel = { annual_leave: '일수', retirement_reserve: '금액(원)', continuing_education: '이수 시간' }[type] || '숫자값';
+
+            document.getElementById('recordFormBox').innerHTML = `
+                <div class="st-form">
+                    <label>날짜<input id="rDate" type="date" value="${new Date().toISOString().slice(0, 10)}"></label>
+                    <label>제목<input id="rTitle" placeholder="예: 2026년 상반기 보수교육"></label>
+                    <label>${amountLabel} (선택)<input id="rAmount" type="number"></label>
+                    ${statusField}
+                    <label>내용<textarea id="rDetail" rows="2"></textarea></label>
+                    <div class="st-form-actions"><button class="st-add-btn" onclick="submitRecord()">추가</button></div>
+                </div>`;
+
+            const listBox = document.getElementById('recordListBox');
+            const group = recordsCache ? recordsCache[type] : null;
+            if (!group || !group.items.length) { listBox.textContent = '등록된 기록이 없습니다'; return; }
+            listBox.innerHTML = group.items.map(r => `
+                <div class="st-detail-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
+                    <div style="display:flex;justify-content:space-between;width:100%;">
+                        <strong>${escapeAttr(r.record_date)} ${escapeAttr(r.title || '')}</strong>
+                        <button class="st-act" style="padding:2px 8px;font-size:11px;" onclick="deleteRecord(${r.id})">삭제</button>
+                    </div>
+                    <div class="st-muted">
+                        ${r.status ? `상태: ${r.status === 'open' ? '접수' : '해결됨'} · ` : ''}
+                        ${r.amount != null ? `${r.amount} · ` : ''}
+                        작성: ${escapeAttr(r.recorded_by_name || '-')}
+                    </div>
+                    ${r.detail ? `<div>${escapeAttr(r.detail)}</div>` : ''}
+                </div>`).join('');
+        }
+
+        async function submitRecord() {
+            const body = {
+                staff_id: recordsStaffId,
+                record_type: currentRecordType,
+                record_date: document.getElementById('rDate').value,
+                title: document.getElementById('rTitle').value,
+                detail: document.getElementById('rDetail').value,
+                amount: document.getElementById('rAmount').value ? parseInt(document.getElementById('rAmount').value, 10) : null,
+            };
+            const statusEl = document.getElementById('rStatus');
+            if (statusEl) body.status = statusEl.value;
+            if (!body.record_date) { alert('날짜를 입력해주세요'); return; }
+
+            try {
+                const r = await fetch(`${API_URL}/staff-records/`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+                });
+                if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.detail || '저장 실패'); }
+                await loadRecords();
+            } catch (e) { alert('오류: ' + e.message); }
+        }
+
+        async function deleteRecord(id) {
+            if (!confirm('이 기록을 삭제할까요?')) return;
+            try {
+                const r = await fetch(`${API_URL}/staff-records/${id}`, { method: 'DELETE' });
+                if (!r.ok) throw new Error('삭제 실패');
+                await loadRecords();
+            } catch (e) { alert('오류: ' + e.message); }
+        }
+
         // 자격증: 센터 전체 목록을 한 번 받아 직원별로 나눠 쓴다
         let certMap = {};
 
@@ -919,7 +1030,7 @@
                         <td>${s.hire_date || '-'}</td>
                         <td><span class="p-badge2 badge-${status}">${STATUS_LABEL[status] || status}</span></td>
                         <td>
-                            <button class="st-act" onclick="openEditModal(${s.id})">수정</button><button class="st-act" onclick="openDetailModal(${s.id})">상세보기</button><button class="st-cal" onclick="openScheduleModal(${s.id})" title="근무 일정 보기"><img src="assets/user_design/15_icon_calendar_action_full.png" alt="근무 일정"></button>
+                            <button class="st-act" onclick="openEditModal(${s.id})">수정</button><button class="st-act" onclick="openDetailModal(${s.id})">상세보기</button><button class="st-cal" onclick="openScheduleModal(${s.id})" title="근무 일정 보기"><img src="assets/user_design/15_icon_calendar_action_full.png" alt="근무 일정"></button><button class="st-act" onclick="openRecordsModal(${s.id})">규정준수 기록</button>
                             <button class="st-pw-btn" onclick="resetPassword(${s.id}, '${name.replace(/'/g, '')}')">비밀번호 재설정</button>
                         </td>
                     </tr>`;

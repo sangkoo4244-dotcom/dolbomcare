@@ -334,3 +334,20 @@ class RiskAssessment(Base):
     risk_level = Column(String, nullable=True)  # 'low', 'high'
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class StaffRecord(Base):
+    """직원 규정준수 기록 - 고충처리/건강검진/보수교육/연차·유급휴일/퇴직적립금.
+    근로기준법·공단평가가 요구하는 각 기록의 정확한 서식·계산식(연차 발생일수, 퇴직금 산정 등)은
+    반영하지 않았다 - 날짜·내용·숫자값을 센터가 직접 기록해두는 대장(ledger) 역할만 한다."""
+    __tablename__ = "staff_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    staff_id = Column(Integer, ForeignKey("users.id"), index=True)
+    record_type = Column(String, index=True)  # 'grievance', 'health_checkup', 'continuing_education', 'annual_leave', 'retirement_reserve'
+    record_date = Column(Date)
+    title = Column(String, nullable=True)
+    detail = Column(Text, nullable=True)
+    status = Column(String, nullable=True)  # 고충처리: 'open'/'resolved' 등. 다른 종류는 비워둔다.
+    amount = Column(Integer, nullable=True)  # 연차: 일수, 퇴직적립금: 금액 등 종류별로 다르게 쓰는 숫자값
+    recorded_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
