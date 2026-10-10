@@ -68,6 +68,7 @@ const SIDEBAR_MENUS = {
         { href: 'schedule_approval.html', icon: 'schedule_check', label: '방문계획 승인' },
         { href: 'billing_management.html', icon: 'billing', label: '청부관리' },
         { href: 'copay_management.html', icon: 'billing', label: '본인부담금' },
+        { href: 'audit_prep.html', icon: 'billing', label: '평가 준비 자료' },
         { href: 'staff_management.html', icon: 'staff', label: '직원관리' },
         { href: 'monthly_settlement.html', icon: 'settlement', label: '월별정산' },
         { href: 'profit_analysis.html', icon: 'profit', label: '수익분석' },

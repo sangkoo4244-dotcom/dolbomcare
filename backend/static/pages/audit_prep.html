@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>평가 준비 자료 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .logout-btn:hover { background: var(--danger-light); color: var(--danger); border-color: var(--danger); }
+        .content { flex: 1; padding: 30px; }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .main-layout { margin-left: 0; }
+            .content { padding: 20px; }
+        }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --warn: #B45309; --danger2: #DC2626; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .filter-bar { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .filter-input { padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 13px; outline: none; }
+        .filter-input:focus { border-color: var(--teal); }
+        .btn-outline { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .btn-solid { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
+        .btn-solid:hover { background: #0C756C; }
+
+        .packet { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 28px; }
+        .packet h2 { margin: 0 0 4px; font-size: 20px; color: var(--navy); }
+        .packet .sub { color: #64748B; font-size: 13px; margin-bottom: 20px; }
+        .packet-section { margin-top: 24px; }
+        .packet-section h3 { font-size: 14px; color: var(--navy); border-bottom: 2px solid var(--teal); padding-bottom: 6px; margin-bottom: 10px; }
+        .plain-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .plain-table th { text-align: left; background: #F8FAFC; padding: 8px 10px; border: 1px solid var(--line2); font-weight: 700; color: #64748B; }
+        .plain-table td { padding: 8px 10px; border: 1px solid var(--line2); }
+        .empty-note { color: #94A3B8; font-size: 13px; }
+        .sig-yes { color: #15803D; font-weight: 700; }
+        .sig-no { color: #DC2626; font-weight: 700; }
+
+        @media print { .sidebar, .topbar, .filter-bar { display: none !important; } .main-layout { margin-left: 0; } .content { padding: 0; } .packet { border: none; box-shadow: none; } }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function navigateTo(url) { window.location.href = url; }
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('user_role');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>평가 준비 자료</h1>
+                <div class="breadcrumb">홈 › 청구 및 경영 관리 › <b>평가 준비 자료</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">센터장</div>
+                    <div class="user-role">관리자</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="filter-bar">
+                <select id="fResident" class="filter-input"><option value="">이용자 선택</option></select>
+                <input type="date" id="fStart" class="filter-input">
+                <span style="color:#94A3B8;">~</span>
+                <input type="date" id="fEnd" class="filter-input">
+                <button type="button" class="btn-solid" onclick="loadPacket()">자료 모으기</button>
+                <button type="button" class="btn-outline" onclick="window.print()">인쇄</button>
+                <span style="color:#94A3B8;font-size:12px;">공단 평가번호별 공식 문항은 기관·회차마다 달라질 수 있어 자동 매핑하지 않습니다. 여기서는 기간 내 방문기록·평가·수납 기록을 모아 보여드리니, 실제 평가표와 대조해 사용하세요.</span>
+            </div>
+
+            <div class="packet" id="packetBox">
+                <div class="empty-note">이용자와 기간을 선택하고 "자료 모으기"를 눌러주세요.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/v1';
+        let currentUser = null;
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) { window.location.href = './login.html'; return; }
+            if (user.role !== 'center_manager') {
+                alert('센터장만 접근 가능합니다');
+                window.location.href = './dashboard.html';
+                return;
+            }
+            currentUser = user;
+            document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
+            if (typeof renderSidebar === 'function') renderSidebar();
+            loadResidents();
+        }
+
+        async function loadResidents() {
+            try {
+                const res = await fetch(`${API_URL}/residents/?center_id=${currentUser.center_id}`);
+                const data = await res.json();
+                const sel = document.getElementById('fResident');
+                sel.innerHTML = '<option value="">이용자 선택</option>' + data.residents.map(r =>
+                    `<option value="${r.id}">${r.name}</option>`).join('');
+            } catch (e) { /* ignore */ }
+        }
+
+        function riskLevelLabel(l) { return { low: '저위험', high: '고위험' }[l] || '미분류'; }
+        function copayStatusLabel(s) { return { unpaid: '미수납', partial: '부분수납', paid: '수납완료' }[s] || s; }
+
+        function renderPacket(data) {
+            const box = document.getElementById('packetBox');
+            const r = data.resident;
+            const v = data.visits;
+
+            let riskHtml = '';
+            Object.values(data.risk_assessments).forEach(group => {
+                riskHtml += `<div style="margin-bottom:10px;"><b>${group.type_label}</b> `;
+                if (!group.records.length) { riskHtml += `<span class="empty-note">기간 내 평가 없음</span></div>`; return; }
+                riskHtml += group.records.map(a => `· ${(a.assessed_date || '').slice(0, 10)} 점수 ${a.score ?? '-'} (${riskLevelLabel(a.risk_level)})`).join(' ') + `</div>`;
+            });
+
+            box.innerHTML = `
+                <h2>${r.name} 어르신 평가 준비 자료</h2>
+                <div class="sub">등급 ${r.care_grade ?? '인지지원'}등급 · ${r.client_type || '-'} · 인정번호 ${r.recognition_number || '-'} · 기간 ${data.period.start} ~ ${data.period.end}</div>
+
+                <div class="packet-section">
+                    <h3>방문 기록 (서명 확인) — 총 ${v.count}건, 서명 완료 ${v.signed_count}건</h3>
+                    ${v.records.length ? `
+                        <table class="plain-table">
+                            <thead><tr><th>방문일</th><th>담당자</th><th>서비스</th><th>시간</th><th>서명</th></tr></thead>
+                            <tbody>${v.records.map(x => `
+                                <tr>
+                                    <td>${(x.date || '').slice(0, 10)}</td>
+                                    <td>${x.caregiver_name}</td>
+                                    <td>${x.service_type || '-'}</td>
+                                    <td>${x.duration_minutes ?? '-'}분</td>
+                                    <td class="${x.has_signature ? 'sig-yes' : 'sig-no'}">${x.has_signature ? '확인' : '미확인'}</td>
+                                </tr>`).join('')}</tbody>
+                        </table>` : '<div class="empty-note">기간 내 방문기록 없음</div>'}
+                </div>
+
+                <div class="packet-section">
+                    <h3>기초평가(욕구사정) 이력</h3>
+                    ${data.needs_assessments.length ? data.needs_assessments.map(a => `
+                        <div style="margin-bottom:6px;">· ${(a.assessed_date || '').slice(0, 10)} 작성: ${a.assessed_by_name || '-'}${a.notes ? ` — ${a.notes}` : ''}</div>
+                    `).join('') : '<div class="empty-note">기간 내 평가 없음</div>'}
+                </div>
+
+                <div class="packet-section">
+                    <h3>위험도 · 기능평가 (낙상 · 욕창 · 인지기능)</h3>
+                    ${riskHtml}
+                </div>
+
+                <div class="packet-section">
+                    <h3>본인부담금 수납 현황</h3>
+                    ${data.copay.length ? `
+                        <table class="plain-table">
+                            <thead><tr><th>월</th><th>본인부담금</th><th>수납액</th><th>상태</th></tr></thead>
+                            <tbody>${data.copay.map(c => `
+                                <tr><td>${c.year_month}</td><td>₩${c.total_amount.toLocaleString()}</td><td>₩${c.paid_amount.toLocaleString()}</td><td>${copayStatusLabel(c.status)}</td></tr>
+                            `).join('')}</tbody>
+                        </table>` : '<div class="empty-note">기간 내 본인부담금 기록 없음</div>'}
+                </div>
+            `;
+        }
+
+        async function loadPacket() {
+            const residentId = document.getElementById('fResident').value;
+            const start = document.getElementById('fStart').value;
+            const end = document.getElementById('fEnd').value;
+            if (!residentId || !start || !end) { alert('이용자와 기간을 모두 선택해주세요'); return; }
+
+            document.getElementById('packetBox').innerHTML = '<div class="empty-note">불러오는 중...</div>';
+            try {
+                const res = await fetch(`${API_URL}/audit-prep/resident/${residentId}?start=${start}&end=${end}`);
+                if (!res.ok) throw new Error('조회 실패');
+                renderPacket(await res.json());
+            } catch (e) {
+                document.getElementById('packetBox').innerHTML = '<div class="empty-note" style="color:var(--danger2);">자료를 불러오지 못했습니다</div>';
+            }
+        }
+
+        loadUserInfo();
+        const now = new Date();
+        const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        document.getElementById('fStart').value = firstOfMonth.toISOString().slice(0, 10);
+        document.getElementById('fEnd').value = now.toISOString().slice(0, 10);
+    </script>
+</body>
+</html>
