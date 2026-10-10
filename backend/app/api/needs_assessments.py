@@ -87,7 +87,7 @@ def create_assessment(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    """욕구조사 작성 (요양사·센터장). 매 방문이 아니라 주기 평가용이라 이력으로 계속 쌓인다."""
+    """기초평가(욕구조사) 작성 (요양사·센터장). 매 방문이 아니라 주기 평가용이라 이력으로 계속 쌓인다."""
     if actor.role not in ("caregiver", "center_manager"):
         raise HTTPException(status_code=403, detail="요양사 또는 센터장만 작성할 수 있습니다")
 
@@ -117,7 +117,7 @@ def create_assessment(
     db.add(assessment)
     db.commit()
     db.refresh(assessment)
-    return {"status": "success", "message": "욕구조사가 저장되었습니다", "data": _to_dict(assessment, actor.full_name)}
+    return {"status": "success", "message": "기초평가가 저장되었습니다", "data": _to_dict(assessment, actor.full_name)}
 
 
 @router.get("/resident/{resident_id}")
@@ -126,7 +126,7 @@ def list_assessments(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    """한 이용자의 욕구조사 이력 (최신순)"""
+    """한 이용자의 기초평가 이력 (최신순)"""
     resident = db.query(Resident).filter(Resident.id == resident_id).first()
     if not resident or resident.center_id != actor.center_id:
         raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")

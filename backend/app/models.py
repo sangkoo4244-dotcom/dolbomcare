@@ -282,7 +282,7 @@ class StaffCertificate(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class NeedsAssessment(Base):
-    """욕구조사 (공단 표준 욕구사정 서식의 핵심 영역). 방문마다가 아니라 주기적으로(보통 월 1회) 작성한다."""
+    """기초평가(욕구조사) - 공단 표준 욕구사정 서식의 핵심 영역. 방문마다가 아니라 주기적으로(보통 월 1회) 작성한다."""
     __tablename__ = "needs_assessments"
 
     id = Column(Integer, primary_key=True, index=True)
