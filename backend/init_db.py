@@ -3,10 +3,12 @@ import os
 from app import models  # noqa: F401  (registers every table on Base)
 from app.api.users import get_password_hash
 from app.database import Base, SessionLocal, engine
+from app.migrations import run_migrations
 
 
 def main():
     Base.metadata.create_all(bind=engine)
+    run_migrations()  # 새 컬럼이 없는 상태로 아래 User 조회가 깨지는 걸 막는다
 
     email = os.getenv("BOOTSTRAP_MANAGER_EMAIL")
     password = os.getenv("BOOTSTRAP_MANAGER_PASSWORD")
