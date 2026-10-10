@@ -320,9 +320,9 @@ class CopayInvoice(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class RiskAssessment(Base):
-    """낙상위험도·욕창위험도·인지기능평가 등, 공단이 표준 체크리스트/배점 기준을 정해둔 반기별 평가의 틀.
-    구체적인 문항과 배점표는 공식 서식을 확보하기 전까지 반영하지 않았다 - 점수와 위험군만
-    센터가 직접 판단해 입력한다 (문항은 나중에 추가 가능)."""
+    """낙상위험도·욕창위험도·인지기능평가 - 공단 2026년 평가매뉴얼의 "위험도 평가" 지표(반기 1회).
+    낙상은 Morse Fall Scale, 욕창은 Braden Scale(둘 다 공단 매뉴얼이 예시로 든 검증된 도구)을
+    체크리스트로 채점하고, 응답 원본은 item_scores에 남겨 평가 시 "모든 기록 확인"에 대비한다."""
     __tablename__ = "risk_assessments"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -330,8 +330,10 @@ class RiskAssessment(Base):
     assessment_type = Column(String, index=True)  # 'fall_risk', 'pressure_sore_risk', 'cognitive_function'
     assessed_by = Column(Integer, ForeignKey("users.id"))
     assessed_date = Column(DateTime, default=datetime.utcnow)
+    tool_name = Column(String, nullable=True)  # 'morse_fall_scale', 'braden_scale', 'k_mmse' 등
     score = Column(Integer, nullable=True)
     risk_level = Column(String, nullable=True)  # 'low', 'high'
+    item_scores = Column(Text, nullable=True)  # JSON: 체크리스트 문항별 응답 (감사 대비 원본 기록)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

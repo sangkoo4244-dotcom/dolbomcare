@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -11,9 +12,16 @@ from app.models import RiskAssessment, Resident, User
 
 router = APIRouter()
 
-# 공단이 반기(6개월)마다 요구하는 표준 위험도/기능평가 항목들.
-# 구체적인 체크리스트 문항·배점표는 공식 서식을 확보하기 전까지는 반영하지 않고,
-# 점수와 위험군만 센터가 직접 입력하는 틀만 제공한다 (문항은 나중에 추가 가능).
+# 공단 2026년 재가급여 평가매뉴얼(방문요양) "위험도 평가" 지표 - 반기별 1회 이상 실시.
+# 공단은 특정 배점표를 지정하지 않고 "검증된 도구(관련학회·논문 발표 도구)"를 쓰도록 요구하며,
+# 매뉴얼이 예시로 든 도구는 다음과 같다:
+#   낙상: Huhn의 낙상위험도 평가도구, Morse Fall Scale, Bobath Memorial Hospital Fall Risk Assessment Scales
+#   욕창: Braden scale, Norton scale, Gosnell scale, Knoll scale
+#   인지기능: CIST(인지선별검사), K-MMSE, MMSE-K
+# 여기서는 그중 가장 널리 쓰이고 국제적으로 표준화된 Morse Fall Scale과 Braden Scale을 체크리스트로
+# 구현한다. 인지기능평가는 검사 자체(그림检사 등 포함)가 복잡하고 일부 도구는 중앙치매센터 교육
+# 이수가 필요해 앱 안에서 검사를 대신하지 않고, 점수·도구명 기록과 공단이 인정하는 대체 경로
+# (치매진단+투약 확인)만 지원한다.
 ASSESSMENT_TYPES = {
     "fall_risk": "낙상위험도",
     "pressure_sore_risk": "욕창위험도",
@@ -21,8 +29,57 @@ ASSESSMENT_TYPES = {
 }
 CADENCE_DAYS = 183  # 반기 1회
 
+# Morse Fall Scale: 6개 항목, 0~125점. 25점 이상부터 표준 낙상예방조치 강화가 권고된다.
+MORSE_FALL_ITEMS = {
+    "history": {"label": "낙상 경험 (최근 3개월 이내)", "options": {"no": ["없음", 0], "yes": ["있음", 25]}},
+    "secondary_diagnosis": {"label": "동반 진단 2개 이상", "options": {"no": ["아니오", 0], "yes": ["예", 15]}},
+    "ambulatory_aid": {"label": "보행 보조기구", "options": {
+        "none": ["없음·침상안정·휠체어·직원 부축", 0], "crutch_cane_walker": ["목발·지팡이·보행기", 15], "furniture": ["가구 짚고 이동", 30],
+    }},
+    "iv_therapy": {"label": "정맥주사·헤파린락 여부", "options": {"no": ["없음", 0], "yes": ["있음", 20]}},
+    "gait": {"label": "보행 상태", "options": {
+        "normal": ["정상·침상안정·부동", 0], "weak": ["약함", 10], "impaired": ["장애 있음", 20],
+    }},
+    "mental_status": {"label": "정신 상태", "options": {
+        "aware": ["자신의 능력을 인지함", 0], "overestimates": ["자신의 능력을 과대평가·망각함", 15],
+    }},
+}
+
+# Braden Scale: 6개 하위영역(마찰력과전단력만 1~3점, 나머지 1~4점), 총점 6~23점.
+# 15점 이하를 욕창 위험군으로 본다 (6~9 최고위험 / 10~12 고위험 / 13~14 중등도위험 / 15~18 경도위험).
+BRADEN_ITEMS = {
+    "sensory_perception": {"label": "감각 인지", "options": {"1": ["완전 제한", 1], "2": ["매우 제한", 2], "3": ["약간 제한", 3], "4": ["제한 없음", 4]}},
+    "moisture": {"label": "습기", "options": {"1": ["항상 습함", 1], "2": ["매우 습함", 2], "3": ["가끔 습함", 3], "4": ["거의 없음", 4]}},
+    "activity": {"label": "활동", "options": {"1": ["와상", 1], "2": ["의자 이용", 2], "3": ["가끔 보행", 3], "4": ["자주 보행", 4]}},
+    "mobility": {"label": "움직임", "options": {"1": ["완전 부동", 1], "2": ["매우 제한", 2], "3": ["약간 제한", 3], "4": ["제한 없음", 4]}},
+    "nutrition": {"label": "영양", "options": {"1": ["매우 불량", 1], "2": ["부적절", 2], "3": ["적절", 3], "4": ["매우 양호", 4]}},
+    "friction_shear": {"label": "마찰력과 전단력", "options": {"1": ["문제 있음", 1], "2": ["잠재적 문제", 2], "3": ["문제 없음", 3]}},
+}
+
+COGNITIVE_TOOLS = {
+    "k_mmse": "K-MMSE / MMSE-K (간이정신상태검사)",
+    "cist": "CIST (인지선별검사 - 중앙치매센터 교육 이수 필요)",
+    "external": "외부 전문기관 검사 (병원·보건소·치매안심센터 등)",
+    "dementia_dx_medication": "치매진단 + 복약 확인 서류로 대체 인정",
+    "other": "기타 검증된 도구",
+}
+
+
+def _score_checklist(items: dict, selections: dict) -> int:
+    total = 0
+    for code, choice in (selections or {}).items():
+        item = items.get(code)
+        if not item or choice not in item["options"]:
+            raise HTTPException(status_code=400, detail=f"잘못된 체크리스트 응답입니다 ({code})")
+        total += item["options"][choice][1]
+    return total
+
 
 def _to_dict(a: RiskAssessment, assessor_name: Optional[str] = None) -> dict:
+    try:
+        item_scores = json.loads(a.item_scores) if a.item_scores else None
+    except (ValueError, TypeError):
+        item_scores = None
     return {
         "id": a.id,
         "resident_id": a.resident_id,
@@ -30,22 +87,31 @@ def _to_dict(a: RiskAssessment, assessor_name: Optional[str] = None) -> dict:
         "assessed_by": a.assessed_by,
         "assessed_by_name": assessor_name,
         "assessed_date": a.assessed_date.isoformat() if a.assessed_date else None,
+        "tool_name": a.tool_name,
         "score": a.score,
         "risk_level": a.risk_level,
+        "item_scores": item_scores,
         "notes": a.notes,
     }
 
 
 @router.get("/options")
 def get_options():
-    return {"assessment_types": ASSESSMENT_TYPES}
+    return {
+        "assessment_types": ASSESSMENT_TYPES,
+        "morse_fall_items": MORSE_FALL_ITEMS,
+        "braden_items": BRADEN_ITEMS,
+        "cognitive_tools": COGNITIVE_TOOLS,
+    }
 
 
 class RiskAssessmentCreate(BaseModel):
     resident_id: int
     assessment_type: str
-    score: Optional[int] = None
-    risk_level: Optional[str] = None  # 'low', 'high'
+    tool_name: Optional[str] = None  # 'morse_fall_scale', 'braden_scale', 또는 인지기능 도구 코드
+    item_scores: Optional[dict] = None  # Morse/Braden 체크리스트 응답 {항목코드: 선택코드} - 있으면 점수를 서버가 계산한다
+    score: Optional[int] = None  # item_scores가 없을 때(인지기능, 기타 도구) 직접 입력
+    risk_level: Optional[str] = None  # 'low', 'high' - item_scores가 있으면 서버가 계산해 덮어쓴다
     notes: str = ""
 
 
@@ -67,13 +133,32 @@ def create_risk_assessment(
     if not resident or resident.center_id != actor.center_id:
         raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
 
+    score = body.score
+    risk_level = body.risk_level
+    item_scores_json = None
+
+    # 체크리스트 응답이 있으면 점수·위험군은 서버가 표준 배점으로 직접 계산한다 (클라이언트 합산을 신뢰하지 않는다)
+    if body.tool_name == "morse_fall_scale" and body.item_scores:
+        score = _score_checklist(MORSE_FALL_ITEMS, body.item_scores)
+        risk_level = "high" if score >= 25 else "low"
+        item_scores_json = json.dumps(body.item_scores, ensure_ascii=False)
+    elif body.tool_name == "braden_scale" and body.item_scores:
+        score = _score_checklist(BRADEN_ITEMS, body.item_scores)
+        risk_level = "high" if score <= 15 else "low"
+        item_scores_json = json.dumps(body.item_scores, ensure_ascii=False)
+    elif body.tool_name == "dementia_dx_medication":
+        # 공단 매뉴얼상 치매진단+투약 확인 서류가 있으면 검사 없이도 '충족'으로 인정되는 경로 - 진단이 있다는 것 자체가 위험군을 뜻한다
+        risk_level = risk_level or "high"
+
     assessment = RiskAssessment(
         resident_id=body.resident_id,
         assessment_type=body.assessment_type,
         assessed_by=actor.id,
         assessed_date=datetime.utcnow(),
-        score=body.score,
-        risk_level=body.risk_level,
+        tool_name=body.tool_name,
+        score=score,
+        risk_level=risk_level,
+        item_scores=item_scores_json,
         notes=body.notes or None,
     )
     db.add(assessment)

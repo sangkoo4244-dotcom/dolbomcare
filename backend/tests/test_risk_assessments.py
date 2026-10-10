@@ -105,3 +105,90 @@ def test_invalid_assessment_type_rejected(client):
 def test_cannot_access_other_centers_resident(client):
     res = client.get("/api/v1/risk-assessments/resident/2", headers=MANAGER)
     assert res.status_code == 404
+
+
+def test_morse_fall_scale_server_computes_score_and_risk(client):
+    # 낙상 경험(25) + 보행보조기구 가구짚고이동(30) = 55점 -> 25점 이상이므로 high
+    res = client.post("/api/v1/risk-assessments/", headers=CAREGIVER, json={
+        "resident_id": 1, "assessment_type": "fall_risk", "tool_name": "morse_fall_scale",
+        "item_scores": {
+            "history": "yes", "secondary_diagnosis": "no", "ambulatory_aid": "furniture",
+            "iv_therapy": "no", "gait": "normal", "mental_status": "aware",
+        },
+    })
+    assert res.status_code == 200
+    body = res.json()["data"]
+    assert body["score"] == 55
+    assert body["risk_level"] == "high"
+    assert body["item_scores"]["ambulatory_aid"] == "furniture"
+
+
+def test_morse_fall_scale_low_risk_below_25(client):
+    res = client.post("/api/v1/risk-assessments/", headers=CAREGIVER, json={
+        "resident_id": 1, "assessment_type": "fall_risk", "tool_name": "morse_fall_scale",
+        "item_scores": {
+            "history": "no", "secondary_diagnosis": "no", "ambulatory_aid": "none",
+            "iv_therapy": "no", "gait": "normal", "mental_status": "aware",
+        },
+    })
+    assert res.status_code == 200
+    body = res.json()["data"]
+    assert body["score"] == 0
+    assert body["risk_level"] == "low"
+
+
+def test_braden_scale_server_computes_score_and_risk(client):
+    # 모두 최저점: 1+1+1+1+1+1 = 6점 -> 15점 이하이므로 high (최고위험군)
+    res = client.post("/api/v1/risk-assessments/", headers=CAREGIVER, json={
+        "resident_id": 1, "assessment_type": "pressure_sore_risk", "tool_name": "braden_scale",
+        "item_scores": {
+            "sensory_perception": "1", "moisture": "1", "activity": "1",
+            "mobility": "1", "nutrition": "1", "friction_shear": "1",
+        },
+    })
+    assert res.status_code == 200
+    body = res.json()["data"]
+    assert body["score"] == 6
+    assert body["risk_level"] == "high"
+
+
+def test_braden_scale_low_risk_above_15(client):
+    res = client.post("/api/v1/risk-assessments/", headers=CAREGIVER, json={
+        "resident_id": 1, "assessment_type": "pressure_sore_risk", "tool_name": "braden_scale",
+        "item_scores": {
+            "sensory_perception": "4", "moisture": "4", "activity": "4",
+            "mobility": "4", "nutrition": "4", "friction_shear": "3",
+        },
+    })
+    assert res.status_code == 200
+    body = res.json()["data"]
+    assert body["score"] == 23
+    assert body["risk_level"] == "low"
+
+
+def test_invalid_checklist_choice_rejected(client):
+    res = client.post("/api/v1/risk-assessments/", headers=CAREGIVER, json={
+        "resident_id": 1, "assessment_type": "fall_risk", "tool_name": "morse_fall_scale",
+        "item_scores": {"history": "maybe"},
+    })
+    assert res.status_code == 400
+
+
+def test_dementia_diagnosis_alternative_marks_high_risk_without_score(client):
+    res = client.post("/api/v1/risk-assessments/", headers=CAREGIVER, json={
+        "resident_id": 1, "assessment_type": "cognitive_function", "tool_name": "dementia_dx_medication",
+        "notes": "처방전 확인 완료",
+    })
+    assert res.status_code == 200
+    body = res.json()["data"]
+    assert body["risk_level"] == "high"
+    assert body["score"] is None
+
+
+def test_options_endpoint_includes_item_definitions(client):
+    res = client.get("/api/v1/risk-assessments/options")
+    assert res.status_code == 200
+    data = res.json()
+    assert "ambulatory_aid" in data["morse_fall_items"]
+    assert "friction_shear" in data["braden_items"]
+    assert "k_mmse" in data["cognitive_tools"]

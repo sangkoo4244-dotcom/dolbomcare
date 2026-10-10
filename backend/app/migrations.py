@@ -35,6 +35,8 @@ ADDITIVE_COLUMNS = [
     ("daily_records", "signature", "TEXT"),
     ("users", "alimtalk_opt_in", "BOOLEAN DEFAULT TRUE"),
     ("users", "alimtalk_categories", "VARCHAR"),
+    ("risk_assessments", "tool_name", "VARCHAR"),
+    ("risk_assessments", "item_scores", "TEXT"),
 ]
 
 

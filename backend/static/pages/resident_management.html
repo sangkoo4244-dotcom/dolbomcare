@@ -803,22 +803,10 @@
             <!-- 낙상위험도/욕창위험도/인지기능평가 공용 패널 (반기 1회, 공식 문항·배점표는 아직 없어 점수/위험군만 직접 입력) -->
             <div id="riskPanel" style="display:none;">
                 <div id="riskStatusBox" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:16px;font-size:13px;"></div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;">
-                    <div>
-                        <label style="display:block;font-weight:700;margin-bottom:6px;">점수 (선택)</label>
-                        <input type="number" id="riskScore" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;">
-                    </div>
-                    <div>
-                        <label style="display:block;font-weight:700;margin-bottom:6px;">위험군</label>
-                        <select id="riskLevel" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;">
-                            <option value="">미분류</option>
-                            <option value="low">저위험</option>
-                            <option value="high">고위험</option>
-                        </select>
-                    </div>
-                </div>
-                <label style="display:block;font-weight:700;margin-bottom:6px;">비고</label>
+                <div id="riskFormDynamic"></div>
+                <label style="display:block;font-weight:700;margin:14px 0 6px;">비고</label>
                 <textarea id="riskNotes" rows="2" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;"></textarea>
+                <div id="riskComputedPreview" style="margin-top:10px;font-size:13px;font-weight:700;"></div>
                 <div style="display:flex;gap:12px;margin-top:16px;">
                     <button type="button" onclick="submitRiskAssessment()" style="flex:1;padding:10px;background:#B5532F;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;">평가 저장</button>
                 </div>
@@ -1467,6 +1455,7 @@
         const RISK_TYPE_LABELS = { fall_risk: '낙상위험도', pressure_sore_risk: '욕창위험도', cognitive_function: '인지기능평가' };
         let riskOverview = null;  // 이 이용자의 3종 평가 현황 (탭 전환 때마다 다시 불러오지 않도록 캐시)
         let currentRiskType = null;
+        let riskOptions = null;  // 낙상(Morse Fall Scale)/욕창(Braden Scale) 문항 + 인지기능 도구 목록
 
         function switchNeedsTab(tab) {
             document.querySelectorAll('.needs-tab-btn').forEach(btn => {
@@ -1500,52 +1489,141 @@
             } catch (e) { riskOverview = null; }
         }
 
-        function renderRiskPanel() {
+        const TOOL_NAME_LABELS = {
+            morse_fall_scale: 'Morse Fall Scale', braden_scale: 'Braden Scale',
+            k_mmse: 'K-MMSE/MMSE-K', cist: 'CIST', external: '외부 전문기관 검사',
+            dementia_dx_medication: '치매진단+투약 확인', other: '기타 도구',
+        };
+
+        async function loadRiskOptions() {
+            if (riskOptions) return riskOptions;
+            const r = await fetch(`${API_URL}/risk-assessments/options`);
+            riskOptions = await r.json();
+            return riskOptions;
+        }
+
+        // Morse Fall Scale(낙상)/Braden Scale(욕창)은 공단 2026 평가매뉴얼이 예시로 든 검증된 도구이고,
+        // 항목·배점은 각 도구의 국제 표준값이다 (점수는 선택 즉시 서버가 다시 계산해 신뢰한다).
+        function buildChecklistForm(items) {
+            return Object.entries(items).map(([code, item]) => `
+                <div style="margin-bottom:10px;">
+                    <label style="display:block;font-weight:600;margin-bottom:4px;font-size:13px;">${escapeHtml(item.label)}</label>
+                    <select data-risk-item="${code}" onchange="recomputeRiskPreview()" style="width:100%;box-sizing:border-box;padding:7px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;">
+                        <option value="">선택 안 함</option>
+                        ${Object.entries(item.options).map(([val, pair]) => `<option value="${val}">${escapeHtml(pair[0])} (${pair[1]}점)</option>`).join('')}
+                    </select>
+                </div>`).join('');
+        }
+
+        function buildCognitiveForm(tools) {
+            return `
+                <label style="display:block;font-weight:700;margin-bottom:6px;">검사 도구</label>
+                <select id="cogTool" onchange="onCogToolChange()" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;margin-bottom:10px;">
+                    <option value="">선택</option>
+                    ${Object.entries(tools).map(([code, label]) => `<option value="${code}">${escapeHtml(label)}</option>`).join('')}
+                </select>
+                <div id="cogScoreBox">
+                    <label style="display:block;font-weight:700;margin-bottom:6px;">점수 (K-MMSE/MMSE-K는 30점 만점, 24점 이상 정상)</label>
+                    <input type="number" id="cogScore" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;">
+                </div>
+                <div id="cogAltNotice" style="display:none;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:10px;font-size:12px;color:#92400E;margin-bottom:10px;">
+                    공단 매뉴얼상 치매진단을 받고 치매약을 복용 중인 경우, 검사 없이 처방전 등 객관적 자료 확인으로 "충족"이 인정됩니다. 비고란에 확인한 자료를 적어주세요.
+                </div>`;
+        }
+
+        function onCogToolChange() {
+            const tool = document.getElementById('cogTool').value;
+            const isAlt = tool === 'dementia_dx_medication';
+            document.getElementById('cogScoreBox').style.display = isAlt ? 'none' : '';
+            document.getElementById('cogAltNotice').style.display = isAlt ? '' : 'none';
+        }
+
+        function recomputeRiskPreview() {
+            const preview = document.getElementById('riskComputedPreview');
+            const type = currentRiskType;
+            if (type === 'cognitive_function') { preview.textContent = ''; return; }
+            const items = type === 'fall_risk' ? riskOptions.morse_fall_items : riskOptions.braden_items;
+            const selects = document.querySelectorAll('#riskFormDynamic select[data-risk-item]');
+            let total = 0, answered = 0;
+            selects.forEach(sel => {
+                if (!sel.value) return;
+                answered++;
+                total += items[sel.dataset.riskItem].options[sel.value][1];
+            });
+            if (answered === 0) { preview.textContent = ''; return; }
+            const isHigh = type === 'fall_risk' ? total >= 25 : total <= 15;
+            preview.innerHTML = `예상 점수: ${total}점 (${answered}/${selects.length}문항 응답) · <span style="color:${isHigh ? '#DC2626' : '#15803D'};">${isHigh ? '고위험' : '저위험'}</span>`;
+        }
+
+        async function renderRiskPanel() {
             const type = currentRiskType;
             const label = RISK_TYPE_LABELS[type];
             const info = riskOverview ? riskOverview[type] : null;
             const statusBox = document.getElementById('riskStatusBox');
-            document.getElementById('riskScore').value = '';
-            document.getElementById('riskLevel').value = '';
             document.getElementById('riskNotes').value = '';
+            document.getElementById('riskComputedPreview').textContent = '';
+
+            await loadRiskOptions();
+            const formBox = document.getElementById('riskFormDynamic');
+            if (type === 'fall_risk') formBox.innerHTML = buildChecklistForm(riskOptions.morse_fall_items);
+            else if (type === 'pressure_sore_risk') formBox.innerHTML = buildChecklistForm(riskOptions.braden_items);
+            else formBox.innerHTML = buildCognitiveForm(riskOptions.cognitive_tools);
 
             if (!info || !info.latest) {
                 statusBox.innerHTML = `<b>${label}</b> · 평가 이력이 없습니다 (반기 1회 평가 대상)`;
             } else {
                 const levelLabel = { low: '저위험', high: '고위험' }[info.latest.risk_level] || '미분류';
+                const toolLabel = info.latest.tool_name ? ` · ${escapeHtml(TOOL_NAME_LABELS[info.latest.tool_name] || info.latest.tool_name)}` : '';
                 const overdueTag = info.is_overdue ? ' <span style="color:#DC2626;font-weight:700;">(평가 기한 초과)</span>' : '';
-                statusBox.innerHTML = `<b>${label}</b> · 최근 평가: ${(info.latest.assessed_date || '').slice(0, 10)} · 점수 ${info.latest.score ?? '-'} · ${levelLabel}${overdueTag}<br>다음 평가 예정일: ${info.next_due_date || '-'}`;
+                statusBox.innerHTML = `<b>${label}</b> · 최근 평가: ${(info.latest.assessed_date || '').slice(0, 10)} · 점수 ${info.latest.score ?? '-'} · ${levelLabel}${toolLabel}${overdueTag}<br>다음 평가 예정일: ${info.next_due_date || '-'}`;
             }
 
             const histBox = document.getElementById('riskHistory');
             if (!info || !info.history.length) { histBox.textContent = '이력 없음'; return; }
             histBox.innerHTML = info.history.map(a => {
                 const levelLabel = { low: '저위험', high: '고위험' }[a.risk_level] || '미분류';
+                const toolLabel = a.tool_name ? ` · ${escapeHtml(TOOL_NAME_LABELS[a.tool_name] || a.tool_name)}` : '';
                 return `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;">
-                    <b>${(a.assessed_date || '').slice(0, 10)}</b> · 작성: ${escapeHtml(a.assessed_by_name || '-')} · 점수 ${a.score ?? '-'} · ${levelLabel}
+                    <b>${(a.assessed_date || '').slice(0, 10)}</b> · 작성: ${escapeHtml(a.assessed_by_name || '-')} · 점수 ${a.score ?? '-'} · ${levelLabel}${toolLabel}
                     ${a.notes ? `<div style="color:#9ca3af;">${escapeHtml(a.notes)}</div>` : ''}
                 </div>`;
             }).join('');
         }
 
         async function submitRiskAssessment() {
-            const score = document.getElementById('riskScore').value;
-            const riskLevel = document.getElementById('riskLevel').value;
+            const type = currentRiskType;
             const notes = document.getElementById('riskNotes').value;
+            let body = { resident_id: needsResidentId, assessment_type: type, notes };
+
+            if (type === 'fall_risk' || type === 'pressure_sore_risk') {
+                const itemScores = {};
+                document.querySelectorAll('#riskFormDynamic select[data-risk-item]').forEach(sel => {
+                    if (sel.value) itemScores[sel.dataset.riskItem] = sel.value;
+                });
+                if (!Object.keys(itemScores).length) { alert('최소 한 문항 이상 선택해주세요'); return; }
+                body.tool_name = type === 'fall_risk' ? 'morse_fall_scale' : 'braden_scale';
+                body.item_scores = itemScores;
+            } else {
+                const tool = document.getElementById('cogTool').value;
+                if (!tool) { alert('검사 도구를 선택해주세요'); return; }
+                body.tool_name = tool;
+                if (tool !== 'dementia_dx_medication') {
+                    const score = document.getElementById('cogScore').value;
+                    body.score = score === '' ? null : parseInt(score, 10);
+                    if (tool === 'k_mmse' && body.score != null) body.risk_level = body.score <= 23 ? 'high' : 'low';
+                }
+            }
+
             try {
                 const r = await fetch(`${API_URL}/risk-assessments/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        resident_id: needsResidentId, assessment_type: currentRiskType,
-                        score: score === '' ? null : parseInt(score, 10),
-                        risk_level: riskLevel || null, notes,
-                    })
+                    body: JSON.stringify(body),
                 });
                 const d = await r.json().catch(() => ({}));
                 if (!r.ok) { alert(`저장 실패: ${d.detail || '오류'}`); return; }
                 await loadRiskOverview(needsResidentId);
-                alert(`${RISK_TYPE_LABELS[currentRiskType]} 평가가 저장되었습니다`);
+                alert(`${RISK_TYPE_LABELS[type]} 평가가 저장되었습니다`);
             } catch (e) { alert('오류: ' + e.message); }
         }
 
