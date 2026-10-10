@@ -296,3 +296,24 @@ class NeedsAssessment(Base):
     function_status = Column(Text, nullable=True)  # JSON 문자열: {"stand_up": "alone", "eating": "guided", ...}
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class CopayInvoice(Base):
+    """본인부담금 청구/수납 - 이용자(보호자)가 실제로 낸 돈을 월 단위로 추적한다.
+    청구액 자체는 billing_records(total_cost - amount)에서 매월 집계해 total_amount로 저장하고,
+    이 테이블은 그 금액을 "수납했는지"만 따로 관리한다."""
+    __tablename__ = "copay_invoices"
+    __table_args__ = (UniqueConstraint("resident_id", "year_month", name="uq_copay_resident_month"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    year_month = Column(String, index=True)  # 'YYYY-MM'
+    total_amount = Column(Integer, default=0)  # 해당 월 본인부담금 총액 (billing_records 집계값)
+    paid_amount = Column(Integer, default=0)  # 실제 수납액 (분할 납부 가능)
+    status = Column(String, default="unpaid")  # 'unpaid', 'partial', 'paid'
+    payment_method = Column(String, nullable=True)  # '현금', '계좌이체', '카드', 'CMS자동이체' 등
+    paid_date = Column(DateTime, nullable=True)
+    memo = Column(String, nullable=True)
+    recorded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

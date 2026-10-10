@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>본인부담금 관리 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .logout-btn:hover { background: var(--danger-light); color: var(--danger); border-color: var(--danger); }
+        .content { flex: 1; padding: 30px; }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .main-layout { margin-left: 0; }
+            .content { padding: 20px; }
+        }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --warn: #B45309; --danger2: #DC2626; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .summary-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .summary-row > div { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .summary-label { font-size: 13px; font-weight: 700; color: #64748B; }
+        .summary-value { font-size: 26px; font-weight: 800; color: var(--navy); line-height: 1.3; font-variant-numeric: tabular-nums; }
+
+        .filter-bar { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .filter-input { padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 13px; outline: none; }
+        .filter-input:focus { border-color: var(--teal); }
+        .btn-outline { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .btn-solid { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
+        .btn-solid:hover { background: #0C756C; }
+        .btn-small { padding: 5px 10px; font-size: 12px; }
+
+        .copay-table { border-collapse: collapse; width: 100%; }
+        .copay-table th { text-align: left; font-size: 12px; font-weight: 700; color: #64748B; padding: 10px 12px; background: #F8FAFC; border-bottom: 1px solid var(--line2); white-space: nowrap; }
+        .copay-table td { padding: 12px; font-size: 13px; color: var(--charcoal); border-bottom: 1px solid #F1F5F9; vertical-align: middle; white-space: nowrap; }
+        .copay-table tr:hover td { background: #FAFBFC; }
+        .status-pill2 { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; display: inline-block; }
+        .sp-unpaid { background: #FDE8E8; color: #DC2626; }
+        .sp-partial { background: #FDF1E3; color: #B45309; }
+        .sp-paid { background: #E6F7EE; color: #15803D; }
+
+        .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(20,40,63,0.45); z-index: 100; align-items: center; justify-content: center; }
+        .modal-backdrop.open { display: flex; }
+        .modal-box { background: #fff; border-radius: 14px; padding: 24px; width: 380px; max-width: 90vw; }
+        .modal-box h3 { margin: 0 0 16px; font-size: 16px; color: var(--navy); }
+        .modal-field { margin-bottom: 12px; }
+        .modal-field label { display: block; font-size: 12px; font-weight: 700; color: #64748B; margin-bottom: 4px; }
+        .modal-field input, .modal-field select { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 2px solid var(--line2); border-radius: 8px; font-size: 13px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+        .history-list { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow-y: auto; }
+        .history-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F1F5F9; font-size: 13px; }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function navigateTo(url) { window.location.href = url; }
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('user_role');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>본인부담금 관리</h1>
+                <div class="breadcrumb">홈 › 청구 및 경영 관리 › <b>본인부담금</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">센터장</div>
+                    <div class="user-role">관리자</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="summary-row">
+                <div>
+                    <div class="summary-label">이번 달 본인부담금 총액</div>
+                    <div class="summary-value" id="sumTotal">₩0</div>
+                </div>
+                <div>
+                    <div class="summary-label">수납액</div>
+                    <div class="summary-value" id="sumPaid">₩0</div>
+                </div>
+                <div>
+                    <div class="summary-label">미수납 이용자</div>
+                    <div class="summary-value" id="sumUnpaid">0명</div>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <input type="month" id="fMonth" class="filter-input">
+                <button type="button" class="btn-solid" onclick="loadSummary()">조회</button>
+                <span style="color:#94A3B8;font-size:12px;">본인부담금 = 승인된 청구 건의 (급여비용 총액 − 청구액). 수납 여부만 이 화면에서 따로 관리합니다.</span>
+            </div>
+
+            <div style="background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden;">
+                <div style="overflow-x:auto;">
+                    <table class="copay-table">
+                        <thead>
+                            <tr>
+                                <th>이용자</th>
+                                <th style="text-align:right;">본인부담금</th>
+                                <th style="text-align:right;">수납액</th>
+                                <th style="text-align:right;">미수납 잔액</th>
+                                <th>상태</th>
+                                <th>수납방법</th>
+                                <th>납부일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="copayTableBody">
+                            <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-tertiary);">조회 중...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 수납 기록 모달 -->
+    <div class="modal-backdrop" id="payModal">
+        <div class="modal-box">
+            <h3>본인부담금 수납 기록 — <span id="payResidentName"></span></h3>
+            <div class="modal-field">
+                <label>수납액 (원)</label>
+                <input type="number" id="payAmount" min="1" step="1000">
+            </div>
+            <div class="modal-field">
+                <label>수납 방법</label>
+                <select id="payMethod">
+                    <option value="현금">현금</option>
+                    <option value="계좌이체">계좌이체</option>
+                    <option value="카드">카드</option>
+                    <option value="CMS자동이체">CMS자동이체</option>
+                </select>
+            </div>
+            <div class="modal-field">
+                <label>메모 (선택)</label>
+                <input type="text" id="payMemo" placeholder="예: 10/5 보호자 방문 수납">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-outline" onclick="closePayModal()">취소</button>
+                <button class="btn-solid" onclick="submitPayment()">수납 저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 납부 이력 모달 -->
+    <div class="modal-backdrop" id="historyModal">
+        <div class="modal-box" style="width:420px;">
+            <h3>납부 이력 — <span id="histResidentName"></span></h3>
+            <ul class="history-list" id="historyList"></ul>
+            <div class="modal-actions">
+                <button class="btn-outline" onclick="closeHistoryModal()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/v1';
+        let currentUser = null;
+        let payTargetResidentId = null;
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) { window.location.href = './login.html'; return; }
+            if (user.role !== 'center_manager') {
+                alert('센터장만 접근 가능합니다');
+                window.location.href = './dashboard.html';
+                return;
+            }
+            currentUser = user;
+            document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
+            if (typeof renderSidebar === 'function') renderSidebar();
+        }
+
+        function statusLabel(s) { return { unpaid: '미수납', partial: '부분수납', paid: '수납완료' }[s] || s; }
+
+        function renderTable(invoices) {
+            const body = document.getElementById('copayTableBody');
+            if (!invoices.length) {
+                body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-tertiary);">해당 월에 본인부담금 청구가 없습니다</td></tr>';
+                return;
+            }
+            body.innerHTML = invoices.map(inv => `
+                <tr>
+                    <td>${inv.resident_name}</td>
+                    <td style="text-align:right;">₩${inv.total_amount.toLocaleString()}</td>
+                    <td style="text-align:right;">₩${inv.paid_amount.toLocaleString()}</td>
+                    <td style="text-align:right;color:${inv.balance > 0 ? '#DC2626' : '#64748B'};">₩${inv.balance.toLocaleString()}</td>
+                    <td><span class="status-pill2 sp-${inv.status}">${statusLabel(inv.status)}</span></td>
+                    <td>${inv.payment_method || '-'}</td>
+                    <td>${inv.paid_date ? inv.paid_date.slice(0, 10) : '-'}</td>
+                    <td>
+                        <button class="btn-outline btn-small" onclick="openPayModal(${inv.resident_id}, '${inv.resident_name}')">수납 기록</button>
+                        <button class="btn-outline btn-small" onclick="openHistoryModal(${inv.resident_id}, '${inv.resident_name}')">이력</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadSummary() {
+            const yearMonth = document.getElementById('fMonth').value;
+            if (!yearMonth) return;
+            document.getElementById('copayTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-tertiary);">조회 중...</td></tr>';
+            try {
+                const res = await fetch(`${API_URL}/copay/summary?year_month=${yearMonth}`);
+                if (!res.ok) throw new Error('조회 실패');
+                const data = await res.json();
+                document.getElementById('sumTotal').textContent = `₩${data.summary.total_amount.toLocaleString()}`;
+                document.getElementById('sumPaid').textContent = `₩${data.summary.paid_amount.toLocaleString()}`;
+                document.getElementById('sumUnpaid').textContent = `${data.summary.unpaid_count}명`;
+                renderTable(data.invoices);
+            } catch (e) {
+                document.getElementById('copayTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--danger);">조회 중 오류가 발생했습니다</td></tr>';
+            }
+        }
+
+        function openPayModal(residentId, residentName) {
+            payTargetResidentId = residentId;
+            document.getElementById('payResidentName').textContent = residentName;
+            document.getElementById('payAmount').value = '';
+            document.getElementById('payMemo').value = '';
+            document.getElementById('payModal').classList.add('open');
+        }
+        function closePayModal() { document.getElementById('payModal').classList.remove('open'); }
+
+        async function submitPayment() {
+            const amount = parseInt(document.getElementById('payAmount').value, 10);
+            if (!amount || amount <= 0) { alert('수납액을 올바르게 입력해주세요'); return; }
+            const yearMonth = document.getElementById('fMonth').value;
+            const res = await fetch(`${API_URL}/copay/${payTargetResidentId}/pay`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    year_month: yearMonth,
+                    amount: amount,
+                    payment_method: document.getElementById('payMethod').value,
+                    memo: document.getElementById('payMemo').value,
+                }),
+            });
+            if (!res.ok) { alert('수납 기록에 실패했습니다'); return; }
+            closePayModal();
+            loadSummary();
+        }
+
+        async function openHistoryModal(residentId, residentName) {
+            document.getElementById('histResidentName').textContent = residentName;
+            document.getElementById('historyList').innerHTML = '<li>불러오는 중...</li>';
+            document.getElementById('historyModal').classList.add('open');
+            const res = await fetch(`${API_URL}/copay/resident/${residentId}/history`);
+            if (!res.ok) { document.getElementById('historyList').innerHTML = '<li>조회 실패</li>'; return; }
+            const data = await res.json();
+            if (!data.invoices.length) { document.getElementById('historyList').innerHTML = '<li>납부 이력이 없습니다</li>'; return; }
+            document.getElementById('historyList').innerHTML = data.invoices.map(inv => `
+                <li><span>${inv.year_month}</span><span>₩${inv.paid_amount.toLocaleString()} / ₩${inv.total_amount.toLocaleString()} (${statusLabel(inv.status)})</span></li>
+            `).join('');
+        }
+        function closeHistoryModal() { document.getElementById('historyModal').classList.remove('open'); }
+
+        loadUserInfo();
+        const now = new Date();
+        document.getElementById('fMonth').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        loadSummary();
+    </script>
+</body>
+</html>
