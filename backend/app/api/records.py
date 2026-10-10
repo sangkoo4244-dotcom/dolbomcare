@@ -9,6 +9,7 @@ from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, 
 from app.schemas import DailyRecordResponse
 from app.database import get_db
 from app.auth import get_current_user, require_manager, assert_self_or_manager
+from app.api.notifications import notify
 from datetime import datetime, time
 import os
 
@@ -20,6 +21,28 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 def get_year_month(date: datetime) -> str:
     """날짜로부터 YYYY-MM 형식의 정산월 추출"""
     return date.strftime("%Y-%m")
+
+SERVICE_TYPE_LABELS = {"basic_care": "기본 돌봄", "meal_service": "식사 서빙", "medical_care": "의료 관리", "emergency": "응급"}
+CONDITION_LABELS = {"good": "좋음", "normal": "보통", "poor": "나쁨"}
+
+def guardian_visit_summary(
+    resident_name: str,
+    service_type: str,
+    duration_minutes: Optional[int] = None,
+    condition: Optional[str] = None,
+    note: Optional[str] = None,
+) -> str:
+    """요양사가 따로 작성하지 않아도, 기록된 항목만으로 보호자에게 보낼 요약을 만든다."""
+    service_label = SERVICE_TYPE_LABELS.get(service_type, service_type)
+    headline = f"{resident_name}님 오늘 {service_label} 서비스를 받으셨습니다"
+    if duration_minutes:
+        headline += f" (약 {duration_minutes}분)"
+    parts = [headline]
+    if condition and CONDITION_LABELS.get(condition):
+        parts.append(f"컨디션: {CONDITION_LABELS[condition]}")
+    if note and note.strip():
+        parts.append(f"메모: {note.strip()[:40]}")
+    return ". ".join(parts) + "."
 
 # Request 모델
 class CreateRecordRequest(BaseModel):
@@ -103,6 +126,11 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
             approval_status="draft"
         )
         db.add(billing_record)
+        if resident.guardian_id:
+            summary = guardian_visit_summary(
+                resident.name, request.service_type, request.duration_minutes, request.condition, request.notes
+            )
+            notify(db, resident.guardian_id, "visit_completed", summary)
         db.commit()
 
         return {
@@ -1005,6 +1033,9 @@ async def create_voice_record(
         db.flush()
 
         voice_record.billing_record_id = billing_record.id
+        if resident.guardian_id:
+            summary = guardian_visit_summary(resident.name, service_type, duration_minutes, note=transcription)
+            notify(db, resident.guardian_id, "visit_completed", summary)
         db.commit()
 
         return {

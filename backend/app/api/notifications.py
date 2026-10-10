@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user
 from app.database import get_db
 from app.models import Notification, User
+from app.alimtalk import send_alimtalk, TEMPLATE_IDS
 
 router = APIRouter()
 
@@ -11,6 +12,11 @@ router = APIRouter()
 def notify(db: Session, user_id: int, kind: str, message: str) -> None:
     """호출한 쪽에서 commit한다 (결정과 알림이 함께 저장되도록)."""
     db.add(Notification(user_id=user_id, kind=kind, message=message))
+
+    if TEMPLATE_IDS.get(kind):
+        user = db.query(User).filter(User.id == user_id).first()
+        if user and user.phone:
+            send_alimtalk(user.phone, kind, message)
 
 
 def _to_dict(n: Notification) -> dict:
