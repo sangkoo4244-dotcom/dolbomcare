@@ -351,3 +351,17 @@ class StaffRecord(Base):
     amount = Column(Integer, nullable=True)  # 연차: 일수, 퇴직적립금: 금액 등 종류별로 다르게 쓰는 숫자값
     recorded_by = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class ResidentMedia(Base):
+    """이용자 사진첩 - 보호자 신뢰 구축용 (어린이집 알림장과 같은 개념).
+    별도 파일 스토리지(S3 등) 연동 전이라 base64로 DB에 저장한다 - 서명(signature) 필드와 같은 방식.
+    Render 등 컨테이너 배포 환경은 로컬 디스크가 배포마다 초기화되어 파일시스템 저장은 쓸 수 없다."""
+    __tablename__ = "resident_media"
+
+    id = Column(Integer, primary_key=True, index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    uploaded_by = Column(Integer, ForeignKey("users.id"))
+    uploaded_by_role = Column(String)  # 업로드 시점의 역할 스냅샷: 'caregiver', 'center_manager', 'guardian'
+    image_data = Column(Text)  # base64 data URL (image/jpeg,png 등)
+    caption = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

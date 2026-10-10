@@ -830,6 +830,22 @@
         </div>
     </div>
 
+    <!-- 사진첩: 요양사/센터장/보호자 모두 올릴 수 있다 (보호자 신뢰 구축용) -->
+    <div id="albumModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 32px; width: 92%; max-width: 720px; max-height: 90vh; overflow-y: auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h2 style="margin:0;">사진첩 <span id="albumResidentName" style="font-weight:400;color:#6b7280;font-size:14px;"></span></h2>
+                <button type="button" onclick="closeAlbumModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9ca3af;">&times;</button>
+            </div>
+            <div id="albumCounts" style="font-size:13px;color:#6b7280;margin-bottom:12px;"></div>
+            <div style="margin-bottom:16px;">
+                <input type="file" id="albumFileInput" accept="image/*" onchange="handleAlbumFileSelect(event)">
+                <span id="albumUploadStatus" style="font-size:12px;color:#9ca3af;margin-left:8px;"></span>
+            </div>
+            <div id="albumGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;">불러오는 중...</div>
+        </div>
+    </div>
+
     <script>
         const API_URL = '/api/v1';
         let currentUser = null;
@@ -1172,6 +1188,7 @@
                             <div class="action-buttons" style="justify-content: center; align-items: center;">
                                 <button class="btn-detail" onclick="editResident(${r.id})">상세보기</button>
                                 <button class="btn-detail" onclick="openNeedsAssessment(${r.id})">기초평가</button>
+                                <button class="btn-detail" onclick="openAlbumModal(${r.id})">사진첩</button>
                                 <button class="btn-kebab" title="삭제" onclick="deleteResident(${r.id})">⋮</button>
                             </div>
                         </td>
@@ -1530,6 +1547,97 @@
                 await loadRiskOverview(needsResidentId);
                 alert(`${RISK_TYPE_LABELS[currentRiskType]} 평가가 저장되었습니다`);
             } catch (e) { alert('오류: ' + e.message); }
+        }
+
+        // ===== 사진첩 =====
+        let albumResidentId = null;
+
+        async function openAlbumModal(residentId) {
+            albumResidentId = residentId;
+            const resident = residents.find(r => r.id === residentId);
+            document.getElementById('albumResidentName').textContent = resident ? `- ${resident.name} 어르신` : '';
+            document.getElementById('albumFileInput').value = '';
+            document.getElementById('albumUploadStatus').textContent = '';
+            document.getElementById('albumModal').style.display = 'flex';
+            loadAlbum();
+        }
+
+        function closeAlbumModal() {
+            document.getElementById('albumModal').style.display = 'none';
+            albumResidentId = null;
+        }
+
+        async function loadAlbum() {
+            const grid = document.getElementById('albumGrid');
+            grid.textContent = '불러오는 중...';
+            try {
+                const r = await fetch(`${API_URL}/resident-media/resident/${albumResidentId}`);
+                const d = await r.json();
+                document.getElementById('albumCounts').textContent = `직원이 올린 사진 ${d.staff_count}장 · 보호자가 올린 사진 ${d.guardian_count}장`;
+                if (!d.media.length) { grid.innerHTML = '<div style="grid-column:1/-1;color:#9ca3af;font-size:13px;">등록된 사진이 없습니다</div>'; return; }
+                grid.innerHTML = d.media.map(m => `
+                    <div style="position:relative;">
+                        <img src="${m.image_data}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;">
+                        <button onclick="deleteAlbumPhoto(${m.id})" title="삭제" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:white;border:none;border-radius:6px;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:1;">&times;</button>
+                        <div style="font-size:11px;color:#6b7280;margin-top:3px;">${escapeHtml(m.uploaded_by_name || '-')} · ${(m.created_at || '').slice(0, 10)}</div>
+                    </div>`).join('');
+            } catch (e) { grid.textContent = '사진을 불러오지 못했습니다'; }
+        }
+
+        // 휴대폰 카메라 원본은 수 MB라 캔버스로 줄여서 올린다 (DB에 base64로 저장하는 방식이라 용량 제한이 있다)
+        function resizeImageFile(file, maxDim = 1280, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let { width, height } = img;
+                        if (width > maxDim || height > maxDim) {
+                            const scale = maxDim / Math.max(width, height);
+                            width = Math.round(width * scale);
+                            height = Math.round(height * scale);
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = reject;
+                    img.src = reader.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleAlbumFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const status = document.getElementById('albumUploadStatus');
+            status.textContent = '업로드 중...';
+            try {
+                const dataUrl = await resizeImageFile(file);
+                const r = await fetch(`${API_URL}/resident-media/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resident_id: albumResidentId, image_data: dataUrl }),
+                });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok) { status.textContent = ''; alert(`업로드 실패: ${d.detail || '오류'}`); return; }
+                status.textContent = '';
+                event.target.value = '';
+                loadAlbum();
+            } catch (e) { status.textContent = ''; alert('업로드 중 오류가 발생했습니다'); }
+        }
+
+        async function deleteAlbumPhoto(mediaId) {
+            if (!confirm('이 사진을 삭제할까요?')) return;
+            try {
+                const r = await fetch(`${API_URL}/resident-media/${mediaId}`, { method: 'DELETE' });
+                if (!r.ok) throw new Error();
+                loadAlbum();
+            } catch (e) { alert('삭제 중 오류가 발생했습니다'); }
         }
 
         async function saveResident(event) {
