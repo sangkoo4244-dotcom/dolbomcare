@@ -107,12 +107,15 @@
                 </div>
 
                 <!-- 알림 수신 설정: 전화번호가 없으면 끌 것도 없으므로 숨긴다 -->
-                <div id="notifySettingBox" class="hidden bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-5 flex items-center justify-between gap-4 flex-wrap">
-                    <div>
-                        <div class="text-lg font-bold text-gray-800">카카오 알림톡으로도 받기</div>
-                        <div class="text-sm text-gray-500 mt-1">꺼도 이 화면의 알림함에는 그대로 남습니다.</div>
+                <div id="notifySettingBox" class="hidden bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-5">
+                    <div class="flex items-center justify-between gap-4 flex-wrap">
+                        <div>
+                            <div class="text-lg font-bold text-gray-800">카카오 알림톡으로도 받기</div>
+                            <div class="text-sm text-gray-500 mt-1">꺼도 이 화면의 알림함에는 그대로 남습니다.</div>
+                        </div>
+                        <button id="alimtalkToggle" onclick="toggleAlimtalk()" class="g-pill" style="border:none;cursor:pointer;"></button>
                     </div>
-                    <button id="alimtalkToggle" onclick="toggleAlimtalk()" class="g-pill" style="border:none;cursor:pointer;"></button>
+                    <div id="alimtalkCategoryBox" class="hidden mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-4"></div>
                 </div>
 
                 <!-- 방문 현황 요약 (실제 조회된 14일치 기록으로만 계산) -->
@@ -172,6 +175,9 @@
         }
 
         let alimtalkOn = true;
+        let availableCategories = {};
+        let selectedCategories = null; // null = 전체 수신
+
         async function loadNotifySetting() {
             try {
                 const r = await fetch(`${API_URL}/users/me/notification-settings`);
@@ -179,8 +185,11 @@
                 const d = await r.json();
                 if (!d.has_phone) return; // 전화번호가 없으면 애초에 보낼 수 없으니 설정 자체를 숨긴다
                 alimtalkOn = d.alimtalk_opt_in;
+                availableCategories = d.available_categories || {};
+                selectedCategories = d.alimtalk_categories; // null 또는 코드 배열
                 document.getElementById('notifySettingBox').classList.remove('hidden');
                 renderAlimtalkToggle();
+                renderCategoryBox();
             } catch (e) { /* 설정 조회 실패 시 그냥 숨긴 채로 둔다 */ }
         }
 
@@ -188,6 +197,19 @@
             const btn = document.getElementById('alimtalkToggle');
             btn.textContent = alimtalkOn ? '켜짐' : '꺼짐';
             btn.className = 'g-pill ' + (alimtalkOn ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500');
+        }
+
+        function renderCategoryBox() {
+            const box = document.getElementById('alimtalkCategoryBox');
+            if (!alimtalkOn || !Object.keys(availableCategories).length) { box.classList.add('hidden'); return; }
+            box.classList.remove('hidden');
+            box.innerHTML = Object.entries(availableCategories).map(([code, label]) => {
+                const checked = !selectedCategories || selectedCategories.includes(code);
+                return `<label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input type="checkbox" value="${code}" ${checked ? 'checked' : ''} onchange="updateCategorySelection()">
+                    ${label}
+                </label>`;
+            }).join('');
         }
 
         async function toggleAlimtalk() {
@@ -201,7 +223,22 @@
                 if (!r.ok) return;
                 alimtalkOn = next;
                 renderAlimtalkToggle();
+                renderCategoryBox();
             } catch (e) { /* 실패 시 기존 상태 유지 */ }
+        }
+
+        async function updateCategorySelection() {
+            const checked = Array.from(document.querySelectorAll('#alimtalkCategoryBox input:checked')).map(el => el.value);
+            try {
+                const r = await fetch(`${API_URL}/users/me/notification-settings`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ alimtalk_opt_in: alimtalkOn, alimtalk_categories: checked })
+                });
+                if (!r.ok) return;
+                const d = await r.json();
+                selectedCategories = d.alimtalk_categories ? d.alimtalk_categories.split(',') : null;
+            } catch (e) { /* 실패 시 다음 로드까지 화면 상태 유지 */ }
         }
 
         // "최근 14일" 조회 범위를 실제 조회 기준(오늘 기준 -13일 ~ 오늘)으로 보여준다 - 임의의 날짜가 아니다

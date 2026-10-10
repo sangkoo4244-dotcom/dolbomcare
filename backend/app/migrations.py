@@ -34,6 +34,7 @@ ADDITIVE_COLUMNS = [
     ("billing_records", "review_note", "VARCHAR"),
     ("daily_records", "signature", "TEXT"),
     ("users", "alimtalk_opt_in", "BOOLEAN DEFAULT TRUE"),
+    ("users", "alimtalk_categories", "VARCHAR"),
 ]
 
 

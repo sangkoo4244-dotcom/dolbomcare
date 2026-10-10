@@ -203,13 +203,23 @@ async def reset_password(
     db.commit()
     return {"status": "success", "message": "비밀번호가 재설정되었습니다"}
 
+# 보호자가 받는 알림 종류 (notify()의 kind와 맞춘다). 새 종류가 생기면 여기만 추가하면 된다.
+GUARDIAN_NOTIFY_CATEGORIES = {"visit_completed": "방문완료 알림", "message_received": "메시지 알림"}
+
 class NotificationSettingsUpdate(BaseModel):
     alimtalk_opt_in: bool
+    alimtalk_categories: Optional[list[str]] = None  # None이면 "전체" 유지 (생략 가능)
 
 @router.get("/me/notification-settings")
 async def get_my_notification_settings(actor: User = Depends(get_current_user)):
-    """본인의 알림톡 수신 설정 조회"""
-    return {"alimtalk_opt_in": bool(actor.alimtalk_opt_in), "has_phone": bool(actor.phone)}
+    """본인의 알림톡 수신 설정 조회. alimtalk_categories가 비어있으면(null) 전체 종류를 받는 것이다."""
+    categories = actor.alimtalk_categories.split(",") if actor.alimtalk_categories else None
+    return {
+        "alimtalk_opt_in": bool(actor.alimtalk_opt_in),
+        "has_phone": bool(actor.phone),
+        "alimtalk_categories": categories,
+        "available_categories": GUARDIAN_NOTIFY_CATEGORIES,
+    }
 
 @router.patch("/me/notification-settings")
 async def update_my_notification_settings(
@@ -217,10 +227,14 @@ async def update_my_notification_settings(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user)
 ):
-    """본인의 알림톡 수신 여부를 직접 켜고 끈다 (인앱 알림은 이 설정과 무관하게 항상 온다)"""
+    """본인의 알림톡 수신 여부와 종류별 수신 여부를 설정한다 (인앱 알림은 이 설정과 무관하게 항상 온다)"""
     actor.alimtalk_opt_in = body.alimtalk_opt_in
+    if body.alimtalk_categories is not None:
+        valid = [c for c in body.alimtalk_categories if c in GUARDIAN_NOTIFY_CATEGORIES]
+        # 전체 종류를 다 선택했으면 "전체"를 뜻하는 null로 저장한다 (새 종류가 추가돼도 자동으로 받도록)
+        actor.alimtalk_categories = None if len(valid) == len(GUARDIAN_NOTIFY_CATEGORIES) else ",".join(valid)
     db.commit()
-    return {"status": "success", "alimtalk_opt_in": actor.alimtalk_opt_in}
+    return {"status": "success", "alimtalk_opt_in": actor.alimtalk_opt_in, "alimtalk_categories": actor.alimtalk_categories}
 
 @router.delete("/{user_id}")
 async def delete_user(user_id: int, db: Session = Depends(get_db), _: User = Depends(require_manager)):

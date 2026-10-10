@@ -19,6 +19,7 @@ class User(Base):
     employment_status = Column(String, default="active")  # 'active', 'inactive', 'leave'
     is_active = Column(Boolean, default=True)
     alimtalk_opt_in = Column(Boolean, default=True)  # 카카오 알림톡 수신 여부 (끄면 인앱 알림만 받음)
+    alimtalk_categories = Column(String, nullable=True)  # 받고 싶은 알림 종류 코드 (쉼표 구분). null=전체
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Center(Base):

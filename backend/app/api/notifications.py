@@ -16,7 +16,9 @@ def notify(db: Session, user_id: int, kind: str, message: str) -> None:
     if TEMPLATE_IDS.get(kind):
         user = db.query(User).filter(User.id == user_id).first()
         if user and user.phone and user.alimtalk_opt_in:
-            send_alimtalk(user.phone, kind, message)
+            allowed = not user.alimtalk_categories or kind in user.alimtalk_categories.split(",")
+            if allowed:
+                send_alimtalk(user.phone, kind, message)
 
 
 def _to_dict(n: Notification) -> dict:
