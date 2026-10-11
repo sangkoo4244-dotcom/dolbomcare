@@ -80,12 +80,21 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     if user.center_id:
-        center = db.query(Center).filter(Center.id == user.center_id).first()
-        if center and center.trial_ends_at and center.trial_ends_at < datetime.utcnow():
-            raise HTTPException(
-                status_code=403,
-                detail="무료 체험 기간(15일)이 종료되었습니다. 정식 이용을 원하시면 이음로직에 문의해 주세요.",
-            )
+        try:
+            center = db.query(Center).filter(Center.id == user.center_id).first()
+            if center and center.trial_ends_at and center.trial_ends_at < datetime.utcnow():
+                raise HTTPException(
+                    status_code=403,
+                    detail="무료 체험 기간(15일)이 종료되었습니다. 정식 이용을 원하시면 이음로직에 문의해 주세요.",
+                )
+        except HTTPException:
+            raise
+        except Exception as e:
+            # trial_ends_at 컬럼 마이그레이션이 아직 반영 안 됐거나 DB 조회가 실패해도
+            # 로그인 자체를 막아서는 안 된다 - 체험 기간 확인은 그냥 건너뛴다.
+            # PostgreSQL은 에러난 트랜잭션을 롤백하지 않으면 같은 커넥션의 다음 쿼리까지 막히므로 롤백한다.
+            db.rollback()
+            print(f"⚠️ 체험 기간 확인 실패 (로그인은 계속 진행): {e}")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
