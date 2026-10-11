@@ -156,7 +156,12 @@ def get_retirement_estimate(
         .limit(3)
         .all()
     )
-    recent_monthly_wages = [(s.year_month, s.billing_total) for s in reversed(recent)]
+    # billing_total은 공단 청구액(센터 매출)이지 급여가 아니다 - 평균임금은 실제 급여 산정액(wage_base)
+    # 기준이어야 한다. 비율 분리 이전에 확정된 과거 명세는 wage_base가 비어 있으므로 그때는
+    # billing_total을 그대로 쓴다 (당시엔 둘이 같은 값이었다).
+    recent_monthly_wages = [
+        (s.year_month, s.wage_base if s.wage_base is not None else s.billing_total) for s in reversed(recent)
+    ]
     return retirement_estimate(staff.hire_date, as_of or date.today(), recent_monthly_wages)
 
 

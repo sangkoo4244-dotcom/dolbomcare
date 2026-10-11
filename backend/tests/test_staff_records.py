@@ -148,6 +148,27 @@ def test_retirement_endpoint_uses_recent_salary_statements(client):
     assert body["estimated_amount"] == 3_000_000
 
 
+def test_retirement_uses_wage_base_not_billing_total_when_ratio_applied(client):
+    """급여 비율이 적용된 확정 명세는 billing_total(청구액)이 아니라 wage_base(실제 급여 산정액)로
+    평균임금을 계산해야 한다 - 요양사가 청구액의 50%만 받는데 평균임금을 100%로 계산하면 안 된다."""
+    db = client.app.dependency_overrides[get_db]
+    session = next(db())
+    for i, ym in enumerate(["2026-01", "2026-02", "2026-03"], start=1):
+        session.add(models.SalaryStatement(
+            id=i, center_id=1, caregiver_id=2, year_month=ym, billing_total=3_000_000,
+            wage_ratio=50, wage_base=1_500_000,
+            income_tax=0, pension=0, health=0, employment=0, total_deduction=0, net=1_500_000,
+        ))
+    session.commit()
+    session.close()
+
+    res = client.get("/api/v1/staff-records/staff/2/retirement-estimate?as_of=2026-01-01", headers=MANAGER)
+    assert res.status_code == 200
+    body = res.json()
+    assert body["average_daily_wage"] == 50000
+    assert body["estimated_amount"] == 1_500_000
+
+
 def test_caregiver_cannot_see_annual_leave_or_retirement(client):
     assert client.get("/api/v1/staff-records/staff/2/annual-leave", headers=CAREGIVER).status_code == 403
     assert client.get("/api/v1/staff-records/staff/2/retirement-estimate", headers=CAREGIVER).status_code == 403
