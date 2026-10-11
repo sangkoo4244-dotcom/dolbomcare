@@ -54,8 +54,18 @@
             padding: 6px 4px; cursor: pointer;
         }
 
-        .demo-box { margin-top: 18px; padding: 14px 16px; border: 1.5px dashed var(--line2); border-radius: 10px; text-align: center; }
+        .trial-cta-box { margin-top: 18px; padding: 16px; border-radius: 10px; background: #EDF8F6; border: 1.5px solid #CDEAE5; text-align: center; }
+        .trial-cta-box .demo-title { color: var(--navy); margin-bottom: 4px; }
+        .trial-cta-desc { font-size: 12.5px; color: #4B6B64; margin: 0 0 12px; line-height: 1.5; }
+        .trial-cta-button {
+            width: 100%; height: 46px; border-radius: 9px; border: none; background: var(--teal);
+            color: #fff; font-size: 14.5px; font-weight: 800; cursor: pointer; font-family: inherit;
+        }
+        .trial-cta-button:hover { background: #0C756C; }
+
+        .demo-box { margin-top: 14px; padding: 14px 16px; border: 1.5px dashed var(--line2); border-radius: 10px; text-align: center; }
         .demo-title { font-size: 12.5px; font-weight: 700; color: #64748B; margin-bottom: 10px; }
+        .demo-desc { font-size: 12px; color: #94A3B8; margin: -6px 0 10px; }
         .demo-buttons { display: flex; gap: 10px; }
         .demo-button {
             flex: 1; height: 42px; border-radius: 9px; border: 1.5px solid var(--teal); background: #fff;
@@ -63,6 +73,30 @@
         }
         .demo-button:hover:not(:disabled) { background: #EDF8F6; }
         .demo-button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* 체험 신청 모달 */
+        .trial-modal-backdrop {
+            position: fixed; inset: 0; background: rgba(15,23,42,0.5); display: none;
+            align-items: center; justify-content: center; z-index: 100; padding: 20px;
+        }
+        .trial-modal-backdrop.open { display: flex; }
+        .trial-modal { background: #fff; border-radius: 14px; padding: 28px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+        .trial-modal h3 { font-size: 17px; color: var(--navy); margin: 0 0 6px; }
+        .trial-modal .trial-modal-sub { font-size: 13px; color: #64748B; margin-bottom: 20px; line-height: 1.5; }
+        .trial-modal .field { margin-bottom: 14px; }
+        .trial-modal .field label { display: block; font-size: 13px; font-weight: 700; color: var(--charcoal); margin-bottom: 6px; }
+        .trial-modal .field input {
+            width: 100%; height: 44px; padding: 0 14px; border: 1.5px solid var(--line2); border-radius: 9px;
+            font-size: 14px; font-family: inherit; box-sizing: border-box;
+        }
+        .trial-modal .field input:focus { border-color: var(--teal); outline: none; }
+        .trial-modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+        .trial-modal-actions button { flex: 1; height: 46px; border-radius: 9px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
+        .trial-modal-cancel { background: #F1F5F9; color: var(--charcoal); }
+        .trial-modal-cancel:hover { background: #E2E8F0; }
+        .trial-modal-submit { background: var(--teal); color: #fff; }
+        .trial-modal-submit:hover { background: #0C756C; }
+        .trial-modal-note { font-size: 12px; color: #94A3B8; margin-top: 12px; text-align: center; }
 
         .trust-box {
             display: flex; gap: 12px; align-items: flex-start; background: #EDF8F6; border: 1px solid #CDEAE5;
@@ -151,11 +185,18 @@
                     <button type="submit" id="loginButton" class="login-button">로그인</button>
                 </form>
 
+                <div class="trial-cta-box">
+                    <div class="demo-title">아직 계정이 없는 센터장이신가요?</div>
+                    <p class="trial-cta-desc">우리 센터로 15일 무료체험을 신청하면, 확인 후 로그인 정보를 보내드립니다.</p>
+                    <button type="button" class="trial-cta-button" onclick="openTrialRequestModal()">15일 무료체험 신청하기</button>
+                </div>
+
                 <div class="demo-box">
-                    <div class="demo-title">가입 없이 먼저 둘러보시겠어요?</div>
+                    <div class="demo-title">신청 전에 먼저 둘러만 보고 싶다면</div>
+                    <p class="demo-desc">아래는 우리 센터가 아니라 샘플 데이터로 채워진 공용 체험 계정입니다.</p>
                     <div class="demo-buttons">
-                        <button type="button" class="demo-button" onclick="handleLogin('demo_center_manager@dolbomcare.app', 'demo1234!')">센터장으로 체험</button>
-                        <button type="button" class="demo-button" onclick="handleLogin('demo_guardian@dolbomcare.app', 'demo1234!')">보호자로 체험</button>
+                        <button type="button" class="demo-button" onclick="handleLogin('demo_center_manager@dolbomcare.app', 'demo1234!')">센터장으로 둘러보기</button>
+                        <button type="button" class="demo-button" onclick="handleLogin('demo_guardian@dolbomcare.app', 'demo1234!')">보호자로 둘러보기</button>
                     </div>
                 </div>
 
@@ -174,6 +215,36 @@
                 </div>
             </div>
         </section>
+    </div>
+
+    <div class="trial-modal-backdrop" id="trialRequestBackdrop">
+        <div class="trial-modal">
+            <h3>15일 무료체험 신청</h3>
+            <p class="trial-modal-sub">아래 정보를 보내주시면 확인 후 센터 계정과 로그인 정보를 이메일로 보내드립니다.</p>
+            <form id="trialRequestForm" novalidate>
+                <div class="field">
+                    <label for="trCenterName">센터명 *</label>
+                    <input id="trCenterName" required maxlength="100" autocomplete="organization">
+                </div>
+                <div class="field">
+                    <label for="trManagerName">담당자명(센터장) *</label>
+                    <input id="trManagerName" required maxlength="50" autocomplete="name">
+                </div>
+                <div class="field">
+                    <label for="trEmail">이메일 *</label>
+                    <input id="trEmail" type="email" required autocomplete="email">
+                </div>
+                <div class="field">
+                    <label for="trPhone">연락처 (선택)</label>
+                    <input id="trPhone" type="tel" autocomplete="tel">
+                </div>
+                <div class="trial-modal-actions">
+                    <button type="button" class="trial-modal-cancel" onclick="closeTrialRequestModal()">취소</button>
+                    <button type="submit" class="trial-modal-submit">이메일로 신청하기</button>
+                </div>
+                <p class="trial-modal-note">메일 앱이 열리며, 그곳에서 최종 발송해야 신청이 접수됩니다.</p>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -219,6 +290,35 @@
                 localStorage.removeItem('user');
             }
         })();
+
+        // 체험 신청: 자동 가입이 아직 없어서, 메일 앱으로 문의를 접수하고 운영자가
+        // 운영자 콘솔에서 직접 센터를 만들어 로그인 정보를 보내준다
+        function openTrialRequestModal() {
+            document.getElementById('trialRequestBackdrop').classList.add('open');
+            document.getElementById('trCenterName').focus();
+        }
+
+        function closeTrialRequestModal() {
+            document.getElementById('trialRequestBackdrop').classList.remove('open');
+        }
+
+        document.getElementById('trialRequestBackdrop').addEventListener('click', (e) => {
+            if (e.target.id === 'trialRequestBackdrop') closeTrialRequestModal();
+        });
+
+        document.getElementById('trialRequestForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!e.currentTarget.reportValidity()) return;
+            const v = (id) => document.getElementById(id).value.trim();
+            const subject = '[돌봄케어 무료체험 신청] ' + v('trCenterName');
+            const body = [
+                '센터명: ' + v('trCenterName'),
+                '담당자명: ' + v('trManagerName'),
+                '이메일: ' + v('trEmail'),
+                '연락처: ' + (v('trPhone') || '(미입력)'),
+            ].join('\n');
+            location.href = 'mailto:contact@eeum-logic.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+        });
 
         // 역할은 서버가 계정에서 정한다
         async function handleLogin(email, password) {
