@@ -79,6 +79,10 @@
         .btn-cancel:hover { background: #E2E8F0; }
         .btn-confirm { background: var(--teal); color: #fff; }
         .btn-confirm:hover { background: var(--teal-dark); }
+        .btn-confirm.danger { background: var(--danger); }
+        .btn-confirm.danger:hover { background: #B91C1C; }
+        .force-delete-btn { margin-left: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid var(--danger); background: #fff; color: var(--danger); cursor: pointer; }
+        .force-delete-btn:hover { background: var(--danger); color: #fff; }
         .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 999px; box-shadow: 0 10px 24px rgba(0,0,0,0.2); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .toast.show { opacity: 1; }
 
@@ -186,6 +190,19 @@
         </div>
     </div>
 
+    <div class="modal-backdrop" id="forceDeleteBackdrop">
+        <div class="modal">
+            <h3 id="forceDeleteCenterName">센터</h3>
+            <div class="modal-sub" id="forceDeleteWarning"></div>
+            <label>확인을 위해 센터명을 정확히 입력하세요</label>
+            <input type="text" id="forceDeleteInput" placeholder="센터명" autocomplete="off">
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeForceDeleteModal()">취소</button>
+                <button class="btn-confirm danger" onclick="confirmForceDelete()">완전 삭제</button>
+            </div>
+        </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <script>
@@ -254,7 +271,7 @@
                                     <button class="charge-btn" onclick="openModal(${r.center_id})">충전</button>
                                     ${r.resident_count === 0 && r.staff_count <= 1
                                         ? `<button class="delete-btn" onclick="deleteCenter(${r.center_id})">삭제</button>`
-                                        : `<button class="delete-btn" disabled title="이용자 ${r.resident_count}명, 직원 ${r.staff_count}명이 있어 삭제할 수 없습니다">삭제</button>`}
+                                        : `<button class="force-delete-btn" onclick="openForceDeleteModal(${r.center_id})" title="이용자 ${r.resident_count}명, 직원 ${r.staff_count}명 - 모든 데이터와 함께 완전 삭제">강제 삭제</button>`}
                                 </td>
                             </tr>
                         `).join('')}
@@ -326,6 +343,58 @@
 
         document.getElementById('modalBackdrop').addEventListener('click', (e) => {
             if (e.target.id === 'modalBackdrop') closeModal();
+        });
+
+        let forceDeleteCenterId = null;
+
+        function openForceDeleteModal(centerId) {
+            const center = rows.find(r => r.center_id === centerId);
+            if (!center) return;
+            forceDeleteCenterId = centerId;
+            document.getElementById('forceDeleteCenterName').textContent = center.center_name;
+            document.getElementById('forceDeleteWarning').textContent =
+                `이용자 ${center.resident_count}명, 직원 ${center.staff_count}명을 포함한 모든 기록이 영구히 삭제됩니다. 되돌릴 수 없습니다.`;
+            document.getElementById('forceDeleteInput').value = '';
+            document.getElementById('forceDeleteBackdrop').classList.add('open');
+            document.getElementById('forceDeleteInput').focus();
+        }
+
+        function closeForceDeleteModal() {
+            document.getElementById('forceDeleteBackdrop').classList.remove('open');
+            forceDeleteCenterId = null;
+        }
+
+        async function confirmForceDelete() {
+            const center = rows.find(r => r.center_id === forceDeleteCenterId);
+            if (!center) return;
+            const typed = document.getElementById('forceDeleteInput').value.trim();
+            if (typed !== center.center_name) {
+                alert('센터명이 일치하지 않습니다');
+                return;
+            }
+
+            const token = localStorage.getItem('access_token');
+            try {
+                const res = await fetch(`${API_URL}/admin/centers/${forceDeleteCenterId}/force`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ confirm_name: typed }),
+                });
+                const d = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(d.detail || '삭제 실패');
+
+                rows = rows.filter(r => r.center_id !== forceDeleteCenterId);
+                renderStats();
+                renderTable();
+                closeForceDeleteModal();
+                showToast(`"${center.center_name}"와 모든 데이터가 삭제되었습니다`);
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        document.getElementById('forceDeleteBackdrop').addEventListener('click', (e) => {
+            if (e.target.id === 'forceDeleteBackdrop') closeForceDeleteModal();
         });
 
         async function deleteCenter(centerId) {

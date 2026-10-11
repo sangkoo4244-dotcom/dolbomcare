@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from fastapi import FastAPI
@@ -186,4 +186,85 @@ def test_delete_empty_center_succeeds_and_manager_cannot_login(client):
     assert not any(r["center_id"] == center_id for r in overview_after)
 
     login = client.post("/api/v1/users/login", json={"email": "to-delete@test.com", "password": "password123"})
+    assert login.status_code in (401, 404)
+
+
+def test_non_admin_cannot_force_delete(client):
+    headers = auth(2, "center_manager", "manager@test.com")
+    res = client.request("DELETE", "/api/v1/admin/centers/1/force", headers=headers, json={"confirm_name": "테스트센터"})
+    assert res.status_code == 403
+
+
+def test_force_delete_requires_exact_name_match(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    res = client.request("DELETE", "/api/v1/admin/centers/1/force", headers=headers, json={"confirm_name": "오타난이름"})
+    assert res.status_code == 400
+    assert "일치" in res.json()["detail"]
+
+
+def test_normal_delete_still_blocked_for_center_with_residents(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    created = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "강제삭제대상", "manager_name": "황센터장",
+        "manager_email": "force-target@test.com", "manager_password": "password123",
+    }).json()
+    center_id = created["center_id"]
+
+    session = client.Session()
+    session.add(models.Resident(center_id=center_id, name="이어르신"))
+    session.commit()
+    session.close()
+
+    res = client.delete(f"/api/v1/admin/centers/{center_id}", headers=headers)
+    assert res.status_code == 400
+
+
+def test_force_delete_removes_center_with_full_data(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    created = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "강제삭제대상2", "manager_name": "황센터장",
+        "manager_email": "force-target2@test.com", "manager_password": "password123",
+    }).json()
+    center_id = created["center_id"]
+
+    session = client.Session()
+    manager = session.query(models.User).filter(models.User.email == "force-target2@test.com").first()
+    caregiver = models.User(
+        email="force-caregiver@test.com", hashed_password="x", full_name="요양사",
+        role="caregiver", center_id=center_id, is_active=True,
+    )
+    session.add(caregiver)
+    session.flush()
+
+    resident = models.Resident(center_id=center_id, name="박어르신")
+    session.add(resident)
+    session.flush()
+
+    daily = models.DailyRecord(resident_id=resident.id, caregiver_id=caregiver.id, recorded_date=None)
+    session.add(daily)
+    session.flush()
+
+    session.add(models.BillingRecord(
+        daily_record_id=daily.id, caregiver_id=caregiver.id, resident_id=resident.id,
+        center_id=center_id, amount=10000,
+    ))
+    session.add(models.Notification(user_id=caregiver.id, kind="visit_completed", message="방문 완료"))
+    session.add(models.GuardianInvite(
+        code="FORCEDEL1", resident_id=resident.id, center_id=center_id,
+        expires_at=datetime.utcnow() + timedelta(days=7),
+    ))
+    session.commit()
+    session.close()
+
+    # 데이터가 있으니 일반 삭제는 거부된다
+    assert client.delete(f"/api/v1/admin/centers/{center_id}", headers=headers).status_code == 400
+
+    # 강제 삭제는 성공한다
+    res = client.request("DELETE", f"/api/v1/admin/centers/{center_id}/force", headers=headers, json={"confirm_name": "강제삭제대상2"})
+    assert res.status_code == 200
+
+    overview = client.get("/api/v1/admin/alimtalk-overview", headers=headers).json()
+    assert not any(r["center_id"] == center_id for r in overview)
+
+    login = client.post("/api/v1/users/login", json={"email": "force-target2@test.com", "password": "password123"})
     assert login.status_code in (401, 404)
