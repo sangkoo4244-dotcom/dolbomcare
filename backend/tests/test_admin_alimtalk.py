@@ -112,9 +112,33 @@ def test_admin_can_create_center_and_manager_can_login(client):
     body = res.json()
     assert body["center_name"] == "새 센터"
     assert body["manager_email"] == "new@test.com"
+    assert body["email_sent"] is False  # 테스트 환경엔 SMTP가 설정돼 있지 않다
 
     overview = client.get("/api/v1/admin/alimtalk-overview", headers=headers).json()
     assert any(r["center_name"] == "새 센터" for r in overview)
+
+
+def test_create_center_sends_email_when_smtp_configured(client, monkeypatch):
+    sent = {}
+
+    def fake_send_email(to, subject, body):
+        sent["to"] = to
+        sent["subject"] = subject
+        sent["body"] = body
+        return True
+
+    monkeypatch.setattr(admin, "send_email", fake_send_email)
+
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    res = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "이메일센터", "manager_name": "최센터장",
+        "manager_email": "email-test@test.com", "manager_password": "password123",
+    })
+    assert res.status_code == 200
+    assert res.json()["email_sent"] is True
+    assert sent["to"] == "email-test@test.com"
+    assert "이메일센터" in sent["subject"]
+    assert "password123" in sent["body"]
 
 
 def test_create_center_rejects_duplicate_email(client):

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.users import get_password_hash
 from app.auth import require_platform_admin
 from app.database import get_db
+from app.email_service import send_email
 from app.models import (
     AlimtalkUsage,
     BillingRecord,
@@ -79,7 +80,29 @@ def create_center(
     )
     db.add(manager)
     db.commit()
-    return {"status": "success", "center_id": center.id, "center_name": center.name, "manager_email": manager.email}
+
+    email_sent = send_email(
+        to=manager.email,
+        subject=f"[돌봄케어] {center.name} 15일 무료체험 계정이 만들어졌습니다",
+        body=(
+            f"{body.manager_name}님, 안녕하세요.\n\n"
+            f"신청하신 돌봄케어 15일 무료체험 계정이 만들어졌습니다.\n\n"
+            f"센터명: {center.name}\n"
+            f"로그인 이메일: {manager.email}\n"
+            f"비밀번호: {body.manager_password}\n\n"
+            f"아래 주소에서 로그인해 주세요.\n"
+            f"https://seniorcareinfo.kr/pages/login.html\n\n"
+            f"문의: contact@eeum-logic.com\n"
+            f"이음로직 드림"
+        ),
+    )
+    return {
+        "status": "success",
+        "center_id": center.id,
+        "center_name": center.name,
+        "manager_email": manager.email,
+        "email_sent": email_sent,
+    }
 
 
 @router.get("/alimtalk-overview")
