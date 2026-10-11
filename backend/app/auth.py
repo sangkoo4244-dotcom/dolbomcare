@@ -45,6 +45,16 @@ def require_manager_or_caregiver(user: User = Depends(get_current_user)) -> User
     return user
 
 
+def require_platform_admin(user: User = Depends(get_current_user)) -> User:
+    """플랫폼 운영진(이음로직) 전용 - 센터장 권한과 별개로, 환경변수 PLATFORM_ADMIN_EMAILS에
+    등록된 이메일로 로그인한 계정만 통과한다. 별도의 admin 역할을 만들지 않고 이메일 허용목록으로
+    간단히 처리한다 (관리 대상 센터가 아직 소수라 역할 체계를 늘릴 필요가 없다)."""
+    admin_emails = {e.strip().lower() for e in os.getenv("PLATFORM_ADMIN_EMAILS", "").split(",") if e.strip()}
+    if user.email.lower() not in admin_emails:
+        raise HTTPException(status_code=403, detail="운영자만 할 수 있는 작업입니다")
+    return user
+
+
 def assert_self_or_manager(actor: User, caregiver_id: int) -> None:
     if actor.role != "center_manager" and actor.id != caregiver_id:
         raise HTTPException(status_code=403, detail="본인의 정보만 조회할 수 있습니다")

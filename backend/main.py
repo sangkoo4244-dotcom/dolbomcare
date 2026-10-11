@@ -24,6 +24,7 @@ from app.api import staff_records
 from app.api import resident_media
 from app.api import centers
 from app.api import nhis
+from app.api import admin
 from app.database import Base, engine, SessionLocal
 from app.migrations import run_migrations
 import os
@@ -74,6 +75,7 @@ app.include_router(staff_records.router, prefix="/api/v1/staff-records", tags=["
 app.include_router(resident_media.router, prefix="/api/v1/resident-media", tags=["resident_media"], dependencies=[Depends(get_current_user)])
 app.include_router(centers.router, prefix="/api/v1/centers", tags=["centers"], dependencies=[Depends(get_current_user)])
 app.include_router(nhis.router, prefix="/api/v1/nhis", tags=["nhis"], dependencies=[Depends(get_current_user)])
+app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"], dependencies=[Depends(get_current_user)])
 
 @app.middleware("http")
 async def revalidate_pages(request, call_next):

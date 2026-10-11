@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>알림톡 충전 관리 - 운영자</title>
+    <style>
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --danger2: #DC2626; --line2: #E2E8F0; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif; color: var(--charcoal); padding: 30px; }
+        h1 { font-size: 20px; color: var(--navy); margin: 0 0 4px; }
+        .sub { font-size: 13px; color: #64748B; margin-bottom: 24px; }
+        table { width: 100%; max-width: 900px; border-collapse: collapse; background: #fff; border: 1px solid var(--line2); border-radius: 12px; overflow: hidden; }
+        th, td { text-align: left; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--line2); }
+        th { background: #F8FAFC; color: #64748B; font-weight: 700; }
+        tr:last-child td { border-bottom: none; }
+        input[type=number] { width: 100px; padding: 6px 8px; border: 1.5px solid var(--line2); border-radius: 7px; font-size: 13px; }
+        button { padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
+        button:hover { background: #0C756C; }
+        .denied { color: var(--danger2); font-size: 14px; }
+        .msg { font-size: 12px; margin-left: 8px; color: #15803D; }
+    </style>
+</head>
+<body>
+    <h1>알림톡 충전 관리</h1>
+    <div class="sub">입금 확인 후 해당 센터에 금액을 더해 주세요. 운영자 전용 페이지입니다.</div>
+    <div id="body">불러오는 중...</div>
+
+    <script>
+        const API_URL = '/api/v1';
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text ?? '';
+            return div.innerHTML;
+        }
+
+        async function load() {
+            const token = localStorage.getItem('access_token');
+            if (!token) { window.location.href = './login.html'; return; }
+            const body = document.getElementById('body');
+            try {
+                const res = await fetch(`${API_URL}/admin/alimtalk-overview`, { headers: { Authorization: `Bearer ${token}` } });
+                if (res.status === 403) {
+                    body.innerHTML = '<div class="denied">이 계정은 운영자 권한이 없습니다.</div>';
+                    return;
+                }
+                if (!res.ok) throw new Error('조회 실패');
+                const rows = await res.json();
+                body.innerHTML = `
+                    <table>
+                        <tr><th>센터</th><th>이번 달 무료/유료</th><th>미발송</th><th>충전 잔액</th><th>충전</th></tr>
+                        ${rows.map(r => `
+                            <tr>
+                                <td>${escapeHtml(r.center_name)}</td>
+                                <td>${r.free_sent} / ${r.paid_sent}</td>
+                                <td>${r.blocked_count}</td>
+                                <td id="balance-${r.center_id}">${r.balance.toLocaleString()}원</td>
+                                <td>
+                                    <input type="number" id="amount-${r.center_id}" placeholder="원">
+                                    <button onclick="charge(${r.center_id})">충전</button>
+                                    <span class="msg" id="msg-${r.center_id}"></span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </table>`;
+            } catch (e) {
+                body.textContent = '불러오지 못했습니다';
+            }
+        }
+
+        async function charge(centerId) {
+            const token = localStorage.getItem('access_token');
+            const input = document.getElementById(`amount-${centerId}`);
+            const amount = parseInt(input.value, 10);
+            if (!amount) { alert('충전할 금액을 입력해 주세요'); return; }
+            try {
+                const res = await fetch(`${API_URL}/admin/alimtalk-charge`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ center_id: centerId, amount }),
+                });
+                const d = await res.json();
+                if (!res.ok) throw new Error(d.detail || '충전 실패');
+                document.getElementById(`balance-${centerId}`).textContent = d.balance.toLocaleString() + '원';
+                input.value = '';
+                const msg = document.getElementById(`msg-${centerId}`);
+                msg.textContent = '충전 완료';
+                setTimeout(() => { msg.textContent = ''; }, 3000);
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        load();
+    </script>
+</body>
+</html>
