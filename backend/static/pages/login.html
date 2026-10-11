@@ -91,6 +91,12 @@
         .notice.error { background: #FDE8E8; color: #B91C1C; border: 1px solid #FBD5D5; }
         .notice.ok { background: #E6F3F1; color: #0C756C; border: 1px solid #CDEAE5; }
 
+        .error-action {
+            display: block; text-align: center; margin: -8px 0 16px; padding: 12px 14px; border-radius: 8px;
+            background: var(--teal); color: #fff; font-size: 14px; font-weight: 700; text-decoration: none;
+        }
+        .error-action:hover { background: #0C756C; }
+
         .login-help { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line2); font-size: 13.5px; color: #64748B; line-height: 1.7; }
         .login-help a { color: var(--teal); font-weight: 700; text-decoration: none; }
         .login-help a:hover { text-decoration: underline; }
@@ -119,6 +125,7 @@
                 </div>
 
                 <div id="errorMessage" class="notice error" role="alert"></div>
+                <a id="errorAction" href="/pricing.html" class="error-action" style="display:none;">요금제 보기 · 결제하기 →</a>
                 <div id="successMessage" class="notice ok" role="status"></div>
 
                 <form id="loginForm" novalidate>
@@ -187,10 +194,11 @@
             togglePassword.setAttribute('aria-label', showing ? '비밀번호 보기' : '비밀번호 숨기기');
         });
 
-        function showError(text) {
+        function showError(text, showPaymentAction) {
             successMessage.classList.remove('show');
             errorMessage.textContent = text;
             errorMessage.classList.add('show');
+            document.getElementById('errorAction').style.display = showPaymentAction ? 'block' : 'none';
         }
 
         // 이미 유효한 로그인이 있으면 폼을 보여주지 않고 바로 들여보낸다
@@ -217,6 +225,7 @@
             loginButton.disabled = true;
             loginButton.textContent = '로그인 중...';
             errorMessage.classList.remove('show');
+            document.getElementById('errorAction').style.display = 'none';
             try {
                 const response = await fetch('/api/v1/users/login', {
                     method: 'POST',
@@ -226,9 +235,11 @@
                 const data = await response.json().catch(() => ({}));
 
                 if (!response.ok) {
+                    // 403은 지금 이 로그인 엔드포인트에서 체험 기간 종료일 때만 쓴다
                     showError(response.status === 401
                         ? '이메일 또는 비밀번호가 올바르지 않습니다.'
-                        : (data.detail || '로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.'));
+                        : (data.detail || '로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.'),
+                        response.status === 403);
                     return;
                 }
 
