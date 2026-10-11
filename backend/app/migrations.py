@@ -85,17 +85,65 @@ def run_migrations():
             db.rollback()
 
         # 추가 컬럼들: 한 컬럼 실패가 나머지 컬럼 추가를 막지 않도록 각각 독립적으로 커밋한다
+        primary_caregiver_just_added = False
         for table, column, col_type in ADDITIVE_COLUMNS:
             try:
                 if is_postgres:
+                    existed_before = db.execute(text(
+                        "SELECT 1 FROM information_schema.columns WHERE table_name = :t AND column_name = :c"
+                    ), {"t": table, "c": column}).first() is not None
                     db.execute(text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {col_type}"))
                 else:
                     existing = [row[1] for row in db.execute(text(f"PRAGMA table_info({table})")).fetchall()]
-                    if column not in existing:
+                    existed_before = column in existing
+                    if not existed_before:
                         db.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"))
                 db.commit()
+                if not existed_before and table == "residents" and column == "primary_caregiver_id":
+                    primary_caregiver_just_added = True
             except Exception as e:
                 print(f"⚠️  컬럼 추가 건너뜀 ({table}.{column}): {e}")
+                db.rollback()
+
+        # primary_caregiver_id는 이 기능을 처음 배포한 직후 전부 NULL이다. 이 상태로 두면 이미 이용자를
+        # 방문하던 요양사가 갑자기 "담당 이용자 없음"이 되어 센터장 화면과 어긋나 보인다. 그래서
+        # (a) 컬럼이 이번 재시작에 "방금" 생겼거나, (b) 컬럼은 이전 배포에서 이미 생겼지만(이 백필 로직이
+        # 그때는 없었다) 시스템 전체에 지정된 값이 단 하나도 없는 "아직 한 번도 안 채워진" 상태라면,
+        # Schedule/DailyRecord에 남은 가장 최근 담당자로 1회성 백필한다. 센터장이 이후 명시적으로
+        # 배정/해제한 값이 하나라도 생기면(센터 전체에 걸쳐) 다음 재시작부터는 더 이상 건드리지 않는다.
+        should_backfill_primary_caregiver = primary_caregiver_just_added
+        if not should_backfill_primary_caregiver:
+            try:
+                from app.models import Resident as _Resident
+                has_any_resident = db.query(_Resident).first() is not None
+                has_any_assignment = db.query(_Resident).filter(_Resident.primary_caregiver_id.isnot(None)).first() is not None
+                should_backfill_primary_caregiver = has_any_resident and not has_any_assignment
+            except Exception:
+                should_backfill_primary_caregiver = False
+
+        if should_backfill_primary_caregiver:
+            try:
+                from app.models import DailyRecord, Resident, Schedule
+                latest_caregiver_by_resident = {}
+                for s in db.query(Schedule.resident_id, Schedule.caregiver_id, Schedule.scheduled_date).filter(Schedule.status != "cancelled").all():
+                    prev = latest_caregiver_by_resident.get(s.resident_id)
+                    if not prev or (s.scheduled_date and (not prev[1] or s.scheduled_date > prev[1])):
+                        latest_caregiver_by_resident[s.resident_id] = (s.caregiver_id, s.scheduled_date)
+                for d in db.query(DailyRecord.resident_id, DailyRecord.caregiver_id, DailyRecord.recorded_date).all():
+                    prev = latest_caregiver_by_resident.get(d.resident_id)
+                    if not prev or (d.recorded_date and (not prev[1] or d.recorded_date > prev[1])):
+                        latest_caregiver_by_resident[d.resident_id] = (d.caregiver_id, d.recorded_date)
+
+                filled = 0
+                for resident in db.query(Resident).filter(Resident.primary_caregiver_id.is_(None)).all():
+                    found = latest_caregiver_by_resident.get(resident.id)
+                    if found and found[0]:
+                        resident.primary_caregiver_id = found[0]
+                        filled += 1
+                db.commit()
+                print(f"✅ primary_caregiver_id 1회성 백필 완료: {filled}명")
+            except Exception as e:
+                print(f"⚠️  primary_caregiver_id 백필 건너뜀: {e}")
                 db.rollback()
 
         try:
