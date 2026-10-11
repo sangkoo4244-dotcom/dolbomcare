@@ -58,6 +58,7 @@ const SIDEBAR_MENUS = {
     ],
     guardian: [
         { href: 'guardian_home.html', icon: 'home', label: '이용자 방문 기록' },
+        { href: 'ltci_guide.html', icon: 'stamp', label: '장기요양 신청 안내' },
         { href: 'notifications.html', icon: 'notify', label: '알림' },
         { href: 'messages.html', icon: 'messages', label: '센터와 메시지' }
     ],

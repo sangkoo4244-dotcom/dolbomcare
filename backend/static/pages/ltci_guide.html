@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>돌봄케어 - 장기요양 신청 안내</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        /* ===== Premium Healthcare Management SaaS 톤 (guardian_home.html과 동일, 보호자 공통) ===== */
+        :root {
+            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247;
+            --warn: #B45309; --danger: #DC2626; --line2: #E2E8F0;
+        }
+        aside.w-72 { background: var(--navy) !important; }
+        .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
+        #navContent .side-item { color: #C9D6E3 !important; border-radius: 8px; }
+        #navContent .side-item:hover { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+        #navContent .side-item.active { background: var(--teal) !important; color: #fff !important; }
+
+        /* 보호자 화면: 고령 사용자를 위해 글자를 키운다 (스타일 가이드 4장: 본문 18px, 제목 30px 이상) */
+        main { font-size: 18px; }
+        main .text-xs { font-size: 15px !important; }
+        main .text-sm { font-size: 17px !important; }
+
+        .g-breadcrumb { font-size: 13px; color: #94A3B8; }
+        .g-breadcrumb b { color: var(--charcoal); font-weight: 700; }
+        .g-date-chip { display: inline-flex; align-items: center; gap: 6px; background: #F1F5F9; border: 1px solid var(--line2); border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--charcoal); white-space: nowrap; }
+        #userName { white-space: nowrap; }
+        @media (max-width: 640px) {
+            .g-header-row { flex-wrap: wrap; row-gap: 10px; }
+            .g-date-chip { display: none; }
+        }
+
+        .notice-box { background: #FFF7EB; border: 1px solid #FCE2B5; border-radius: 14px; padding: 18px 22px; display: flex; gap: 14px; align-items: flex-start; }
+        .notice-box svg { width: 26px; height: 26px; color: var(--warn); flex: 0 0 auto; margin-top: 2px; }
+        .notice-box b { color: #92400E; }
+        .notice-box p { color: #78350F; line-height: 1.6; margin-top: 4px; }
+
+        .section-card { background: #fff; border: 1px solid var(--line2); border-radius: 16px; padding: 28px 30px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .section-title { font-size: 24px; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+        .section-desc { color: #64748B; font-size: 16px; margin-bottom: 22px; line-height: 1.6; }
+
+        /* 대상 카드 */
+        .target-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        @media (max-width: 800px) { .target-grid { grid-template-columns: 1fr; } }
+        .target-card { background: #F8FAFC; border: 1px solid var(--line2); border-radius: 14px; padding: 20px 22px; }
+        .target-card .t-head { font-weight: 800; color: var(--navy); font-size: 18px; margin-bottom: 8px; }
+        .target-card ul { list-style: none; padding: 0; margin-top: 10px; }
+        .target-card li { padding: 4px 0 4px 22px; position: relative; color: var(--charcoal); }
+        .target-card li::before { content: "•"; position: absolute; left: 4px; color: var(--teal); font-weight: 900; }
+
+        /* 절차 타임라인 */
+        .timeline { position: relative; padding-left: 8px; }
+        .tl-step { display: flex; gap: 20px; padding-bottom: 28px; position: relative; }
+        .tl-step:last-child { padding-bottom: 0; }
+        .tl-step::before { content: ""; position: absolute; left: 21px; top: 44px; bottom: 0; width: 2px; background: var(--line2); }
+        .tl-step:last-child::before { display: none; }
+        .tl-num { width: 44px; height: 44px; border-radius: 50%; background: var(--teal); color: #fff; font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; z-index: 1; }
+        .tl-body b { color: var(--navy); font-size: 18px; }
+        .tl-body p { color: #64748B; margin-top: 4px; line-height: 1.6; font-size: 16px; }
+
+        /* 구비서류 체크리스트 */
+        .doc-list { list-style: none; padding: 0; margin: 0; }
+        .doc-item { display: flex; gap: 14px; align-items: flex-start; padding: 14px 4px; border-bottom: 1px solid #F1F5F9; }
+        .doc-item:last-child { border-bottom: none; }
+        .doc-item input[type=checkbox] { width: 22px; height: 22px; margin-top: 2px; accent-color: var(--teal); flex: 0 0 auto; cursor: pointer; }
+        .doc-item label { cursor: pointer; }
+        .doc-item b { color: var(--navy); }
+        .doc-item p { color: #64748B; font-size: 15px; margin-top: 2px; line-height: 1.5; }
+
+        /* 신청 방법 카드 */
+        .method-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
+        @media (max-width: 1000px) { .method-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+        .method-card { border: 1px solid var(--line2); border-radius: 14px; padding: 18px; text-align: center; }
+        .method-card .m-icon { width: 44px; height: 44px; border-radius: 12px; background: #EDF8F6; color: var(--teal); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+        .method-card .m-icon svg { width: 22px; height: 22px; }
+        .method-card b { color: var(--navy); font-size: 16px; display: block; margin-bottom: 4px; }
+        .method-card p { color: #64748B; font-size: 14px; line-height: 1.5; }
+
+        /* 등급 표 */
+        .grade-table { width: 100%; border-collapse: collapse; }
+        .grade-table th { text-align: left; font-size: 14px; color: #94A3B8; padding: 10px 8px; border-bottom: 2px solid var(--line2); }
+        .grade-table td { padding: 12px 8px; border-bottom: 1px solid #F1F5F9; color: var(--charcoal); }
+        .grade-pill { display: inline-block; padding: 4px 12px; border-radius: 999px; font-weight: 800; font-size: 14px; background: #E6F3F1; color: var(--teal); }
+
+        .contact-card { background: var(--navy); border-radius: 16px; padding: 28px 30px; color: #fff; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+        .contact-card b { font-size: 20px; }
+        .contact-card p { color: #C9D6E3; margin-top: 4px; font-size: 15px; }
+        .contact-btn { background: var(--teal); color: #fff; font-weight: 800; padding: 12px 22px; border-radius: 12px; white-space: nowrap; }
+        .contact-btn:hover { background: #0C756C; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex min-h-screen">
+        <aside class="w-72 text-white fixed h-screen overflow-hidden">
+            <div class="p-6 border-b border-gray-700 flex items-center gap-3">
+                <div><div class="text-lg font-bold">돌봄케어</div><div class="text-xs text-gray-400">Care Management</div></div>
+            </div>
+            <nav id="navContent" class="p-4"></nav>
+        </aside>
+        <main class="ml-72 w-full flex flex-col">
+            <div class="g-header-row bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
+                <div>
+                    <div class="g-breadcrumb">홈 › <b>장기요양 신청 안내</b></div>
+                    <h1 class="text-3xl font-bold text-[#1E3A5F] mt-1">장기요양 신청 안내</h1>
+                    <p class="text-sm text-gray-500 mt-1">장기요양등급 신청부터 돌봄케어 이용 시작까지, 전체 절차를 안내해드립니다.</p>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="g-date-chip" id="headerDate"></div>
+                    <a href="./notifications.html"><img src="assets/user_design/28_top_notification_icon.png" alt="알림" class="w-7 h-7 object-contain"></a>
+                    <div class="flex items-center gap-3">
+                        <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
+                        <span id="userName" class="text-base font-bold text-gray-900">보호자</span>
+                    </div>
+                    <button onclick="logout()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:border-red-500 hover:text-red-600 transition">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+                        로그아웃
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-8 space-y-6">
+                <!-- 유의사항 -->
+                <div class="notice-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/></svg>
+                    <div>
+                        <b>이 페이지는 일반적인 절차를 요약한 안내입니다.</b>
+                        <p>정확한 최신 기준·구비서류·제출 양식은 반드시 <b>국민건강보험공단(☎ 1577-1000)</b> 또는 <b>노인장기요양보험 홈페이지(www.longtermcare.or.kr)</b>에서 다시 확인해 주세요. 이 안내만으로 신청이 처리되지 않으며, 법적 효력이 없습니다.</p>
+                    </div>
+                </div>
+
+                <!-- 신청 대상 -->
+                <div class="section-card">
+                    <div class="section-title">신청 대상</div>
+                    <div class="section-desc">아래 중 하나에 해당하면 장기요양인정을 신청할 수 있습니다.</div>
+                    <div class="target-grid">
+                        <div class="target-card">
+                            <div class="t-head">만 65세 이상 어르신</div>
+                            <p style="color:#64748B;">거동이나 일상생활에 도움이 필요한 상태라면 질병의 종류와 관계없이 신청할 수 있습니다.</p>
+                        </div>
+                        <div class="target-card">
+                            <div class="t-head">만 65세 미만 + 노인성 질병</div>
+                            <p style="color:#64748B;">다음과 같은 노인성 질병으로 거동이 어려운 경우 65세 미만도 신청할 수 있습니다.</p>
+                            <ul>
+                                <li>치매</li>
+                                <li>뇌혈관질환(뇌졸중 등)</li>
+                                <li>파킨슨병</li>
+                                <li>그 밖의 노인성 질병 (공단에 해당 여부 확인)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 전체 절차 -->
+                <div class="section-card">
+                    <div class="section-title">전체 절차</div>
+                    <div class="section-desc">신청부터 서비스 이용까지 보통 다음 순서로 진행됩니다. 처리 기간은 신청일로부터 통상 30일 이내이나, 의사소견서 제출이 늦어지면 더 걸릴 수 있습니다.</div>
+                    <div class="timeline">
+                        <div class="tl-step"><div class="tl-num">1</div><div class="tl-body"><b>장기요양인정 신청</b><p>국민건강보험공단 지사 방문, 우편, 팩스, 홈페이지·모바일 앱으로 신청합니다. 본인이 어려우면 가족이 대리 신청할 수 있습니다.</p></div></div>
+                        <div class="tl-step"><div class="tl-num">2</div><div class="tl-body"><b>공단 직원 방문조사</b><p>공단 직원이 집을 방문해 거동·인지 상태 등 52개 항목을 조사합니다.</p></div></div>
+                        <div class="tl-step"><div class="tl-num">3</div><div class="tl-body"><b>의사소견서 제출</b><p>공단이 지정한 기한까지 의사소견서를 제출합니다 (거동이 어려우면 의사가 방문해 발급하는 제도도 있습니다).</p></div></div>
+                        <div class="tl-step"><div class="tl-num">4</div><div class="tl-body"><b>등급판정위원회 심의</b><p>방문조사 결과와 의사소견서를 바탕으로 등급판정위원회가 장기요양등급을 심의·판정합니다.</p></div></div>
+                        <div class="tl-step"><div class="tl-num">5</div><div class="tl-body"><b>등급 통보 + 서류 수령</b><p>등급 결과와 함께 장기요양인정서, 표준장기이용계획서를 받습니다.</p></div></div>
+                        <div class="tl-step"><div class="tl-num">6</div><div class="tl-body"><b>장기요양기관 계약</b><p>표준장기이용계획서를 가지고 저희 센터처럼 원하는 장기요양기관과 계약합니다.</p></div></div>
+                        <div class="tl-step"><div class="tl-num">7</div><div class="tl-body"><b>서비스 이용 시작</b><p>계약 후 방문요양 등 장기요양 서비스를 바로 이용할 수 있습니다. 돌봄케어 앱에서 방문 기록을 확인하실 수 있어요.</p></div></div>
+                    </div>
+                </div>
+
+                <!-- 구비서류 -->
+                <div class="section-card">
+                    <div class="section-title">구비서류 체크리스트</div>
+                    <div class="section-desc">신청 시 일반적으로 필요한 서류입니다. 상황에 따라 추가·생략될 수 있으니 방문·접수 전 공단에 다시 확인해 주세요. 체크한 항목은 이 기기에 저장되어 다음에 다시 봐도 유지됩니다.</div>
+                    <ul class="doc-list" id="docList"></ul>
+                </div>
+
+                <!-- 신청 방법 -->
+                <div class="section-card">
+                    <div class="section-title">신청 방법</div>
+                    <div class="section-desc">편한 방법으로 신청하실 수 있습니다.</div>
+                    <div class="method-grid" id="methodGrid"></div>
+                </div>
+
+                <!-- 등급 안내 -->
+                <div class="section-card">
+                    <div class="section-title">등급은 어떻게 나뉘나요</div>
+                    <div class="section-desc">등급판정위원회가 심신 기능 상태(거동·인지 등)를 종합해 등급을 결정합니다. 등급이 높을수록(숫자가 작을수록) 더 많은 도움이 필요한 상태입니다.</div>
+                    <table class="grade-table">
+                        <tr><th>등급</th><th>대략적인 의미</th></tr>
+                        <tr><td><span class="grade-pill">1~2등급</span></td><td>일상생활 대부분에 다른 사람의 도움이 필요한 상태</td></tr>
+                        <tr><td><span class="grade-pill">3~5등급</span></td><td>부분적으로 다른 사람의 도움이 필요한 상태 (5등급은 치매 특화)</td></tr>
+                        <tr><td><span class="grade-pill">인지지원등급</span></td><td>신체 기능은 비교적 양호하나 치매가 있는 경우</td></tr>
+                        <tr><td><span class="grade-pill">등급외</span></td><td>장기요양 급여 대상은 아니나 다른 노인 복지서비스로 연계될 수 있음</td></tr>
+                    </table>
+                    <p style="color:#94A3B8;font-size:14px;margin-top:14px;">정확한 등급별 기준은 심신 상태에 따라 공단이 개별 판정하므로, 여기서는 일반적인 의미만 안내해드립니다.</p>
+                </div>
+
+                <!-- 문의처 -->
+                <div class="contact-card">
+                    <div>
+                        <b>더 궁금한 점이 있으신가요?</b>
+                        <p>국민건강보험공단 노인장기요양보험 콜센터 ☎ 1577-1000 (평일 09:00~18:00)</p>
+                    </div>
+                    <a href="tel:1577-1000" class="contact-btn">전화 문의하기</a>
+                </div>
+
+                <!-- 센터 문의 -->
+                <div class="section-card" style="text-align:center;">
+                    <div class="section-title" style="justify-content:center;">이미 등급을 받으셨나요?</div>
+                    <p style="color:#64748B;margin-bottom:18px;">표준장기이용계획서를 가지고 계시다면, 저희 센터에 바로 문의해 주세요.</p>
+                    <a href="./messages.html" class="contact-btn" style="display:inline-block;">센터에 문의하기 →</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="menu.js"></script>
+    <script>
+        let currentUser = null;
+
+        // 서식 파일은 여기서 직접 올리지 않는다 - 공단이 서식을 바꾸면 우리가 올린 파일이 구버전이 되어 더 위험하다.
+        // 대신 공단 홈페이지로 보내서 항상 최신 서식을 받게 한다 (게시판 URL은 자주 바뀌므로 루트 주소만 쓴다).
+        const LTCI_SITE_URL = 'https://www.longtermcare.or.kr/';
+
+        const DOC_ITEMS = [
+            { id: 'form', title: '장기요양인정 신청서', desc: '공단 지사에 비치되어 있거나 홈페이지에서 내려받을 수 있습니다.', download: true },
+            { id: 'opinion', title: '의사소견서', desc: '등급판정위원회 심의 전까지 제출하면 됩니다. 공단이 발급 의뢰서를 보내드립니다.' },
+            { id: 'id', title: '신청인(본인) 신분증', desc: '주민등록증, 운전면허증 등' },
+            { id: 'proxy', title: '(대리 신청 시) 가족관계증명서 또는 위임장', desc: '가족이나 대리인이 대신 신청할 때 필요합니다. 대리인 신분증도 함께 지참하세요.' },
+        ];
+
+        function renderDocList() {
+            let checked = {};
+            try { checked = JSON.parse(localStorage.getItem('ltci_doc_checklist') || '{}'); } catch (e) { checked = {}; }
+            const list = document.getElementById('docList');
+            list.innerHTML = DOC_ITEMS.map(d => `
+                <li class="doc-item">
+                    <input type="checkbox" id="doc_${d.id}" ${checked[d.id] ? 'checked' : ''} onchange="toggleDoc('${d.id}', this.checked)">
+                    <label for="doc_${d.id}" style="flex:1;">
+                        <b>${d.title}</b>
+                        <p>${d.desc}</p>
+                    </label>
+                    ${d.download ? `<a href="${LTCI_SITE_URL}" target="_blank" rel="noopener" title="공단 홈페이지 > 자료마당 > 서식자료실에서 최신 서식을 내려받을 수 있습니다" style="flex:0 0 auto;align-self:center;font-size:14px;font-weight:700;color:var(--teal);white-space:nowrap;">서식 받으러 가기 →</a>` : ''}
+                </li>`).join('');
+        }
+
+        function toggleDoc(id, isChecked) {
+            let checked = {};
+            try { checked = JSON.parse(localStorage.getItem('ltci_doc_checklist') || '{}'); } catch (e) { checked = {}; }
+            checked[id] = isChecked;
+            try { localStorage.setItem('ltci_doc_checklist', JSON.stringify(checked)); } catch (e) { /* 저장 실패해도 화면 체크는 유지됨 */ }
+        }
+
+        const METHODS = [
+            { title: '지사 방문', desc: '가까운 국민건강보험공단 지사를 방문해 신청', icon: '<path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/>' },
+            { title: '우편·팩스', desc: '신청서를 작성해 우편 또는 팩스로 접수', icon: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>' },
+            { title: '홈페이지', desc: 'www.longtermcare.or.kr 에서 온라인 신청', icon: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>' },
+            { title: '모바일 앱', desc: '노인장기요양보험 모바일 앱으로 신청', icon: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>' },
+        ];
+
+        function renderMethods() {
+            document.getElementById('methodGrid').innerHTML = METHODS.map(m => `
+                <div class="method-card">
+                    <div class="m-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${m.icon}</svg></div>
+                    <b>${m.title}</b>
+                    <p>${m.desc}</p>
+                </div>`).join('');
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('access_token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (!token || !user.id) { window.location.href = './login.html'; return; }
+            currentUser = user;
+            document.getElementById('userName').textContent = `${user.full_name || '보호자'}님`;
+            document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+            renderSidebar();
+            renderDocList();
+            renderMethods();
+        }
+
+        function logout() { if (confirm('로그아웃하시겠습니까?')) { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; } }
+        window.addEventListener('load', checkAuth);
+    </script>
+</body>
+</html>
