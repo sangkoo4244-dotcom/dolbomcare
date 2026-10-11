@@ -877,7 +877,7 @@
 
             document.getElementById('recordFormBox').innerHTML = `
                 <div class="st-form">
-                    <label>날짜<input id="rDate" type="date" value="${new Date().toISOString().slice(0, 10)}"></label>
+                    <label>날짜<input id="rDate" type="date" value="${todayLocal()}"></label>
                     <label>제목<input id="rTitle" placeholder="예: 2026년 상반기 보수교육"></label>
                     <label>${amountLabel} (선택)<input id="rAmount" type="number"></label>
                     ${statusField}

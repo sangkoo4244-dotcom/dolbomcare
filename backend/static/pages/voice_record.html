@@ -671,7 +671,7 @@
 
         function setDefaultVisitDateTime() {
             const now = new Date();
-            document.getElementById('visitDate').value = now.toISOString().slice(0, 10);
+            document.getElementById('visitDate').value = todayLocal(now);
             document.getElementById('visitTime').value = now.toTimeString().slice(0, 5);
         }
 
@@ -888,7 +888,7 @@
                 const r = await fetch(`${API_URL}/schedule/caregiver-view?caregiver_id=${currentUser.id}&year_month=${ym}&user_id=${currentUser.id}&user_role=${currentUser.role}`);
                 const data = await r.json();
                 const items = data.items || [];
-                const todayKey = now.toISOString().slice(0, 10);
+                const todayKey = todayLocal(now);
 
                 const todays = items.filter(i => i.date === todayKey);
                 const todayEl = document.getElementById('todayVisitsPanel');

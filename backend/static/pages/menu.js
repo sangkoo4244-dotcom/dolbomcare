@@ -24,6 +24,13 @@
 })();
 
 
+// "오늘 날짜"는 항상 이걸로 구한다. new Date().toISOString().slice(0,10)은 UTC 기준이라
+// 한국 시간 자정~오전 9시 사이에는 실제로는 오늘인데 어제 날짜를 돌려준다 (실제 버그였음 - 2026-10-12
+// 아침에 음성기록 기본 방문일시가 전날로 잡히고, "오늘 방문 예정" 패널이 비어보이는 문제로 발견됨).
+function todayLocal(d = new Date()) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 // 메뉴 아이콘: 색 타일 위에 그림 하나 (직접 그림, 얼굴 없음). 글자색과 무관하게 색을 가진다
 const MENU_TILE = (tile, shadow, inner) => `<svg viewBox="0 0 40 40" width="24" height="24" aria-hidden="true" focusable="false"><rect x="0" y="0" width="40" height="40" rx="11" fill="${tile}"/><ellipse cx="20" cy="34" rx="11" ry="2" fill="${shadow}" opacity="0.5"/>${inner}</svg>`;
 const MENU_ICONS = {

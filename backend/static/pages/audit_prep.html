@@ -218,9 +218,8 @@
 
         loadUserInfo();
         const now = new Date();
-        const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        document.getElementById('fStart').value = firstOfMonth.toISOString().slice(0, 10);
-        document.getElementById('fEnd').value = now.toISOString().slice(0, 10);
+        document.getElementById('fStart').value = todayLocal(new Date(now.getFullYear(), now.getMonth(), 1));
+        document.getElementById('fEnd').value = todayLocal(now);
     </script>
 </body>
 </html>
