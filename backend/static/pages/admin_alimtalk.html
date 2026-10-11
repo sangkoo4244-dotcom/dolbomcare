@@ -346,8 +346,15 @@
                 const d = await res.json();
                 if (!res.ok) throw new Error(d.detail || '센터 생성 실패');
 
+                lastCreatedCredentials = { email: d.manager_email, password: managerPassword };
                 result.className = 'create-result ok';
-                result.textContent = `"${d.center_name}" 센터와 센터장 계정(${d.manager_email})이 만들어졌습니다. 로그인 이메일과 비밀번호를 센터장에게 전달해 주세요.`;
+                result.innerHTML = `
+                    "${escapeHtml(d.center_name)}" 센터가 만들어졌습니다. 아래 로그인 정보를 센터장에게 전달해 주세요 (이 화면을 벗어나면 비밀번호는 다시 볼 수 없습니다).
+                    <div style="margin-top:10px; padding:10px 12px; background:#fff; border:1px solid #A7F3D0; border-radius:8px; font-family: monospace; font-size:13px;">
+                        이메일: ${escapeHtml(d.manager_email)}<br>비밀번호: ${escapeHtml(managerPassword)}
+                    </div>
+                    <button type="button" class="btn-create" style="margin-top:10px; padding:7px 14px;" onclick="copyCredentials(this)">정보 복사</button>
+                `;
                 document.getElementById('newCenterName').value = '';
                 document.getElementById('newManagerName').value = '';
                 document.getElementById('newManagerEmail').value = '';
@@ -356,6 +363,21 @@
             } catch (e) {
                 result.className = 'create-result err';
                 result.textContent = e.message;
+            }
+        }
+
+        let lastCreatedCredentials = null;
+
+        async function copyCredentials(btn) {
+            if (!lastCreatedCredentials) return;
+            const text = `이메일: ${lastCreatedCredentials.email}\n비밀번호: ${lastCreatedCredentials.password}`;
+            try {
+                await navigator.clipboard.writeText(text);
+                const original = btn.textContent;
+                btn.textContent = '복사됨';
+                setTimeout(() => { btn.textContent = original; }, 1500);
+            } catch (e) {
+                alert('복사에 실패했습니다. 직접 선택해서 복사해 주세요.');
             }
         }
 
