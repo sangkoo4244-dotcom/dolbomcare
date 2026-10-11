@@ -193,6 +193,25 @@
             errorMessage.classList.add('show');
         }
 
+        // 이미 유효한 로그인이 있으면 폼을 보여주지 않고 바로 들여보낸다
+        // (다른 화면 갔다가 로그인 링크를 다시 눌렀을 때 "또 로그인하라"는 느낌을 주지 않기 위해)
+        // /users/me는 토큰이 아직 유효한지 확인하는 용도로만 쓰고, localStorage의 user는 덮어쓰지
+        // 않는다 - /me 응답엔 center_id가 없어서, 덮어쓰면 다른 화면들이 center_id를 잃고 엉뚱한
+        // 센터(1번) 데이터를 보여주게 된다.
+        (async function redirectIfAlreadyLoggedIn() {
+            const token = localStorage.getItem('access_token');
+            const savedUser = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!token || !savedUser) return;
+            try {
+                const res = await fetch('/api/v1/users/me', { headers: { Authorization: `Bearer ${token}` } });
+                if (!res.ok) throw new Error('invalid session');
+                window.location.replace(savedUser.role === 'guardian' ? './guardian_home.html' : './dashboard.html');
+            } catch (e) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+            }
+        })();
+
         // 역할은 서버가 계정에서 정한다
         async function handleLogin(email, password) {
             loginButton.disabled = true;
