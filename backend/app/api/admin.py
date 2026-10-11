@@ -106,6 +106,30 @@ def _cascade_delete_center(db: Session, center: Center) -> None:
     resident_ids = [r.id for r in db.query(Resident.id).filter(Resident.center_id == center_id).all()]
     user_ids = [u.id for u in db.query(User.id).filter(User.center_id == center_id).all()]
 
+    # 보호자(guardian)는 users.center_id가 없고 residents.guardian_id로만 이 센터와 연결된다.
+    # 이 센터의 이용자에게만 연결돼 있고(다른 센터 이용자는 없고) 소속 센터가 없는 보호자만
+    # 함께 지운다 - 그래야 나중에 같은 이메일로 다시 못 쓰는 "유령 계정"으로 안 남는다.
+    guardian_candidate_ids = {
+        g for (g,) in db.query(Resident.guardian_id)
+        .filter(Resident.center_id == center_id, Resident.guardian_id.isnot(None)).all()
+    }
+    for gid in list(guardian_candidate_ids):
+        guardian = db.query(User).filter(User.id == gid).first()
+        if not guardian or guardian.center_id is not None:
+            guardian_candidate_ids.discard(gid)
+            continue
+        has_other_residents = db.query(Resident).filter(
+            Resident.guardian_id == gid, Resident.center_id != center_id
+        ).first() is not None
+        if has_other_residents:
+            guardian_candidate_ids.discard(gid)
+    user_ids = list(set(user_ids) | guardian_candidate_ids)
+
+    # centers.manager_id가 users를 참조한다 (데모 센터처럼 설정된 경우). 먼저 끊지 않으면
+    # 아래에서 그 직원(User)을 지울 때 FK 위반으로 실패한다 (특히 PostgreSQL).
+    center.manager_id = None
+    db.flush()
+
     # billing_records.daily_record_id가 daily_records를 참조하므로 daily_records보다 먼저 지운다
     db.query(BillingRecord).filter(BillingRecord.center_id == center_id).delete(synchronize_session=False)
 
@@ -135,7 +159,8 @@ def _cascade_delete_center(db: Session, center: Center) -> None:
     db.query(AlimtalkUsage).filter(AlimtalkUsage.center_id == center_id).delete(synchronize_session=False)
 
     db.query(Resident).filter(Resident.center_id == center_id).delete(synchronize_session=False)
-    db.query(User).filter(User.center_id == center_id).delete(synchronize_session=False)
+    if user_ids:
+        db.query(User).filter(User.id.in_(user_ids)).delete(synchronize_session=False)
     db.delete(center)
 
 

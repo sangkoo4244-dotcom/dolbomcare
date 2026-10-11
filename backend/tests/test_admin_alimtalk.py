@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 from app import models
@@ -23,6 +23,13 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setenv("PLATFORM_ADMIN_EMAILS", "owner@eeumlogic.com")
 
     engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
+
+    # SQLite는 기본적으로 FK 제약을 강제하지 않는다. 운영 DB(PostgreSQL)는 강제하므로,
+    # 여기서도 켜서 테스트가 실제 운영에서 터질 FK 위반을 잡아낼 수 있게 한다.
+    @event.listens_for(engine, "connect")
+    def _enable_fk(dbapi_conn, _):
+        dbapi_conn.execute("PRAGMA foreign_keys=ON")
+
     Base.metadata.create_all(bind=engine)
     Session = sessionmaker(bind=engine)
 
@@ -268,3 +275,99 @@ def test_force_delete_removes_center_with_full_data(client):
 
     login = client.post("/api/v1/users/login", json={"email": "force-target2@test.com", "password": "password123"})
     assert login.status_code in (401, 404)
+
+
+def test_force_delete_works_when_center_manager_id_is_set(client):
+    """데모 체험 센터(seed_demo.py)는 Center.manager_id를 센터장 User로 설정해둔다.
+    FK를 먼저 끊지 않고 그 User를 지우면 PostgreSQL에서 위반으로 실패하던 버그의 회귀 테스트."""
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    created = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "매니저아이디센터", "manager_name": "데모센터장",
+        "manager_email": "manager-id-test@test.com", "manager_password": "password123",
+    }).json()
+    center_id = created["center_id"]
+
+    session = client.Session()
+    manager = session.query(models.User).filter(models.User.email == "manager-id-test@test.com").first()
+    center = session.query(models.Center).filter(models.Center.id == center_id).first()
+    center.manager_id = manager.id
+    session.add(models.Resident(center_id=center_id, name="데모어르신"))
+    session.commit()
+    session.close()
+
+    res = client.request(
+        "DELETE", f"/api/v1/admin/centers/{center_id}/force",
+        headers=headers, json={"confirm_name": "매니저아이디센터"},
+    )
+    assert res.status_code == 200
+
+    overview = client.get("/api/v1/admin/alimtalk-overview", headers=headers).json()
+    assert not any(r["center_id"] == center_id for r in overview)
+
+
+def test_force_delete_removes_guardian_exclusive_to_center(client):
+    """seed_demo.py처럼 guardian User는 center_id가 없고 Resident.guardian_id로만 연결된다.
+    이걸 놓치면 센터는 지워져도 보호자 계정이 유령으로 남아 같은 이메일을 다시 못 쓰게 되는
+    버그(실제로 로컬에서 seed_demo.py 재실행 시 UNIQUE constraint 위반으로 재현됨)의 회귀 테스트."""
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    created = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "보호자있는센터", "manager_name": "보호자센터장",
+        "manager_email": "guardian-center@test.com", "manager_password": "password123",
+    }).json()
+    center_id = created["center_id"]
+
+    session = client.Session()
+    guardian = models.User(
+        email="exclusive-guardian@test.com", hashed_password="x", full_name="보호자",
+        role="guardian", center_id=None, is_active=True,
+    )
+    session.add(guardian)
+    session.flush()
+    session.add(models.Resident(center_id=center_id, name="연결된어르신", guardian_id=guardian.id))
+    session.commit()
+    session.close()
+
+    res = client.request(
+        "DELETE", f"/api/v1/admin/centers/{center_id}/force",
+        headers=headers, json={"confirm_name": "보호자있는센터"},
+    )
+    assert res.status_code == 200
+
+    session = client.Session()
+    assert session.query(models.User).filter(models.User.email == "exclusive-guardian@test.com").first() is None
+    session.close()
+
+
+def test_force_delete_keeps_guardian_shared_with_other_center(client):
+    """보호자가 다른 센터의 이용자와도 연결돼 있으면, 그 센터를 강제 삭제해도 보호자 계정은
+    지우지 않는다 (다른 센터에서 여전히 필요한 계정이므로)."""
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    created = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "공유보호자센터", "manager_name": "공유센터장",
+        "manager_email": "shared-guardian-center@test.com", "manager_password": "password123",
+    }).json()
+    center_id = created["center_id"]
+
+    session = client.Session()
+    guardian = models.User(
+        email="shared-guardian@test.com", hashed_password="x", full_name="보호자",
+        role="guardian", center_id=None, is_active=True,
+    )
+    session.add(guardian)
+    session.flush()
+    # 삭제할 센터(center_id)의 이용자 + 다른 센터(id=1, 기존 테스트센터)의 이용자 둘 다 연결
+    session.add(models.Resident(center_id=center_id, name="삭제될어르신", guardian_id=guardian.id))
+    session.add(models.Resident(center_id=1, name="남아있을어르신", guardian_id=guardian.id))
+    session.commit()
+    guardian_id = guardian.id
+    session.close()
+
+    res = client.request(
+        "DELETE", f"/api/v1/admin/centers/{center_id}/force",
+        headers=headers, json={"confirm_name": "공유보호자센터"},
+    )
+    assert res.status_code == 200
+
+    session = client.Session()
+    assert session.query(models.User).filter(models.User.id == guardian_id).first() is not None
+    session.close()
