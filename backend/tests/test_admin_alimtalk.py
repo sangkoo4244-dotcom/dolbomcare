@@ -8,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app import models
 from app.api import admin
+from app.api import users as users_api
 from app.api.users import create_access_token
 from app.database import Base, get_db
 
@@ -34,6 +35,7 @@ def client(tmp_path, monkeypatch):
 
     app = FastAPI()
     app.include_router(admin.router, prefix="/api/v1/admin")
+    app.include_router(users_api.router, prefix="/api/v1/users")
 
     def override_get_db():
         session = Session()
@@ -43,7 +45,9 @@ def client(tmp_path, monkeypatch):
             session.close()
 
     app.dependency_overrides[get_db] = override_get_db
-    return TestClient(app)
+    test_client = TestClient(app)
+    test_client.Session = Session
+    return test_client
 
 
 def test_non_admin_manager_is_denied(client):
@@ -131,3 +135,55 @@ def test_create_center_rejects_blank_name(client):
         "manager_email": "blank@test.com", "manager_password": "password123",
     })
     assert res.status_code == 400
+
+
+def test_non_admin_cannot_delete_center(client):
+    headers = auth(2, "center_manager", "manager@test.com")
+    assert client.delete("/api/v1/admin/centers/1", headers=headers).status_code == 403
+
+
+def test_delete_center_blocked_when_residents_exist(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    created = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "이용자있는센터", "manager_name": "정센터장",
+        "manager_email": "has-residents@test.com", "manager_password": "password123",
+    }).json()
+    center_id = created["center_id"]
+
+    session = client.Session()
+    session.add(models.Resident(center_id=center_id, name="김어르신"))
+    session.commit()
+    session.close()
+
+    res = client.delete(f"/api/v1/admin/centers/{center_id}", headers=headers)
+    assert res.status_code == 400
+    assert "이용자" in res.json()["detail"]
+
+
+def test_delete_center_blocked_when_extra_staff_exists(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    # 테스트센터(id=1)는 fixture에서 이미 직원 2명(운영자 본인 + 센터장)이 속해 있다
+    res = client.delete("/api/v1/admin/centers/1", headers=headers)
+    assert res.status_code == 400
+    assert "직원" in res.json()["detail"]
+
+
+def test_delete_empty_center_succeeds_and_manager_cannot_login(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    created = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "삭제될센터", "manager_name": "임시센터장",
+        "manager_email": "to-delete@test.com", "manager_password": "password123",
+    }).json()
+    center_id = created["center_id"]
+
+    overview_before = client.get("/api/v1/admin/alimtalk-overview", headers=headers).json()
+    assert any(r["center_id"] == center_id for r in overview_before)
+
+    res = client.delete(f"/api/v1/admin/centers/{center_id}", headers=headers)
+    assert res.status_code == 200
+
+    overview_after = client.get("/api/v1/admin/alimtalk-overview", headers=headers).json()
+    assert not any(r["center_id"] == center_id for r in overview_after)
+
+    login = client.post("/api/v1/users/login", json={"email": "to-delete@test.com", "password": "password123"})
+    assert login.status_code in (401, 404)

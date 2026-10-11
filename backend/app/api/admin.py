@@ -7,7 +7,18 @@ from sqlalchemy.orm import Session
 from app.api.users import get_password_hash
 from app.auth import require_platform_admin
 from app.database import get_db
-from app.models import AlimtalkUsage, Center, User
+from app.models import (
+    AlimtalkUsage,
+    Center,
+    GuardianInvite,
+    Notification,
+    Resident,
+    ResidentThreadRead,
+    SalaryStatement,
+    StaffCertificate,
+    StaffRecord,
+    User,
+)
 
 router = APIRouter()
 
@@ -68,9 +79,42 @@ def list_alimtalk_overview(db: Session = Depends(get_db), actor: User = Depends(
             "free_sent": usages[c.id].free_sent if c.id in usages else 0,
             "paid_sent": usages[c.id].paid_sent if c.id in usages else 0,
             "blocked_count": usages[c.id].blocked_count if c.id in usages else 0,
+            "resident_count": db.query(Resident).filter(Resident.center_id == c.id).count(),
+            "staff_count": db.query(User).filter(User.center_id == c.id).count(),
         }
         for c in centers
     ]
+
+
+@router.delete("/centers/{center_id}")
+def delete_center(center_id: int, db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    """사용하지 않는 센터를 삭제한다 (운영자 전용). 이용자가 한 명이라도 있거나 센터장 외에
+    직원이 등록돼 있으면 실수로 실제 운영 데이터를 지우는 것을 막기 위해 거부한다."""
+    center = db.query(Center).filter(Center.id == center_id).first()
+    if not center:
+        raise HTTPException(status_code=404, detail="센터를 찾을 수 없습니다")
+
+    resident_count = db.query(Resident).filter(Resident.center_id == center_id).count()
+    if resident_count > 0:
+        raise HTTPException(status_code=400, detail=f"이용자가 {resident_count}명 등록돼 있어 삭제할 수 없습니다")
+
+    staff_ids = [u.id for u in db.query(User.id).filter(User.center_id == center_id).all()]
+    if len(staff_ids) > 1:
+        raise HTTPException(status_code=400, detail="센터장 외 직원이 등록돼 있어 삭제할 수 없습니다")
+
+    if staff_ids:
+        db.query(StaffCertificate).filter(StaffCertificate.user_id.in_(staff_ids)).delete(synchronize_session=False)
+        db.query(StaffRecord).filter(StaffRecord.staff_id.in_(staff_ids)).delete(synchronize_session=False)
+        db.query(ResidentThreadRead).filter(ResidentThreadRead.user_id.in_(staff_ids)).delete(synchronize_session=False)
+        db.query(Notification).filter(Notification.user_id.in_(staff_ids)).delete(synchronize_session=False)
+
+    db.query(AlimtalkUsage).filter(AlimtalkUsage.center_id == center_id).delete(synchronize_session=False)
+    db.query(GuardianInvite).filter(GuardianInvite.center_id == center_id).delete(synchronize_session=False)
+    db.query(SalaryStatement).filter(SalaryStatement.center_id == center_id).delete(synchronize_session=False)
+    db.query(User).filter(User.center_id == center_id).delete(synchronize_session=False)
+    db.delete(center)
+    db.commit()
+    return {"status": "success"}
 
 
 class ChargeRequest(BaseModel):

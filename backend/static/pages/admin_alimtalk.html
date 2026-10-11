@@ -57,6 +57,9 @@
 
         .charge-btn { padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid var(--teal); background: #fff; color: var(--teal); cursor: pointer; }
         .charge-btn:hover { background: var(--teal); color: #fff; }
+        .delete-btn { margin-left: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid var(--line); background: #fff; color: var(--muted); cursor: pointer; }
+        .delete-btn:not(:disabled):hover { border-color: var(--danger); color: var(--danger); }
+        .delete-btn:disabled { color: var(--faint); cursor: not-allowed; opacity: 0.6; }
 
         .empty, .denied, .loading { padding: 60px 20px; text-align: center; color: var(--muted); font-size: 14px; }
         .denied { color: var(--danger); font-weight: 600; }
@@ -247,7 +250,12 @@
                                     ? `<span class="blocked-badge">${r.blocked_count}건</span>`
                                     : `<span class="zero">0</span>`}</td>
                                 <td class="num balance">${r.balance.toLocaleString()}원</td>
-                                <td><button class="charge-btn" onclick="openModal(${r.center_id})">충전</button></td>
+                                <td style="white-space:nowrap;">
+                                    <button class="charge-btn" onclick="openModal(${r.center_id})">충전</button>
+                                    ${r.resident_count === 0 && r.staff_count <= 1
+                                        ? `<button class="delete-btn" onclick="deleteCenter(${r.center_id})">삭제</button>`
+                                        : `<button class="delete-btn" disabled title="이용자 ${r.resident_count}명, 직원 ${r.staff_count}명이 있어 삭제할 수 없습니다">삭제</button>`}
+                                </td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -319,6 +327,29 @@
         document.getElementById('modalBackdrop').addEventListener('click', (e) => {
             if (e.target.id === 'modalBackdrop') closeModal();
         });
+
+        async function deleteCenter(centerId) {
+            const center = rows.find(r => r.center_id === centerId);
+            const name = center ? center.center_name : '이 센터';
+            if (!confirm(`"${name}"를 삭제하시겠습니까? 되돌릴 수 없습니다.`)) return;
+
+            const token = localStorage.getItem('access_token');
+            try {
+                const res = await fetch(`${API_URL}/admin/centers/${centerId}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const d = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(d.detail || '삭제 실패');
+
+                rows = rows.filter(r => r.center_id !== centerId);
+                renderStats();
+                renderTable();
+                showToast(`"${name}"가 삭제되었습니다`);
+            } catch (e) {
+                alert(e.message);
+            }
+        }
 
         async function createCenter() {
             const centerName = document.getElementById('newCenterName').value.trim();
