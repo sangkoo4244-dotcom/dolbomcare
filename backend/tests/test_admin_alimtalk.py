@@ -511,3 +511,55 @@ def test_login_allowed_when_no_trial_set(client):
 
     res = client.post("/api/v1/users/login", json={"email": "no-trial-login@test.com", "password": "password123"})
     assert res.status_code == 200
+
+
+def test_non_admin_cannot_lookup_user(client):
+    headers = auth(2, "center_manager", "manager@test.com")
+    assert client.get("/api/v1/admin/users/lookup?email=manager@test.com", headers=headers).status_code == 403
+
+
+def test_lookup_user_returns_404_for_unknown_email(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    res = client.get("/api/v1/admin/users/lookup?email=nobody@test.com", headers=headers)
+    assert res.status_code == 404
+
+
+def test_lookup_user_returns_center_and_role(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    res = client.get("/api/v1/admin/users/lookup?email=manager@test.com", headers=headers)
+    assert res.status_code == 200
+    body = res.json()
+    assert body["role"] == "center_manager"
+    assert body["center_name"] == "테스트센터"
+
+
+def test_non_admin_cannot_reset_password(client):
+    headers = auth(2, "center_manager", "manager@test.com")
+    res = client.post("/api/v1/admin/users/2/reset-password", headers=headers, json={"new_password": "newpass123"})
+    assert res.status_code == 403
+
+
+def test_admin_reset_password_rejects_short_password(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    res = client.post("/api/v1/admin/users/2/reset-password", headers=headers, json={"new_password": "1234"})
+    assert res.status_code == 400
+
+
+def test_admin_reset_password_lets_user_login_with_new_password(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    _make_login_user(client, "reset-target@test.com", "oldpassword123", 1)
+    user_id = client.get(
+        "/api/v1/admin/users/lookup?email=reset-target@test.com", headers=headers
+    ).json()["id"]
+
+    res = client.post(
+        f"/api/v1/admin/users/{user_id}/reset-password", headers=headers,
+        json={"new_password": "newpassword456"},
+    )
+    assert res.status_code == 200
+
+    old_login = client.post("/api/v1/users/login", json={"email": "reset-target@test.com", "password": "oldpassword123"})
+    assert old_login.status_code == 401
+
+    new_login = client.post("/api/v1/users/login", json={"email": "reset-target@test.com", "password": "newpassword456"})
+    assert new_login.status_code == 200

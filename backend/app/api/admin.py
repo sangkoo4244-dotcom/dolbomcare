@@ -43,6 +43,48 @@ def check_is_admin(actor: User = Depends(require_platform_admin)):
     return {"is_admin": True}
 
 
+@router.get("/users/lookup")
+def lookup_user(email: str, db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    """이메일로 계정을 찾는다 (운영자 전용). 로그인이 안 된다는 문의가 왔을 때 어느 센터
+    소속인지, 역할이 뭔지 확인한 뒤 바로 비밀번호를 재설정해 줄 수 있게 한다."""
+    user = db.query(User).filter(User.email == email.strip()).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="해당 이메일의 계정을 찾을 수 없습니다")
+    center = db.query(Center).filter(Center.id == user.center_id).first() if user.center_id else None
+    return {
+        "id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role,
+        "is_active": user.is_active,
+        "center_id": user.center_id,
+        "center_name": center.name if center else None,
+        "trial_ends_at": center.trial_ends_at.isoformat() if center and center.trial_ends_at else None,
+    }
+
+
+class AdminResetPasswordRequest(BaseModel):
+    new_password: str
+
+
+@router.post("/users/{user_id}/reset-password")
+def admin_reset_password(
+    user_id: int,
+    body: AdminResetPasswordRequest,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_platform_admin),
+):
+    """운영자가 어떤 계정이든 비밀번호를 바로 재설정한다 (센터장을 거치지 않고 즉시 처리할 때 사용)."""
+    if len(body.new_password) < 8:
+        raise HTTPException(status_code=400, detail="비밀번호는 최소 8자 이상이어야 합니다")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="계정을 찾을 수 없습니다")
+    user.hashed_password = get_password_hash(body.new_password)
+    db.commit()
+    return {"status": "success", "email": user.email}
+
+
 class CenterCreateRequest(BaseModel):
     center_name: str
     manager_name: str

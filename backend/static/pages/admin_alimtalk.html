@@ -99,6 +99,8 @@
         .create-form label { font-size: 12px; font-weight: 700; color: var(--muted); }
         .create-form input { padding: 9px 12px; border: 1.5px solid var(--line); border-radius: 8px; font-size: 14px; outline: none; }
         .create-form input:focus { border-color: var(--teal); }
+        .create-form .field-row { display: flex; gap: 10px; align-items: center; }
+        .create-form .field-row input { flex: 1; }
         .create-form .actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
         .btn-create { padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
         .btn-create:hover { background: var(--teal-dark); }
@@ -156,6 +158,20 @@
                     <button class="btn-create" onclick="createCenter()">센터 만들기</button>
                 </div>
                 <div class="create-result" id="createResult"></div>
+            </div>
+        </div>
+
+        <h2 class="section-title">계정 찾기 · 비밀번호 재설정</h2>
+        <div class="panel" style="margin-bottom: 40px;">
+            <div class="create-form">
+                <div class="field full">
+                    <label>로그인이 안 된다는 계정의 이메일</label>
+                    <div class="field-row">
+                        <input type="email" id="lookupEmail" placeholder="example@email.com" style="flex:1;">
+                        <button class="btn-create" style="padding:9px 16px;" onclick="lookupUser()">찾기</button>
+                    </div>
+                </div>
+                <div class="create-result" id="lookupResult"></div>
             </div>
         </div>
         </div>
@@ -576,6 +592,71 @@
                 setTimeout(() => { btn.textContent = original; }, 1500);
             } catch (e) {
                 alert('복사에 실패했습니다. 직접 선택해서 복사해 주세요.');
+            }
+        }
+
+        const ROLE_LABELS = { center_manager: '센터장', caregiver: '요양보호사', guardian: '보호자' };
+        let lookedUpUser = null;
+
+        async function lookupUser() {
+            const email = document.getElementById('lookupEmail').value.trim();
+            const result = document.getElementById('lookupResult');
+            if (!email) {
+                result.className = 'create-result err';
+                result.textContent = '이메일을 입력해 주세요';
+                return;
+            }
+
+            const token = localStorage.getItem('access_token');
+            try {
+                const res = await fetch(`${API_URL}/admin/users/lookup?email=${encodeURIComponent(email)}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const d = await res.json();
+                if (!res.ok) throw new Error(d.detail || '조회 실패');
+
+                lookedUpUser = d;
+                result.className = 'create-result ok';
+                result.innerHTML = `
+                    <div style="font-size:13px; line-height:1.8;">
+                        <b>${escapeHtml(d.full_name)}</b> (${ROLE_LABELS[d.role] || d.role})${d.is_active ? '' : ' · <span style="color:var(--danger);">비활성 계정</span>'}<br>
+                        이메일: ${escapeHtml(d.email)}<br>
+                        소속 센터: ${d.center_name ? escapeHtml(d.center_name) : '(없음 - 보호자일 수 있음)'}${d.center_name ? ' ' + trialBadge(d.trial_ends_at) : ''}
+                    </div>
+                    <div class="field-row" style="margin-top:12px;">
+                        <input type="text" id="resetPasswordInput" placeholder="새 비밀번호 (8자 이상)">
+                        <button class="btn-create" style="padding:9px 16px; white-space:nowrap;" onclick="confirmAdminResetPassword()">비밀번호 재설정</button>
+                    </div>
+                `;
+            } catch (e) {
+                lookedUpUser = null;
+                result.className = 'create-result err';
+                result.textContent = e.message;
+            }
+        }
+
+        async function confirmAdminResetPassword() {
+            if (!lookedUpUser) return;
+            const newPassword = document.getElementById('resetPasswordInput').value;
+            if (!newPassword || newPassword.length < 8) {
+                alert('비밀번호는 8자 이상이어야 합니다');
+                return;
+            }
+            if (!confirm(`"${lookedUpUser.email}" 계정의 비밀번호를 재설정할까요?`)) return;
+
+            const token = localStorage.getItem('access_token');
+            try {
+                const res = await fetch(`${API_URL}/admin/users/${lookedUpUser.id}/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ new_password: newPassword }),
+                });
+                const d = await res.json();
+                if (!res.ok) throw new Error(d.detail || '재설정 실패');
+                showToast(`"${lookedUpUser.email}" 비밀번호가 재설정되었습니다`);
+                document.getElementById('resetPasswordInput').value = '';
+            } catch (e) {
+                alert(e.message);
             }
         }
 
