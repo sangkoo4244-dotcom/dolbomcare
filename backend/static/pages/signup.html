@@ -240,19 +240,18 @@
     </div>
 
     <script>
-        // URL에서 요금제 정보 가져오기 (pricing.html의 이용자 수 계산기와 같은 공식)
+        // URL에서 요금제 정보 가져오기 (pricing.html의 요금제와 동일)
         const urlParams = new URLSearchParams(window.location.search);
         const plan = urlParams.get('plan') || 'standard';
-        const residents = parseInt(urlParams.get('residents'), 10) || 10;
 
-        if (plan === 'enterprise') {
-            document.getElementById('planBadge').textContent = '선택한 요금제: 엔터프라이즈 플랜 (맞춤형 가격, 별도 협의)';
-            document.getElementById('planBadge').style.display = 'block';
-        } else {
-            const BASE_FEE = 19000, INCLUDED = 10, PER_PERSON = 1200;
-            const price = BASE_FEE + Math.max(0, residents - INCLUDED) * PER_PERSON;
-            document.getElementById('planBadge').textContent =
-                `선택한 요금제: 스탠다드 (이용자 ${residents}명 기준 월 ${price.toLocaleString()}원, 부가세 포함)`;
+        const planNames = {
+            'starter': '스타터 (이용자 15명까지, 월 29,000원 · 부가세 포함)',
+            'standard': '스탠다드 (이용자 16명 이상, 월 59,000원 · 부가세 포함)',
+            'enterprise': '엔터프라이즈 (맞춤형 가격, 별도 협의)',
+        };
+
+        if (planNames[plan]) {
+            document.getElementById('planBadge').textContent = '선택한 요금제: ' + planNames[plan];
             document.getElementById('planBadge').style.display = 'block';
         }
 

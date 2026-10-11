@@ -105,16 +105,7 @@
         .btn-block.secondary { background: var(--bg); color: var(--text); border-color: var(--border); }
         .btn-block.secondary:hover { border-color: var(--teal); color: var(--teal); }
 
-        /* ===== 이용자 수 계산기 ===== */
-        .price-grid.calc-grid { grid-template-columns: 1.3fr 1fr; align-items: stretch; }
-        .calc-box { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; margin-bottom: 26px; }
-        .calc-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
-        .calc-top label { font-size: 13.5px; font-weight: 700; color: var(--text); }
-        .calc-top .calc-count { font-size: 15px; font-weight: 800; color: var(--teal-dark); }
-        .calc-box input[type="range"] { width: 100%; accent-color: var(--teal); height: 4px; }
-        .calc-formula { font-size: 12px; color: var(--text-faint); margin-top: 12px; line-height: 1.6; }
         .price-sub { font-size: 14px; color: var(--text-soft); font-weight: 600; }
-        @media (max-width: 760px) { .price-grid.calc-grid { grid-template-columns: 1fr; } }
 
         /* ===== Compare ===== */
         .compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
@@ -192,8 +183,8 @@
 
     <section class="p-header">
         <div class="wrap">
-            <h1>이용자 수만큼만 내는 요금제</h1>
-            <p>등급·기능별로 나누지 않습니다. 센터가 돌보는 이용자 수에 비례해 하나의 요금만 내면, 음성 기록부터 급여 계산까지 전부 기본 포함입니다.</p>
+            <h1>센터 규모에 맞는 간단한 요금제</h1>
+            <p>기능으로 등급을 나누지 않습니다. 이용자 수 구간에 맞는 요금 하나만 내면, 음성 기록부터 급여 계산까지 전부 기본 포함입니다.</p>
             <div class="trial-badge">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
                 15일 무료체험 · 신용카드 등록 불필요 · 셋팅비 없음
@@ -203,22 +194,11 @@
 
     <section class="section">
         <div class="wrap">
-            <div class="price-grid calc-grid">
-                <div class="price-card featured">
-                    <div class="price-badge">모든 기능 기본 포함</div>
-                    <div class="plan-name">스탠다드</div>
-
-                    <div class="calc-box">
-                        <div class="calc-top">
-                            <label for="residentCount">이용자(수급자) 수</label>
-                            <span class="calc-count"><span id="residentCountLabel">20</span>명</span>
-                        </div>
-                        <input type="range" id="residentCount" min="1" max="150" value="20" oninput="updatePrice()" aria-describedby="calcPrice">
-                        <div class="calc-formula">기본료 19,000원(10명까지) + 10명 초과 1인당 1,200원</div>
-                    </div>
-
-                    <div class="price" id="calcPrice">31,000<span class="price-sub">원 / 월</span></div>
-                    <div class="price-period">부가세 포함 · 15일 무료체험 · 셋팅비 없음</div>
+            <div class="price-grid">
+                <div class="price-card">
+                    <div class="plan-name">스타터</div>
+                    <div class="price">29,000<span class="price-sub">원 / 월</span></div>
+                    <div class="price-period">이용자 15명까지 · 부가세 포함 · 셋팅비 없음</div>
                     <ul class="features-list">
                         <li>음성 기반 방문 기록</li>
                         <li>자동 청구 생성 및 정산</li>
@@ -227,13 +207,26 @@
                         <li>직원·일정 관리</li>
                         <li>공단평가 준비 자료</li>
                     </ul>
+                    <button class="btn-block secondary" onclick="selectPlan('starter')">15일 무료체험 시작</button>
+                </div>
+
+                <div class="price-card featured">
+                    <div class="price-badge">가장 인기있음</div>
+                    <div class="plan-name">스탠다드</div>
+                    <div class="price">59,000<span class="price-sub">원 / 월</span></div>
+                    <div class="price-period">이용자 16명 이상(인원 제한 없음) · 부가세 포함 · 셋팅비 없음</div>
+                    <ul class="features-list">
+                        <li>스타터의 모든 기능</li>
+                        <li>이용자 수 제한 없음</li>
+                        <li>우선 이메일 지원</li>
+                    </ul>
                     <button class="btn-block primary" onclick="selectPlan('standard')">15일 무료체험 시작</button>
                 </div>
 
                 <div class="price-card">
                     <div class="plan-name">엔터프라이즈</div>
                     <div class="price">맞춤형</div>
-                    <div class="price-period">다중 센터 운영 · 별도 협의</div>
+                    <div class="price-period">여러 센터·지점 통합 운영 · 별도 협의</div>
                     <ul class="features-list">
                         <li>스탠다드의 모든 기능</li>
                         <li>다중 시설 통합 관리</li>
@@ -269,7 +262,7 @@
                 <div class="compare-card highlight">
                     <div class="compare-type">돌봄케어</div>
                     <h4>음성 기록 + 자동 청구·급여 + 보호자 공유</h4>
-                    <div class="compare-price">이용자 10명 기준 월 19,000원부터</div>
+                    <div class="compare-price">이용자 15명까지 월 29,000원부터</div>
                     <p class="desc">비슷한 가격대에서, 방문 중 말로 남기는 음성 기록과 보호자용 모바일 화면을 기본으로 포함합니다. 15일 무료체험, 셋팅비 없음.</p>
                 </div>
             </div>
@@ -289,8 +282,8 @@
                     <p>네. 신용카드 등록 없이 15일 무료체험을 제공합니다. 체험 기간에는 언제든 취소할 수 있고, 유료 전환 전 별도 동의 절차를 거칩니다.</p>
                 </div>
                 <div class="faq-item">
-                    <h3>이용자 수가 늘거나 줄면 요금은 어떻게 되나요?</h3>
-                    <p>매달 그 달의 이용자 수를 기준으로 다음 달 요금이 자동으로 조정됩니다. 별도 플랜 변경 신청 없이, 센터 규모에 맞게 그대로 늘고 줄어듭니다.</p>
+                    <h3>이용자 수가 늘어나 구간이 바뀌면 어떻게 되나요?</h3>
+                    <p>이용자가 15명을 넘어가면 다음 결제 주기부터 스탠다드 요금이 적용됩니다. 스탠다드는 이용자 수 제한이 없어, 그 이후로는 인원이 더 늘어도 요금이 그대로입니다.</p>
                 </div>
                 <div class="faq-item">
                     <h3>계약을 취소할 수 있나요?</h3>
@@ -353,25 +346,11 @@
             navToggle.setAttribute('aria-expanded', 'false');
         }));
 
-        const BASE_FEE = 19000;
-        const INCLUDED_COUNT = 10;
-        const PER_PERSON_FEE = 1200;
-
-        function updatePrice() {
-            const count = parseInt(document.getElementById('residentCount').value, 10);
-            document.getElementById('residentCountLabel').textContent = count;
-            const extra = Math.max(0, count - INCLUDED_COUNT);
-            const price = BASE_FEE + extra * PER_PERSON_FEE;
-            document.getElementById('calcPrice').innerHTML = price.toLocaleString() + '<span class="price-sub">원 / 월</span>';
-        }
-        updatePrice();
-
         function selectPlan(plan) {
             if (plan === 'enterprise') {
                 window.location.href = 'mailto:contact@eeum-logic.com?subject=엔터프라이즈 플랜 문의';
             } else {
-                const count = document.getElementById('residentCount').value;
-                window.location.href = '/pages/signup.html?plan=' + plan + '&residents=' + count;
+                window.location.href = '/pages/signup.html?plan=' + plan;
             }
         }
     </script>
