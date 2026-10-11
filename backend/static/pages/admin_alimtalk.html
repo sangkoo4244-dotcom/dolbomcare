@@ -3,31 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>알림톡 충전 관리 - 운영자</title>
+    <title>알림톡 충전 관리 - 이음로직 운영자 콘솔</title>
     <style>
-        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --danger2: #DC2626; --line2: #E2E8F0; }
+        :root {
+            --navy: #14283F; --navy-2: #0E1D30; --teal: #0F8B80; --teal-dark: #0C756C;
+            --bg: #F5F7FA; --charcoal: #243247; --muted: #64748B; --faint: #94A3B8;
+            --danger: #DC2626; --danger-bg: #FEF2F2; --warn: #B45309; --warn-bg: #FFFBEB;
+            --ok: #15803D; --line: #E2E8F0; --card: #FFFFFF;
+        }
         * { box-sizing: border-box; }
-        body { margin: 0; background: var(--bg); font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif; color: var(--charcoal); padding: 30px; }
-        h1 { font-size: 20px; color: var(--navy); margin: 0 0 4px; }
-        .sub { font-size: 13px; color: #64748B; margin-bottom: 24px; }
-        table { width: 100%; max-width: 900px; border-collapse: collapse; background: #fff; border: 1px solid var(--line2); border-radius: 12px; overflow: hidden; }
-        th, td { text-align: left; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--line2); }
-        th { background: #F8FAFC; color: #64748B; font-weight: 700; }
-        tr:last-child td { border-bottom: none; }
-        input[type=number] { width: 100px; padding: 6px 8px; border: 1.5px solid var(--line2); border-radius: 7px; font-size: 13px; }
-        button { padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
-        button:hover { background: #0C756C; }
-        .denied { color: var(--danger2); font-size: 14px; }
-        .msg { font-size: 12px; margin-left: 8px; color: #15803D; }
+        body { margin: 0; background: var(--bg); font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif; color: var(--charcoal); }
+
+        .topbar { background: linear-gradient(180deg, var(--navy) 0%, var(--navy-2) 100%); color: #fff; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; }
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand .wordmark { font-size: 15px; font-weight: 800; letter-spacing: 0.2px; }
+        .brand .divider { width: 1px; height: 14px; background: rgba(255,255,255,0.25); }
+        .brand .console { font-size: 13px; color: #B9C6D8; font-weight: 600; }
+        .whoami { display: flex; align-items: center; gap: 14px; font-size: 12px; color: #B9C6D8; }
+        .whoami b { color: #fff; font-weight: 700; }
+        .logout { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); color: #fff; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 7px; cursor: pointer; }
+        .logout:hover { background: rgba(255,255,255,0.16); }
+
+        .page { max-width: 1040px; margin: 0 auto; padding: 32px 24px 60px; }
+        .page-head { margin-bottom: 24px; }
+        .page-head h1 { font-size: 20px; color: var(--navy); margin: 0 0 4px; }
+        .page-head .sub { font-size: 13px; color: var(--muted); }
+
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+        .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+        .stat .label { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+        .stat .value { font-size: 22px; font-weight: 800; color: var(--navy); }
+        .stat .value.warn { color: var(--danger); }
+        .stat .unit { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 2px; }
+
+        .panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+        .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+        .panel-head h2 { font-size: 14px; margin: 0; color: var(--navy); }
+        .search { position: relative; }
+        .search input { width: 220px; padding: 7px 12px; border: 1.5px solid var(--line); border-radius: 8px; font-size: 13px; outline: none; }
+        .search input:focus { border-color: var(--teal); }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 12px 20px; font-size: 13px; border-bottom: 1px solid var(--line); }
+        th { background: #F8FAFC; color: var(--muted); font-weight: 700; font-size: 12px; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: #FAFBFC; }
+        .center-name { font-weight: 700; color: var(--charcoal); }
+        .num { font-variant-numeric: tabular-nums; }
+        .blocked-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--danger-bg); color: var(--danger); font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+        .zero { color: var(--faint); }
+        .balance { font-weight: 700; }
+
+        .charge-btn { padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid var(--teal); background: #fff; color: var(--teal); cursor: pointer; }
+        .charge-btn:hover { background: var(--teal); color: #fff; }
+
+        .empty, .denied, .loading { padding: 60px 20px; text-align: center; color: var(--muted); font-size: 14px; }
+        .denied { color: var(--danger); font-weight: 600; }
+
+        /* 충전 모달 */
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,0.45); display: none; align-items: center; justify-content: center; z-index: 50; }
+        .modal-backdrop.open { display: flex; }
+        .modal { background: #fff; border-radius: 14px; padding: 24px; width: 320px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .modal h3 { font-size: 15px; margin: 0 0 4px; color: var(--navy); }
+        .modal .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+        .modal label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+        .modal input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 9px; font-size: 15px; outline: none; margin-bottom: 16px; }
+        .modal input:focus { border-color: var(--teal); }
+        .modal-actions { display: flex; gap: 8px; }
+        .modal-actions button { flex: 1; padding: 10px; border-radius: 9px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; }
+        .btn-cancel { background: #F1F5F9; color: var(--charcoal); }
+        .btn-cancel:hover { background: #E2E8F0; }
+        .btn-confirm { background: var(--teal); color: #fff; }
+        .btn-confirm:hover { background: var(--teal-dark); }
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 999px; box-shadow: 0 10px 24px rgba(0,0,0,0.2); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .toast.show { opacity: 1; }
+
+        @media (max-width: 720px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            th:nth-child(2), td:nth-child(2) { display: none; }
+        }
     </style>
 </head>
 <body>
-    <h1>알림톡 충전 관리</h1>
-    <div class="sub">입금 확인 후 해당 센터에 금액을 더해 주세요. 운영자 전용 페이지입니다.</div>
-    <div id="body">불러오는 중...</div>
+    <div class="topbar">
+        <div class="brand">
+            <span class="wordmark">이음로직</span>
+            <span class="divider"></span>
+            <span class="console">운영자 콘솔</span>
+        </div>
+        <div class="whoami">
+            <span>로그인: <b id="whoamiEmail">-</b></span>
+            <button class="logout" onclick="logout()">로그아웃</button>
+        </div>
+    </div>
+
+    <div class="page">
+        <div class="page-head">
+            <h1>알림톡 충전 관리</h1>
+            <div class="sub">센터별 월 알림톡 사용량과 충전 잔액을 확인하고, 입금 확인 후 잔액을 올려주세요.</div>
+        </div>
+
+        <div class="stats" id="stats" style="display:none;">
+            <div class="stat"><div class="label">관리 중인 센터</div><div class="value" id="statCenters">-</div></div>
+            <div class="stat"><div class="label">이번 달 발송 (무료+유료)</div><div class="value" id="statSent">-</div></div>
+            <div class="stat"><div class="label">미발송 건수</div><div class="value" id="statBlocked">-</div></div>
+            <div class="stat"><div class="label">전체 충전 잔액</div><div class="value" id="statBalance">-</div></div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-head">
+                <h2>센터별 현황</h2>
+                <div class="search">
+                    <input type="text" id="searchInput" placeholder="센터 이름 검색" oninput="renderTable()">
+                </div>
+            </div>
+            <div id="body" class="loading">불러오는 중...</div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="modalBackdrop">
+        <div class="modal">
+            <h3 id="modalCenterName">센터</h3>
+            <div class="modal-sub">입금 확인된 금액을 입력하세요</div>
+            <label>충전 금액 (원)</label>
+            <input type="number" id="modalAmount" placeholder="예: 50000" autocomplete="off">
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">취소</button>
+                <button class="btn-confirm" onclick="confirmCharge()">충전하기</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
 
     <script>
         const API_URL = '/api/v1';
+        let rows = [];
+        let chargingCenterId = null;
 
         function escapeHtml(text) {
             const div = document.createElement('div');
@@ -35,9 +147,71 @@
             return div.innerHTML;
         }
 
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('user_role');
+            window.location.href = './login.html';
+        }
+
+        function showToast(text) {
+            const toast = document.getElementById('toast');
+            toast.textContent = text;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function renderStats() {
+            const totalSent = rows.reduce((sum, r) => sum + r.free_sent + r.paid_sent, 0);
+            const totalBlocked = rows.reduce((sum, r) => sum + r.blocked_count, 0);
+            const totalBalance = rows.reduce((sum, r) => sum + r.balance, 0);
+            document.getElementById('statCenters').textContent = rows.length;
+            document.getElementById('statSent').textContent = totalSent.toLocaleString() + '건';
+            const blockedEl = document.getElementById('statBlocked');
+            blockedEl.textContent = totalBlocked.toLocaleString() + '건';
+            blockedEl.className = 'value' + (totalBlocked > 0 ? ' warn' : '');
+            document.getElementById('statBalance').textContent = totalBalance.toLocaleString() + '원';
+            document.getElementById('stats').style.display = 'grid';
+        }
+
+        function renderTable() {
+            const body = document.getElementById('body');
+            const q = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+            const filtered = q ? rows.filter(r => r.center_name.toLowerCase().includes(q)) : rows;
+
+            if (!filtered.length) {
+                body.innerHTML = '<div class="empty">검색 결과가 없습니다</div>';
+                return;
+            }
+
+            body.innerHTML = `
+                <table>
+                    <thead>
+                        <tr><th>센터</th><th>이번 달 무료 / 유료</th><th>미발송</th><th>충전 잔액</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        ${filtered.map(r => `
+                            <tr>
+                                <td class="center-name">${escapeHtml(r.center_name)}</td>
+                                <td class="num">${r.free_sent} / ${r.paid_sent}</td>
+                                <td class="num">${r.blocked_count > 0
+                                    ? `<span class="blocked-badge">${r.blocked_count}건</span>`
+                                    : `<span class="zero">0</span>`}</td>
+                                <td class="num balance">${r.balance.toLocaleString()}원</td>
+                                <td><button class="charge-btn" onclick="openModal(${r.center_id})">충전</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+        }
+
         async function load() {
             const token = localStorage.getItem('access_token');
             if (!token) { window.location.href = './login.html'; return; }
+
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (user?.email) document.getElementById('whoamiEmail').textContent = user.email;
+
             const body = document.getElementById('body');
             try {
                 const res = await fetch(`${API_URL}/admin/alimtalk-overview`, { headers: { Authorization: `Bearer ${token}` } });
@@ -46,51 +220,55 @@
                     return;
                 }
                 if (!res.ok) throw new Error('조회 실패');
-                const rows = await res.json();
-                body.innerHTML = `
-                    <table>
-                        <tr><th>센터</th><th>이번 달 무료/유료</th><th>미발송</th><th>충전 잔액</th><th>충전</th></tr>
-                        ${rows.map(r => `
-                            <tr>
-                                <td>${escapeHtml(r.center_name)}</td>
-                                <td>${r.free_sent} / ${r.paid_sent}</td>
-                                <td>${r.blocked_count}</td>
-                                <td id="balance-${r.center_id}">${r.balance.toLocaleString()}원</td>
-                                <td>
-                                    <input type="number" id="amount-${r.center_id}" placeholder="원">
-                                    <button onclick="charge(${r.center_id})">충전</button>
-                                    <span class="msg" id="msg-${r.center_id}"></span>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </table>`;
+                rows = await res.json();
+                renderStats();
+                renderTable();
             } catch (e) {
-                body.textContent = '불러오지 못했습니다';
+                body.innerHTML = '<div class="empty">불러오지 못했습니다</div>';
             }
         }
 
-        async function charge(centerId) {
-            const token = localStorage.getItem('access_token');
-            const input = document.getElementById(`amount-${centerId}`);
-            const amount = parseInt(input.value, 10);
+        function openModal(centerId) {
+            chargingCenterId = centerId;
+            const center = rows.find(r => r.center_id === centerId);
+            document.getElementById('modalCenterName').textContent = center ? center.center_name : '센터';
+            document.getElementById('modalAmount').value = '';
+            document.getElementById('modalBackdrop').classList.add('open');
+            document.getElementById('modalAmount').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modalBackdrop').classList.remove('open');
+            chargingCenterId = null;
+        }
+
+        async function confirmCharge() {
+            const amount = parseInt(document.getElementById('modalAmount').value, 10);
             if (!amount) { alert('충전할 금액을 입력해 주세요'); return; }
+            const token = localStorage.getItem('access_token');
             try {
                 const res = await fetch(`${API_URL}/admin/alimtalk-charge`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                    body: JSON.stringify({ center_id: centerId, amount }),
+                    body: JSON.stringify({ center_id: chargingCenterId, amount }),
                 });
                 const d = await res.json();
                 if (!res.ok) throw new Error(d.detail || '충전 실패');
-                document.getElementById(`balance-${centerId}`).textContent = d.balance.toLocaleString() + '원';
-                input.value = '';
-                const msg = document.getElementById(`msg-${centerId}`);
-                msg.textContent = '충전 완료';
-                setTimeout(() => { msg.textContent = ''; }, 3000);
+
+                const row = rows.find(r => r.center_id === chargingCenterId);
+                if (row) row.balance = d.balance;
+                renderStats();
+                renderTable();
+                closeModal();
+                showToast('충전 완료되었습니다');
             } catch (e) {
                 alert(e.message);
             }
         }
+
+        document.getElementById('modalBackdrop').addEventListener('click', (e) => {
+            if (e.target.id === 'modalBackdrop') closeModal();
+        });
 
         load();
     </script>
