@@ -103,7 +103,13 @@
                 <h2>센터 기본정보</h2>
                 <div class="sub">이용자·보호자 화면에 표시되는 센터 정보입니다.</div>
                 <div class="field"><label>센터명</label><input id="fName"></div>
-                <div class="field"><label>주소</label><input id="fAddress"></div>
+                <div class="field">
+                    <label>주소</label>
+                    <div class="field-row">
+                        <input id="fAddress" placeholder="주소 검색을 눌러 입력하세요">
+                        <button type="button" class="btn-outline" onclick="openJusoPopup()">주소 검색</button>
+                    </div>
+                </div>
                 <div class="field"><label>전화번호</label><input id="fPhone"></div>
                 <div class="field">
                     <label>장기요양기관코드 (11자리)</label>
@@ -147,6 +153,24 @@
             div.textContent = text ?? '';
             return div.innerHTML;
         }
+
+        // 행정안전부 주소기반산업지원서비스(juso.go.kr) 도로명주소 팝업 API 승인키.
+        // 도메인(seniorcareinfo.kr)에 묶여 발급된 키라 프런트에 그대로 둬도 다른 도메인에서는 쓸 수 없다.
+        const JUSO_CONFM_KEY = 'U01TX0FVVEgyMDI2MTAwOTExMDg1MjEyMDYzODk=';
+
+        function openJusoPopup() {
+            const returnUrl = `${location.origin}/pages/juso_popup_return.html`;
+            const url = `https://business.juso.go.kr/addrlink/addrLinkUrl.do?confmKey=${encodeURIComponent(JUSO_CONFM_KEY)}&returnUrl=${encodeURIComponent(returnUrl)}`;
+            window.open(url, 'jusoPopup', 'width=570,height=420,scrollbars=yes');
+        }
+
+        function fillJusoAddress(result) {
+            const road = result.roadFullAddr || result.jibunAddr || '';
+            const detail = result.addrDetail ? ` ${result.addrDetail}` : '';
+            document.getElementById('fAddress').value = (road + detail).trim();
+            document.getElementById('fAddress').focus();
+        }
+        window.fillJusoAddress = fillJusoAddress;
 
         async function loadCenter() {
             try {
