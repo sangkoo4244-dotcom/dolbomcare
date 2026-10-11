@@ -216,6 +216,7 @@
         .st-cert-title { font-size: 15px; font-weight: 800; color: #1F2937; margin: 18px 0 8px; }
         .st-cert-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px; }
         .st-muted { color: #9CA3AF; font-size: 14px; padding: 6px 0; }
+        .st-calc-box { background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 14px; color: #14532D; }
         .st-cert-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
         .st-cert-form input { height: 38px; padding: 0 10px; border: 1px solid #D6D0C4; border-radius: 10px; font-size: 14px; }
         .st-cert-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: #374151; }
@@ -799,10 +800,11 @@
             if (!s) return;
             document.getElementById('staffModalTitle').textContent = `${s.full_name || s.email} · 규정준수 기록`;
             document.getElementById('staffModalBody').innerHTML = `
-                <div class="st-muted" style="margin-bottom:10px;">연차 일수·퇴직금 등은 자동 계산하지 않습니다. 날짜·내용을 직접 기록해두는 대장입니다.</div>
+                <div class="st-muted" style="margin-bottom:10px;">연차·퇴직금은 법정 기준(근로기준법 제60조·근로자퇴직급여보장법) 참고용 자동계산을 보여줍니다. 실제 사용·지급 기록은 아래에 직접 추가하세요.</div>
                 <select id="recordTypeSelect" onchange="switchRecordType(this.value)" style="width:100%;margin-bottom:12px;">
                     ${Object.entries(RECORD_TYPE_LABELS).map(([code, label]) => `<option value="${code}">${label}</option>`).join('')}
                 </select>
+                <div id="recordCalcBox"></div>
                 <div id="recordFormBox"></div>
                 <div id="recordListBox" class="st-muted" style="margin-top:14px;">불러오는 중...</div>
                 <div class="st-form-actions"><button class="st-act" onclick="closeStaffModal()">닫기</button></div>`;
@@ -817,12 +819,48 @@
             }
             document.getElementById('recordTypeSelect').value = currentRecordType;
             renderRecordType();
+            loadCalcBox();
         }
 
         function switchRecordType(code) {
             currentRecordType = code;
             document.getElementById('recordTypeSelect').value = code;
             renderRecordType();
+            loadCalcBox();
+        }
+
+        // 연차/퇴직금 탭일 때만 법정 기준 참고 계산을 보여준다 (고충처리 등 나머지 종류는 해당 없음)
+        async function loadCalcBox() {
+            const box = document.getElementById('recordCalcBox');
+            if (currentRecordType === 'annual_leave') {
+                box.innerHTML = '<div class="st-muted">계산 중...</div>';
+                try {
+                    const r = await fetch(`${API_URL}/staff-records/staff/${recordsStaffId}/annual-leave`);
+                    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || '계산 실패');
+                    const d = await r.json();
+                    box.innerHTML = `<div class="st-calc-box"><b>법정 연차 발생일수 (참고용)</b>: ${d.days}일 <span class="st-muted">· ${escapeAttr(d.basis)} · 근속 ${d.service_days}일</span></div>`;
+                } catch (e) {
+                    box.innerHTML = `<div class="st-muted">${escapeAttr(e.message)}</div>`;
+                }
+            } else if (currentRecordType === 'retirement_reserve') {
+                box.innerHTML = '<div class="st-muted">계산 중...</div>';
+                try {
+                    const r = await fetch(`${API_URL}/staff-records/staff/${recordsStaffId}/retirement-estimate`);
+                    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || '계산 실패');
+                    const d = await r.json();
+                    if (!d.eligible) {
+                        box.innerHTML = `<div class="st-calc-box"><b>법정 퇴직금 추정액 (참고용)</b>: <span class="st-muted">${escapeAttr(d.reason)}</span></div>`;
+                    } else if (d.estimated_amount == null) {
+                        box.innerHTML = `<div class="st-calc-box"><b>법정 퇴직금 추정액 (참고용)</b>: <span class="st-muted">${escapeAttr(d.reason)}</span></div>`;
+                    } else {
+                        box.innerHTML = `<div class="st-calc-box"><b>법정 퇴직금 추정액 (참고용)</b>: ₩${d.estimated_amount.toLocaleString()} <span class="st-muted">· 평균임금(1일) ₩${d.average_daily_wage.toLocaleString()} · 근속 ${d.service_days}일 · 최근 확정급여 ${d.wage_months_used.join(', ')} 기준</span></div>`;
+                    }
+                } catch (e) {
+                    box.innerHTML = `<div class="st-muted">${escapeAttr(e.message)}</div>`;
+                }
+            } else {
+                box.innerHTML = '';
+            }
         }
 
         function renderRecordType() {

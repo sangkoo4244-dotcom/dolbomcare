@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 
 from app.auth import require_manager
 from app.database import get_db
-from app.models import StaffRecord, User
+from app.labor_rules import annual_leave_days, retirement_estimate
+from app.models import SalaryStatement, StaffRecord, User
 
 router = APIRouter()
 
@@ -115,6 +116,48 @@ def list_staff_records(
             for code, label in RECORD_TYPES.items()
         },
     }
+
+
+@router.get("/staff/{staff_id}/annual-leave")
+def get_annual_leave_estimate(
+    staff_id: int,
+    as_of: Optional[date] = None,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_manager),
+):
+    """근로기준법 제60조 기준 연차유급휴가 발생일수 (참고용 자동계산)."""
+    staff = db.query(User).filter(User.id == staff_id).first()
+    if not staff or staff.center_id != actor.center_id:
+        raise HTTPException(status_code=404, detail="직원을 찾을 수 없습니다")
+    if not staff.hire_date:
+        raise HTTPException(status_code=400, detail="입사일이 등록되지 않아 계산할 수 없습니다")
+
+    return annual_leave_days(staff.hire_date, as_of or date.today())
+
+
+@router.get("/staff/{staff_id}/retirement-estimate")
+def get_retirement_estimate(
+    staff_id: int,
+    as_of: Optional[date] = None,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_manager),
+):
+    """근로자퇴직급여보장법 기준 퇴직금 추정액 (참고용 자동계산) - 최근 확정 급여 3개월을 평균임금 산정에 쓴다."""
+    staff = db.query(User).filter(User.id == staff_id).first()
+    if not staff or staff.center_id != actor.center_id:
+        raise HTTPException(status_code=404, detail="직원을 찾을 수 없습니다")
+    if not staff.hire_date:
+        raise HTTPException(status_code=400, detail="입사일이 등록되지 않아 계산할 수 없습니다")
+
+    recent = (
+        db.query(SalaryStatement)
+        .filter(SalaryStatement.caregiver_id == staff_id)
+        .order_by(SalaryStatement.year_month.desc())
+        .limit(3)
+        .all()
+    )
+    recent_monthly_wages = [(s.year_month, s.billing_total) for s in reversed(recent)]
+    return retirement_estimate(staff.hire_date, as_of or date.today(), recent_monthly_wages)
 
 
 @router.delete("/{record_id}")

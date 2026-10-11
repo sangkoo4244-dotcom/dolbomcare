@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 import pytest
 from fastapi import FastAPI
@@ -27,7 +27,7 @@ def client(tmp_path):
     db.add(models.Center(id=1, name="테스트센터"))
     db.add(models.Center(id=2, name="다른센터"))
     db.add(models.User(id=1, email="manager@test.com", full_name="센터장", role="center_manager", center_id=1))
-    db.add(models.User(id=2, email="caregiver1@test.com", full_name="요양사1", role="caregiver", center_id=1))
+    db.add(models.User(id=2, email="caregiver1@test.com", full_name="요양사1", role="caregiver", center_id=1, hire_date=date(2025, 1, 1)))
     db.add(models.User(id=3, email="other@test.com", full_name="다른센터직원", role="caregiver", center_id=2))
     db.commit()
     db.close()
@@ -107,3 +107,47 @@ def test_delete_record(client):
     assert res.status_code == 200
     data = client.get("/api/v1/staff-records/staff/2", headers=MANAGER).json()["records"]
     assert data["grievance"]["items"] == []
+
+
+def test_annual_leave_endpoint_uses_hire_date(client):
+    res = client.get("/api/v1/staff-records/staff/2/annual-leave?as_of=2026-01-01", headers=MANAGER)
+    assert res.status_code == 200
+    body = res.json()
+    assert body["service_years"] == 1
+    assert body["days"] == 15
+
+
+def test_annual_leave_endpoint_requires_hire_date(client):
+    res = client.get("/api/v1/staff-records/staff/3/annual-leave", headers=MANAGER)
+    assert res.status_code == 404  # 다른 센터 직원
+
+
+def test_retirement_endpoint_uses_recent_salary_statements(client):
+    db = client.app.dependency_overrides[get_db]
+    session = next(db())
+    session.add(models.SalaryStatement(
+        id=1, center_id=1, caregiver_id=2, year_month="2026-01", billing_total=3_000_000,
+        income_tax=0, pension=0, health=0, employment=0, total_deduction=0, net=3_000_000,
+    ))
+    session.add(models.SalaryStatement(
+        id=2, center_id=1, caregiver_id=2, year_month="2026-02", billing_total=3_000_000,
+        income_tax=0, pension=0, health=0, employment=0, total_deduction=0, net=3_000_000,
+    ))
+    session.add(models.SalaryStatement(
+        id=3, center_id=1, caregiver_id=2, year_month="2026-03", billing_total=3_000_000,
+        income_tax=0, pension=0, health=0, employment=0, total_deduction=0, net=3_000_000,
+    ))
+    session.commit()
+    session.close()
+
+    res = client.get("/api/v1/staff-records/staff/2/retirement-estimate?as_of=2026-01-01", headers=MANAGER)
+    assert res.status_code == 200
+    body = res.json()
+    assert body["eligible"] is True
+    assert body["average_daily_wage"] == 100000
+    assert body["estimated_amount"] == 3_000_000
+
+
+def test_caregiver_cannot_see_annual_leave_or_retirement(client):
+    assert client.get("/api/v1/staff-records/staff/2/annual-leave", headers=CAREGIVER).status_code == 403
+    assert client.get("/api/v1/staff-records/staff/2/retirement-estimate", headers=CAREGIVER).status_code == 403
