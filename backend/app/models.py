@@ -33,6 +33,7 @@ class Center(Base):
     institution_code = Column(String, nullable=True)  # 장기요양기관코드 (공단 API 조회용, 11자리)
     logo_image = Column(Text, nullable=True)  # 센터 이미지/로고 base64 data URL
     alimtalk_balance = Column(Integer, default=0)  # 알림톡 월 무료 한도를 넘긴 뒤 건당 차감되는 충전 잔액(원)
+    trial_ends_at = Column(DateTime, nullable=True)  # 무료 체험 종료 시각. NULL이면 체험 제한 없음(정식 전환 또는 기존 센터)
     manager_id = Column(Integer, ForeignKey("users.id"))
     residents_count = Column(Integer)
     caregivers_count = Column(Integer)

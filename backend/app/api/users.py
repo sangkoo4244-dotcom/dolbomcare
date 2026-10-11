@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from app.schemas import LoginRequest, LoginResponse, UserCreate, UserResponse
-from app.models import User
+from app.models import User, Center
 from app.database import get_db
 from app.auth import SECRET_KEY, get_current_user, require_manager
 from passlib.context import CryptContext
@@ -78,6 +78,14 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
 
     if not verify_password(request.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    if user.center_id:
+        center = db.query(Center).filter(Center.id == user.center_id).first()
+        if center and center.trial_ends_at and center.trial_ends_at < datetime.utcnow():
+            raise HTTPException(
+                status_code=403,
+                detail="무료 체험 기간(15일)이 종료되었습니다. 정식 이용을 원하시면 이음로직에 문의해 주세요.",
+            )
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(

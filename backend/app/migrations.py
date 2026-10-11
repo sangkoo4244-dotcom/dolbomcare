@@ -42,6 +42,7 @@ ADDITIVE_COLUMNS = [
     ("users", "profile_image", "TEXT"),
     ("centers", "logo_image", "TEXT"),
     ("centers", "alimtalk_balance", "INTEGER DEFAULT 0"),
+    ("centers", "trial_ends_at", "TIMESTAMP"),
 ]
 
 

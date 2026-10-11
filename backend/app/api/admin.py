@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -49,12 +49,16 @@ class CenterCreateRequest(BaseModel):
     manager_password: str
 
 
+TRIAL_DAYS = 15
+
+
 @router.post("/centers")
 def create_center(
     body: CenterCreateRequest, db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)
 ):
     """새 센터와 센터장 계정을 만든다 (운영자 전용). 지금은 가입 페이지가 실제 계정을 만들지
-    않기 때문에, 파일럿 센터를 쓰게 하려면 운영자가 이 화면에서 직접 만들어 전달해야 한다."""
+    않기 때문에, 파일럿 센터를 쓰게 하려면 운영자가 이 화면에서 직접 만들어 전달해야 한다.
+    15일 무료 체험이 자동으로 시작되고, 기간이 지나면 로그인이 막힌다 (users.py 로그인 참고)."""
     if not body.center_name.strip():
         raise HTTPException(status_code=400, detail="센터명을 입력해 주세요")
     if len(body.manager_password) < 8:
@@ -62,7 +66,7 @@ def create_center(
     if db.query(User).filter(User.email == body.manager_email).first():
         raise HTTPException(status_code=400, detail="이미 사용 중인 이메일입니다")
 
-    center = Center(name=body.center_name.strip())
+    center = Center(name=body.center_name.strip(), trial_ends_at=datetime.utcnow() + timedelta(days=TRIAL_DAYS))
     db.add(center)
     db.flush()
     manager = User(
@@ -94,9 +98,43 @@ def list_alimtalk_overview(db: Session = Depends(get_db), actor: User = Depends(
             "blocked_count": usages[c.id].blocked_count if c.id in usages else 0,
             "resident_count": db.query(Resident).filter(Resident.center_id == c.id).count(),
             "staff_count": db.query(User).filter(User.center_id == c.id).count(),
+            "trial_ends_at": c.trial_ends_at.isoformat() if c.trial_ends_at else None,
         }
         for c in centers
     ]
+
+
+class ExtendTrialRequest(BaseModel):
+    days: int
+
+
+@router.post("/centers/{center_id}/extend-trial")
+def extend_trial(
+    center_id: int, body: ExtendTrialRequest, db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)
+):
+    """체험 기간을 연장한다 (운영자 전용). 이미 지난 센터는 오늘부터, 아직 안 지난 센터는
+    남은 기간에 이어서 더한다."""
+    if body.days <= 0:
+        raise HTTPException(status_code=400, detail="연장할 일수를 입력해 주세요")
+    center = db.query(Center).filter(Center.id == center_id).first()
+    if not center:
+        raise HTTPException(status_code=404, detail="센터를 찾을 수 없습니다")
+
+    base = center.trial_ends_at if center.trial_ends_at and center.trial_ends_at > datetime.utcnow() else datetime.utcnow()
+    center.trial_ends_at = base + timedelta(days=body.days)
+    db.commit()
+    return {"status": "success", "center_id": center.id, "trial_ends_at": center.trial_ends_at.isoformat()}
+
+
+@router.post("/centers/{center_id}/convert-to-paid")
+def convert_to_paid(center_id: int, db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    """체험 기간 제한을 완전히 없앤다 (운영자 전용) - 정식 계약 전환 시 사용."""
+    center = db.query(Center).filter(Center.id == center_id).first()
+    if not center:
+        raise HTTPException(status_code=404, detail="센터를 찾을 수 없습니다")
+    center.trial_ends_at = None
+    db.commit()
+    return {"status": "success", "center_id": center.id}
 
 
 def _cascade_delete_center(db: Session, center: Center) -> None:

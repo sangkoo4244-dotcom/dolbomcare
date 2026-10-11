@@ -57,6 +57,10 @@
 
         .charge-btn { padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid var(--teal); background: #fff; color: var(--teal); cursor: pointer; }
         .charge-btn:hover { background: var(--teal); color: #fff; }
+        .trial-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #F1F5F9; color: var(--muted); }
+        .trial-badge.ok { background: #ECFDF5; color: var(--ok); }
+        .trial-badge.warn { background: var(--warn-bg); color: var(--warn); }
+        .trial-badge.expired { background: var(--danger-bg); color: var(--danger); }
         .delete-btn { margin-left: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid var(--line); background: #fff; color: var(--muted); cursor: pointer; }
         .delete-btn:not(:disabled):hover { border-color: var(--danger); color: var(--danger); }
         .delete-btn:disabled { color: var(--faint); cursor: not-allowed; opacity: 0.6; }
@@ -177,6 +181,20 @@
         </div>
     </div>
 
+    <div class="modal-backdrop" id="trialModalBackdrop">
+        <div class="modal">
+            <h3 id="trialModalCenterName">센터</h3>
+            <div class="modal-sub" id="trialModalStatus"></div>
+            <label>연장할 일수</label>
+            <input type="number" id="trialExtendDays" placeholder="예: 15" autocomplete="off">
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeTrialModal()">닫기</button>
+                <button class="btn-confirm" onclick="confirmExtendTrial()">연장하기</button>
+            </div>
+            <button class="force-delete-btn" style="width:100%; margin: 10px 0 0 0;" onclick="confirmConvertToPaid()">체험 제한 없애기 (정식 전환)</button>
+        </div>
+    </div>
+
     <div class="modal-backdrop" id="modalBackdrop">
         <div class="modal">
             <h3 id="modalCenterName">센터</h3>
@@ -256,12 +274,13 @@
             body.innerHTML = `
                 <table>
                     <thead>
-                        <tr><th>센터</th><th>이번 달 무료 / 유료</th><th>미발송</th><th>충전 잔액</th><th></th></tr>
+                        <tr><th>센터</th><th>체험 현황</th><th>이번 달 무료 / 유료</th><th>미발송</th><th>충전 잔액</th><th></th></tr>
                     </thead>
                     <tbody>
                         ${filtered.map(r => `
                             <tr>
                                 <td class="center-name">${escapeHtml(r.center_name)}</td>
+                                <td>${trialBadge(r.trial_ends_at)}</td>
                                 <td class="num">${r.free_sent} / ${r.paid_sent}</td>
                                 <td class="num">${r.blocked_count > 0
                                     ? `<span class="blocked-badge">${r.blocked_count}건</span>`
@@ -269,6 +288,7 @@
                                 <td class="num balance">${r.balance.toLocaleString()}원</td>
                                 <td style="white-space:nowrap;">
                                     <button class="charge-btn" onclick="openModal(${r.center_id})">충전</button>
+                                    <button class="charge-btn" onclick="openTrialModal(${r.center_id})">체험관리</button>
                                     ${r.resident_count === 0 && r.staff_count <= 1
                                         ? `<button class="delete-btn" onclick="deleteCenter(${r.center_id})">삭제</button>`
                                         : `<button class="force-delete-btn" onclick="openForceDeleteModal(${r.center_id})" title="이용자 ${r.resident_count}명, 직원 ${r.staff_count}명 - 모든 데이터와 함께 완전 삭제">강제 삭제</button>`}
@@ -277,6 +297,13 @@
                         `).join('')}
                     </tbody>
                 </table>`;
+        }
+
+        function trialBadge(trialEndsAt) {
+            if (!trialEndsAt) return `<span class="trial-badge ok">정식 사용</span>`;
+            const daysLeft = Math.ceil((new Date(trialEndsAt) - new Date()) / (1000 * 60 * 60 * 24));
+            if (daysLeft < 0) return `<span class="trial-badge expired">만료됨</span>`;
+            return `<span class="trial-badge ${daysLeft <= 3 ? 'warn' : ''}">D-${daysLeft}</span>`;
         }
 
         async function load() {
@@ -302,6 +329,74 @@
                 body.innerHTML = '<div class="empty">불러오지 못했습니다</div>';
             }
         }
+
+        let trialCenterId = null;
+
+        function openTrialModal(centerId) {
+            const center = rows.find(r => r.center_id === centerId);
+            if (!center) return;
+            trialCenterId = centerId;
+            document.getElementById('trialModalCenterName').textContent = center.center_name;
+            document.getElementById('trialModalStatus').innerHTML = `현재 상태: ${trialBadge(center.trial_ends_at)}`;
+            document.getElementById('trialExtendDays').value = '';
+            document.getElementById('trialModalBackdrop').classList.add('open');
+            document.getElementById('trialExtendDays').focus();
+        }
+
+        function closeTrialModal() {
+            document.getElementById('trialModalBackdrop').classList.remove('open');
+            trialCenterId = null;
+        }
+
+        async function confirmExtendTrial() {
+            const days = parseInt(document.getElementById('trialExtendDays').value, 10);
+            if (!days || days <= 0) { alert('연장할 일수를 입력해 주세요'); return; }
+            const token = localStorage.getItem('access_token');
+            try {
+                const res = await fetch(`${API_URL}/admin/centers/${trialCenterId}/extend-trial`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ days }),
+                });
+                const d = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(d.detail || '연장 실패');
+
+                const row = rows.find(r => r.center_id === trialCenterId);
+                if (row) row.trial_ends_at = d.trial_ends_at;
+                renderTable();
+                closeTrialModal();
+                showToast('체험 기간을 연장했습니다');
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function confirmConvertToPaid() {
+            const center = rows.find(r => r.center_id === trialCenterId);
+            if (!center) return;
+            if (!confirm(`"${center.center_name}"의 체험 기간 제한을 완전히 없앨까요? (정식 전환)`)) return;
+
+            const token = localStorage.getItem('access_token');
+            try {
+                const res = await fetch(`${API_URL}/admin/centers/${trialCenterId}/convert-to-paid`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const d = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(d.detail || '전환 실패');
+
+                center.trial_ends_at = null;
+                renderTable();
+                closeTrialModal();
+                showToast('정식 전환되었습니다');
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        document.getElementById('trialModalBackdrop').addEventListener('click', (e) => {
+            if (e.target.id === 'trialModalBackdrop') closeTrialModal();
+        });
 
         function openModal(centerId) {
             chargingCenterId = centerId;

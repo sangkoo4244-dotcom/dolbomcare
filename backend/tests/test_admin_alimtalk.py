@@ -371,3 +371,119 @@ def test_force_delete_keeps_guardian_shared_with_other_center(client):
     session = client.Session()
     assert session.query(models.User).filter(models.User.id == guardian_id).first() is not None
     session.close()
+
+
+def test_create_center_sets_15_day_trial(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    created = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "체험센터1", "manager_name": "체험센터장",
+        "manager_email": "trial1@test.com", "manager_password": "password123",
+    }).json()
+
+    overview = client.get("/api/v1/admin/alimtalk-overview", headers=headers).json()
+    row = next(r for r in overview if r["center_id"] == created["center_id"])
+    assert row["trial_ends_at"] is not None
+    ends_at = datetime.fromisoformat(row["trial_ends_at"])
+    delta = ends_at - datetime.utcnow()
+    assert timedelta(days=14, hours=23) < delta < timedelta(days=15, hours=1)
+
+
+def test_non_admin_cannot_manage_trial(client):
+    headers = auth(2, "center_manager", "manager@test.com")
+    assert client.post("/api/v1/admin/centers/1/extend-trial", headers=headers, json={"days": 7}).status_code == 403
+    assert client.post("/api/v1/admin/centers/1/convert-to-paid", headers=headers).status_code == 403
+
+
+def test_extend_trial_adds_to_future_date(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    session = client.Session()
+    center = models.Center(name="연장대상센터", trial_ends_at=datetime.utcnow() + timedelta(days=5))
+    session.add(center)
+    session.commit()
+    center_id = center.id
+    session.close()
+
+    res = client.post(f"/api/v1/admin/centers/{center_id}/extend-trial", headers=headers, json={"days": 10})
+    assert res.status_code == 200
+    ends_at = datetime.fromisoformat(res.json()["trial_ends_at"])
+    delta = ends_at - datetime.utcnow()
+    assert timedelta(days=14) < delta < timedelta(days=16)  # 5일 남은 데서 10일 연장 = 약 15일 뒤
+
+
+def test_extend_trial_from_expired_starts_from_today(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    session = client.Session()
+    center = models.Center(name="만료된센터", trial_ends_at=datetime.utcnow() - timedelta(days=30))
+    session.add(center)
+    session.commit()
+    center_id = center.id
+    session.close()
+
+    res = client.post(f"/api/v1/admin/centers/{center_id}/extend-trial", headers=headers, json={"days": 7})
+    assert res.status_code == 200
+    ends_at = datetime.fromisoformat(res.json()["trial_ends_at"])
+    delta = ends_at - datetime.utcnow()
+    assert timedelta(days=6) < delta < timedelta(days=8)  # 과거 날짜가 아니라 오늘부터 7일
+
+
+def test_convert_to_paid_clears_trial(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    session = client.Session()
+    center = models.Center(name="정식전환대상", trial_ends_at=datetime.utcnow() + timedelta(days=3))
+    session.add(center)
+    session.commit()
+    center_id = center.id
+    session.close()
+
+    res = client.post(f"/api/v1/admin/centers/{center_id}/convert-to-paid", headers=headers)
+    assert res.status_code == 200
+
+    overview = client.get("/api/v1/admin/alimtalk-overview", headers=headers).json()
+    row = next(r for r in overview if r["center_id"] == center_id)
+    assert row["trial_ends_at"] is None
+
+
+def _make_login_user(client, email, password, center_id):
+    from app.api.users import get_password_hash
+    session = client.Session()
+    session.add(models.User(
+        email=email, hashed_password=get_password_hash(password), full_name="테스트",
+        role="center_manager", center_id=center_id, is_active=True,
+    ))
+    session.commit()
+    session.close()
+
+
+def test_login_blocked_when_trial_expired(client):
+    session = client.Session()
+    center = models.Center(name="만료로그인센터", trial_ends_at=datetime.utcnow() - timedelta(days=1))
+    session.add(center)
+    session.commit()
+    center_id = center.id
+    session.close()
+    _make_login_user(client, "expired-login@test.com", "password123", center_id)
+
+    res = client.post("/api/v1/users/login", json={"email": "expired-login@test.com", "password": "password123"})
+    assert res.status_code == 403
+    assert "체험 기간" in res.json()["detail"]
+
+
+def test_login_allowed_when_trial_not_expired(client):
+    session = client.Session()
+    center = models.Center(name="진행중로그인센터", trial_ends_at=datetime.utcnow() + timedelta(days=5))
+    session.add(center)
+    session.commit()
+    center_id = center.id
+    session.close()
+    _make_login_user(client, "active-trial-login@test.com", "password123", center_id)
+
+    res = client.post("/api/v1/users/login", json={"email": "active-trial-login@test.com", "password": "password123"})
+    assert res.status_code == 200
+
+
+def test_login_allowed_when_no_trial_set(client):
+    # center_id=1 (테스트센터)는 trial_ends_at이 없는 "기존 센터" 시나리오
+    _make_login_user(client, "no-trial-login@test.com", "password123", 1)
+
+    res = client.post("/api/v1/users/login", json={"email": "no-trial-login@test.com", "password": "password123"})
+    assert res.status_code == 200
