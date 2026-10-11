@@ -176,7 +176,7 @@
                 </div>
 
                 <div class="packet-section">
-                    <h3>기초평가(욕구사정) 이력</h3>
+                    <h3>욕구사정 이력</h3>
                     ${data.needs_assessments.length ? data.needs_assessments.map(a => `
                         <div style="margin-bottom:6px;">· ${(a.assessed_date || '').slice(0, 10)} 작성: ${a.assessed_by_name || '-'}${a.notes ? ` — ${a.notes}` : ''}</div>
                     `).join('') : '<div class="empty-note">기간 내 평가 없음</div>'}
