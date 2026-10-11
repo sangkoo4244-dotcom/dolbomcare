@@ -18,6 +18,7 @@ def _to_dict(center: Center) -> dict:
         "address": center.address,
         "phone": center.phone,
         "institution_code": center.institution_code,
+        "logo_image": center.logo_image,
     }
 
 
@@ -35,6 +36,7 @@ class CenterUpdate(BaseModel):
     address: Optional[str] = None
     phone: Optional[str] = None
     institution_code: Optional[str] = None
+    logo_image: Optional[str] = None  # base64 data URL. 빈 문자열이면 이미지 제거로 본다
 
 
 @router.put("/me")
@@ -56,6 +58,8 @@ def update_my_center(
         center.phone = body.phone
     if body.institution_code is not None:
         center.institution_code = body.institution_code
+    if body.logo_image is not None:
+        center.logo_image = body.logo_image or None
 
     db.commit()
     db.refresh(center)

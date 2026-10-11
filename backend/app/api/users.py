@@ -203,6 +203,52 @@ async def reset_password(
     db.commit()
     return {"status": "success", "message": "비밀번호가 재설정되었습니다"}
 
+class ProfileUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    profile_image: Optional[str] = None  # base64 data URL. 빈 문자열이면 사진 제거로 본다
+
+
+@router.get("/me")
+async def get_my_profile(actor: User = Depends(get_current_user)):
+    """본인 프로필 조회 (역할 공통 - 요양사·센터장·보호자 모두)."""
+    return {
+        "id": actor.id,
+        "email": actor.email,
+        "full_name": actor.full_name,
+        "phone": actor.phone,
+        "role": actor.role,
+        "profile_image": actor.profile_image,
+    }
+
+
+@router.patch("/me")
+async def update_my_profile(
+    body: ProfileUpdate,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """본인 프로필 수정 (이름·연락처·사진). 이메일·역할은 본인이 바꿀 수 없다."""
+    if body.full_name is not None:
+        if not body.full_name.strip():
+            raise HTTPException(status_code=400, detail="이름은 비울 수 없습니다")
+        actor.full_name = body.full_name.strip()
+    if body.phone is not None:
+        actor.phone = body.phone.strip() or None
+    if body.profile_image is not None:
+        actor.profile_image = body.profile_image or None
+
+    db.commit()
+    db.refresh(actor)
+    return {
+        "status": "success",
+        "data": {
+            "id": actor.id, "full_name": actor.full_name, "phone": actor.phone,
+            "role": actor.role, "profile_image": actor.profile_image,
+        },
+    }
+
+
 # 보호자가 받는 알림 종류 (notify()의 kind와 맞춘다). 새 종류가 생기면 여기만 추가하면 된다.
 GUARDIAN_NOTIFY_CATEGORIES = {"visit_completed": "방문완료 알림", "message_received": "메시지 알림"}
 

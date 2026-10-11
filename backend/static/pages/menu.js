@@ -132,6 +132,8 @@ function renderSidebar() {
         `;
         nav.parentElement.appendChild(credit);
     }
+
+    initProfileMenu();
 }
 
 // 보호자 소통 메뉴에 안 읽은 메시지 개수를 표시한다 (실패해도 메뉴는 그대로 둔다)
@@ -149,5 +151,165 @@ async function showUnreadMessageBadge() {
         });
     } catch (e) {
         // 배지는 부가 기능이므로 실패해도 무시한다
+    }
+}
+
+// ===== 내 프로필 (상단 이름/아바타 클릭 시 열림) - 모든 역할 공통, menu.js가 모든 화면에 로드되므로 여기 한 번만 구현한다 =====
+let profileMenuInitialized = false;
+let pmPendingImage = null;
+const PROFILE_ROLE_LABEL = { caregiver: '요양보호사', center_manager: '센터장', guardian: '보호자' };
+
+function initProfileMenu() {
+    if (profileMenuInitialized) return;
+    profileMenuInitialized = true;
+    injectProfileModal();
+
+    const attachClick = (el) => {
+        if (!el) return;
+        el.style.cursor = 'pointer';
+        el.title = '내 프로필 수정';
+        el.addEventListener('click', openProfileModal);
+    };
+    attachClick(document.getElementById('userName'));
+    attachClick(document.getElementById('userAvatar'));
+}
+
+function injectProfileModal() {
+    if (document.getElementById('profileModalBackdrop')) return;
+
+    const style = document.createElement('style');
+    style.textContent = `
+        .pm-backdrop { display:none; position:fixed; inset:0; background:rgba(20,40,63,0.45); z-index:3000; align-items:center; justify-content:center; }
+        .pm-backdrop.open { display:flex; }
+        .pm-box { background:#fff; border-radius:14px; padding:28px; width:380px; max-width:90vw; font-family:'Pretendard','Noto Sans KR',-apple-system,system-ui,sans-serif; }
+        .pm-box h3 { margin:0 0 18px; font-size:17px; color:#14283F; }
+        .pm-avatar-row { display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+        .pm-avatar-row img { width:64px; height:64px; border-radius:50%; object-fit:cover; background:#F1F5F9; }
+        .pm-field { margin-bottom:12px; }
+        .pm-field label { display:block; font-size:12px; font-weight:700; color:#64748B; margin-bottom:4px; }
+        .pm-field input { width:100%; box-sizing:border-box; padding:8px 10px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; }
+        .pm-field input:disabled { background:#F8FAFC; color:#94A3B8; }
+        .pm-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+        .pm-btn-outline { padding:8px 16px; border-radius:9px; font-size:13px; font-weight:700; border:1.5px solid #E2E8F0; background:#fff; color:#243247; cursor:pointer; }
+        .pm-btn-solid { padding:8px 16px; border-radius:9px; font-size:13px; font-weight:700; border:none; background:#0F8B80; color:#fff; cursor:pointer; }
+        .pm-msg { font-size:12px; margin-top:8px; display:none; }
+        .pm-msg.ok { color:#15803D; display:block; }
+        .pm-msg.err { color:#DC2626; display:block; }
+    `;
+    document.head.appendChild(style);
+
+    const box = document.createElement('div');
+    box.className = 'pm-backdrop';
+    box.id = 'profileModalBackdrop';
+    box.innerHTML = `
+        <div class="pm-box">
+            <h3>내 프로필</h3>
+            <div class="pm-avatar-row">
+                <img id="pmAvatarPreview" src="assets/user_design/29_top_profile_icon.png" alt="">
+                <label class="pm-btn-outline" style="cursor:pointer;">
+                    사진 변경
+                    <input type="file" accept="image/*" id="pmPhotoInput" style="display:none;" onchange="handleProfilePhotoChange(event)">
+                </label>
+            </div>
+            <div class="pm-field"><label>이름</label><input id="pmFullName"></div>
+            <div class="pm-field"><label>연락처</label><input id="pmPhone"></div>
+            <div class="pm-field"><label>이메일</label><input id="pmEmail" disabled></div>
+            <div class="pm-field"><label>역할</label><input id="pmRole" disabled></div>
+            <div class="pm-msg" id="pmMsg"></div>
+            <div class="pm-actions">
+                <button type="button" class="pm-btn-outline" onclick="closeProfileModal()">취소</button>
+                <button type="button" class="pm-btn-solid" onclick="saveProfile()">저장</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(box);
+}
+
+async function openProfileModal() {
+    document.getElementById('profileModalBackdrop').classList.add('open');
+    document.getElementById('pmMsg').className = 'pm-msg';
+    pmPendingImage = null;
+    try {
+        const r = await fetch('/api/v1/users/me');
+        if (!r.ok) throw new Error();
+        const d = await r.json();
+        document.getElementById('pmFullName').value = d.full_name || '';
+        document.getElementById('pmPhone').value = d.phone || '';
+        document.getElementById('pmEmail').value = d.email || '';
+        document.getElementById('pmRole').value = PROFILE_ROLE_LABEL[d.role] || d.role;
+        document.getElementById('pmAvatarPreview').src = d.profile_image || 'assets/user_design/29_top_profile_icon.png';
+    } catch (e) {
+        // 조회 실패해도 모달은 열어 두고 빈 값으로 둔다
+    }
+}
+
+function closeProfileModal() {
+    document.getElementById('profileModalBackdrop').classList.remove('open');
+}
+
+function pmResizeImageFile(file, maxDim = 480, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+                let { width, height } = img;
+                if (width > maxDim || height > maxDim) {
+                    const scale = maxDim / Math.max(width, height);
+                    width = Math.round(width * scale);
+                    height = Math.round(height * scale);
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = reject;
+            img.src = reader.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+async function handleProfilePhotoChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+        pmPendingImage = await pmResizeImageFile(file);
+        document.getElementById('pmAvatarPreview').src = pmPendingImage;
+    } catch (e) {
+        alert('사진을 불러오지 못했습니다');
+    }
+}
+
+async function saveProfile() {
+    const body = {
+        full_name: document.getElementById('pmFullName').value,
+        phone: document.getElementById('pmPhone').value,
+    };
+    if (pmPendingImage) body.profile_image = pmPendingImage;
+
+    const msg = document.getElementById('pmMsg');
+    try {
+        const r = await fetch('/api/v1/users/me', {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.detail || '저장에 실패했습니다');
+
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        user.full_name = d.data.full_name;
+        user.phone = d.data.phone;
+        user.profile_image = d.data.profile_image;
+        localStorage.setItem('user', JSON.stringify(user));
+
+        msg.textContent = '저장되었습니다';
+        msg.className = 'pm-msg ok';
+        setTimeout(() => window.location.reload(), 600);
+    } catch (e) {
+        msg.textContent = e.message;
+        msg.className = 'pm-msg err';
     }
 }

@@ -39,6 +39,8 @@ ADDITIVE_COLUMNS = [
     ("risk_assessments", "item_scores", "TEXT"),
     ("residents", "primary_caregiver_id", "INTEGER"),
     ("centers", "institution_code", "VARCHAR"),
+    ("users", "profile_image", "TEXT"),
+    ("centers", "logo_image", "TEXT"),
 ]
 
 

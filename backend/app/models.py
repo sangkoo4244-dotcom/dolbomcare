@@ -20,6 +20,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     alimtalk_opt_in = Column(Boolean, default=True)  # 카카오 알림톡 수신 여부 (끄면 인앱 알림만 받음)
     alimtalk_categories = Column(String, nullable=True)  # 받고 싶은 알림 종류 코드 (쉼표 구분). null=전체
+    profile_image = Column(Text, nullable=True)  # 프로필 사진 base64 data URL (resident_media.py와 같은 방식)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Center(Base):
@@ -30,6 +31,7 @@ class Center(Base):
     address = Column(String)
     phone = Column(String)
     institution_code = Column(String, nullable=True)  # 장기요양기관코드 (공단 API 조회용, 11자리)
+    logo_image = Column(Text, nullable=True)  # 센터 이미지/로고 base64 data URL
     manager_id = Column(Integer, ForeignKey("users.id"))
     residents_count = Column(Integer)
     caregivers_count = Column(Integer)

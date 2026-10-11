@@ -82,3 +82,11 @@ def test_partial_update_does_not_clear_other_fields(client):
     body = res.json()
     assert body["name"] == "테스트센터"  # 그대로 유지
     assert body["institution_code"] == "14139000308"
+
+
+def test_manager_can_set_and_remove_logo_image(client):
+    res = client.put("/api/v1/centers/me", headers=MANAGER, json={"logo_image": "data:image/jpeg;base64,xyz"})
+    assert res.json()["data"]["logo_image"] == "data:image/jpeg;base64,xyz"
+
+    res = client.put("/api/v1/centers/me", headers=MANAGER, json={"logo_image": ""})
+    assert res.json()["data"]["logo_image"] is None
