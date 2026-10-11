@@ -272,8 +272,9 @@
         .health-critical { color: #DC2626; }
         .btn-detail { padding: 10px 18px; border: 1px solid #D6D0C4; border-radius: 10px; background: #fff; font-size: 14px; font-weight: 600; color: #374151; cursor: pointer; }
         .btn-detail:hover { border-color: #B5532F; color: #B5532F; background: #fff; }
-        .btn-kebab { width: 36px; height: 36px; border: none; background: transparent; font-size: 22px; color: #6B7280; cursor: pointer; border-radius: 8px; }
-        .btn-kebab:hover { background: #F3F4F6; color: #B91C1C; }
+        .btn-kebab { width: 36px; height: 36px; border: none; background: transparent; color: #6B7280; cursor: pointer; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-kebab svg { width: 18px; height: 18px; }
+        .btn-kebab:hover { background: #FEE2E2; color: #B91C1C; }
         .empty-wide { display: flex; align-items: center; gap: 24px; margin: 20px; padding: 24px 32px; border: 1px dashed #D6D0C4; border-radius: 16px; background: #fff; text-align: left; }
         .empty-wide img { width: 200px; height: auto; flex: 0 0 auto; }
         .empty-wide-title { font-size: 19px; font-weight: 800; }
@@ -1177,7 +1178,7 @@
                                 <button class="btn-detail" onclick="editResident(${r.id})">상세보기</button>
                                 <button class="btn-detail" onclick="openNeedsAssessment(${r.id})">기초평가</button>
                                 <button class="btn-detail" onclick="openAlbumModal(${r.id})">사진첩</button>
-                                <button class="btn-kebab" title="삭제" onclick="deleteResident(${r.id})">⋮</button>
+                                <button class="btn-kebab" title="삭제" onclick="deleteResident(${r.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                             </div>
                         </td>
                     </tr>
