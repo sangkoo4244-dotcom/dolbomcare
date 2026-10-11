@@ -178,10 +178,13 @@
                             <button type="button" id="togglePassword" class="password-toggle" aria-label="비밀번호 보기">보기</button>
                         </div>
                     </div>
-                    <label class="check-row">
-                        <input type="checkbox" id="rememberMe">
-                        이메일 기억하기
-                    </label>
+                    <div class="check-row" style="justify-content: space-between;">
+                        <label style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" id="rememberMe">
+                            이메일 기억하기
+                        </label>
+                        <a href="#" onclick="openForgotPasswordModal(); return false;" style="color: var(--teal); font-weight: 700; text-decoration: none;">비밀번호를 잊으셨나요?</a>
+                    </div>
                     <button type="submit" id="loginButton" class="login-button">로그인</button>
                 </form>
 
@@ -244,6 +247,24 @@
                     <button type="submit" class="trial-modal-submit">이메일로 신청하기</button>
                 </div>
                 <p class="trial-modal-note">메일 앱이 열리며, 그곳에서 최종 발송해야 신청이 접수됩니다.</p>
+            </form>
+        </div>
+    </div>
+
+    <div class="trial-modal-backdrop" id="forgotPasswordBackdrop">
+        <div class="trial-modal">
+            <h3>비밀번호 찾기</h3>
+            <p class="trial-modal-sub">가입하신 이메일을 입력하시면, 비밀번호 재설정 링크를 보내드립니다.</p>
+            <form id="forgotPasswordForm" novalidate>
+                <div class="field">
+                    <label for="fpEmail">이메일 *</label>
+                    <input id="fpEmail" type="email" required autocomplete="email">
+                </div>
+                <div id="forgotPasswordResult" class="notice" style="margin-bottom: 0;"></div>
+                <div class="trial-modal-actions">
+                    <button type="button" class="trial-modal-cancel" onclick="closeForgotPasswordModal()">닫기</button>
+                    <button type="submit" class="trial-modal-submit" id="forgotPasswordSubmit">재설정 링크 받기</button>
+                </div>
             </form>
         </div>
     </div>
@@ -319,6 +340,50 @@
                 '연락처: ' + (v('trPhone') || '(미입력)'),
             ].join('\n');
             location.href = 'mailto:contact@eeum-logic.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+        });
+
+        // 비밀번호 찾기: SMTP가 설정돼 있어야 실제 메일이 나간다. 계정 존재 여부는 응답에서
+        // 드러나지 않게, 요청이 끝나면 항상 같은 안내 문구를 보여준다.
+        function openForgotPasswordModal() {
+            document.getElementById('fpEmail').value = emailInput.value || '';
+            document.getElementById('forgotPasswordResult').className = 'notice';
+            document.getElementById('forgotPasswordResult').textContent = '';
+            document.getElementById('forgotPasswordBackdrop').classList.add('open');
+            document.getElementById('fpEmail').focus();
+        }
+
+        function closeForgotPasswordModal() {
+            document.getElementById('forgotPasswordBackdrop').classList.remove('open');
+        }
+
+        document.getElementById('forgotPasswordBackdrop').addEventListener('click', (e) => {
+            if (e.target.id === 'forgotPasswordBackdrop') closeForgotPasswordModal();
+        });
+
+        document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!e.currentTarget.reportValidity()) return;
+            const email = document.getElementById('fpEmail').value.trim();
+            const btn = document.getElementById('forgotPasswordSubmit');
+            const result = document.getElementById('forgotPasswordResult');
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/v1/users/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email }),
+                });
+                const data = await res.json().catch(() => ({}));
+                result.className = res.ok ? 'notice ok show' : 'notice error show';
+                result.textContent = res.ok
+                    ? (data.message || '요청이 접수되었습니다.')
+                    : (data.detail || '요청에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+            } catch (err) {
+                result.className = 'notice error show';
+                result.textContent = '서버에 연결할 수 없습니다.';
+            } finally {
+                btn.disabled = false;
+            }
         });
 
         // 역할은 서버가 계정에서 정한다

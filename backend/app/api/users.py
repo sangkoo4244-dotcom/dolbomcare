@@ -1,14 +1,16 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from app.schemas import LoginRequest, LoginResponse, UserCreate, UserResponse
-from app.models import User, Center
+from app.models import User, Center, PasswordResetToken
 from app.database import get_db
 from app.auth import SECRET_KEY, get_current_user, require_manager
+from app.email_service import send_email
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, date
 from jose import jwt
 from typing import Optional
 from pydantic import BaseModel
+import secrets
 
 router = APIRouter()
 
@@ -114,6 +116,67 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
             "created_at": user.created_at.isoformat() if user.created_at else None
         }
     }
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+RESET_TOKEN_EXPIRE_MINUTES = 60
+
+
+@router.post("/forgot-password")
+def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """비밀번호 재설정 이메일을 보낸다. 계정이 있든 없든 같은 응답을 줘서 이메일 존재 여부가
+    새어나가지 않게 한다 - 실제 발송 여부는 SMTP 설정(app/email_service.py)에 달려있다."""
+    user = db.query(User).filter(User.email == request.email.strip()).first()
+    if user:
+        db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user.id).delete(synchronize_session=False)
+        token = secrets.token_urlsafe(32)
+        db.add(PasswordResetToken(
+            user_id=user.id, token=token,
+            expires_at=datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES),
+        ))
+        db.commit()
+        send_email(
+            to=user.email,
+            subject="[돌봄케어] 비밀번호 재설정 안내",
+            body=(
+                f"{user.full_name}님, 안녕하세요.\n\n"
+                f"비밀번호 재설정을 요청하셨습니다. 아래 링크에서 새 비밀번호를 설정해 주세요.\n"
+                f"(이 링크는 {RESET_TOKEN_EXPIRE_MINUTES}분 동안만 유효합니다)\n\n"
+                f"https://seniorcareinfo.kr/pages/reset_password.html?token={token}\n\n"
+                f"본인이 요청하지 않았다면 이 메일을 무시하셔도 됩니다.\n\n"
+                f"이음로직 드림"
+            ),
+        )
+    return {"status": "success", "message": "입력하신 이메일로 가입된 계정이 있다면 재설정 링크를 보내드렸습니다."}
+
+
+class ResetPasswordWithTokenRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+@router.post("/reset-password")
+def reset_password_with_token(request: ResetPasswordWithTokenRequest, db: Session = Depends(get_db)):
+    """이메일로 받은 토큰으로 비밀번호를 재설정한다 (로그인 불필요)."""
+    if len(request.new_password) < 8:
+        raise HTTPException(status_code=400, detail="비밀번호는 최소 8자 이상이어야 합니다")
+
+    reset_token = db.query(PasswordResetToken).filter(PasswordResetToken.token == request.token).first()
+    if not reset_token or reset_token.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="링크가 만료되었거나 올바르지 않습니다. 다시 요청해 주세요.")
+
+    user = db.query(User).filter(User.id == reset_token.user_id).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="계정을 찾을 수 없습니다")
+
+    user.hashed_password = get_password_hash(request.new_password)
+    db.delete(reset_token)
+    db.commit()
+    return {"status": "success"}
+
 
 @router.get("/")
 async def list_users(

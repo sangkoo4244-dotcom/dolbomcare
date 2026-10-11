@@ -386,3 +386,15 @@ class ResidentMedia(Base):
     image_data = Column(Text)  # base64 data URL (image/jpeg,png 등)
     caption = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class PasswordResetToken(Base):
+    """비밀번호 찾기(self-service) - 이메일로 보낸 링크의 토큰. SMTP가 설정돼 있어야 실제로
+    이메일이 나간다(app/email_service.py). 토큰은 1시간 후 만료, 한 번 쓰면 바로 지운다."""
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    token = Column(String, unique=True, index=True)
+    expires_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
