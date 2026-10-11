@@ -80,3 +80,54 @@ def test_charge_rejects_zero_amount(client):
     headers = auth(1, "center_manager", "owner@eeumlogic.com")
     res = client.post("/api/v1/admin/alimtalk-charge", headers=headers, json={"center_id": 1, "amount": 0})
     assert res.status_code == 400
+
+
+def test_non_admin_cannot_create_center(client):
+    headers = auth(2, "center_manager", "manager@test.com")
+    res = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "새 센터", "manager_name": "김센터장",
+        "manager_email": "new@test.com", "manager_password": "password123",
+    })
+    assert res.status_code == 403
+
+
+def test_admin_can_create_center_and_manager_can_login(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    res = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "새 센터", "manager_name": "김센터장",
+        "manager_email": "new@test.com", "manager_password": "password123",
+    })
+    assert res.status_code == 200
+    body = res.json()
+    assert body["center_name"] == "새 센터"
+    assert body["manager_email"] == "new@test.com"
+
+    overview = client.get("/api/v1/admin/alimtalk-overview", headers=headers).json()
+    assert any(r["center_name"] == "새 센터" for r in overview)
+
+
+def test_create_center_rejects_duplicate_email(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    res = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "다른 센터", "manager_name": "박센터장",
+        "manager_email": "manager@test.com", "manager_password": "password123",
+    })
+    assert res.status_code == 400
+
+
+def test_create_center_rejects_short_password(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    res = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "다른 센터", "manager_name": "박센터장",
+        "manager_email": "short@test.com", "manager_password": "1234",
+    })
+    assert res.status_code == 400
+
+
+def test_create_center_rejects_blank_name(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    res = client.post("/api/v1/admin/centers", headers=headers, json={
+        "center_name": "   ", "manager_name": "박센터장",
+        "manager_email": "blank@test.com", "manager_password": "password123",
+    })
+    assert res.status_code == 400

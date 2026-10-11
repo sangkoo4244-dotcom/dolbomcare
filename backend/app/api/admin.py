@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.api.users import get_password_hash
 from app.auth import require_platform_admin
 from app.database import get_db
 from app.models import AlimtalkUsage, Center, User
@@ -15,6 +16,42 @@ router = APIRouter()
 def check_is_admin(actor: User = Depends(require_platform_admin)):
     """프런트에서 운영자 콘솔 링크를 보여줄지 판단하기 위한 가벼운 확인용 (DB 조회 없음)."""
     return {"is_admin": True}
+
+
+class CenterCreateRequest(BaseModel):
+    center_name: str
+    manager_name: str
+    manager_email: str
+    manager_password: str
+
+
+@router.post("/centers")
+def create_center(
+    body: CenterCreateRequest, db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)
+):
+    """새 센터와 센터장 계정을 만든다 (운영자 전용). 지금은 가입 페이지가 실제 계정을 만들지
+    않기 때문에, 파일럿 센터를 쓰게 하려면 운영자가 이 화면에서 직접 만들어 전달해야 한다."""
+    if not body.center_name.strip():
+        raise HTTPException(status_code=400, detail="센터명을 입력해 주세요")
+    if len(body.manager_password) < 8:
+        raise HTTPException(status_code=400, detail="비밀번호는 최소 8자 이상이어야 합니다")
+    if db.query(User).filter(User.email == body.manager_email).first():
+        raise HTTPException(status_code=400, detail="이미 사용 중인 이메일입니다")
+
+    center = Center(name=body.center_name.strip())
+    db.add(center)
+    db.flush()
+    manager = User(
+        email=body.manager_email,
+        hashed_password=get_password_hash(body.manager_password),
+        full_name=body.manager_name,
+        role="center_manager",
+        center_id=center.id,
+        is_active=True,
+    )
+    db.add(manager)
+    db.commit()
+    return {"status": "success", "center_id": center.id, "center_name": center.name, "manager_email": manager.email}
 
 
 @router.get("/alimtalk-overview")
