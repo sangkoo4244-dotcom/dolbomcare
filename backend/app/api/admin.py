@@ -11,6 +11,12 @@ from app.models import AlimtalkUsage, Center, User
 router = APIRouter()
 
 
+@router.get("/is-admin")
+def check_is_admin(actor: User = Depends(require_platform_admin)):
+    """프런트에서 운영자 콘솔 링크를 보여줄지 판단하기 위한 가벼운 확인용 (DB 조회 없음)."""
+    return {"is_admin": True}
+
+
 @router.get("/alimtalk-overview")
 def list_alimtalk_overview(db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
     """센터별 이번 달 알림톡 사용량·충전 잔액 (운영자 전용)."""

@@ -133,7 +133,26 @@ function renderSidebar() {
         nav.parentElement.appendChild(credit);
     }
 
+    showAdminConsoleLinkIfOperator();
     initProfileMenu();
+}
+
+// 이음로직 운영자 계정으로 로그인했을 때만 사이드바 하단에 운영자 콘솔 링크를 보여준다.
+// 일반 센터장/요양사 계정에는 평생 안 보인다 (요청이 403이면 그냥 조용히 넘어간다).
+async function showAdminConsoleLinkIfOperator() {
+    if (document.getElementById('adminConsoleLink')) return;
+    try {
+        const res = await fetch('/api/v1/admin/is-admin');
+        if (!res.ok) return;
+        const credit = document.getElementById('sideCredit');
+        if (!credit) return;
+        const link = document.createElement('a');
+        link.id = 'adminConsoleLink';
+        link.href = './admin_alimtalk.html';
+        link.textContent = '운영자 콘솔';
+        link.style.cssText = 'display:block; margin-top: 10px; color: #fbbf24; text-decoration: none; font-weight: 700;';
+        credit.appendChild(link);
+    } catch (e) { /* 네트워크 오류는 무시 - 없어도 메뉴는 정상 동작해야 한다 */ }
 }
 
 // 보호자 소통 메뉴에 안 읽은 메시지 개수를 표시한다 (실패해도 메뉴는 그대로 둔다)

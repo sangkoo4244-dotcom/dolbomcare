@@ -50,6 +50,14 @@ def test_non_admin_manager_is_denied(client):
     headers = auth(2, "center_manager", "manager@test.com")
     assert client.get("/api/v1/admin/alimtalk-overview", headers=headers).status_code == 403
     assert client.post("/api/v1/admin/alimtalk-charge", headers=headers, json={"center_id": 1, "amount": 1000}).status_code == 403
+    assert client.get("/api/v1/admin/is-admin", headers=headers).status_code == 403
+
+
+def test_is_admin_true_for_admin_email(client):
+    headers = auth(1, "center_manager", "owner@eeumlogic.com")
+    res = client.get("/api/v1/admin/is-admin", headers=headers)
+    assert res.status_code == 200
+    assert res.json()["is_admin"] is True
 
 
 def test_admin_email_can_view_overview(client):

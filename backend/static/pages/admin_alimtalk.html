@@ -16,7 +16,8 @@
 
         .topbar { background: linear-gradient(180deg, var(--navy) 0%, var(--navy-2) 100%); color: #fff; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; }
         .brand { display: flex; align-items: center; gap: 10px; }
-        .brand .wordmark { font-size: 15px; font-weight: 800; letter-spacing: 0.2px; }
+        .brand .wordmark { font-size: 15px; font-weight: 800; letter-spacing: 0.2px; color: #fff; text-decoration: none; }
+        .brand .wordmark:hover { text-decoration: underline; }
         .brand .divider { width: 1px; height: 14px; background: rgba(255,255,255,0.25); }
         .brand .console { font-size: 13px; color: #B9C6D8; font-weight: 600; }
         .whoami { display: flex; align-items: center; gap: 14px; font-size: 12px; color: #B9C6D8; }
@@ -87,7 +88,7 @@
 <body>
     <div class="topbar">
         <div class="brand">
-            <span class="wordmark">이음로직</span>
+            <a class="wordmark" href="https://seniorcareinfo.kr/">이음로직</a>
             <span class="divider"></span>
             <span class="console">운영자 콘솔</span>
         </div>
