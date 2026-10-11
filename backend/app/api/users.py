@@ -22,6 +22,7 @@ class UserUpdate(BaseModel):
     position: Optional[str] = None
     emergency_contact: Optional[str] = None
     employment_status: Optional[str] = None
+    wage_ratio: Optional[int] = None  # 급여 비율(%) - 요양사가 받는 급여 = 청구액 × 이 비율
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
@@ -208,6 +209,7 @@ async def list_users(
                 "position": u.position,
                 "emergency_contact": u.emergency_contact,
                 "employment_status": u.employment_status,
+                "wage_ratio": u.wage_ratio,
                 "role": u.role,
                 "center_id": u.center_id,
                 "is_active": u.is_active,
@@ -243,6 +245,10 @@ async def update_user(
         user.emergency_contact = user_update.emergency_contact
     if user_update.employment_status:
         user.employment_status = user_update.employment_status
+    if user_update.wage_ratio is not None:
+        if not (0 <= user_update.wage_ratio <= 100):
+            raise HTTPException(status_code=400, detail="급여 비율은 0~100 사이여야 합니다")
+        user.wage_ratio = user_update.wage_ratio
 
     db.commit()
     db.refresh(user)
@@ -256,6 +262,7 @@ async def update_user(
         "position": user.position,
         "emergency_contact": user.emergency_contact,
         "employment_status": user.employment_status,
+        "wage_ratio": user.wage_ratio,
         "role": user.role,
         "center_id": user.center_id,
         "is_active": user.is_active
@@ -299,6 +306,7 @@ async def get_my_profile(actor: User = Depends(get_current_user)):
         "phone": actor.phone,
         "role": actor.role,
         "profile_image": actor.profile_image,
+        "wage_ratio": actor.wage_ratio,
     }
 
 

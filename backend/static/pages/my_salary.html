@@ -195,7 +195,7 @@
                         <ul class="notice-list2">
                             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>급여는 센터의 확정 후 최종 금액으로 바뀝니다.</li>
                             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>확정은 센터가 금액을 잠그는 것이며, 실제 지급 완료와는 다릅니다.</li>
-                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>청부액은 승인된 청구 합계이며, 실제 급여 산정 기준과 같은지는 센터에 확인해 주세요.</li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>청부액(공단 청구 합계)과 급여는 다른 금액입니다. 급여는 청부액 중 센터가 정한 비율(급여 산정액)에서 공제한 금액입니다.</li>
                             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>PDF 저장은 브라우저 인쇄창에서 "PDF로 저장"을 선택하는 방식입니다.</li>
                             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>급여 금액이 다르면 센터에 문의해 주세요.</li>
                         </ul>
@@ -205,13 +205,13 @@
                 <!-- 금액 요약 -->
                 <div class="money-row">
                     <div>
-                        <div class="money-label">청부액</div><div class="money-value" id="totalBillingAmount">₩0</div><div class="money-note">이번 달 승인 청구 합계</div>
+                        <div class="money-label">청부액</div><div class="money-value" id="totalBillingAmount">₩0</div><div class="money-note">이번 달 승인 청구 합계 (센터 매출, 급여와는 다른 금액)</div>
+                    </div>
+                    <div>
+                        <div class="money-label">급여 산정액</div><div class="money-value" id="wageBaseAmount">₩0</div><div class="money-note" id="wageRatioNote">청부액의 100%</div>
                     </div>
                     <div>
                         <div class="money-label">세금·보험료</div><div class="money-value" style="color:var(--danger);" id="taxAmount">-₩0</div><div class="money-note">소득세 + 4대보험(임시 기준)</div>
-                    </div>
-                    <div>
-                        <div class="money-label">기타 공제</div><div class="money-value" id="deductionAmount">-₩0</div><div class="money-note">해당 없음</div>
                     </div>
                     <div>
                         <div class="money-label">실수령액</div><div class="money-value" style="color:var(--teal);" id="netSalary">₩0</div><div class="money-note">예상 또는 확정 금액</div>
@@ -227,7 +227,8 @@
                         <div class="detail-card-head">지급 항목 (총 지급액)</div>
                         <table class="detail-table">
                             <tr><th>항목</th><th>금액</th><th>비고</th></tr>
-                            <tr><td>청부액</td><td class="num" id="detail_billing">₩0</td><td style="text-align:right;color:#94A3B8;font-size:12px;">승인된 청구 합계</td></tr>
+                            <tr><td>청부액</td><td class="num" id="detail_billing">₩0</td><td style="text-align:right;color:#94A3B8;font-size:12px;">승인된 청구 합계 (참고용)</td></tr>
+                            <tr><td>급여 산정액</td><td class="num" id="detail_wage_base">₩0</td><td style="text-align:right;color:#94A3B8;font-size:12px;" id="detail_wage_ratio_note">청부액의 100%</td></tr>
                             <tr class="total"><td>지급 합계</td><td class="num" id="detail_pay_total">₩0</td><td></td></tr>
                         </table>
                     </div>
@@ -294,10 +295,10 @@
                     <div style="overflow-x:auto;">
                         <table class="sl-table">
                             <thead>
-                                <tr><th>대상월</th><th style="text-align:right;">총 지급액</th><th style="text-align:right;">총 공제액</th><th style="text-align:right;">실수령액</th><th>확정 상태</th><th>관리</th></tr>
+                                <tr><th>대상월</th><th style="text-align:right;">청부액</th><th style="text-align:right;">급여 산정액</th><th style="text-align:right;">총 공제액</th><th style="text-align:right;">실수령액</th><th>확정 상태</th><th>관리</th></tr>
                             </thead>
                             <tbody id="salaryTableBody">
-                                <tr><td colspan="6" style="text-align:center;padding:40px;color:#94A3B8;">급여 내역이 없습니다</td></tr>
+                                <tr><td colspan="7" style="text-align:center;padding:40px;color:#94A3B8;">급여 내역이 없습니다</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -395,13 +396,16 @@
 
         // 급여 공제율: app/salary_rules.py의 RATES와 반드시 같은 값을 쓴다 (센터가 확정하는 실제 계산과 같은 기준이어야 한다).
         // 항목별로 반올림한 뒤 합산한다 (calc_deductions()와 동일한 방식 — 전체를 한 번에 곱해 반올림하면 몇 원 단위로 어긋날 수 있음)
-        function calcSalary(amount) {
-            const incomeTax = Math.round(amount * 0.033);
-            const pension = Math.round(amount * 0.09);
-            const health = Math.round(amount * 0.0349);
-            const employment = Math.round(amount * 0.0065);
+        // 공단 청구액(billing_total)은 센터 매출이고, 실제 급여는 그중 계약된 비율(wageRatio)만큼의 급여 산정액(wage_base)에서 공제한다.
+        function calcSalary(billingTotal, wageRatio) {
+            const ratio = wageRatio ?? 100;
+            const wageBase = Math.floor(billingTotal * ratio / 100 + 0.5);
+            const incomeTax = Math.round(wageBase * 0.033);
+            const pension = Math.round(wageBase * 0.09);
+            const health = Math.round(wageBase * 0.0349);
+            const employment = Math.round(wageBase * 0.0065);
             const totalTax = incomeTax + pension + health + employment;
-            return { billing_total: amount, income_tax: incomeTax, pension, health, employment, total_deduction: totalTax, net: amount - totalTax };
+            return { billing_total: billingTotal, wage_ratio: ratio, wage_base: wageBase, income_tax: incomeTax, pension, health, employment, total_deduction: totalTax, net: wageBase - totalTax };
         }
 
         function escapeHtml(text) {
@@ -429,16 +433,21 @@
             reimbursed: ['sp-approved', '승인완료'], rejected: ['sp-rejected', '보완 요청'],
         };
 
+        let myWageRatio = 100;
+
         async function loadSalaryData() {
             try {
-                const [billingRes, recordsRes, statementsRes] = await Promise.all([
+                const [billingRes, recordsRes, statementsRes, meRes] = await Promise.all([
                     fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}&include_archived=true`).then(r => r.json()),
                     fetch(`${API_URL}/records/all?caregiver_id=${currentUser.id}`).then(r => r.json()),
-                    fetch(`${API_URL}/statements/mine`).then(r => r.json())
+                    fetch(`${API_URL}/statements/mine`).then(r => r.json()),
+                    fetch(`${API_URL}/users/me`).then(r => r.ok ? r.json() : null).catch(() => null)
                 ]);
                 allBillings = billingRes.records || [];
                 allDailyRecords = recordsRes.records || [];
                 confirmedStatements = statementsRes.statements || [];
+                // localStorage.user는 덮어쓰지 않는다 (/me는 center_id가 없어 다른 화면의 center_id 기준이 깨짐) - 비율만 따로 보관
+                myWageRatio = meRes?.wage_ratio ?? 100;
 
                 const now = new Date();
                 const thisYm = ymKey(now);
@@ -469,7 +478,7 @@
 
             const c = confirmed
                 ? { ...confirmed, state: 'confirmed' }
-                : { ...calcSalary(billingAmountOfMonth(ym)), year_month: ym, state: 'pending' };
+                : { ...calcSalary(billingAmountOfMonth(ym), myWageRatio), year_month: ym, state: 'pending' };
             currentMonthStatement = c;
 
             const banner = document.getElementById('statusBanner');
@@ -495,7 +504,7 @@
             const prevYm = ymKey(new Date(now_year(ym), now_month(ym) - 2, 1));
             const prevConfirmed = confirmedStatements.find(s => s.year_month === prevYm);
             const prevAmount = billingAmountOfMonth(prevYm);
-            const prev = prevConfirmed || (prevAmount ? calcSalary(prevAmount) : null);
+            const prev = prevConfirmed || (prevAmount ? calcSalary(prevAmount, myWageRatio) : null);
             const momEl = document.getElementById('momText');
             if (prev) {
                 const diff = c.net - prev.net;
@@ -511,12 +520,17 @@
         function now_month(ym) { return parseInt(ym.split('-')[1]); }
 
         function fillAmounts(c) {
+            const ratio = c.wage_ratio ?? 100;
+            const wageBase = c.wage_base ?? c.billing_total;
             document.getElementById('totalBillingAmount').textContent = `₩${c.billing_total.toLocaleString()}`;
+            document.getElementById('wageBaseAmount').textContent = `₩${wageBase.toLocaleString()}`;
+            document.getElementById('wageRatioNote').textContent = `청부액의 ${ratio}%`;
             document.getElementById('taxAmount').textContent = `-₩${c.total_deduction.toLocaleString()}`;
-            document.getElementById('deductionAmount').textContent = `-₩0`;
             document.getElementById('netSalary').textContent = `₩${c.net.toLocaleString()}`;
             document.getElementById('detail_billing').textContent = `₩${c.billing_total.toLocaleString()}`;
-            document.getElementById('detail_pay_total').textContent = `₩${c.billing_total.toLocaleString()}`;
+            document.getElementById('detail_wage_base').textContent = `₩${wageBase.toLocaleString()}`;
+            document.getElementById('detail_wage_ratio_note').textContent = `청부액의 ${ratio}%`;
+            document.getElementById('detail_pay_total').textContent = `₩${wageBase.toLocaleString()}`;
             document.getElementById('detail_income_tax').textContent = `-₩${c.income_tax.toLocaleString()}`;
             document.getElementById('detail_pension').textContent = `-₩${c.pension.toLocaleString()}`;
             document.getElementById('detail_health').textContent = `-₩${c.health.toLocaleString()}`;
@@ -534,7 +548,7 @@
                 const confirmed = confirmedStatements.find(s => s.year_month === ym);
                 if (confirmed) return { net: confirmed.net, state: 'confirmed' };
                 const amt = billingAmountOfMonth(ym);
-                return amt > 0 ? { net: calcSalary(amt).net, state: 'pending' } : { net: 0, state: 'none' };
+                return amt > 0 ? { net: calcSalary(amt, myWageRatio).net, state: 'pending' } : { net: 0, state: 'none' };
             });
 
             if (trendChart) trendChart.destroy();
@@ -567,16 +581,17 @@
             const rows = confirmedStatements.map(s => ({ ...s, state: 'confirmed' }));
             const thisAmount = billingAmountOfMonth(thisYm);
             if (!hasThisMonth && thisAmount > 0) {
-                rows.unshift({ ...calcSalary(thisAmount), year_month: thisYm, state: 'pending' });
+                rows.unshift({ ...calcSalary(thisAmount, myWageRatio), year_month: thisYm, state: 'pending' });
             }
             if (rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94A3B8;">급여 내역이 없습니다</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94A3B8;">급여 내역이 없습니다</td></tr>';
                 return;
             }
             tbody.innerHTML = rows.map(s => `
                 <tr>
                     <td style="font-weight:700;color:var(--navy);">${ymLabel(s.year_month)}</td>
                     <td class="num">₩${s.billing_total.toLocaleString()}</td>
+                    <td class="num">₩${(s.wage_base ?? s.billing_total).toLocaleString()} <span style="color:#94A3B8;font-size:11px;">(${s.wage_ratio ?? 100}%)</span></td>
                     <td class="num" style="color:var(--danger);">-₩${s.total_deduction.toLocaleString()}</td>
                     <td class="num" style="font-weight:700;color:var(--teal);">₩${s.net.toLocaleString()}</td>
                     <td>${s.state === 'pending'
@@ -670,7 +685,8 @@
                     <table class="ps-table">
                         <tr><th>지급 항목</th><th>금액</th></tr>
                         <tr><td>청부액</td><td>₩${s.billing_total.toLocaleString()}</td></tr>
-                        <tr class="ps-total"><td>지급 합계</td><td>₩${s.billing_total.toLocaleString()}</td></tr>
+                        <tr><td>급여 산정액 (청부액의 ${s.wage_ratio ?? 100}%)</td><td>₩${(s.wage_base ?? s.billing_total).toLocaleString()}</td></tr>
+                        <tr class="ps-total"><td>지급 합계</td><td>₩${(s.wage_base ?? s.billing_total).toLocaleString()}</td></tr>
                     </table>
                     <table class="ps-table">
                         <tr><th>공제 항목</th><th>금액</th></tr>
@@ -705,6 +721,7 @@
             document.getElementById('detailBody').innerHTML = `
                 <div class="flex justify-between"><span class="text-gray-500">대상월</span><span class="font-bold text-gray-900">${ymLabel(s.year_month)}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">청부액</span><span class="font-bold text-gray-900">₩${s.billing_total.toLocaleString()}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">급여 산정액 (${s.wage_ratio ?? 100}%)</span><span class="font-bold text-gray-900">₩${(s.wage_base ?? s.billing_total).toLocaleString()}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">소득세</span><span class="text-red-600">-₩${s.income_tax.toLocaleString()}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">국민연금</span><span class="text-red-600">-₩${s.pension.toLocaleString()}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">건강보험</span><span class="text-red-600">-₩${s.health.toLocaleString()}</span></div>

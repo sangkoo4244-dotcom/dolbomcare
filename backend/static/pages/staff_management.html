@@ -656,6 +656,9 @@
                     <label>입사일<input id="eHire" type="date" value="${escapeAttr(s.hire_date)}"></label>
                     <label>직종<select id="eJob">${JOB_OPTIONS.map(j => `<option ${jobOf(s) === j ? 'selected' : ''}>${j}</option>`).join('')}</select></label>
                     <label>근무 상태<select id="eStatus">${Object.entries(STATUS_LABEL).map(([k, v]) => `<option value="${k}" ${statusOf(s) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+                    ${s.role === 'caregiver' ? `
+                    <label>급여 비율(%)<input id="eWageRatio" type="number" min="0" max="100" placeholder="100 (미입력 시 기본값)" value="${s.wage_ratio ?? ''}"></label>
+                    <div style="font-size:11.5px;color:#94A3B8;margin-top:-6px;">이 요양사의 급여 = 공단 청구액(청부액) × 이 비율. 비워두면 100%로 계산됩니다.</div>` : ''}
                     <div class="st-form-actions">
                         <button class="st-act" onclick="closeStaffModal()">취소</button>
                         <button class="st-add-btn" onclick="saveStaffEdit()">저장</button>
@@ -673,6 +676,8 @@
                 position: document.getElementById('eJob').value,
                 employment_status: document.getElementById('eStatus').value
             };
+            const wageInput = document.getElementById('eWageRatio');
+            if (wageInput && wageInput.value !== '') body.wage_ratio = parseInt(wageInput.value, 10);
             try {
                 const r = await fetch(`${API_URL}/users/${editingId}`, {
                     method: 'PUT',
@@ -701,7 +706,8 @@
                 ['연락처', s.phone || '-'],
                 ['긴급 연락처', s.emergency_contact || '-'],
                 ['입사일', s.hire_date || '-'],
-                ['근무 상태', STATUS_LABEL[statusOf(s)] || statusOf(s)]
+                ['근무 상태', STATUS_LABEL[statusOf(s)] || statusOf(s)],
+                ...(s.role === 'caregiver' ? [['급여 비율', `청구액의 ${s.wage_ratio ?? 100}%`]] : [])
             ];
             document.getElementById('staffModalTitle').textContent = '직원 상세';
             document.getElementById('staffModalBody').innerHTML = rows.map(([k, v]) => `<div class="st-detail-row"><span>${k}</span><span>${escapeAttr(v)}</span></div>`).join('')

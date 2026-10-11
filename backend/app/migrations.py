@@ -43,6 +43,9 @@ ADDITIVE_COLUMNS = [
     ("centers", "logo_image", "TEXT"),
     ("centers", "alimtalk_balance", "INTEGER DEFAULT 0"),
     ("centers", "trial_ends_at", "TIMESTAMP"),
+    ("users", "wage_ratio", "INTEGER"),
+    ("salary_statements", "wage_ratio", "INTEGER"),
+    ("salary_statements", "wage_base", "INTEGER"),
 ]
 
 

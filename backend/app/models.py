@@ -17,6 +17,7 @@ class User(Base):
     position = Column(String, nullable=True)  # 직급: '요양사', '팀장', '관리사' 등
     emergency_contact = Column(String, nullable=True)  # 긴급 연락처
     employment_status = Column(String, default="active")  # 'active', 'inactive', 'leave'
+    wage_ratio = Column(Integer, nullable=True)  # 요양사가 받는 급여 = 청구액(공단부담+본인부담) 중 이 비율(%). NULL=100(기존 동작과 동일)
     is_active = Column(Boolean, default=True)
     alimtalk_opt_in = Column(Boolean, default=True)  # 카카오 알림톡 수신 여부 (끄면 인앱 알림만 받음)
     alimtalk_categories = Column(String, nullable=True)  # 받고 싶은 알림 종류 코드 (쉼표 구분). null=전체
@@ -280,7 +281,9 @@ class SalaryStatement(Base):
     center_id = Column(Integer, ForeignKey("centers.id"), index=True)
     caregiver_id = Column(Integer, ForeignKey("users.id"), index=True)
     year_month = Column(String)
-    billing_total = Column(Integer)
+    billing_total = Column(Integer)  # 승인된 청구 합계 (공단부담, 100% 기준 — 급여와는 다른 숫자)
+    wage_ratio = Column(Integer, nullable=True)  # 확정 시점에 적용된 급여 비율(%)
+    wage_base = Column(Integer, nullable=True)  # billing_total * wage_ratio / 100 — 공제 전 급여 산정 기준액
     income_tax = Column(Integer)
     pension = Column(Integer)
     health = Column(Integer)

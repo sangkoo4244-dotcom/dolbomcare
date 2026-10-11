@@ -8,7 +8,7 @@ from app.api.notifications import notify
 from app.auth import get_current_user, require_manager
 from app.database import get_db
 from app.models import BillingRecord, SalaryStatement, User
-from app.salary_rules import SALARY_STATUSES, calc_deductions
+from app.salary_rules import DEFAULT_WAGE_RATIO, SALARY_STATUSES, calc_deductions, calc_wage_base
 
 router = APIRouter()
 
@@ -22,6 +22,8 @@ def _to_dict(s: SalaryStatement) -> dict:
     return {
         "year_month": s.year_month,
         "billing_total": s.billing_total,
+        "wage_ratio": s.wage_ratio if s.wage_ratio is not None else DEFAULT_WAGE_RATIO,
+        "wage_base": s.wage_base if s.wage_base is not None else s.billing_total,
         "income_tax": s.income_tax,
         "pension": s.pension,
         "health": s.health,
@@ -57,9 +59,12 @@ def confirm_statement(body: ConfirmBody, db: Session = Depends(get_db), manager:
     if total <= 0:
         raise HTTPException(status_code=400, detail="승인된 청구가 없는 달은 확정할 수 없습니다")
 
-    deductions = calc_deductions(total)
+    wage_ratio = caregiver.wage_ratio if caregiver.wage_ratio is not None else DEFAULT_WAGE_RATIO
+    wage_base = calc_wage_base(total, wage_ratio)
+    deductions = calc_deductions(wage_base)
     statement = SalaryStatement(
         center_id=manager.center_id, caregiver_id=caregiver.id, year_month=body.year_month, billing_total=total,
+        wage_ratio=wage_ratio, wage_base=wage_base,
         income_tax=deductions["income_tax"], pension=deductions["pension"], health=deductions["health"],
         employment=deductions["employment"], total_deduction=deductions["total_deduction"], net=deductions["net"],
         confirmed_by=manager.id, confirmed_at=datetime.utcnow(),
@@ -97,10 +102,13 @@ def month_status(year_month: str, db: Session = Depends(get_db), manager: User =
                 BillingRecord.approval_status.in_(SALARY_STATUSES),
             ).all()
         )
+        wage_ratio = c.wage_ratio if c.wage_ratio is not None else DEFAULT_WAGE_RATIO
         rows.append({
             "caregiver_id": c.id,
             "caregiver_name": c.full_name,
             "billing_total": total,
+            "wage_ratio": wage_ratio,
+            "wage_base": calc_wage_base(total, wage_ratio),
             "confirmed": c.id in confirmed,
         })
     return {"year_month": year_month, "caregivers": rows}

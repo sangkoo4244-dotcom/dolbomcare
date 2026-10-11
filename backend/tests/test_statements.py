@@ -100,3 +100,37 @@ def test_only_manager_can_confirm_and_only_once(setup):
 
 def test_cannot_confirm_a_month_without_approved_claims(setup):
     assert confirm(setup, year_month="2026-09").status_code == 400
+
+
+def test_wage_ratio_applies_before_deductions_not_on_full_billing_amount(setup):
+    """요양사 급여는 공단 청구액 전체가 아니라 계약된 비율만큼이어야 한다 (billing_total=센터 매출, wage_base=급여 산정 기준)."""
+    db = setup.Session()
+    db.query(models.User).filter(models.User.id == 2).update({"wage_ratio": 50})
+    db.commit()
+    db.close()
+
+    assert confirm(setup).status_code == 200
+    statement = setup.get("/api/v1/statements/mine", headers=CAREGIVER1).json()["statements"][0]
+    assert statement["billing_total"] == 1000000
+    assert statement["wage_ratio"] == 50
+    assert statement["wage_base"] == 500000
+    assert statement["income_tax"] == 16500
+    assert statement["pension"] == 45000
+    assert statement["health"] == 17450
+    assert statement["employment"] == 3250
+    assert statement["net"] == 500000 - (16500 + 45000 + 17450 + 3250)
+
+
+def test_status_endpoint_reports_wage_ratio_and_base(setup):
+    db = setup.Session()
+    db.query(models.User).filter(models.User.id == 2).update({"wage_ratio": 60})
+    db.commit()
+    db.close()
+
+    rows = setup.get(f"/api/v1/statements/status?year_month={YM}", headers=MANAGER).json()["caregivers"]
+    row = next(r for r in rows if r["caregiver_id"] == 2)
+    assert row["wage_ratio"] == 60
+    assert row["wage_base"] == 600000
+
+    other = next(r for r in rows if r["caregiver_id"] == 3)
+    assert other["wage_ratio"] == 100  # 설정 안 하면 기존 동작과 동일(100%)

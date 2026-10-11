@@ -167,12 +167,13 @@
                                     <tr>
                                         <th>No</th><th>요양사</th><th>근무 일수</th><th>방문 횟수</th>
                                         <th style="text-align:right;">총 청구금액</th><th style="text-align:right;">승인 청구액(공단)</th>
-                                        <th style="text-align:right;">본인부담금</th><th style="text-align:right;">지급 예정액</th>
+                                        <th style="text-align:right;">본인부담금</th><th style="text-align:right;">급여 비율</th>
+                                        <th style="text-align:right;">급여 산정액</th><th style="text-align:right;">지급 예정액</th>
                                         <th>확정 상태</th><th>관리</th>
                                     </tr>
                                 </thead>
                                 <tbody id="statusBody">
-                                    <tr><td colspan="10" style="text-align:center;padding:40px;color:#94A3B8;">달을 고르세요</td></tr>
+                                    <tr><td colspan="12" style="text-align:center;padding:40px;color:#94A3B8;">달을 고르세요</td></tr>
                                 </tbody>
                             </table>
                             </div>
@@ -210,10 +211,15 @@
 
         // calc_deductions()와 동일한 공제율 (app/salary_rules.py 그대로 복사 — 산식을 바꾸지 않고 미리보기만 한다)
         const DEDUCTION_RATES = { income_tax: 0.033, pension: 0.09, health: 0.0349, employment: 0.0065 };
+        // 급여 산정 기준액(wage_base) = 승인 청구액(공단부담) × 급여 비율. 공단 청구액 전체가 아니라
+        // 이 기준액에서 공제한다 (app/salary_rules.py calc_wage_base·calc_deductions와 동일한 순서)
+        function wageBaseOf(billingTotal, wageRatio) {
+            return Math.floor(billingTotal * (wageRatio ?? 100) / 100 + 0.5);
+        }
         // calc_deductions()와 동일하게 항목별로 반올림한 뒤 합산한다 (전체 요율을 한 번에 곱해 반올림하면 몇 원 단위로 어긋날 수 있음)
-        function estimateNet(amount) {
-            const totalDeduction = Object.values(DEDUCTION_RATES).reduce((sum, rate) => sum + Math.floor(amount * rate + 0.5), 0);
-            return amount - totalDeduction;
+        function estimateNet(wageBase) {
+            const totalDeduction = Object.values(DEDUCTION_RATES).reduce((sum, rate) => sum + Math.floor(wageBase * rate + 0.5), 0);
+            return wageBase - totalDeduction;
         }
 
         function checkAuth() {
@@ -296,7 +302,8 @@
             const records = r.ok ? (await r.json()).records || [] : [];
             const byCaregiver = {};
             records.forEach(rec => {
-                if (rec.year_month !== ym) return;
+                // /billing/ 목록 응답에는 year_month 필드가 없다 (DB에는 있지만 API가 내려주지 않음) - recorded_date로 월을 판단한다 (my_salary.html과 동일한 방식)
+                if ((rec.recorded_date || '').slice(0, 7) !== ym) return;
                 if (!byCaregiver[rec.caregiver_id]) byCaregiver[rec.caregiver_id] = { days: new Set(), visits: 0, insurance: 0, patient: 0, reviewCount: 0, totalCount: 0 };
                 const cell = byCaregiver[rec.caregiver_id];
                 cell.totalCount += 1;
@@ -332,10 +339,10 @@
             const ym = document.getElementById('yearMonth').value;
             if (!ym) return;
             const body = document.getElementById('statusBody');
-            body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:#94A3B8;">불러오는 중...</td></tr>';
+            body.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:40px;color:#94A3B8;">불러오는 중...</td></tr>';
             const r = await fetch(`${API_URL}/statements/status?year_month=${ym}`);
             if (!r.ok) {
-                body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:#94A3B8;">불러올 수 없습니다</td></tr>';
+                body.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:40px;color:#94A3B8;">불러올 수 없습니다</td></tr>';
                 updateMetrics([]);
                 return;
             }
@@ -352,16 +359,18 @@
                 sortBy === 'amount' ? b.billing_total - a.billing_total : a.caregiver_name.localeCompare(b.caregiver_name, 'ko'));
             const body = document.getElementById('statusBody');
             if (!rows.length) {
-                body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:#94A3B8;">요양사가 없습니다</td></tr>';
+                body.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:40px;color:#94A3B8;">요양사가 없습니다</td></tr>';
                 return;
             }
-            let sumDays = 0, sumVisits = 0, sumTotal = 0, sumInsurance = 0, sumPatient = 0, sumNet = 0;
+            let sumDays = 0, sumVisits = 0, sumTotal = 0, sumInsurance = 0, sumPatient = 0, sumWageBase = 0, sumNet = 0;
             body.innerHTML = rows.map((c, i) => {
                 const stat = billingByCaregiver[c.caregiver_id] || { days: new Set(), visits: 0, insurance: 0, patient: 0, reviewCount: 0 };
                 const totalBilled = stat.insurance + stat.patient;
-                const net = estimateNet(c.billing_total);
+                const wageRatio = c.wage_ratio ?? 100;
+                const wageBase = c.wage_base ?? wageBaseOf(c.billing_total, wageRatio);
+                const net = estimateNet(wageBase);
                 sumDays += stat.days.size; sumVisits += stat.visits; sumTotal += totalBilled;
-                sumInsurance += c.billing_total; sumPatient += stat.patient; sumNet += net;
+                sumInsurance += c.billing_total; sumPatient += stat.patient; sumWageBase += wageBase; sumNet += net;
 
                 const [label, cls] = c.confirmed ? ['확정 완료', 'sp-confirmed'] : (stat.reviewCount > 0 ? ['검토 필요', 'sp-review'] : ['미확정', 'sp-pending']);
                 const initial = escapeHtml((c.caregiver_name || '?').slice(0, 1));
@@ -375,6 +384,8 @@
                     <td class="num">₩${totalBilled.toLocaleString()}</td>
                     <td class="num">₩${c.billing_total.toLocaleString()}</td>
                     <td class="num">₩${stat.patient.toLocaleString()}</td>
+                    <td class="num">${wageRatio}%</td>
+                    <td class="num">₩${wageBase.toLocaleString()}</td>
                     <td class="num">₩${net.toLocaleString()}</td>
                     <td><span class="status-pill2 ${cls}">${label}</span></td>
                     <td>${actionDisabled
@@ -388,6 +399,8 @@
                     <td class="num">₩${sumTotal.toLocaleString()}</td>
                     <td class="num">₩${sumInsurance.toLocaleString()}</td>
                     <td class="num">₩${sumPatient.toLocaleString()}</td>
+                    <td class="num">-</td>
+                    <td class="num">₩${sumWageBase.toLocaleString()}</td>
                     <td class="num">₩${sumNet.toLocaleString()}</td>
                     <td colspan="2">-</td>
                 </tr>`;
@@ -396,8 +409,10 @@
         async function confirmStatement(caregiverId, btn) {
             const ym = document.getElementById('yearMonth').value;
             const row = statusRows.find(c => c.caregiver_id === caregiverId);
-            const amountText = row ? `₩${row.billing_total.toLocaleString()}` : '';
-            if (!confirm(`${row?.caregiver_name || ''} 요양사의 ${ym} 급여를 ${amountText}(승인 청구액 기준)으로 확정할까요?\n확정 후에는 되돌릴 수 없습니다.`)) return;
+            const wageRatio = row?.wage_ratio ?? 100;
+            const wageBase = row ? (row.wage_base ?? wageBaseOf(row.billing_total, wageRatio)) : 0;
+            const amountText = row ? `₩${wageBase.toLocaleString()} (청구액의 ${wageRatio}%)` : '';
+            if (!confirm(`${row?.caregiver_name || ''} 요양사의 ${ym} 급여를 ${amountText} 기준으로 확정할까요?\n확정 후에는 되돌릴 수 없습니다.`)) return;
             if (confirmInFlight.has(caregiverId)) return;
             confirmInFlight.add(caregiverId);
             if (btn) { btn.disabled = true; btn.textContent = '처리 중…'; }
@@ -416,11 +431,13 @@
 
         function exportCsv() {
             if (!statusRows.length) { alert('내려받을 급여 내역이 없습니다'); return; }
-            const header = ['요양사', '근무일수', '방문횟수', '총청구금액', '승인청구액', '본인부담금', '지급예정액(추정)', '확정상태'];
+            const header = ['요양사', '근무일수', '방문횟수', '총청구금액', '승인청구액', '본인부담금', '급여비율', '급여산정액', '지급예정액(추정)', '확정상태'];
             const lines = statusRows.map(c => {
                 const stat = billingByCaregiver[c.caregiver_id] || { days: new Set(), visits: 0, insurance: 0, patient: 0, reviewCount: 0 };
                 const [label] = c.confirmed ? ['확정 완료'] : (stat.reviewCount > 0 ? ['검토 필요'] : ['미확정']);
-                return [c.caregiver_name, stat.days.size, stat.visits, stat.insurance + stat.patient, c.billing_total, stat.patient, estimateNet(c.billing_total), label];
+                const wageRatio = c.wage_ratio ?? 100;
+                const wageBase = c.wage_base ?? wageBaseOf(c.billing_total, wageRatio);
+                return [c.caregiver_name, stat.days.size, stat.visits, stat.insurance + stat.patient, c.billing_total, stat.patient, `${wageRatio}%`, wageBase, estimateNet(wageBase), label];
             });
             const csv = [header, ...lines].map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
             const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
