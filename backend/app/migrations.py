@@ -38,6 +38,7 @@ ADDITIVE_COLUMNS = [
     ("risk_assessments", "tool_name", "VARCHAR"),
     ("risk_assessments", "item_scores", "TEXT"),
     ("residents", "primary_caregiver_id", "INTEGER"),
+    ("centers", "institution_code", "VARCHAR"),
 ]
 
 

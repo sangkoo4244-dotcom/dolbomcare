@@ -29,6 +29,7 @@ class Center(Base):
     name = Column(String, index=True)
     address = Column(String)
     phone = Column(String)
+    institution_code = Column(String, nullable=True)  # 장기요양기관코드 (공단 API 조회용, 11자리)
     manager_id = Column(Integer, ForeignKey("users.id"))
     residents_count = Column(Integer)
     caregivers_count = Column(Integer)

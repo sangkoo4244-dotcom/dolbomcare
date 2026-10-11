@@ -22,6 +22,8 @@ from app.api import risk_assessments
 from app.api import audit_prep
 from app.api import staff_records
 from app.api import resident_media
+from app.api import centers
+from app.api import nhis
 from app.database import Base, engine, SessionLocal
 from app.migrations import run_migrations
 import os
@@ -70,6 +72,8 @@ app.include_router(risk_assessments.router, prefix="/api/v1/risk-assessments", t
 app.include_router(audit_prep.router, prefix="/api/v1/audit-prep", tags=["audit_prep"], dependencies=[Depends(get_current_user)])
 app.include_router(staff_records.router, prefix="/api/v1/staff-records", tags=["staff_records"], dependencies=[Depends(get_current_user)])
 app.include_router(resident_media.router, prefix="/api/v1/resident-media", tags=["resident_media"], dependencies=[Depends(get_current_user)])
+app.include_router(centers.router, prefix="/api/v1/centers", tags=["centers"], dependencies=[Depends(get_current_user)])
+app.include_router(nhis.router, prefix="/api/v1/nhis", tags=["nhis"], dependencies=[Depends(get_current_user)])
 
 @app.middleware("http")
 async def revalidate_pages(request, call_next):

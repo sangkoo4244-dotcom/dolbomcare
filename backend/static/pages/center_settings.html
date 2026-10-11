@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>센터 정보 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .logout-btn:hover { background: var(--danger-light); color: var(--danger); border-color: var(--danger); }
+        .content { flex: 1; padding: 30px; }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .main-layout { margin-left: 0; }
+            .content { padding: 20px; }
+        }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --warn: #B45309; --danger2: #DC2626; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 22px 24px; margin-bottom: 20px; max-width: 680px; }
+        .panel h2 { font-size: 16px; color: var(--navy); margin: 0 0 4px; }
+        .panel .sub { font-size: 13px; color: #64748B; margin-bottom: 16px; }
+        .field { margin-bottom: 14px; }
+        .field label { display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px; }
+        .field input { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 2px solid var(--line2); border-radius: 9px; font-size: 14px; outline: none; }
+        .field input:focus { border-color: var(--teal); }
+        .field-row { display: flex; gap: 10px; align-items: flex-end; }
+        .field-row .field { flex: 1; margin-bottom: 0; }
+        .btn-outline { padding: 10px 16px; border-radius: 9px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; white-space: nowrap; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .btn-solid { padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
+        .btn-solid:hover { background: #0C756C; }
+        .msg { font-size: 13px; margin-top: 10px; display: none; }
+        .msg.ok { color: #15803D; display: block; }
+        .msg.err { color: var(--danger2); display: block; }
+
+        .lookup-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 14px; }
+        .lookup-table th { text-align: left; font-weight: 700; color: #64748B; padding: 6px 8px; width: 160px; }
+        .lookup-table td { padding: 6px 8px; }
+        .lookup-table .apply-btn { padding: 3px 9px; font-size: 11px; border-radius: 7px; border: 1px solid var(--line2); background: #fff; cursor: pointer; margin-left: 8px; }
+        .lookup-table .apply-btn:hover { border-color: var(--teal); color: var(--teal); }
+        .lookup-note { font-size: 12px; color: #94A3B8; margin-top: 10px; line-height: 1.5; }
+        .lookup-section-title { font-size: 13px; font-weight: 800; color: var(--navy); margin: 16px 0 4px; }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function navigateTo(url) { window.location.href = url; }
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('user_role');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>센터 정보</h1>
+                <div class="breadcrumb">홈 › 대상자 및 인력 관리 › <b>센터 정보</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">센터장</div>
+                    <div class="user-role">관리자</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="panel">
+                <h2>센터 기본정보</h2>
+                <div class="sub">이용자·보호자 화면에 표시되는 센터 정보입니다.</div>
+                <div class="field"><label>센터명</label><input id="fName"></div>
+                <div class="field"><label>주소</label><input id="fAddress"></div>
+                <div class="field"><label>전화번호</label><input id="fPhone"></div>
+                <div class="field">
+                    <label>장기요양기관코드 (11자리)</label>
+                    <div class="field-row">
+                        <input id="fInstCode" placeholder="예: 14139000308" maxlength="11">
+                        <button type="button" class="btn-outline" onclick="lookupInstitution()">공단 정보 조회</button>
+                    </div>
+                </div>
+                <button type="button" class="btn-solid" onclick="saveCenter()">저장</button>
+                <div class="msg" id="saveMsg"></div>
+            </div>
+
+            <div class="panel" id="lookupPanel" style="display:none;">
+                <h2>국민건강보험공단 조회 결과</h2>
+                <div class="sub">공단 공공데이터 API(B550928) 응답입니다. 필드명이 곧바로 무엇인지 애매하면, 값을 보고 맞는 항목에 "적용"을 눌러 위 폼에 채워 넣으세요.</div>
+                <div id="lookupBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/v1';
+        let currentUser = null;
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) { window.location.href = './login.html'; return; }
+            if (user.role !== 'center_manager') {
+                alert('센터장만 접근 가능합니다');
+                window.location.href = './dashboard.html';
+                return;
+            }
+            currentUser = user;
+            document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
+            if (typeof renderSidebar === 'function') renderSidebar();
+            loadCenter();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text ?? '';
+            return div.innerHTML;
+        }
+
+        async function loadCenter() {
+            try {
+                const res = await fetch(`${API_URL}/centers/me`);
+                if (!res.ok) throw new Error('조회 실패');
+                const d = await res.json();
+                document.getElementById('fName').value = d.name || '';
+                document.getElementById('fAddress').value = d.address || '';
+                document.getElementById('fPhone').value = d.phone || '';
+                document.getElementById('fInstCode').value = d.institution_code || '';
+            } catch (e) {
+                showMsg('센터 정보를 불러오지 못했습니다', false);
+            }
+        }
+
+        function showMsg(text, ok) {
+            const el = document.getElementById('saveMsg');
+            el.textContent = text;
+            el.className = 'msg ' + (ok ? 'ok' : 'err');
+        }
+
+        async function saveCenter() {
+            const body = {
+                name: document.getElementById('fName').value,
+                address: document.getElementById('fAddress').value,
+                phone: document.getElementById('fPhone').value,
+                institution_code: document.getElementById('fInstCode').value,
+            };
+            try {
+                const res = await fetch(`${API_URL}/centers/me`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+                });
+                if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || '저장 실패');
+                showMsg('저장되었습니다', true);
+            } catch (e) {
+                showMsg(e.message, false);
+            }
+        }
+
+        // 응답 필드 키 이름으로 센터명/주소/전화에 해당할 법한 항목을 추정해, "적용" 버튼을 붙여준다.
+        // 정확한 필드명은 공단 활용가이드 문서로만 확인 가능해 추정일 뿐이다 - 틀리면 그냥 수동으로 복사하면 된다.
+        const GUESS_TARGET = [
+            { pattern: /nm$/i, target: 'fName', label: '센터명' },
+            { pattern: /addr/i, target: 'fAddress', label: '주소' },
+            { pattern: /tel|phone/i, target: 'fPhone', label: '전화번호' },
+        ];
+        function guessTarget(key) {
+            const hit = GUESS_TARGET.find(g => g.pattern.test(key));
+            return hit || null;
+        }
+
+        function renderFieldsTable(fields) {
+            const keys = Object.keys(fields);
+            if (!keys.length) return '<div class="lookup-note">표시할 항목이 없습니다</div>';
+            return `<table class="lookup-table">${keys.map(k => {
+                const guess = guessTarget(k);
+                const btn = guess ? `<button type="button" class="apply-btn" onclick="applyLookupValue('${guess.target}', this)" data-value="${escapeHtml(fields[k])}">${guess.label}에 적용</button>` : '';
+                return `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(fields[k]) || '-'}${btn}</td></tr>`;
+            }).join('')}</table>`;
+        }
+
+        function applyLookupValue(targetId, btn) {
+            document.getElementById(targetId).value = btn.dataset.value;
+        }
+
+        async function lookupInstitution() {
+            const code = document.getElementById('fInstCode').value.trim();
+            if (!code) { alert('장기요양기관코드를 입력해 주세요'); return; }
+            const panel = document.getElementById('lookupPanel');
+            const body = document.getElementById('lookupBody');
+            panel.style.display = 'block';
+            body.innerHTML = '<div class="lookup-note">조회 중...</div>';
+            try {
+                const res = await fetch(`${API_URL}/nhis/ltc-institution/${encodeURIComponent(code)}`);
+                const d = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(d.detail || '조회에 실패했습니다');
+
+                let html = '';
+                html += '<div class="lookup-section-title">일반현황</div>';
+                html += d.general.ok ? renderFieldsTable(d.general.fields) : `<div class="lookup-note">${escapeHtml(d.general.message)}</div>`;
+                html += '<div class="lookup-section-title">인력현황</div>';
+                html += d.staff.ok ? renderFieldsTable(d.staff.fields) : `<div class="lookup-note">${escapeHtml(d.staff.message)}</div>`;
+                body.innerHTML = html;
+            } catch (e) {
+                body.innerHTML = `<div class="lookup-note" style="color:var(--danger2);">${escapeHtml(e.message)}</div>`;
+            }
+        }
+
+        loadUserInfo();
+    </script>
+</body>
+</html>

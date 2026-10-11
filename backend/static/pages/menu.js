@@ -42,6 +42,7 @@ const MENU_ICONS = {
     profit: MENU_TILE('#E8F0EA', '#55645D', '<rect x="8" y="8" width="24" height="24" rx="4" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.4"/><rect x="12" y="20" width="3.5" height="8" rx="1" fill="#6F8F7E"/><rect x="18" y="15" width="3.5" height="13" rx="1" fill="#B5532F"/><rect x="24" y="11" width="3.5" height="17" rx="1" fill="#6F8F7E"/>'),
     guardian: MENU_TILE('#E8F0EA', '#55645D', '<path d="M20 7 L30 11 V19 Q30 27 20 32 Q10 27 10 19 V11 Z" fill="#6F8F7E" stroke="#1E2B26" stroke-width="1.4" stroke-linejoin="round"/><path d="M15 20 L20 15 L25 20 V25 H15 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1"/>'),
     stamp: MENU_TILE('#F6E4DC', '#9A4425', '<path d="M11 8 H23 L29 14 V31 H11 Z" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.4" stroke-linejoin="round"/><rect x="14" y="18" width="11" height="2.2" rx="1.1" fill="#6F8F7E"/><rect x="14" y="23" width="8" height="2.2" rx="1.1" fill="#6F8F7E" opacity="0.7"/><circle cx="25" cy="27" r="5" fill="#A8432A" stroke="#1E2B26" stroke-width="1"/><path d="M22.8 27 L24.3 28.5 L27.4 25.5" fill="none" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>'),
+    center: MENU_TILE('#F6E4DC', '#9A4425', '<rect x="9" y="11" width="22" height="21" rx="2" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.4"/><rect x="13" y="15" width="4" height="4" fill="#6F8F7E"/><rect x="23" y="15" width="4" height="4" fill="#6F8F7E"/><rect x="13" y="22" width="4" height="4" fill="#6F8F7E"/><rect x="23" y="22" width="4" height="4" fill="#B5532F"/><rect x="17" y="6" width="6" height="7" fill="#FFFFFF" stroke="#1E2B26" stroke-width="1.2"/>'),
 };
 
 const SIDEBAR_MENUS = {
@@ -70,6 +71,7 @@ const SIDEBAR_MENUS = {
         { href: 'copay_management.html', icon: 'billing', label: '본인부담금' },
         { href: 'audit_prep.html', icon: 'billing', label: '평가 준비 자료' },
         { href: 'staff_management.html', icon: 'staff', label: '직원관리' },
+        { href: 'center_settings.html', icon: 'center', label: '센터 정보' },
         { href: 'monthly_settlement.html', icon: 'settlement', label: '월별정산' },
         { href: 'profit_analysis.html', icon: 'profit', label: '수익분석' },
         { href: 'statement_confirm.html', icon: 'stamp', label: '급여 확정' },
