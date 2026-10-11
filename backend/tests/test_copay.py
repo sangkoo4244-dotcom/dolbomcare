@@ -134,3 +134,26 @@ def test_history_lists_invoice_after_payment(client):
     assert len(invoices) == 1
     assert invoices[0]["year_month"] == "2026-10"
     assert invoices[0]["paid_amount"] == 1000
+
+
+def test_annual_statement_sums_only_paid_amounts_for_the_year(client):
+    client.post("/api/v1/copay/1/pay", headers=MANAGER, json={"year_month": "2026-10", "amount": 3000})
+    client.post("/api/v1/copay/1/pay", headers=MANAGER, json={"year_month": "2026-10", "amount": 4770})
+
+    res = client.get("/api/v1/copay/resident/1/annual-statement?year=2026", headers=MANAGER)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["resident_name"] == "김이용"
+    assert data["center_name"] == "테스트센터"
+    assert data["year"] == 2026
+    assert len(data["monthly"]) == 12
+    october = next(m for m in data["monthly"] if m["year_month"] == "2026-10")
+    assert october["paid_amount"] == 7770
+    other_months = [m for m in data["monthly"] if m["year_month"] != "2026-10"]
+    assert all(m["paid_amount"] == 0 for m in other_months)
+    assert data["total_paid"] == 7770
+
+
+def test_annual_statement_requires_manager(client):
+    res = client.get("/api/v1/copay/resident/1/annual-statement?year=2026", headers=CAREGIVER)
+    assert res.status_code == 403

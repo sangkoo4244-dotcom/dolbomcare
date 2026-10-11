@@ -69,6 +69,19 @@
 
         .history-list { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow-y: auto; }
         .history-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F1F5F9; font-size: 13px; }
+
+        .cert { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 36px; max-width: 640px; margin: 0 auto; }
+        .cert h2 { text-align: center; font-size: 22px; color: var(--navy); margin: 0 0 24px; letter-spacing: 2px; }
+        .cert-row { display: flex; padding: 8px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
+        .cert-row .cl { width: 140px; color: #64748B; font-weight: 700; }
+        .cert-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+        .cert-table th { background: #F8FAFC; padding: 8px 10px; border: 1px solid var(--line2); font-weight: 700; color: #64748B; }
+        .cert-table td { padding: 8px 10px; border: 1px solid var(--line2); text-align: right; }
+        .cert-total { margin-top: 16px; text-align: right; font-size: 16px; font-weight: 800; color: var(--navy); }
+        .cert-foot { margin-top: 32px; text-align: center; font-size: 13px; color: #64748B; }
+        .cert-issue { margin-top: 24px; text-align: right; font-size: 13px; }
+
+        @media print { .sidebar, .topbar, .filter-bar, .summary-row, .copay-table-wrap, #annualPrintBtn { display: none !important; } .main-layout { margin-left: 0; } .content { padding: 0; } .cert { border: none; } }
     </style>
     <script src="menu.js"></script>
     <script>
@@ -130,7 +143,7 @@
                 <span style="color:#94A3B8;font-size:12px;">본인부담금 = 승인된 청구 건의 (급여비용 총액 − 청구액). 수납 여부만 이 화면에서 따로 관리합니다.</span>
             </div>
 
-            <div style="background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden;">
+            <div class="copay-table-wrap" style="background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden;">
                 <div style="overflow-x:auto;">
                     <table class="copay-table">
                         <thead>
@@ -149,6 +162,20 @@
                             <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-tertiary);">조회 중...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div style="margin-top:28px;">
+                <h2 style="font-size:18px;color:var(--navy);margin-bottom:12px;">연말정산용 납부확인서</h2>
+                <div class="filter-bar">
+                    <select id="fCertResident" class="filter-input"><option value="">이용자 선택</option></select>
+                    <select id="fCertYear" class="filter-input"></select>
+                    <button type="button" class="btn-solid" onclick="loadAnnualStatement()">확인서 보기</button>
+                    <button type="button" id="annualPrintBtn" class="btn-outline" onclick="window.print()">인쇄</button>
+                    <span style="color:#94A3B8;font-size:12px;">세액공제 기준인 "실제 납부액"을 월별로 집계합니다 (청구만 되고 미납인 금액은 포함하지 않음).</span>
+                </div>
+                <div class="cert" id="certBox">
+                    <div class="empty-note" style="color:#94A3B8;">이용자와 연도를 선택하고 "확인서 보기"를 눌러주세요.</div>
                 </div>
             </div>
         </div>
@@ -295,7 +322,60 @@
         }
         function closeHistoryModal() { document.getElementById('historyModal').classList.remove('open'); }
 
+        async function loadCertResidents() {
+            try {
+                const res = await fetch(`${API_URL}/residents/?center_id=${currentUser.center_id}`);
+                const data = await res.json();
+                document.getElementById('fCertResident').innerHTML = '<option value="">이용자 선택</option>' +
+                    (data.residents || []).map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            } catch (e) { /* ignore */ }
+        }
+
+        function fillCertYears() {
+            const thisYear = new Date().getFullYear();
+            const select = document.getElementById('fCertYear');
+            select.innerHTML = [thisYear, thisYear - 1, thisYear - 2].map(y => `<option value="${y}">${y}년</option>`).join('');
+        }
+
+        async function loadAnnualStatement() {
+            const residentId = document.getElementById('fCertResident').value;
+            const year = document.getElementById('fCertYear').value;
+            const box = document.getElementById('certBox');
+            if (!residentId) { alert('이용자를 선택해주세요'); return; }
+
+            box.innerHTML = '<div class="empty-note" style="color:#94A3B8;">불러오는 중...</div>';
+            try {
+                const res = await fetch(`${API_URL}/copay/resident/${residentId}/annual-statement?year=${year}`);
+                if (!res.ok) throw new Error('조회 실패');
+                renderCertificate(await res.json());
+            } catch (e) {
+                box.innerHTML = '<div class="empty-note" style="color:var(--danger2);">확인서를 불러오지 못했습니다</div>';
+            }
+        }
+
+        function renderCertificate(data) {
+            const box = document.getElementById('certBox');
+            const issuedOn = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+            box.innerHTML = `
+                <h2>본인부담금 납부확인서</h2>
+                <div class="cert-row"><span class="cl">수급자(이용자)</span><span>${data.resident_name} (${data.resident_birth_date || '생년월일 미등록'})</span></div>
+                <div class="cert-row"><span class="cl">장기요양기관</span><span>${data.center_name || '-'}</span></div>
+                <div class="cert-row"><span class="cl">소재지</span><span>${data.center_address || '-'}</span></div>
+                <div class="cert-row"><span class="cl">전화번호</span><span>${data.center_phone || '-'}</span></div>
+                <div class="cert-row"><span class="cl">납부기간</span><span>${data.year}년 1월 ~ 12월</span></div>
+                <table class="cert-table">
+                    <thead><tr>${data.monthly.map(m => `<th>${m.year_month.slice(5)}월</th>`).join('')}</tr></thead>
+                    <tbody><tr>${data.monthly.map(m => `<td>${m.paid_amount.toLocaleString()}</td>`).join('')}</tr></tbody>
+                </table>
+                <div class="cert-total">연간 납부 합계: ₩${data.total_paid.toLocaleString()}</div>
+                <div class="cert-foot">위와 같이 본인부담금을 납부하였음을 확인합니다.</div>
+                <div class="cert-issue">발급일자: ${issuedOn}<br>${data.center_name || ''} (직인)</div>
+            `;
+        }
+
         loadUserInfo();
+        loadCertResidents();
+        fillCertYears();
         const now = new Date();
         document.getElementById('fMonth').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         loadSummary();

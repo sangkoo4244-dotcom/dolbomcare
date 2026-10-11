@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user, require_manager
 from app.billing_rules import REVENUE_STATUSES
 from app.database import get_db
-from app.models import BillingRecord, CopayInvoice, Resident, User
+from app.models import BillingRecord, Center, CopayInvoice, Resident, User
 
 router = APIRouter()
 
@@ -143,3 +143,42 @@ def get_resident_copay_history(
         CopayInvoice.resident_id == resident_id,
     ).order_by(CopayInvoice.year_month.desc()).all()
     return {"resident_name": resident.name, "invoices": [_to_dict(i, resident.name) for i in invoices]}
+
+
+@router.get("/resident/{resident_id}/annual-statement")
+def get_annual_payment_statement(
+    resident_id: int,
+    year: int,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_manager),
+):
+    """연말정산용 본인부담금 납부확인서 - 세액공제는 "실제로 낸 돈" 기준이라 total_amount(청구액)가 아니라
+    paid_amount(실제 수납액)를 월별로 집계한다."""
+    resident = db.query(Resident).filter(Resident.id == resident_id).first()
+    if not resident or resident.center_id != actor.center_id:
+        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    center = db.query(Center).filter(Center.id == resident.center_id).first()
+
+    months = [f"{year}-{m:02d}" for m in range(1, 13)]
+    invoices_by_month = {
+        i.year_month: i
+        for i in db.query(CopayInvoice).filter(
+            CopayInvoice.resident_id == resident_id,
+            CopayInvoice.year_month.in_(months),
+        ).all()
+    }
+    monthly = [
+        {"year_month": ym, "paid_amount": invoices_by_month[ym].paid_amount if ym in invoices_by_month else 0}
+        for ym in months
+    ]
+
+    return {
+        "resident_name": resident.name,
+        "resident_birth_date": resident.birth_date.isoformat() if resident.birth_date else None,
+        "center_name": center.name if center else None,
+        "center_address": center.address if center else None,
+        "center_phone": center.phone if center else None,
+        "year": year,
+        "monthly": monthly,
+        "total_paid": sum(m["paid_amount"] for m in monthly),
+    }
