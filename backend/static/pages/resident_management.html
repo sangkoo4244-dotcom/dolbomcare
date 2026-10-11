@@ -696,6 +696,13 @@
                 </div>
 
                 <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">담당 요양보호사</label>
+                    <select id="primaryCaregiverSelect" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                        <option value="">미배정</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 16px;">
                     <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">성별</label>
                     <select id="residentGender" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
                         <option value="">선택하세요</option>
@@ -835,6 +842,24 @@
         </div>
     </div>
 
+    <!-- 보호자 초대: 요양사가 방문 중 보호자에게 직접 코드를 전달할 수 있게 한다 (기존에는 센터장만 가능했음) -->
+    <div id="inviteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 32px; width: 92%; max-width: 440px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h2 style="margin:0;">보호자 초대 <span id="inviteResidentName" style="font-weight:400;color:#6b7280;font-size:14px;"></span></h2>
+                <button type="button" onclick="closeInviteModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9ca3af;">&times;</button>
+            </div>
+            <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">코드를 발급해 보호자에게 전달하세요. 코드는 7일 동안 한 번만 사용할 수 있습니다.</p>
+            <button type="button" id="inviteIssueBtn" onclick="issueGuardianInviteFromResident()" style="width:100%;padding:10px;background:#B5532F;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;">코드 발급</button>
+            <div id="inviteCodeBox" style="display:none;margin-top:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;">
+                <div style="font-size:12px;color:#166534;font-weight:700;">발급된 코드</div>
+                <div id="inviteCodeValue" style="font-size:26px;font-weight:800;letter-spacing:2px;color:#14532d;margin:4px 0;"></div>
+                <div id="inviteCodeExpires" style="font-size:12px;color:#166534;margin-bottom:10px;"></div>
+                <button type="button" onclick="copyInviteCode()" style="padding:8px 14px;background:white;border:1px solid #bbf7d0;border-radius:6px;font-weight:600;color:#166534;cursor:pointer;">코드 복사</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = '/api/v1';
         let currentUser = null;
@@ -956,11 +981,13 @@
                 const data = await response.json();
                 residents = data.residents || [];
 
-                // 담당 요양보호사 / 서비스 종류 / 최근 방문일: Schedule 레코드에서 이용자별 "가장 최근" 건을 찾아 붙인다 (지어낸 값 아님)
+                // 서비스 종류 / 최근 방문일: Schedule 레코드에서 이용자별 "가장 최근" 건을 찾아 붙인다 (지어낸 값 아님)
+                // 담당 요양보호사는 이제 resident.primary_caregiver_id(센터장이 지정)를 그대로 쓴다 - 일정 유무로 추측하지 않는다
                 const names = {};
                 if (usersRes && usersRes.ok) {
                     const usersData = await usersRes.json();
                     (usersData.users || []).forEach(u => { names[u.id] = u.full_name; });
+                    renderCaregiverOptions((usersData.users || []).filter(u => u.role === 'caregiver'));
                 }
                 const latestByResident = {};
                 if (scheduleRes && scheduleRes.ok) {
@@ -976,7 +1003,7 @@
                 const now = new Date();
                 residents.forEach(r => {
                     const latest = latestByResident[r.id];
-                    r._caregiverName = latest ? (names[latest.caregiver_id] || '-') : '-';
+                    r._caregiverName = r.primary_caregiver_name || '미배정';
                     r._serviceType = latest ? (SERVICE_TYPE_LABEL[latest.service_type] || latest.service_type) : '-';
                     r._lastVisit = latest ? latest.scheduled_date : null;
                     r._active = r._lastVisit ? ((now - new Date(r._lastVisit)) / 86400000 <= ACTIVE_WINDOW_DAYS) : false;
@@ -1031,6 +1058,14 @@
                     <div><div class="rn">${escapeHtml(r.name)} 어르신</div><div class="rd">${(r.admission_date || '').slice(0, 10)}</div></div>
                     <span class="rg" style="background:${gradeColor[r.care_grade] || '#475569'}1A;color:${gradeColor[r.care_grade] || '#475569'};">${gradeLabel(r.care_grade)}</span>
                 </div>`).join('');
+        }
+
+        function renderCaregiverOptions(caregivers) {
+            const select = document.getElementById('primaryCaregiverSelect');
+            const current = select.value;
+            select.innerHTML = '<option value="">미배정</option>' +
+                caregivers.map(c => `<option value="${c.id}">${escapeHtml(c.full_name)}</option>`).join('');
+            select.value = current;
         }
 
         function escapeHtml(text) {
@@ -1178,6 +1213,7 @@
                                 <button class="btn-detail" onclick="editResident(${r.id})">상세보기</button>
                                 <button class="btn-detail" onclick="openNeedsAssessment(${r.id})">욕구사정</button>
                                 <button class="btn-detail" onclick="openAlbumModal(${r.id})">사진첩</button>
+                                ${currentUser.role === 'caregiver' ? `<button class="btn-detail" onclick="openInviteModal(${r.id})">보호자 초대</button>` : ''}
                                 <button class="btn-kebab" title="삭제" onclick="deleteResident(${r.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                             </div>
                         </td>
@@ -1221,6 +1257,7 @@
             document.getElementById('careGrade').value = resident.care_grade == null ? 'cognitive' : resident.care_grade;
             document.getElementById('clientType').value = resident.client_type || '';
             document.getElementById('healthStatus').value = resident.health_status;
+            document.getElementById('primaryCaregiverSelect').value = resident.primary_caregiver_id || '';
             document.getElementById('residentGender').value = resident.gender || '';
             document.getElementById('residentAddress').value = resident.address || '';
             document.getElementById('recognitionNumber').value = resident.recognition_number || '';
@@ -1646,6 +1683,49 @@
             albumResidentId = null;
         }
 
+        let inviteResidentId = null;
+
+        function openInviteModal(residentId) {
+            inviteResidentId = residentId;
+            const resident = residents.find(r => r.id === residentId);
+            document.getElementById('inviteResidentName').textContent = resident ? `- ${resident.name} 어르신` : '';
+            document.getElementById('inviteCodeBox').style.display = 'none';
+            document.getElementById('inviteIssueBtn').style.display = 'block';
+            document.getElementById('inviteModal').style.display = 'flex';
+        }
+
+        function closeInviteModal() {
+            document.getElementById('inviteModal').style.display = 'none';
+            inviteResidentId = null;
+        }
+
+        let inviteLastCode = '';
+
+        async function issueGuardianInviteFromResident() {
+            const response = await fetch(`${API_URL}/guardian/invites`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ resident_id: inviteResidentId }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) { alert(data.detail || '코드 발급에 실패했습니다'); return; }
+            inviteLastCode = data.code;
+            document.getElementById('inviteIssueBtn').style.display = 'none';
+            document.getElementById('inviteCodeBox').style.display = 'block';
+            document.getElementById('inviteCodeValue').textContent = data.code;
+            document.getElementById('inviteCodeExpires').textContent = `만료일: ${new Date(data.expires_at).toLocaleDateString('ko-KR')}`;
+        }
+
+        async function copyInviteCode() {
+            if (!inviteLastCode) return;
+            try {
+                await navigator.clipboard.writeText(inviteLastCode);
+                alert('코드를 복사했습니다');
+            } catch (e) {
+                alert('복사하지 못했습니다. 코드를 직접 선택해 복사해 주세요');
+            }
+        }
+
         async function loadAlbum() {
             const grid = document.getElementById('albumGrid');
             grid.textContent = '불러오는 중...';
@@ -1728,6 +1808,8 @@
             const careGrade = careGradeRaw === 'cognitive' ? null : parseInt(careGradeRaw);
             const clientType = document.getElementById('clientType').value;
             const healthStatus = document.getElementById('healthStatus').value;
+            const primaryCaregiverRaw = document.getElementById('primaryCaregiverSelect').value;
+            const primaryCaregiverId = primaryCaregiverRaw ? parseInt(primaryCaregiverRaw) : null;
             const gender = document.getElementById('residentGender').value;
             const address = document.getElementById('residentAddress').value;
             const recognitionNumber = document.getElementById('recognitionNumber').value;
@@ -1759,6 +1841,7 @@
                         care_grade: careGrade,
                         client_type: clientType,
                         health_status: healthStatus,
+                        primary_caregiver_id: primaryCaregiverId,
                         gender: gender,
                         address: address,
                         recognition_number: recognitionNumber,

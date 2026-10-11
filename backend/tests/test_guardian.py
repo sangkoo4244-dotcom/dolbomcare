@@ -149,3 +149,19 @@ def test_caregiver_cannot_use_guardian_views_or_approve(setup):
     assert setup.get("/api/v1/guardian/requests", headers=CAREGIVER).status_code == 403
     request_id = setup.get("/api/v1/guardian/requests", headers=MANAGER).json()["requests"][0]["id"]
     assert setup.post(f"/api/v1/guardian/requests/{request_id}/approve", headers=CAREGIVER).status_code == 403
+
+
+def test_caregiver_can_issue_invite_for_resident_in_own_center(setup):
+    response = setup.post("/api/v1/guardian/invites", json={"resident_id": 1}, headers=CAREGIVER)
+    assert response.status_code == 200
+    assert response.json()["resident_name"] == "김1"
+
+
+def test_caregiver_cannot_issue_invite_for_resident_in_another_center(setup):
+    db = setup.Session()
+    db.add(models.Center(id=2, name="다른센터"))
+    db.add(models.Resident(id=3, center_id=2, name="박3", age=85, health_status="stable", care_grade=1, client_type="일반"))
+    db.commit()
+    db.close()
+    response = setup.post("/api/v1/guardian/invites", json={"resident_id": 3}, headers=CAREGIVER)
+    assert response.status_code == 404

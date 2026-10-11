@@ -79,3 +79,23 @@ def test_caregiver_can_only_change_health_status(client):
     assert client.put(f"/api/v1/residents/{resident_id}", json={"care_grade": 5}, headers=caregiver).status_code == 403
     assert client.put(f"/api/v1/residents/{resident_id}", json={"client_type": "기초생활보장"}, headers=caregiver).status_code == 403
     assert client.put(f"/api/v1/residents/{resident_id}", json={"recognition_end": "2030-01-01"}, headers=caregiver).status_code == 403
+    assert client.put(f"/api/v1/residents/{resident_id}", json={"primary_caregiver_id": 2}, headers=caregiver).status_code == 403
+
+
+def test_manager_assigns_caregiver_and_list_filters_by_it(client):
+    created1 = client.post("/api/v1/residents/", json=body(name="김1")).json()
+    created2 = client.post("/api/v1/residents/", json=body(name="이2")).json()
+    id1, id2 = created1["data"]["id"], created2["data"]["id"]
+
+    assert client.put(f"/api/v1/residents/{id1}", json={"primary_caregiver_id": 2}).status_code == 200
+
+    all_residents = client.get("/api/v1/residents/?center_id=1").json()["residents"]
+    assert {r["id"] for r in all_residents} == {id1, id2}
+
+    mine = client.get("/api/v1/residents/?caregiver_id=2").json()["residents"]
+    assert [r["id"] for r in mine] == [id1]
+    assert mine[0]["primary_caregiver_name"] == "요양사"
+
+    unassign = client.put(f"/api/v1/residents/{id1}", json={"primary_caregiver_id": None})
+    assert unassign.status_code == 200
+    assert client.get("/api/v1/residents/?caregiver_id=2").json()["residents"] == []

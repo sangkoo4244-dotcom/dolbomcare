@@ -26,6 +26,7 @@ class ResidentUpdate(BaseModel):
     recognition_end: str = None
     guardian_name: str = None
     guardian_phone: str = None
+    primary_caregiver_id: Optional[int] = None  # exclude_unset으로 "안 보냄"과 "배정 해제(null)"를 구분
     user_role: str = "center_manager"
 
 router = APIRouter()
@@ -68,15 +69,21 @@ async def update_care_notes(
 @router.get("/")
 async def get_residents(
     center_id: int = None,
+    caregiver_id: int = None,
     db: Session = Depends(get_db)
 ):
-    """이용자 목록 조회 (center_id로 필터링 가능)"""
+    """이용자 목록 조회 (center_id, caregiver_id로 필터링 가능).
+    caregiver_id는 담당 요양보호사(primary_caregiver_id)로 지정된 이용자만 걸러낸다."""
     query = db.query(Resident)
 
     if center_id:
         query = query.filter(Resident.center_id == center_id)
 
+    if caregiver_id:
+        query = query.filter(Resident.primary_caregiver_id == caregiver_id)
+
     residents = query.all()
+    caregiver_names = {u.id: u.full_name for u in db.query(User).filter(User.role == "caregiver").all()}
 
     return {
         "total_residents": len(residents),
@@ -98,7 +105,9 @@ async def get_residents(
                 "recognition_start": r.recognition_start.isoformat() if r.recognition_start else None,
                 "recognition_end": r.recognition_end.isoformat() if r.recognition_end else None,
                 "guardian_name": r.guardian_name,
-                "guardian_phone": r.guardian_phone
+                "guardian_phone": r.guardian_phone,
+                "primary_caregiver_id": r.primary_caregiver_id,
+                "primary_caregiver_name": caregiver_names.get(r.primary_caregiver_id)
             }
             for r in residents
         ]
@@ -156,7 +165,8 @@ async def get_resident(
         "recognition_start": resident.recognition_start.isoformat() if resident.recognition_start else None,
         "recognition_end": resident.recognition_end.isoformat() if resident.recognition_end else None,
         "guardian_name": resident.guardian_name,
-        "guardian_phone": resident.guardian_phone
+        "guardian_phone": resident.guardian_phone,
+        "primary_caregiver_id": resident.primary_caregiver_id
     }
 
 @router.put("/{resident_id}/update-grade")
@@ -246,6 +256,7 @@ async def create_resident(
             care_grade=resident_data.care_grade,
             client_type=resident_data.client_type,
             guardian_id=resident_data.guardian_id,
+            primary_caregiver_id=resident_data.primary_caregiver_id,
             gender=resident_data.gender,
             address=resident_data.address,
             recognition_number=resident_data.recognition_number,
@@ -297,8 +308,8 @@ async def update_resident(
         # 요양사는 건강상태 외에는 수정할 수 없다 (청구 금액에 영향을 주는 정보 보호)
         caregiver_locked = [
             name for name in ("name", "birth_date", "age", "care_grade", "client_type", "gender",
-                              "recognition_number", "recognition_start", "recognition_end")
-            if (name in provided if name == "care_grade" else getattr(update_data, name) is not None)
+                              "recognition_number", "recognition_start", "recognition_end", "primary_caregiver_id")
+            if (name in provided if name in ("care_grade", "primary_caregiver_id") else getattr(update_data, name) is not None)
         ]
         if actor.role == "caregiver" and caregiver_locked:
             raise HTTPException(status_code=403, detail="요양사는 이 항목을 직접 수정할 수 없습니다. 센터장에게 변경을 요청하세요")
@@ -314,6 +325,8 @@ async def update_resident(
             if provided["care_grade"] is not None and provided["care_grade"] not in [1, 2, 3, 4, 5]:
                 raise HTTPException(status_code=400, detail="Invalid care grade")
             resident.care_grade = provided["care_grade"]  # None = 인지지원등급
+        if "primary_caregiver_id" in provided:
+            resident.primary_caregiver_id = provided["primary_caregiver_id"]  # None = 배정 해제
         if update_data.client_type is not None:
             if update_data.client_type not in ["일반", "차상위계층", "기초생활보장", "의료급여"]:
                 raise HTTPException(status_code=400, detail="Invalid client type")

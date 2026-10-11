@@ -54,6 +54,7 @@ class ResidentBase(BaseModel):
 class ResidentCreate(ResidentBase):
     center_id: int
     guardian_id: Optional[int] = None
+    primary_caregiver_id: Optional[int] = None
     care_grade: Optional[int] = 1  # 1~5등급, None=인지지원등급
     client_type: str = "일반"  # '일반', '차상위계층', '기초생활보장', '의료급여'
     gender: Optional[str] = None

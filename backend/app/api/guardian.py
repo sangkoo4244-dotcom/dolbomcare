@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.users import get_password_hash
-from app.auth import get_current_user, require_manager
+from app.auth import get_current_user, require_manager, require_manager_or_caregiver
 from app.database import get_db
 from app.models import DailyRecord, GuardianInvite, Resident, User
 
@@ -42,13 +42,14 @@ def require_guardian(user: User = Depends(get_current_user)) -> User:
 
 
 @router.post("/invites")
-def create_invite(body: InviteCreate, db: Session = Depends(get_db), manager: User = Depends(require_manager)):
-    resident = db.query(Resident).filter(Resident.id == body.resident_id, Resident.center_id == manager.center_id).first()
+def create_invite(body: InviteCreate, db: Session = Depends(get_db), actor: User = Depends(require_manager_or_caregiver)):
+    """초대 코드 발급. 센터장뿐 아니라 요양사도 자신이 방문하는 이용자의 보호자를 직접 초대할 수 있다."""
+    resident = db.query(Resident).filter(Resident.id == body.resident_id, Resident.center_id == actor.center_id).first()
     if not resident:
         raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
     code = secrets.token_hex(4).upper()
     expires_at = datetime.utcnow() + timedelta(days=INVITE_VALID_DAYS)
-    db.add(GuardianInvite(code=code, resident_id=resident.id, center_id=manager.center_id, expires_at=expires_at))
+    db.add(GuardianInvite(code=code, resident_id=resident.id, center_id=actor.center_id, expires_at=expires_at))
     db.commit()
     return {"code": code, "resident_name": resident.name, "expires_at": expires_at.isoformat()}
 

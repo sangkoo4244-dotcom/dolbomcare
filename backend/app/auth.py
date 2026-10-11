@@ -39,6 +39,12 @@ def require_manager(user: User = Depends(get_current_user)) -> User:
     return user
 
 
+def require_manager_or_caregiver(user: User = Depends(get_current_user)) -> User:
+    if user.role not in ("center_manager", "caregiver"):
+        raise HTTPException(status_code=403, detail="센터장 또는 요양사만 할 수 있는 작업입니다")
+    return user
+
+
 def assert_self_or_manager(actor: User, caregiver_id: int) -> None:
     if actor.role != "center_manager" and actor.id != caregiver_id:
         raise HTTPException(status_code=403, detail="본인의 정보만 조회할 수 있습니다")

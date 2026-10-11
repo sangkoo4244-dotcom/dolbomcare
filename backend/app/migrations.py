@@ -37,6 +37,7 @@ ADDITIVE_COLUMNS = [
     ("users", "alimtalk_categories", "VARCHAR"),
     ("risk_assessments", "tool_name", "VARCHAR"),
     ("risk_assessments", "item_scores", "TEXT"),
+    ("residents", "primary_caregiver_id", "INTEGER"),
 ]
 
 
