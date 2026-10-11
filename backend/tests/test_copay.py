@@ -25,9 +25,13 @@ def client(tmp_path):
 
     db = Session()
     db.add(models.Center(id=1, name="테스트센터"))
+    db.add(models.Center(id=2, name="다른센터"))
     db.add(models.User(id=1, email="manager@test.com", full_name="센터장", role="center_manager", center_id=1))
     db.add(models.User(id=2, email="caregiver1@test.com", full_name="요양사1", role="caregiver", center_id=1))
-    db.add(models.Resident(id=1, center_id=1, name="김이용", client_type="일반"))
+    db.add(models.User(id=3, email="guardian@test.com", full_name="보호자", role="guardian"))
+    db.add(models.User(id=4, email="other_guardian@test.com", full_name="남의보호자", role="guardian"))
+    db.add(models.User(id=5, email="other_caregiver@test.com", full_name="다른센터요양사", role="caregiver", center_id=2))
+    db.add(models.Resident(id=1, center_id=1, name="김이용", client_type="일반", guardian_id=3))
     # 승인된 청구 두 건: 본인부담금 = (total_cost - amount) 합 = (34120-29000) + (17450-14800) = 5120 + 2650 = 7770
     db.add(models.BillingRecord(
         id=1, caregiver_id=2, resident_id=1, center_id=1, service_type="basic_care",
@@ -64,6 +68,9 @@ def client(tmp_path):
 
 MANAGER = auth(1, "center_manager", "manager@test.com")
 CAREGIVER = auth(2, "caregiver", "caregiver1@test.com")
+GUARDIAN = auth(3, "guardian", "guardian@test.com")
+OTHER_GUARDIAN = auth(4, "guardian", "other_guardian@test.com")
+OTHER_CENTER_CAREGIVER = auth(5, "caregiver", "other_caregiver@test.com")
 
 
 def test_summary_computes_copay_from_approved_billing_only(client):
@@ -154,6 +161,36 @@ def test_annual_statement_sums_only_paid_amounts_for_the_year(client):
     assert data["total_paid"] == 7770
 
 
-def test_annual_statement_requires_manager(client):
+def test_annual_statement_accessible_to_same_center_staff(client):
     res = client.get("/api/v1/copay/resident/1/annual-statement?year=2026", headers=CAREGIVER)
+    assert res.status_code == 200
+
+
+def test_annual_statement_rejects_other_center_staff(client):
+    res = client.get("/api/v1/copay/resident/1/annual-statement?year=2026", headers=OTHER_CENTER_CAREGIVER)
+    assert res.status_code == 404
+
+
+def test_linked_guardian_can_self_serve_annual_statement(client):
+    """보호자가 본인이 연결된 이용자의 연말정산 납부확인서를 센터에 요청하지 않고 직접 발급받을 수 있어야 한다."""
+    client.post("/api/v1/copay/1/pay", headers=MANAGER, json={"year_month": "2026-10", "amount": 7770})
+    res = client.get("/api/v1/copay/resident/1/annual-statement?year=2026", headers=GUARDIAN)
+    assert res.status_code == 200
+    assert res.json()["total_paid"] == 7770
+
+
+def test_unrelated_guardian_cannot_see_annual_statement(client):
+    res = client.get("/api/v1/copay/resident/1/annual-statement?year=2026", headers=OTHER_GUARDIAN)
+    assert res.status_code == 403
+
+
+def test_linked_guardian_can_see_copay_history(client):
+    client.post("/api/v1/copay/1/pay", headers=MANAGER, json={"year_month": "2026-10", "amount": 1000})
+    res = client.get("/api/v1/copay/resident/1/history", headers=GUARDIAN)
+    assert res.status_code == 200
+    assert res.json()["invoices"][0]["paid_amount"] == 1000
+
+
+def test_unrelated_guardian_cannot_see_copay_history(client):
+    res = client.get("/api/v1/copay/resident/1/history", headers=OTHER_GUARDIAN)
     assert res.status_code == 403

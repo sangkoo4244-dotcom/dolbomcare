@@ -47,6 +47,24 @@
             .g-header-row { flex-wrap: wrap; row-gap: 10px; }
             .g-date-chip { display: none; }
         }
+
+        /* 연말정산용 납부확인서 (copay_management.html과 동일한 서식) */
+        .cert { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 28px; max-width: 640px; margin: 0 auto; }
+        .cert h3 { text-align: center; font-size: 20px; color: var(--navy); margin: 0 0 20px; letter-spacing: 2px; }
+        .cert-row { display: flex; padding: 7px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
+        .cert-row .cl { width: 130px; color: #64748B; font-weight: 700; flex: 0 0 auto; }
+        .cert-table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; }
+        .cert-table th { background: #F8FAFC; padding: 7px 9px; border: 1px solid var(--line2); font-weight: 700; color: #64748B; }
+        .cert-table td { padding: 7px 9px; border: 1px solid var(--line2); text-align: right; }
+        .cert-total { margin-top: 14px; text-align: right; font-size: 16px; font-weight: 800; color: var(--navy); }
+        .cert-foot { margin-top: 28px; text-align: center; font-size: 13px; color: #64748B; }
+        .cert-issue { margin-top: 20px; text-align: right; font-size: 13px; }
+        @media print {
+            body * { visibility: hidden; }
+            #certSection, #certSection * { visibility: visible; }
+            #certSection { position: absolute; top: 0; left: 0; width: 100%; padding: 0; border: none; box-shadow: none; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -149,6 +167,23 @@
                     <div id="albumCountsText" class="text-sm text-gray-500 mb-4 ml-11"></div>
                     <div id="guardianAlbumGrid" class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr));">불러오는 중...</div>
                 </div>
+
+                <!-- 연말정산용 본인부담금 납부확인서: 실제 수납액(세액공제 기준)만 월별로 보여준다 -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 mt-5" id="certSection">
+                    <div class="flex items-center justify-between flex-wrap gap-3 mb-2">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-8 h-8 text-[#0F8B80]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h3"/></svg>
+                            <h2 class="text-2xl font-extrabold text-gray-900">연말정산용 납부확인서</h2>
+                        </div>
+                        <div class="flex items-center gap-2 no-print">
+                            <select id="certYearSelect" class="border border-gray-300 rounded-xl px-3 py-2 text-base bg-white"></select>
+                            <button onclick="loadCertificate()" class="px-4 py-2 bg-[#0F8B80] text-white rounded-xl text-base font-bold hover:bg-[#0C756C] transition">확인서 보기</button>
+                            <button onclick="window.print()" class="px-4 py-2 bg-white border border-gray-300 rounded-xl text-base font-bold text-gray-700 hover:border-[#0F8B80] hover:text-[#0F8B80] transition">인쇄</button>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4 ml-11">세액공제 기준인 "실제 납부액"만 집계합니다 (청구만 되고 미납인 금액은 포함하지 않습니다).</p>
+                    <div class="cert" id="certBox"><div class="text-gray-400">위에서 이용자를 선택한 뒤, 연도를 고르고 "확인서 보기"를 눌러주세요.</div></div>
+                </div>
             </div>
         </main>
     </div>
@@ -188,6 +223,7 @@
             renderDateRangeChip();
             loadResidents();
             loadNotifySetting();
+            populateCertYearSelect();
         }
 
         let alimtalkOn = true;
@@ -350,6 +386,51 @@
             renderResidentInfo(residentsCache.find(r => r.id === id) || null);
             loadVisits();
             loadGuardianAlbum();
+            document.getElementById('certBox').innerHTML = '<div class="text-gray-400">위에서 이용자를 선택한 뒤, 연도를 고르고 "확인서 보기"를 눌러주세요.</div>';
+        }
+
+        // 최근 3년(올해 포함) 중에서 고를 수 있게 한다 - 세액공제는 보통 직전 연도 기준이지만 당해도 미리 확인할 수 있게 둔다
+        function populateCertYearSelect() {
+            const sel = document.getElementById('certYearSelect');
+            const thisYear = new Date().getFullYear();
+            sel.innerHTML = [thisYear - 1, thisYear - 2, thisYear].sort((a, b) => b - a)
+                .map(y => `<option value="${y}" ${y === thisYear - 1 ? 'selected' : ''}>${y}년</option>`).join('');
+        }
+
+        async function loadCertificate() {
+            const residentId = document.getElementById('residentSelect').value;
+            const year = document.getElementById('certYearSelect').value;
+            const box = document.getElementById('certBox');
+            if (!residentId) { alert('이용자를 선택해 주세요'); return; }
+
+            box.innerHTML = '<div class="text-gray-400">불러오는 중...</div>';
+            try {
+                const res = await fetch(`${API_URL}/copay/resident/${residentId}/annual-statement?year=${year}`);
+                if (!res.ok) throw new Error('조회 실패');
+                renderCertificate(await res.json());
+            } catch (e) {
+                box.innerHTML = '<div style="color:#DC2626;">확인서를 불러오지 못했습니다</div>';
+            }
+        }
+
+        function renderCertificate(data) {
+            const box = document.getElementById('certBox');
+            const issuedOn = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+            box.innerHTML = `
+                <h3>본인부담금 납부확인서</h3>
+                <div class="cert-row"><span class="cl">수급자(이용자)</span><span>${escapeHtml(data.resident_name)} (${data.resident_birth_date || '생년월일 미등록'})</span></div>
+                <div class="cert-row"><span class="cl">장기요양기관</span><span>${escapeHtml(data.center_name || '-')}</span></div>
+                <div class="cert-row"><span class="cl">소재지</span><span>${escapeHtml(data.center_address || '-')}</span></div>
+                <div class="cert-row"><span class="cl">전화번호</span><span>${escapeHtml(data.center_phone || '-')}</span></div>
+                <div class="cert-row"><span class="cl">납부기간</span><span>${data.year}년 1월 ~ 12월</span></div>
+                <table class="cert-table">
+                    <tr>${data.monthly.map(m => `<th>${parseInt(m.year_month.split('-')[1])}월</th>`).join('')}</tr>
+                    <tr>${data.monthly.map(m => `<td>${m.paid_amount.toLocaleString()}</td>`).join('')}</tr>
+                </table>
+                <div class="cert-total">합계: ${data.total_paid.toLocaleString()}원</div>
+                <div class="cert-foot">위와 같이 본인부담금을 납부하였음을 확인합니다.</div>
+                <div class="cert-issue">발급일: ${issuedOn}<br>${escapeHtml(data.center_name || '')}</div>
+            `;
         }
 
         // "1938-05-12" -> "1938.05.12" (서버에 없으면 표시하지 않는다 - 임의로 만들지 않는다)

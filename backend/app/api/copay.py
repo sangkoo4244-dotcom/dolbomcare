@@ -12,6 +12,20 @@ from app.models import BillingRecord, Center, CopayInvoice, Resident, User
 router = APIRouter()
 
 
+def _check_access(db: Session, resident_id: int, actor: User) -> Resident:
+    """보호자는 본인이 연결된 이용자만, 직원은 같은 센터 이용자만 볼 수 있다 (resident_media.py와 동일한 방식)."""
+    resident = db.query(Resident).filter(Resident.id == resident_id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    if actor.role == "guardian":
+        if resident.guardian_id != actor.id:
+            raise HTTPException(status_code=403, detail="본인이 연결된 이용자만 볼 수 있습니다")
+    else:
+        if resident.center_id != actor.center_id:
+            raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    return resident
+
+
 def _resident_month_total(db: Session, resident_id: int, year_month: str) -> int:
     """이 이용자의 해당 월 본인부담금 총액 = 승인된 청구 건들의 (급여비용 총액 - 청구액) 합."""
     rows = db.query(BillingRecord).filter(
@@ -135,9 +149,7 @@ def get_resident_copay_history(
     actor: User = Depends(get_current_user),
 ):
     """한 이용자의 월별 본인부담금 납부 이력 (최신순). 연말정산용 연간 납부확인서에도 쓸 수 있다."""
-    resident = db.query(Resident).filter(Resident.id == resident_id).first()
-    if not resident or resident.center_id != actor.center_id:
-        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    resident = _check_access(db, resident_id, actor)
 
     invoices = db.query(CopayInvoice).filter(
         CopayInvoice.resident_id == resident_id,
@@ -150,13 +162,11 @@ def get_annual_payment_statement(
     resident_id: int,
     year: int,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_manager),
+    actor: User = Depends(get_current_user),
 ):
     """연말정산용 본인부담금 납부확인서 - 세액공제는 "실제로 낸 돈" 기준이라 total_amount(청구액)가 아니라
-    paid_amount(실제 수납액)를 월별로 집계한다."""
-    resident = db.query(Resident).filter(Resident.id == resident_id).first()
-    if not resident or resident.center_id != actor.center_id:
-        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    paid_amount(실제 수납액)를 월별로 집계한다. 보호자도 본인이 연결된 이용자 것은 직접 발급받을 수 있다."""
+    resident = _check_access(db, resident_id, actor)
     center = db.query(Center).filter(Center.id == resident.center_id).first()
 
     months = [f"{year}-{m:02d}" for m in range(1, 13)]
