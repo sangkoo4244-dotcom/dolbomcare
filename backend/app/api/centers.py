@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.alimtalk_billing import get_usage_summary
 from app.auth import require_manager
 from app.database import get_db
 from app.models import Center, User
@@ -64,3 +65,9 @@ def update_my_center(
     db.commit()
     db.refresh(center)
     return {"status": "success", "data": _to_dict(center)}
+
+
+@router.get("/me/alimtalk-usage")
+def get_my_alimtalk_usage(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """내 센터의 이번 달 알림톡 발송 현황·잔액 (센터장 전용)."""
+    return get_usage_summary(db, actor.center_id)

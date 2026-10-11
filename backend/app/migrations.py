@@ -2,7 +2,7 @@ from app.database import engine, SessionLocal
 from app.models import (
     StaffCertificate, SalaryStatement, GuardianInvite, Notification,
     ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
-    RiskAssessment, StaffRecord, ResidentMedia,
+    RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage,
 )
 from sqlalchemy import text
 
@@ -41,6 +41,7 @@ ADDITIVE_COLUMNS = [
     ("centers", "institution_code", "VARCHAR"),
     ("users", "profile_image", "TEXT"),
     ("centers", "logo_image", "TEXT"),
+    ("centers", "alimtalk_balance", "INTEGER DEFAULT 0"),
 ]
 
 
@@ -53,7 +54,7 @@ def run_migrations():
     """
     for table_cls in (StaffCertificate, SalaryStatement, GuardianInvite, Notification,
                        ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
-                       RiskAssessment, StaffRecord, ResidentMedia):
+                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage):
         try:
             table_cls.__table__.create(bind=engine, checkfirst=True)
         except Exception as e:

@@ -90,3 +90,16 @@ def test_manager_can_set_and_remove_logo_image(client):
 
     res = client.put("/api/v1/centers/me", headers=MANAGER, json={"logo_image": ""})
     assert res.json()["data"]["logo_image"] is None
+
+
+def test_manager_can_view_alimtalk_usage(client):
+    res = client.get("/api/v1/centers/me/alimtalk-usage", headers=MANAGER)
+    assert res.status_code == 200
+    body = res.json()
+    assert body["free_sent"] == 0
+    assert body["free_quota"] == 100
+    assert body["balance"] == 0
+
+
+def test_caregiver_cannot_view_alimtalk_usage(client):
+    assert client.get("/api/v1/centers/me/alimtalk-usage", headers=CAREGIVER).status_code == 403

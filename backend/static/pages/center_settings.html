@@ -132,6 +132,13 @@
                 <div class="msg" id="saveMsg"></div>
             </div>
 
+            <div class="panel" id="alimtalkPanel">
+                <h2>알림톡 발송 현황</h2>
+                <div class="sub">보호자·직원에게 보내는 카카오 알림톡은 매월 무료 한도까지는 비용 없이 발송되고, 넘으면 충전 잔액에서 건당 차감됩니다. 인앱 알림은 한도·잔액과 무관하게 항상 발송됩니다.</div>
+                <div id="alimtalkBody" class="lookup-note">불러오는 중...</div>
+                <a id="alimtalkChargeBtn" class="btn-outline" style="display:inline-block;text-decoration:none;margin-top:12px;" href="mailto:support@seniorcareinfo.kr?subject=알림톡 충전 문의">충전 문의하기</a>
+            </div>
+
             <div class="panel" id="lookupPanel" style="display:none;">
                 <h2>국민건강보험공단 조회 결과</h2>
                 <div class="sub">공단 공공데이터 API(B550928) 응답입니다. 필드명이 곧바로 무엇인지 애매하면, 값을 보고 맞는 항목에 "적용"을 눌러 위 폼에 채워 넣으세요.</div>
@@ -156,6 +163,7 @@
             document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
             if (typeof renderSidebar === 'function') renderSidebar();
             loadCenter();
+            loadAlimtalkUsage();
         }
 
         function escapeHtml(text) {
@@ -258,6 +266,24 @@
                 showMsg('저장되었습니다', true);
             } catch (e) {
                 showMsg(e.message, false);
+            }
+        }
+
+        async function loadAlimtalkUsage() {
+            const el = document.getElementById('alimtalkBody');
+            try {
+                const res = await fetch(`${API_URL}/centers/me/alimtalk-usage`);
+                if (!res.ok) throw new Error('조회 실패');
+                const u = await res.json();
+                const totalSent = u.free_sent + u.paid_sent;
+                el.innerHTML = `
+                    <table class="lookup-table">
+                        <tr><th>이번 달 (${escapeHtml(u.year_month)})</th><td>무료 ${u.free_sent} / ${u.free_quota}건 사용${u.paid_sent ? ` · 유료 ${u.paid_sent}건` : ''}</td></tr>
+                        <tr><th>충전 잔액</th><td>${u.balance.toLocaleString()}원 (건당 ${u.per_message_cost}원 차감)</td></tr>
+                        ${u.blocked_count ? `<tr><th>미발송</th><td style="color:var(--danger2);">${u.blocked_count}건 - 한도·잔액 부족으로 알림톡만 건너뜀 (인앱 알림은 정상 발송됨)</td></tr>` : ''}
+                    </table>`;
+            } catch (e) {
+                el.textContent = '알림톡 사용 현황을 불러오지 못했습니다';
             }
         }
 

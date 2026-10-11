@@ -32,6 +32,7 @@ class Center(Base):
     phone = Column(String)
     institution_code = Column(String, nullable=True)  # 장기요양기관코드 (공단 API 조회용, 11자리)
     logo_image = Column(Text, nullable=True)  # 센터 이미지/로고 base64 data URL
+    alimtalk_balance = Column(Integer, default=0)  # 알림톡 월 무료 한도를 넘긴 뒤 건당 차감되는 충전 잔액(원)
     manager_id = Column(Integer, ForeignKey("users.id"))
     residents_count = Column(Integer)
     caregivers_count = Column(Integer)
@@ -222,6 +223,19 @@ class Notification(Base):
     message = Column(String)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class AlimtalkUsage(Base):
+    """센터별 월간 알림톡 발송 현황 - 무료 한도 소진 여부와 충전 잔액 차감 건수를 추적한다."""
+    __tablename__ = "alimtalk_usage"
+    __table_args__ = (UniqueConstraint("center_id", "year_month", name="uq_alimtalk_usage_center_month"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    year_month = Column(String)  # 'YYYY-MM'
+    free_sent = Column(Integer, default=0)  # 무료 한도로 보낸 건수
+    paid_sent = Column(Integer, default=0)  # 충전 잔액으로 보낸 건수
+    blocked_count = Column(Integer, default=0)  # 한도·잔액 부족으로 못 보낸 건수(참고용 - 인앱 알림은 이와 무관하게 전송됨)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class GuardianInvite(Base):
     __tablename__ = "guardian_invites"

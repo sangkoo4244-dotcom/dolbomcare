@@ -5,6 +5,7 @@ from app.auth import get_current_user
 from app.database import get_db
 from app.models import Notification, User
 from app.alimtalk import send_alimtalk, TEMPLATE_IDS
+from app.alimtalk_billing import reserve_send
 
 router = APIRouter()
 
@@ -17,7 +18,8 @@ def notify(db: Session, user_id: int, kind: str, message: str) -> None:
         user = db.query(User).filter(User.id == user_id).first()
         if user and user.phone and user.alimtalk_opt_in:
             allowed = not user.alimtalk_categories or kind in user.alimtalk_categories.split(",")
-            if allowed:
+            # 무료 한도·충전 잔액이 없으면 알림톡만 건너뛴다 - 위 인앱 알림은 이미 저장됐다
+            if allowed and reserve_send(db, user.center_id):
                 send_alimtalk(user.phone, kind, message)
 
 

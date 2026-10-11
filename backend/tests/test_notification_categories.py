@@ -27,7 +27,7 @@ def setup(tmp_path, monkeypatch):
     db.add(models.Center(id=1, name="테스트센터"))
     db.add(models.User(
         id=1, email="guardian@test.com", full_name="보호자", role="guardian",
-        phone="010-1234-5678", alimtalk_opt_in=True,
+        phone="010-1234-5678", alimtalk_opt_in=True, center_id=1,
     ))
     db.commit()
     db.close()
