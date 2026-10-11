@@ -195,12 +195,19 @@
                 </div>
 
                 <div class="demo-box">
-                    <div class="demo-title">신청 전에 먼저 둘러만 보고 싶다면</div>
-                    <p class="demo-desc">아래는 우리 센터가 아니라 샘플 데이터로 채워진 공용 체험 계정입니다.</p>
-                    <div class="demo-buttons">
-                        <button type="button" class="demo-button" onclick="handleLogin('demo_center_manager@dolbomcare.app', 'demo1234!')">센터장으로 둘러보기</button>
-                        <button type="button" class="demo-button" onclick="handleLogin('demo_caregiver@dolbomcare.app', 'demo1234!')">요양보호사로 둘러보기</button>
-                        <button type="button" class="demo-button" onclick="handleLogin('demo_guardian@dolbomcare.app', 'demo1234!')">보호자로 둘러보기</button>
+                    <div id="demoActiveBox">
+                        <div class="demo-title">신청 전에 먼저 둘러만 보고 싶다면</div>
+                        <p class="demo-desc">아래는 우리 센터가 아니라 샘플 데이터로 채워진 공용 체험 계정입니다. (이 브라우저에서 처음 누른 날로부터 3일간 이용 가능)</p>
+                        <div class="demo-buttons">
+                            <button type="button" class="demo-button" onclick="handleDemoLogin('demo_center_manager@dolbomcare.app', 'demo1234!')">센터장으로 둘러보기</button>
+                            <button type="button" class="demo-button" onclick="handleDemoLogin('demo_caregiver@dolbomcare.app', 'demo1234!')">요양보호사로 둘러보기</button>
+                            <button type="button" class="demo-button" onclick="handleDemoLogin('demo_guardian@dolbomcare.app', 'demo1234!')">보호자로 둘러보기</button>
+                        </div>
+                    </div>
+                    <div id="demoExpiredBox" style="display:none;">
+                        <div class="demo-title">둘러보기 체험 기간(3일)이 끝났습니다</div>
+                        <p class="demo-desc">더 보시려면 우리 센터로 실제 15일 무료체험을 신청해 주세요. 샘플이 아닌 우리 센터만의 데이터로 바로 시작할 수 있습니다.</p>
+                        <button type="button" class="trial-cta-button" onclick="openTrialRequestModal()">15일 무료체험 신청하기</button>
                     </div>
                 </div>
 
@@ -432,6 +439,33 @@
             }
         }
 
+        // 둘러보기(공용 데모 계정)는 영구 체험 계정으로 눌러앉지 않도록, 이 브라우저에서
+        // 처음 누른 시점부터 3일만 쓸 수 있게 한다. 서버 계정 자체를 막는 게 아니라
+        // 이 기기의 localStorage만 보는 것이라 다른 방문자에게는 영향이 없다.
+        const DEMO_TRIAL_DAYS = 3;
+        const DEMO_FIRST_USE_KEY = 'demo_browse_first_used_at';
+
+        function isDemoTrialExpired() {
+            const firstUse = localStorage.getItem(DEMO_FIRST_USE_KEY);
+            if (!firstUse) return false;
+            const elapsedMs = Date.now() - Number(firstUse);
+            return elapsedMs > DEMO_TRIAL_DAYS * 24 * 60 * 60 * 1000;
+        }
+
+        function applyDemoTrialState() {
+            const expired = isDemoTrialExpired();
+            document.getElementById('demoActiveBox').style.display = expired ? 'none' : '';
+            document.getElementById('demoExpiredBox').style.display = expired ? '' : 'none';
+        }
+
+        async function handleDemoLogin(email, password) {
+            if (isDemoTrialExpired()) { applyDemoTrialState(); return; }
+            if (!localStorage.getItem(DEMO_FIRST_USE_KEY)) {
+                localStorage.setItem(DEMO_FIRST_USE_KEY, String(Date.now()));
+            }
+            await handleLogin(email, password);
+        }
+
         // 폼 제출 (Enter 키도 여기로 온다)
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -453,6 +487,7 @@
                 rememberMeCheckbox.checked = true;
                 passwordInput.focus();
             }
+            applyDemoTrialState();
         });
     </script>
 </body>
