@@ -37,8 +37,8 @@ def test_search_includes_coordinates_for_map_display(monkeypatch):
     monkeypatch.setattr(kakao_local.httpx, "get", lambda *a, **k: SimpleNamespace(
         raise_for_status=lambda: None,
         json=lambda: {"documents": [
-            {"place_name": "사랑요양원", "x": "127.0276", "y": "37.4979"},
-            {"place_name": "좌표없는곳", "x": "", "y": ""},
+            {"place_name": "사랑요양원", "category_name": "의료,건강>요양원", "x": "127.0276", "y": "37.4979"},
+            {"place_name": "좌표없는곳", "category_name": "의료,건강>요양원", "x": "", "y": ""},
         ]},
     ))
     result = kakao_local.search_nearby_facilities("강남구 요양원")
@@ -46,6 +46,25 @@ def test_search_includes_coordinates_for_map_display(monkeypatch):
     assert result["places"][0]["longitude"] == 127.0276
     assert result["places"][1]["latitude"] is None
     assert result["places"][1]["longitude"] is None
+
+
+def test_search_filters_out_results_unrelated_to_care_facilities(monkeypatch):
+    """지역명만 검색하면("강남") 카카오가 업종 제한 없이 관광명소 등을 섞어 돌려준다 - 돌봄
+    관련 분류명이 아닌 결과는 걸러내야 한다."""
+    monkeypatch.setattr(kakao_local, "KAKAO_REST_API_KEY", "dummy-key")
+    monkeypatch.setattr(kakao_local.httpx, "get", lambda *a, **k: SimpleNamespace(
+        raise_for_status=lambda: None,
+        json=lambda: {"documents": [
+            {"place_name": "강남스타일동상", "category_name": "여행>관광,명소>동상"},
+            {"place_name": "사랑요양원", "category_name": "의료,건강>요양,간병>요양원"},
+            {"place_name": "드림주야간보호센터", "category_name": "사회,공공기관>단체,협회>사회복지시설>노인복지시설"},
+        ]},
+    ))
+    result = kakao_local.search_nearby_facilities("강남")
+    names = [p["name"] for p in result["places"]]
+    assert "강남스타일동상" not in names
+    assert "사랑요양원" in names
+    assert "드림주야간보호센터" in names
 
 
 def test_search_handles_no_results(monkeypatch):

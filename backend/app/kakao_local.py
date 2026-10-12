@@ -12,6 +12,10 @@ import os
 import httpx
 
 KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY")
+# 카카오 키워드 검색은 업종 제한이 없는 자유 텍스트 매칭이라, "강남"처럼 지역명만 검색하면
+# 관광명소·카페 같은 전혀 무관한 결과가 섞여 나온다(공식 category_group_code에도 요양시설
+# 전용 코드가 없음). 그래서 응답받은 뒤 분류명에 돌봄 관련 단어가 있는 것만 남긴다.
+CARE_CATEGORY_KEYWORDS = ("요양", "노인", "간병", "복지")
 # 지도를 그리는 브라우저용 키. REST API 키와 발급 경로가 다르고(카카오맵 JavaScript 키),
 # 카카오 디벨로퍼스에서 이 키를 쓸 도메인(플랫폼)을 따로 등록해야 지도가 뜬다. 공개되어도
 # 되는 키라서(도메인으로 제한됨) 프런트에 그대로 내려줘도 된다.
@@ -55,6 +59,7 @@ def search_nearby_facilities(query: str) -> dict:
             "longitude": _coord(d, "x"),
         }
         for d in data.get("documents", [])
+        if any(kw in (d.get("category_name") or "") for kw in CARE_CATEGORY_KEYWORDS)
     ]
     return {"ok": True, "message": "", "places": places}
 
