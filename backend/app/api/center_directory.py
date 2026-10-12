@@ -5,10 +5,17 @@ from sqlalchemy.orm import Session
 
 from app.api.centers import _to_directory_dict
 from app.database import get_db
-from app.kakao_local import search_nearby_facilities
+from app.kakao_local import KAKAO_JS_KEY, search_nearby_facilities
 from app.models import Center
 
 router = APIRouter()
+
+
+@router.get("/kakao-js-key")
+def get_kakao_js_key():
+    """센터 찾기 지도에 쓸 카카오맵 JavaScript 키 (공개 가능 - 도메인으로 제한됨).
+    미설정이면 key: null을 내려주고, 화면은 지도 없이 목록만 보여준다."""
+    return {"key": KAKAO_JS_KEY}
 
 
 @router.get("/directory")

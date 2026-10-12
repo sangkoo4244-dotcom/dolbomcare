@@ -12,7 +12,12 @@ import os
 import httpx
 
 KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY")
+# 지도를 그리는 브라우저용 키. REST API 키와 발급 경로가 다르고(카카오맵 JavaScript 키),
+# 카카오 디벨로퍼스에서 이 키를 쓸 도메인(플랫폼)을 따로 등록해야 지도가 뜬다. 공개되어도
+# 되는 키라서(도메인으로 제한됨) 프런트에 그대로 내려줘도 된다.
+KAKAO_JS_KEY = os.getenv("KAKAO_JS_KEY")
 SEARCH_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
+ADDRESS_SEARCH_URL = "https://dapi.kakao.com/v2/local/search/address.json"
 
 
 def search_nearby_facilities(query: str) -> dict:
@@ -44,3 +49,27 @@ def search_nearby_facilities(query: str) -> dict:
         for d in data.get("documents", [])
     ]
     return {"ok": True, "message": "", "places": places}
+
+
+def geocode_address(address: str):
+    """주소 문자열 -> (위도, 경도). 센터 찾기 지도/거리 계산에 쓸 좌표를 한 번만 구해 저장해 둔다.
+
+    실패해도(키 미설정, 주소 매칭 실패 등) 예외를 던지지 않고 None을 돌려준다 - 센터 정보 저장
+    자체는 좌표 없이도 계속 되어야 한다.
+    """
+    if not KAKAO_REST_API_KEY or not address or not address.strip():
+        return None
+    try:
+        response = httpx.get(
+            ADDRESS_SEARCH_URL,
+            headers={"Authorization": f"KakaoAK {KAKAO_REST_API_KEY}"},
+            params={"query": address.strip()},
+            timeout=10,
+        )
+        response.raise_for_status()
+        documents = response.json().get("documents", [])
+        if not documents:
+            return None
+        return float(documents[0]["y"]), float(documents[0]["x"])
+    except Exception:
+        return None

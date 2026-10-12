@@ -52,3 +52,42 @@ def test_search_handles_request_failure(monkeypatch):
     result = kakao_local.search_nearby_facilities("강남구 요양원")
     assert result["ok"] is False
     assert "연결 실패" in result["message"]
+
+
+def test_geocode_without_api_key_returns_none(monkeypatch):
+    monkeypatch.setattr(kakao_local, "KAKAO_REST_API_KEY", None)
+    assert kakao_local.geocode_address("서울시 강남구") is None
+
+
+def test_geocode_without_address_returns_none(monkeypatch):
+    monkeypatch.setattr(kakao_local, "KAKAO_REST_API_KEY", "dummy-key")
+    assert kakao_local.geocode_address("") is None
+    assert kakao_local.geocode_address(None) is None
+
+
+def test_geocode_parses_coordinates_on_success(monkeypatch):
+    monkeypatch.setattr(kakao_local, "KAKAO_REST_API_KEY", "dummy-key")
+    monkeypatch.setattr(kakao_local.httpx, "get", lambda *a, **k: SimpleNamespace(
+        raise_for_status=lambda: None,
+        json=lambda: {"documents": [{"y": "37.498", "x": "127.027"}]},
+    ))
+    result = kakao_local.geocode_address("서울시 강남구 테헤란로 1")
+    assert result == (37.498, 127.027)
+
+
+def test_geocode_handles_no_match(monkeypatch):
+    monkeypatch.setattr(kakao_local, "KAKAO_REST_API_KEY", "dummy-key")
+    monkeypatch.setattr(kakao_local.httpx, "get", lambda *a, **k: SimpleNamespace(
+        raise_for_status=lambda: None, json=lambda: {"documents": []},
+    ))
+    assert kakao_local.geocode_address("존재하지않는주소입니다") is None
+
+
+def test_geocode_handles_request_failure(monkeypatch):
+    monkeypatch.setattr(kakao_local, "KAKAO_REST_API_KEY", "dummy-key")
+
+    def raise_error(*a, **k):
+        raise Exception("연결 실패")
+
+    monkeypatch.setattr(kakao_local.httpx, "get", raise_error)
+    assert kakao_local.geocode_address("서울시 강남구") is None

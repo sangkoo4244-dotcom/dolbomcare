@@ -50,7 +50,7 @@ def test_directory_only_lists_opted_in_centers(client):
 def test_directory_hides_operational_fields(client):
     res = client.get("/api/v1/centers/directory")
     center = res.json()["centers"][0]
-    assert set(center.keys()) == {"id", "name", "address", "phone", "logo_image"}
+    assert set(center.keys()) == {"id", "name", "address", "phone", "logo_image", "latitude", "longitude", "service_types"}
 
 
 def test_directory_search_by_name(client):
@@ -75,6 +75,21 @@ def test_nearby_facilities_requires_no_login_and_fails_gracefully_without_key(cl
     res = client.get("/api/v1/centers/nearby-facilities?q=강남구 요양원")
     assert res.status_code == 200
     assert res.json()["ok"] is False
+
+
+def test_kakao_js_key_endpoint_returns_none_without_env(client, monkeypatch):
+    from app.api import center_directory
+    monkeypatch.setattr(center_directory, "KAKAO_JS_KEY", None)
+    res = client.get("/api/v1/centers/kakao-js-key")
+    assert res.status_code == 200
+    assert res.json()["key"] is None
+
+
+def test_kakao_js_key_endpoint_returns_configured_key(client, monkeypatch):
+    from app.api import center_directory
+    monkeypatch.setattr(center_directory, "KAKAO_JS_KEY", "dummy-js-key")
+    res = client.get("/api/v1/centers/kakao-js-key")
+    assert res.json()["key"] == "dummy-js-key"
 
 
 def test_nearby_facilities_returns_kakao_results(client, monkeypatch):

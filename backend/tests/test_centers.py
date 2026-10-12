@@ -115,3 +115,33 @@ def test_manager_can_opt_into_public_directory(client):
     assert res.json()["data"]["is_public_listed"] is True
     res = client.get("/api/v1/centers/me", headers=MANAGER)
     assert res.json()["is_public_listed"] is True
+
+
+def test_manager_can_set_service_types(client):
+    res = client.put("/api/v1/centers/me", headers=MANAGER, json={"service_types": ["방문요양", "방문목욕"]})
+    assert res.status_code == 200
+    assert set(res.json()["data"]["service_types"]) == {"방문요양", "방문목욕"}
+
+
+def test_service_types_ignores_unknown_values(client):
+    res = client.put("/api/v1/centers/me", headers=MANAGER, json={"service_types": ["방문요양", "없는서비스"]})
+    assert res.json()["data"]["service_types"] == ["방문요양"]
+
+
+def test_address_change_attempts_geocode_and_fails_open_without_key(client, monkeypatch):
+    """카카오 키가 없는 테스트 환경에서도 주소 저장 자체는 계속 성공해야 한다 (좌표만 비게 됨)."""
+    from app.api import centers
+    monkeypatch.setattr(centers, "geocode_address", lambda addr: None)
+    res = client.put("/api/v1/centers/me", headers=MANAGER, json={"address": "부산시 해운대구"})
+    assert res.status_code == 200
+    assert res.json()["data"]["latitude"] is None
+
+
+def test_address_change_stores_geocoded_coordinates(client, monkeypatch):
+    from app.api import centers
+    monkeypatch.setattr(centers, "geocode_address", lambda addr: (35.163, 129.163))
+    res = client.put("/api/v1/centers/me", headers=MANAGER, json={"address": "부산시 해운대구"})
+    assert res.status_code == 200
+    data = res.json()["data"]
+    assert data["latitude"] == 35.163
+    assert data["longitude"] == 129.163

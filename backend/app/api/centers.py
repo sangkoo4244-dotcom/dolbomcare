@@ -7,9 +7,13 @@ from sqlalchemy.orm import Session
 from app.alimtalk_billing import get_usage_summary
 from app.auth import require_manager
 from app.database import get_db
+from app.kakao_local import geocode_address
 from app.models import Center, User
 
 router = APIRouter()
+
+# 장기요양보험 급여 종류 중 센터가 실제로 제공 중인 항목을 직접 고르게 한다 (추측으로 채우지 않음).
+SERVICE_TYPE_OPTIONS = ["방문요양", "방문목욕", "방문간호", "주야간보호", "단기보호", "가사활동 지원"]
 
 
 def _to_dict(center: Center) -> dict:
@@ -21,6 +25,9 @@ def _to_dict(center: Center) -> dict:
         "institution_code": center.institution_code,
         "logo_image": center.logo_image,
         "is_public_listed": bool(center.is_public_listed),
+        "latitude": center.latitude,
+        "longitude": center.longitude,
+        "service_types": [s for s in (center.service_types or "").split(",") if s],
     }
 
 
@@ -32,6 +39,9 @@ def _to_directory_dict(center: Center) -> dict:
         "address": center.address,
         "phone": center.phone,
         "logo_image": center.logo_image,
+        "latitude": center.latitude,
+        "longitude": center.longitude,
+        "service_types": [s for s in (center.service_types or "").split(",") if s],
     }
 
 
@@ -51,6 +61,7 @@ class CenterUpdate(BaseModel):
     institution_code: Optional[str] = None
     logo_image: Optional[str] = None  # base64 data URL. 빈 문자열이면 이미지 제거로 본다
     is_public_listed: Optional[bool] = None  # 예비 보호자용 공개 디렉토리 노출 동의
+    service_types: Optional[list] = None  # SERVICE_TYPE_OPTIONS 중 센터가 고른 항목
 
 
 @router.put("/me")
@@ -66,8 +77,13 @@ def update_my_center(
 
     if body.name is not None:
         center.name = body.name
-    if body.address is not None:
+    if body.address is not None and body.address != center.address:
         center.address = body.address
+        geocoded = geocode_address(body.address)
+        if geocoded:
+            center.latitude, center.longitude = geocoded
+        else:
+            center.latitude, center.longitude = None, None
     if body.phone is not None:
         center.phone = body.phone
     if body.institution_code is not None:
@@ -76,6 +92,9 @@ def update_my_center(
         center.logo_image = body.logo_image or None
     if body.is_public_listed is not None:
         center.is_public_listed = body.is_public_listed
+    if body.service_types is not None:
+        valid = [s for s in body.service_types if s in SERVICE_TYPE_OPTIONS]
+        center.service_types = ",".join(valid) if valid else None
 
     db.commit()
     db.refresh(center)

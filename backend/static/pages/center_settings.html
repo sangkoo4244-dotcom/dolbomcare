@@ -59,6 +59,10 @@
         .lookup-table .apply-btn:hover { border-color: var(--teal); color: var(--teal); }
         .lookup-note { font-size: 12px; color: #94A3B8; margin-top: 10px; line-height: 1.5; }
         .lookup-section-title { font-size: 13px; font-weight: 800; color: var(--navy); margin: 16px 0 4px; }
+
+        .svc-pill { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; border: 1.5px solid var(--line2); font-size: 13px; font-weight: 600; cursor: pointer; color: var(--charcoal); background: #fff; }
+        .svc-pill input { width: 14px; height: 14px; margin: 0; }
+        .svc-pill.checked { border-color: var(--teal); background: #EDF8F6; color: var(--teal); }
     </style>
     <script src="menu.js"></script>
     <script>
@@ -129,6 +133,11 @@
                     </div>
                 </div>
                 <div class="field">
+                    <label>제공 서비스 종류</label>
+                    <div class="sub" style="margin-top:-2px;margin-bottom:8px;">센터 찾기 화면에서 보호자가 종류별로 찾을 수 있도록, 실제로 제공 중인 서비스만 선택하세요.</div>
+                    <div id="serviceTypeOptions" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+                </div>
+                <div class="field">
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
                         <input type="checkbox" id="fPublicListed" style="width:16px;height:16px;">
                         센터를 아직 못 정한 예비 보호자용 공개 디렉토리에 우리 센터 노출하기
@@ -157,6 +166,24 @@
     <script>
         const API_URL = '/api/v1';
         let currentUser = null;
+
+        // app/api/centers.py의 SERVICE_TYPE_OPTIONS와 동일하게 맞춘다. 여기 없는 값은 서버가 무시한다.
+        const SERVICE_TYPE_OPTIONS = ['방문요양', '방문목욕', '방문간호', '주야간보호', '단기보호', '가사활동 지원'];
+        let selectedServiceTypes = new Set();
+
+        function renderServiceTypeOptions() {
+            const wrap = document.getElementById('serviceTypeOptions');
+            wrap.innerHTML = SERVICE_TYPE_OPTIONS.map(s => `
+                <label class="svc-pill ${selectedServiceTypes.has(s) ? 'checked' : ''}" data-svc="${s}">
+                    <input type="checkbox" ${selectedServiceTypes.has(s) ? 'checked' : ''} onchange="toggleServiceType('${s}', this.checked)">
+                    ${s}
+                </label>`).join('');
+        }
+
+        function toggleServiceType(s, checked) {
+            if (checked) selectedServiceTypes.add(s); else selectedServiceTypes.delete(s);
+            renderServiceTypeOptions();
+        }
 
         function loadUserInfo() {
             const user = JSON.parse(localStorage.getItem('user'));
@@ -210,6 +237,8 @@
                 document.getElementById('fInstCode').value = d.institution_code || '';
                 document.getElementById('fPublicListed').checked = !!d.is_public_listed;
                 document.getElementById('logoPreview').src = d.logo_image || 'assets/user_design/29_top_profile_icon.png';
+                selectedServiceTypes = new Set(d.service_types || []);
+                renderServiceTypeOptions();
             } catch (e) {
                 showMsg('센터 정보를 불러오지 못했습니다', false);
             }
@@ -265,6 +294,7 @@
                 phone: document.getElementById('fPhone').value,
                 institution_code: document.getElementById('fInstCode').value,
                 is_public_listed: document.getElementById('fPublicListed').checked,
+                service_types: Array.from(selectedServiceTypes),
             };
             if (pendingLogoImage) body.logo_image = pendingLogoImage;
             try {

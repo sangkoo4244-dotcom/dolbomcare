@@ -9,9 +9,8 @@
     <style>
         /* ===== Premium Healthcare Management SaaS 톤 (guardian_home.html과 동일, 보호자 공통) ===== */
         :root {
-            --navy: #14283F; --ink: #1E2B26; --muted: #5B6B7A; --teal: #0F8B80; --teal-dark: #0C756C;
-            --clay: #B5532F; --clay-bg: #FBEDE7; --charcoal: #243247;
-            --warn: #B45309; --danger: #DC2626; --line2: #E4E1DA;
+            --navy: #14283F; --teal: #0F8B80; --teal-dark: #0C756C; --charcoal: #243247; --muted: #64748B;
+            --warn: #B45309; --warn-bg: #FFF7EB; --warn-line: #FCE2B5; --danger: #DC2626; --line2: #E2E8F0; --bg: #F5F7FA;
         }
         aside.w-72 { background: var(--navy) !important; }
         .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; text-transform: uppercase; }
@@ -31,48 +30,79 @@
         @media (max-width: 640px) {
             .g-header-row { flex-wrap: wrap; row-gap: 10px; }
             .g-date-chip { display: none; }
+            .center-card { flex-wrap: wrap; }
+            .card-actions { width: 100%; }
+            .card-actions .call-btn, .card-actions .consult-btn { flex: 1; }
         }
 
-        .intro { font-size: 18px; color: var(--muted); line-height: 1.6; margin: 0 0 22px; max-width: 64ch; }
+        .icon-circle { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .icon-circle svg { width: 18px; height: 18px; }
+        .icon-circle.teal { background: #E6F3F1; color: var(--teal); }
+        .icon-circle.warn { background: var(--warn-bg); color: var(--warn); }
 
-        .search-field { display: flex; align-items: center; gap: 10px; background: #fff; border: 1.5px solid var(--line2); border-radius: 14px; padding: 7px 7px 7px 20px; max-width: 620px; box-shadow: 0 2px 10px rgba(20,40,63,0.04); }
+        .search-panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 22px 24px; box-shadow: 0 1px 3px rgba(20,40,63,0.05); }
+        .panel-label { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; color: var(--charcoal); margin-bottom: 16px; }
+        .search-field { display: flex; align-items: center; gap: 10px; background: #fff; border: 1.5px solid var(--line2); border-radius: 11px; padding: 6px 6px 6px 18px; }
         .search-field:focus-within { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(15,139,128,0.12); }
         .search-field svg { width: 20px; height: 20px; color: var(--muted); flex: 0 0 auto; }
-        .search-field input { flex: 1; height: 50px; border: none; outline: none; font-size: 17px; background: transparent; color: var(--ink); font-family: inherit; }
-        .search-field button { height: 46px; padding: 0 24px; border-radius: 10px; border: none; background: var(--teal); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
+        .search-field input { flex: 1; height: 48px; border: none; outline: none; font-size: 17px; background: transparent; color: var(--charcoal); font-family: inherit; }
+        .search-field button { height: 44px; padding: 0 24px; border-radius: 9px; border: none; background: var(--teal); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
         .search-field button:hover { background: var(--teal-dark); }
 
-        .section { padding: 30px 0; }
-        .section + .section { border-top: 1px solid var(--line2); }
-        .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
-        .section-head h2 { font-size: 22px; font-weight: 800; color: var(--navy); margin: 0; }
-        .section-head .count { font-size: 14.5px; color: var(--muted); }
-        .section-desc { font-size: 15px; color: var(--muted); margin: 8px 0 20px; line-height: 1.6; max-width: 64ch; }
-        .section-desc .ref-tag { color: var(--clay); font-weight: 700; }
+        .section { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 24px 26px; margin-top: 20px; box-shadow: 0 1px 3px rgba(20,40,63,0.05); }
+        .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+        .section-head .title-row { display: flex; align-items: center; gap: 12px; }
+        .section-head h2 { font-size: 20px; font-weight: 800; color: var(--navy); margin: 0; }
+        .section-head .count { font-size: 14.5px; color: var(--muted); font-weight: 600; }
+        .section-desc { font-size: 14.5px; color: var(--muted); margin: 0 0 18px 46px; line-height: 1.6; max-width: 64ch; }
+        .section-desc .ref-tag { display: inline-block; font-size: 11.5px; font-weight: 700; color: var(--warn); background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 999px; padding: 2px 10px; margin-right: 4px; }
 
-        .result-list { animation: riseIn .35s ease both; }
-        @keyframes riseIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+        .filter-row select { height: 40px; padding: 0 12px; border: 1.5px solid var(--line2); border-radius: 9px; font-size: 14px; font-family: inherit; color: var(--charcoal); background: #fff; }
+        .filter-row button { height: 40px; padding: 0 16px; border-radius: 9px; border: 1.5px solid var(--line2); background: #fff; font-size: 14px; font-weight: 700; color: var(--charcoal); cursor: pointer; font-family: inherit; white-space: nowrap; }
+        .filter-row button:hover { border-color: var(--teal); color: var(--teal); }
+        .filter-row button.active { background: #EDF8F6; border-color: var(--teal); color: var(--teal); }
 
-        .center-row { display: flex; align-items: flex-start; gap: 18px; padding: 22px 6px 22px 20px; border-left: 3px solid var(--teal); border-bottom: 1px solid var(--line2); background: #fff; }
-        .center-row:first-child { border-top-left-radius: 10px; border-top-right-radius: 10px; }
-        .center-row:last-child { border-bottom: none; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
-        .center-row img { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; background: #F1F5F9; flex: 0 0 auto; margin-top: 2px; }
-        .center-row .info { flex: 1; min-width: 180px; }
-        .center-row .name { font-size: 19px; font-weight: 800; color: var(--navy); }
-        .center-row .meta { font-size: 15px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
-        .center-row .consult-btn { height: 44px; padding: 0 20px; border-radius: 10px; border: 1.5px solid var(--teal); background: #fff; color: var(--teal); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; align-self: center; }
-        .center-row .consult-btn:hover { background: #EDF8F6; }
+        .list-map-layout { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+        @media (min-width: 980px) {
+            .list-map-layout.has-map { grid-template-columns: 1.25fr 1fr; }
+        }
+        .map-panel { display: none; border: 1px solid var(--line2); border-radius: 12px; overflow: hidden; height: 420px; position: sticky; top: 16px; }
+        .map-panel > div { width: 100%; height: 100%; }
 
-        .facility-row { padding: 16px 6px; border-bottom: 1px solid var(--line2); }
-        .facility-row:last-child { border-bottom: none; }
-        .facility-row .name-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-        .facility-row .name { font-size: 16.5px; font-weight: 700; color: var(--ink); }
-        .facility-row .category { font-size: 13px; color: var(--teal); }
-        .facility-row .meta { font-size: 14.5px; color: var(--muted); margin-top: 5px; }
-        .facility-row a.map-link { font-size: 14px; color: var(--clay); font-weight: 700; text-decoration: none; margin-left: 8px; }
-        .facility-row a.map-link:hover { text-decoration: underline; }
+        .name-line { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .dist-badge { font-size: 12.5px; font-weight: 700; color: var(--teal); background: #EDF8F6; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+        .svc-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .svc-tag { font-size: 12px; font-weight: 600; color: var(--teal); background: #EDF8F6; border-radius: 999px; padding: 3px 10px; }
 
-        .empty-note { padding: 44px 8px; color: var(--muted); font-size: 16px; line-height: 1.6; }
+        .center-card {
+            background: #FBFDFC; border: 1px solid var(--line2); border-radius: 12px; padding: 20px 22px;
+            margin-bottom: 12px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+        }
+        .center-card:last-child { margin-bottom: 0; }
+        .center-card img { width: 72px; height: 72px; border-radius: 12px; object-fit: cover; background: #F1F5F9; flex: 0 0 auto; border: 2px solid #CDEAE5; }
+        .center-card .info { flex: 1; min-width: 180px; }
+        .center-card .name { font-size: 18.5px; font-weight: 800; color: var(--navy); }
+        .meta-row { display: flex; align-items: center; gap: 6px; font-size: 14.5px; color: var(--muted); margin-top: 6px; }
+        .meta-row svg { width: 15px; height: 15px; flex: 0 0 auto; color: #94A3B8; }
+        .meta-row a { color: var(--muted); text-decoration: none; }
+        .meta-row a:hover { color: var(--teal); text-decoration: underline; }
+        .card-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+        .call-btn { height: 44px; padding: 0 16px; border-radius: 9px; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); font-size: 14.5px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+        .call-btn:hover { border-color: var(--teal); color: var(--teal); }
+        .call-btn svg { width: 16px; height: 16px; }
+        .center-card .consult-btn { height: 44px; padding: 0 20px; border-radius: 9px; border: 1.5px solid var(--teal); background: #fff; color: var(--teal); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
+        .center-card .consult-btn:hover { background: #EDF8F6; }
+
+        .facility-card { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 20px; margin-bottom: 10px; }
+        .facility-card .name-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+        .facility-card .name { font-size: 16px; font-weight: 700; color: var(--charcoal); }
+        .facility-card .category { font-size: 12.5px; color: var(--teal); }
+        .facility-card .meta-row { font-size: 14px; }
+        .facility-card a.map-link { font-size: 13.5px; color: var(--teal); font-weight: 700; text-decoration: none; margin-left: 10px; }
+        .facility-card a.map-link:hover { text-decoration: underline; }
+
+        .empty-note { text-align: center; padding: 40px 8px; color: var(--muted); font-size: 16px; line-height: 1.6; background: #fff; border: 1px solid var(--line2); border-radius: 12px; }
 
         /* 상담 신청 모달 */
         .trial-modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(20,40,63,0.45); align-items: center; justify-content: center; padding: 20px; z-index: 50; }
@@ -110,7 +140,7 @@
                 <div>
                     <div class="g-breadcrumb">홈 › <b>센터 찾기</b></div>
                     <h1 class="text-3xl font-bold text-[#1E3A5F] mt-1">센터 찾기</h1>
-                    <p class="text-sm text-gray-500 mt-1">다른 가족을 위한 센터가 필요하신가요? 돌봄케어와 함께하는 센터부터 보여드립니다.</p>
+                    <p class="text-sm text-gray-500 mt-1">우리 가족에게 필요한 돌봄 서비스를 제공하는 센터를 찾아보세요.</p>
                 </div>
                 <div class="flex items-center gap-6">
                     <div class="g-date-chip" id="headerDate"></div>
@@ -127,23 +157,50 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-8">
-                <div class="search-field">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
-                    <input id="searchInput" placeholder="센터명 또는 지역 (예: 강남구)" autocomplete="off">
-                    <button type="button" onclick="search()">검색</button>
-                </div>
-
-                <div class="section" style="padding-top:26px;">
-                    <div class="section-head">
-                        <h2>돌봄케어와 함께하는 센터</h2>
-                        <span class="count" id="resultCount"></span>
+                <div class="search-panel">
+                    <div class="panel-label">
+                        <span class="icon-circle teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg></span>
+                        지역 또는 센터명으로 찾아보세요
                     </div>
-                    <div id="resultList"></div>
+                    <div class="search-field">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+                        <input id="searchInput" placeholder="센터명 또는 지역 (예: 강남구)" autocomplete="off">
+                        <button type="button" onclick="search()">검색</button>
+                    </div>
                 </div>
 
                 <div class="section">
                     <div class="section-head">
-                        <h2>더 둘러보기</h2>
+                        <div class="title-row">
+                            <span class="icon-circle teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg></span>
+                            <h2>돌봄케어와 함께하는 센터</h2>
+                        </div>
+                        <span class="count" id="resultCount"></span>
+                    </div>
+                    <div class="filter-row">
+                        <select id="svcFilter" onchange="render()">
+                            <option value="">서비스 종류 전체</option>
+                            <option>방문요양</option>
+                            <option>방문목욕</option>
+                            <option>방문간호</option>
+                            <option>주야간보호</option>
+                            <option>단기보호</option>
+                            <option>가사활동 지원</option>
+                        </select>
+                        <button type="button" id="locateBtn" onclick="toggleLocationSort()">📍 가까운 순으로 보기</button>
+                    </div>
+                    <div class="list-map-layout" id="listMapLayout">
+                        <div id="resultList"></div>
+                        <div class="map-panel" id="mapPanel"><div id="centerMap"></div></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-head">
+                        <div class="title-row">
+                            <span class="icon-circle warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
+                            <h2>더 둘러보기</h2>
+                        </div>
                     </div>
                     <p class="section-desc"><span class="ref-tag">참고용</span> · 카카오맵 검색 결과입니다. 공단이 인증한 기관 목록은 아니니, 정확한 정보는 시설에 직접 확인해 주세요.</p>
                     <div class="search-field">
@@ -196,6 +253,11 @@
         let currentUser = null;
         const API_URL = '/api/v1';
         let centers = [];
+        let sortByDistance = false;
+        let userCoords = null;
+        let kakaoMapReady = false;
+        let mapInstance = null;
+        let lastVisible = [];
 
         function escapeHtml(text) {
             const div = document.createElement('div');
@@ -217,26 +279,153 @@
             }
         }
 
-        function render() {
-            document.getElementById('resultCount').textContent = centers.length ? `${centers.length}곳` : '';
-            const list = document.getElementById('resultList');
-            if (!centers.length) {
-                list.innerHTML = '<div class="empty-note">아직 이 지역에 공개된 센터가 없습니다. 아래에서 주변 시설을 먼저 둘러보세요.</div>';
-                return;
-            }
-            list.innerHTML = `<div class="result-list">${centers.map((c, i) => `
-                <div class="center-row">
-                    <img src="${c.logo_image || 'assets/user_design/29_top_profile_icon.png'}" alt="">
-                    <div class="info">
-                        <div class="name">${escapeHtml(c.name)}</div>
-                        <div class="meta">${[c.address, c.phone].filter(Boolean).map(escapeHtml).join(' · ')}</div>
-                    </div>
-                    <button type="button" class="consult-btn" onclick="openConsultModal(${i})">상담 신청</button>
-                </div>`).join('')}</div>`;
+        function haversineKm(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
-        function openConsultModal(i) {
-            const c = centers[i];
+        function toggleLocationSort() {
+            const btn = document.getElementById('locateBtn');
+            if (sortByDistance) {
+                sortByDistance = false;
+                btn.classList.remove('active');
+                btn.textContent = '📍 가까운 순으로 보기';
+                render();
+                return;
+            }
+            if (userCoords) {
+                sortByDistance = true;
+                btn.classList.add('active');
+                btn.textContent = '이름순으로 보기';
+                render();
+                return;
+            }
+            if (!navigator.geolocation) { alert('이 브라우저에서는 위치 확인을 지원하지 않습니다'); return; }
+            btn.textContent = '위치 확인 중...';
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    sortByDistance = true;
+                    btn.classList.add('active');
+                    btn.textContent = '이름순으로 보기';
+                    render();
+                },
+                () => {
+                    alert('위치 확인을 허용해야 가까운 순으로 볼 수 있습니다');
+                    btn.textContent = '📍 가까운 순으로 보기';
+                }
+            );
+        }
+
+        function render() {
+            const svc = document.getElementById('svcFilter').value;
+            let visible = svc ? centers.filter(c => (c.service_types || []).includes(svc)) : centers.slice();
+
+            visible = visible.map(c => ({
+                ...c,
+                _dist: (sortByDistance && userCoords && c.latitude != null && c.longitude != null)
+                    ? haversineKm(userCoords.lat, userCoords.lng, c.latitude, c.longitude) : null,
+            }));
+
+            if (sortByDistance && userCoords) {
+                visible.sort((a, b) => {
+                    if (a._dist == null && b._dist == null) return a.name.localeCompare(b.name);
+                    if (a._dist == null) return 1;
+                    if (b._dist == null) return -1;
+                    return a._dist - b._dist;
+                });
+            }
+
+            document.getElementById('resultCount').textContent = visible.length ? `${visible.length}곳` : '';
+            const list = document.getElementById('resultList');
+            if (!visible.length) {
+                list.innerHTML = centers.length
+                    ? '<div class="empty-note">선택한 조건에 맞는 센터가 없습니다.</div>'
+                    : '<div class="empty-note">아직 이 지역에 공개된 센터가 없습니다. 아래에서 주변 시설을 먼저 둘러보세요.</div>';
+            } else {
+                list.innerHTML = visible.map(c => `
+                    <div class="center-card">
+                        <img src="${c.logo_image || 'assets/user_design/29_top_profile_icon.png'}" alt="">
+                        <div class="info">
+                            <div class="name-line">
+                                <span class="name">${escapeHtml(c.name)}</span>
+                                ${c._dist != null ? `<span class="dist-badge">${c._dist.toFixed(1)}km</span>` : ''}
+                            </div>
+                            ${c.address ? `<div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${escapeHtml(c.address)}</div>` : ''}
+                            ${c.phone ? `<div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg><a href="tel:${escapeHtml(c.phone)}">${escapeHtml(c.phone)}</a></div>` : ''}
+                            ${c.service_types && c.service_types.length ? `<div class="svc-tags">${c.service_types.map(s => `<span class="svc-tag">${escapeHtml(s)}</span>`).join('')}</div>` : ''}
+                        </div>
+                        <div class="card-actions">
+                            ${c.phone ? `<a class="call-btn" href="tel:${escapeHtml(c.phone)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>전화하기</a>` : ''}
+                            <button type="button" class="consult-btn" onclick="openConsultModal(${c.id})">상담 신청</button>
+                        </div>
+                    </div>`).join('');
+            }
+
+            lastVisible = visible;
+            renderMap(visible);
+        }
+
+        async function initKakaoMap() {
+            try {
+                const res = await fetch(`${API_URL}/centers/kakao-js-key`);
+                const d = await res.json();
+                if (!d.key) return;
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = `https://dapi.kakao.com/v3/sdk.js?appkey=${encodeURIComponent(d.key)}&autoload=false`;
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+                window.kakao.maps.load(() => {
+                    kakaoMapReady = true;
+                    renderMap(lastVisible);
+                });
+            } catch (e) {
+                // 지도 없이도 목록·전화·상담신청 기능은 그대로 동작해야 한다
+            }
+        }
+
+        function renderMap(visibleCenters) {
+            const layout = document.getElementById('listMapLayout');
+            const panel = document.getElementById('mapPanel');
+            const withCoords = (visibleCenters || []).filter(c => c.latitude != null && c.longitude != null);
+            if (!kakaoMapReady || !withCoords.length) {
+                panel.style.display = 'none';
+                layout.classList.remove('has-map');
+                return;
+            }
+            panel.style.display = 'block';
+            layout.classList.add('has-map');
+
+            const center = new kakao.maps.LatLng(withCoords[0].latitude, withCoords[0].longitude);
+            if (!mapInstance) {
+                mapInstance = new kakao.maps.Map(document.getElementById('centerMap'), { center, level: 8 });
+            }
+            (mapInstance.__markers || []).forEach(m => m.setMap(null));
+            mapInstance.__markers = withCoords.map(c => {
+                const pos = new kakao.maps.LatLng(c.latitude, c.longitude);
+                const marker = new kakao.maps.Marker({ position: pos, map: mapInstance });
+                const iw = new kakao.maps.InfoWindow({ content: `<div style="padding:6px 10px;font-size:13px;white-space:nowrap;">${escapeHtml(c.name)}</div>` });
+                kakao.maps.event.addListener(marker, 'click', () => iw.open(mapInstance, marker));
+                return marker;
+            });
+            if (withCoords.length > 1) {
+                const bounds = new kakao.maps.LatLngBounds();
+                withCoords.forEach(c => bounds.extend(new kakao.maps.LatLng(c.latitude, c.longitude)));
+                mapInstance.setBounds(bounds);
+            } else {
+                mapInstance.setCenter(center);
+            }
+        }
+
+        function openConsultModal(id) {
+            const c = centers.find(x => x.id === id);
+            if (!c) return;
             document.getElementById('cCenterName').value = c.name;
             document.getElementById('cName').value = currentUser?.full_name || '';
             document.getElementById('consultSub').textContent = `${c.name}에 상담을 신청합니다. 아래 정보를 보내주시면 센터에서 연락드립니다.`;
@@ -289,14 +478,14 @@
                     return;
                 }
                 document.getElementById('nearbyCount').textContent = `${d.places.length}곳`;
-                list.innerHTML = `<div class="result-list">${d.places.map(p => `
-                    <div class="facility-row">
+                list.innerHTML = d.places.map(p => `
+                    <div class="facility-card">
                         <div class="name-line">
                             <span class="name">${escapeHtml(p.name)}</span>
                             ${p.category ? `<span class="category">${escapeHtml(p.category)}</span>` : ''}
                         </div>
-                        <div class="meta">${[p.address, p.phone].filter(Boolean).map(escapeHtml).join(' · ')}${p.place_url ? ` <a class="map-link" href="${escapeHtml(p.place_url)}" target="_blank" rel="noopener">지도에서 보기</a>` : ''}</div>
-                    </div>`).join('')}</div>`;
+                        ${p.address ? `<div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${escapeHtml(p.address)}${p.phone ? ` · <a href="tel:${escapeHtml(p.phone)}">${escapeHtml(p.phone)}</a>` : ''}${p.place_url ? ` <a class="map-link" href="${escapeHtml(p.place_url)}" target="_blank" rel="noopener">지도에서 보기</a>` : ''}</div>` : ''}
+                    </div>`).join('');
             } catch (e) {
                 list.innerHTML = '<div class="empty-note">검색하지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
             }
@@ -315,6 +504,7 @@
             document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
             renderSidebar();
             search();
+            initKakaoMap();
         }
 
         function logout() { if (confirm('로그아웃하시겠습니까?')) { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html'; } }
