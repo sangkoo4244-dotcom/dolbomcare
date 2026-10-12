@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.api.centers import _to_directory_dict
 from app.database import get_db
+from app.kakao_local import search_nearby_facilities
 from app.models import Center
 
 router = APIRouter()
@@ -20,3 +21,10 @@ def list_public_centers(q: Optional[str] = None, db: Session = Depends(get_db)):
         query = query.filter((Center.name.like(like)) | (Center.address.like(like)))
     centers = query.order_by(Center.name).all()
     return {"centers": [_to_directory_dict(c) for c in centers]}
+
+
+@router.get("/nearby-facilities")
+def nearby_facilities(q: str):
+    """카카오맵 기반 "주변 요양시설" 참고용 검색 (로그인 불필요). 공단 인증 목록이 아니므로
+    참고용임을 화면에서 반드시 밝혀야 한다 - app/kakao_local.py 모듈 docstring 참고."""
+    return search_nearby_facilities(q)

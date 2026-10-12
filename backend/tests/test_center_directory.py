@@ -68,3 +68,22 @@ def test_directory_search_by_address(client):
 def test_directory_search_excludes_private_center_even_if_name_matches(client):
     res = client.get("/api/v1/centers/directory?q=테스트센터")
     assert res.json()["centers"] == []
+
+
+def test_nearby_facilities_requires_no_login_and_fails_gracefully_without_key(client, monkeypatch):
+    """카카오 키가 없는 환경(이 테스트 환경 포함)에서도 500이 아니라 "검색 불가" 결과를 줘야 한다."""
+    res = client.get("/api/v1/centers/nearby-facilities?q=강남구 요양원")
+    assert res.status_code == 200
+    assert res.json()["ok"] is False
+
+
+def test_nearby_facilities_returns_kakao_results(client, monkeypatch):
+    from app.api import center_directory
+    monkeypatch.setattr(center_directory, "search_nearby_facilities", lambda q: {
+        "ok": True, "message": "", "places": [{"name": "사랑요양원", "category": "요양원", "address": "서울 강남구", "phone": None, "place_url": "https://x"}],
+    })
+    res = client.get("/api/v1/centers/nearby-facilities?q=강남구 요양원")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["ok"] is True
+    assert body["places"][0]["name"] == "사랑요양원"

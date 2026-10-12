@@ -52,6 +52,19 @@
 
         .empty-note { text-align: center; padding: 60px 20px; color: #94A3B8; font-size: 14px; }
 
+        .nearby-section { max-width: 760px; margin: 0 auto 80px; padding: 0 24px; border-top: 1px solid var(--line2); padding-top: 32px; }
+        .nearby-section h2 { font-size: 20px; font-weight: 800; color: var(--navy); margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+        .ref-badge { font-size: 11px; font-weight: 700; color: #B45309; background: #FFF7EB; border: 1px solid #FCE2B5; border-radius: 999px; padding: 2px 10px; }
+        .nearby-note { font-size: 13px; color: #94A3B8; margin: 0 0 16px; line-height: 1.5; }
+        .nearby-section .search-wrap { max-width: none; margin-bottom: 0; }
+        .facility-card { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px 20px; margin-bottom: 12px; }
+        .facility-card .name { font-size: 16px; font-weight: 800; color: var(--navy); }
+        .facility-card .category { font-size: 12px; color: var(--teal); margin-top: 2px; }
+        .facility-card .addr { font-size: 13.5px; color: #64748B; margin-top: 6px; }
+        .facility-card .phone { font-size: 13.5px; color: #64748B; margin-top: 2px; }
+        .facility-card a.map-link { display: inline-block; margin-top: 8px; font-size: 13px; color: var(--teal); font-weight: 700; text-decoration: none; }
+        .facility-card a.map-link:hover { text-decoration: underline; }
+
         /* 상담 신청 모달 (login.html의 체험 신청 모달과 동일한 패턴) */
         .trial-modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(20,40,63,0.45); align-items: center; justify-content: center; padding: 20px; z-index: 50; }
         .trial-modal-backdrop.open { display: flex; }
@@ -94,6 +107,17 @@
     <div class="results">
         <div class="result-count" id="resultCount"></div>
         <div id="resultList"></div>
+    </div>
+
+    <div class="nearby-section">
+        <h2>주변 요양시설 검색 <span class="ref-badge">참고용</span></h2>
+        <p class="nearby-note">카카오맵 검색 결과입니다. 공단이 인증한 장기요양기관 목록이 아니니 등급·급여 종류 등은 시설에 직접 확인해 주세요.</p>
+        <div class="search-wrap">
+            <input id="nearbyInput" placeholder="예: 강남구 요양원, 분당 주야간보호센터" autocomplete="off">
+            <button type="button" onclick="searchNearby()">검색</button>
+        </div>
+        <div class="result-count" id="nearbyCount"></div>
+        <div id="nearbyList"></div>
     </div>
 
     <div class="trial-modal-backdrop" id="consultBackdrop">
@@ -202,6 +226,41 @@
 
         document.getElementById('searchInput').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') search();
+        });
+
+        async function searchNearby() {
+            const q = document.getElementById('nearbyInput').value.trim();
+            const list = document.getElementById('nearbyList');
+            if (!q) { alert('검색어를 입력해 주세요 (예: 강남구 요양원)'); return; }
+            list.innerHTML = '<div class="empty-note">검색 중...</div>';
+            document.getElementById('nearbyCount').textContent = '';
+            try {
+                const res = await fetch(`${API_URL}/centers/nearby-facilities?q=${encodeURIComponent(q)}`);
+                const d = await res.json();
+                if (!d.ok) {
+                    list.innerHTML = `<div class="empty-note">${escapeHtml(d.message || '검색 기능을 쓸 수 없습니다')}</div>`;
+                    return;
+                }
+                if (!d.places.length) {
+                    list.innerHTML = '<div class="empty-note">검색 결과가 없습니다. 다른 지역명으로 찾아보세요.</div>';
+                    return;
+                }
+                document.getElementById('nearbyCount').textContent = `${d.places.length}곳`;
+                list.innerHTML = d.places.map(p => `
+                    <div class="facility-card">
+                        <div class="name">${escapeHtml(p.name)}</div>
+                        ${p.category ? `<div class="category">${escapeHtml(p.category)}</div>` : ''}
+                        ${p.address ? `<div class="addr">${escapeHtml(p.address)}</div>` : ''}
+                        ${p.phone ? `<div class="phone">☎ ${escapeHtml(p.phone)}</div>` : ''}
+                        ${p.place_url ? `<a class="map-link" href="${escapeHtml(p.place_url)}" target="_blank" rel="noopener">카카오맵에서 보기 →</a>` : ''}
+                    </div>`).join('');
+            } catch (e) {
+                list.innerHTML = '<div class="empty-note">검색에 실패했습니다</div>';
+            }
+        }
+
+        document.getElementById('nearbyInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') searchNearby();
         });
 
         search();
