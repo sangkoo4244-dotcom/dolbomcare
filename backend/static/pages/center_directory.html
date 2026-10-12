@@ -426,7 +426,7 @@
                 if (!d.key) return;
                 await new Promise((resolve, reject) => {
                     const script = document.createElement('script');
-                    script.src = `https://dapi.kakao.com/v3/sdk.js?appkey=${encodeURIComponent(d.key)}&autoload=false`;
+                    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(d.key)}&autoload=false`;
                     script.onload = resolve;
                     script.onerror = reject;
                     document.head.appendChild(script);
@@ -437,7 +437,10 @@
                     renderPinsOnMap(nearbyMapState, lastNearbyPlaces);
                 });
             } catch (e) {
-                // 지도 없이도 목록·전화·상담신청 기능은 그대로 동작해야 한다
+                // 지도 없이도 목록·전화·상담신청 기능은 그대로 동작해야 한다 - 화면은 그대로 두되,
+                // 조용히 묻히지 않도록 콘솔에는 남긴다 (SDK URL 오타 같은 버그가 몇 세션째
+                // "콘솔 에러 없음"으로 오인됐던 적이 있었음)
+                console.warn('카카오맵 로드 실패 - 지도 없이 목록만 표시됩니다', e);
             }
         }
 
