@@ -57,11 +57,24 @@
 
         .section { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 24px 26px; margin-top: 20px; box-shadow: 0 1px 3px rgba(20,40,63,0.05); }
         .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-        .section-head .title-row { display: flex; align-items: center; gap: 12px; }
+        .title-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .section-head h2 { font-size: 20px; font-weight: 800; color: var(--navy); margin: 0; }
         .section-head .count { font-size: 14.5px; color: var(--muted); font-weight: 600; }
         .section-desc { font-size: 14.5px; color: var(--muted); margin: 0 0 18px 46px; line-height: 1.6; max-width: 64ch; }
-        .section-desc .ref-tag { display: inline-block; font-size: 11.5px; font-weight: 700; color: var(--warn); background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 999px; padding: 2px 10px; margin-right: 4px; }
+        .ref-tag { display: inline-block; font-size: 11.5px; font-weight: 700; color: var(--warn); background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 999px; padding: 2px 10px; }
+
+        .nearby-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+        .nearby-head-text { flex: 1 1 320px; }
+        .section-desc-inline { font-size: 14px; color: var(--muted); margin: 6px 0 0 46px; line-height: 1.6; max-width: 58ch; }
+        .nearby-search-col { flex: 0 0 auto; width: 360px; max-width: 100%; }
+        .panel-label.small-label { font-size: 14px; margin-bottom: 8px; }
+        .icon-circle.sm { width: 26px; height: 26px; }
+        .icon-circle.sm svg { width: 14px; height: 14px; }
+        @media (max-width: 760px) { .nearby-search-col { width: 100%; } }
+
+        .facility-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+        .facility-card .facility-thumb { width: 100%; height: 80px; border-radius: 10px; background: linear-gradient(155deg, #FFF3E2, #FFFBF2); border: 1px solid var(--warn-line); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+        .facility-card .facility-thumb svg { width: 26px; height: 26px; color: #E3A765; }
 
         .search-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
         .search-row .search-field { flex: 1 1 280px; margin: 0; }
@@ -108,12 +121,12 @@
         .center-card .consult-btn { height: 44px; padding: 0 20px; border-radius: 9px; border: 1.5px solid var(--teal); background: #fff; color: var(--teal); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
         .center-card .consult-btn:hover { background: #EDF8F6; }
 
-        .facility-card { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 20px; margin-bottom: 10px; }
+        .facility-card { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px; }
         .facility-card .name-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
         .facility-card .name { font-size: 16px; font-weight: 700; color: var(--charcoal); }
-        .facility-card .category { font-size: 12.5px; color: var(--teal); }
+        .facility-card .category { font-size: 12.5px; color: var(--warn); margin-top: 2px; }
         .facility-card .meta-row { font-size: 14px; }
-        .facility-card a.map-link { font-size: 13.5px; color: var(--teal); font-weight: 700; text-decoration: none; margin-left: 10px; }
+        .facility-card a.map-link { display: inline-block; font-size: 13.5px; color: var(--teal); font-weight: 700; text-decoration: none; margin-top: 6px; }
         .facility-card a.map-link:hover { text-decoration: underline; }
 
         .empty-note { text-align: center; padding: 40px 8px; color: var(--muted); font-size: 16px; line-height: 1.6; background: #fff; border: 1px solid var(--line2); border-radius: 12px; }
@@ -213,27 +226,32 @@
                 </div>
 
                 <div class="section">
-                    <div class="section-head">
-                        <div class="title-row">
-                            <span class="icon-circle warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
-                            <h2>더 둘러보기</h2>
+                    <div class="nearby-head">
+                        <div class="nearby-head-text">
+                            <div class="title-row">
+                                <span class="icon-circle warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
+                                <h2>더 둘러보기</h2>
+                                <span class="ref-tag">참고용</span>
+                            </div>
+                            <p class="section-desc-inline">돌봄케어 가입 여부와 상관없이 카카오맵에 등록된 시설을 보여드려요. 공단이 인증한 기관 목록이 아니니, 정확한 정보는 시설에 직접 확인해 주세요.</p>
                         </div>
-                    </div>
-                    <p class="section-desc"><span class="ref-tag">참고용</span> · 돌봄케어 가입 여부와 상관없이 카카오맵에 등록된 시설을 보여드려요. 공단이 인증한 기관 목록이 아니니, 정확한 정보는 시설에 직접 확인해 주세요.</p>
-                    <div class="panel-label warn-label">
-                        <span class="icon-circle warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg></span>
-                        카카오맵에서 주변 시설 검색하기
-                    </div>
-                    <div class="search-field warn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
-                        <input id="nearbyInput" placeholder="예: 강남구 요양원, 분당 주야간보호센터" autocomplete="off">
-                        <button type="button" onclick="searchNearby()">카카오맵 검색</button>
+                        <div class="nearby-search-col">
+                            <div class="panel-label warn-label small-label">
+                                <span class="icon-circle warn sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg></span>
+                                카카오맵에서 검색
+                            </div>
+                            <div class="search-field warn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+                                <input id="nearbyInput" placeholder="예: 강남구 요양원" autocomplete="off">
+                                <button type="button" onclick="searchNearby()">검색</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="section-head" style="margin-top:18px;">
                         <span></span>
                         <span class="count" id="nearbyCount"></span>
                     </div>
-                    <div id="nearbyList"></div>
+                    <div id="nearbyList" class="facility-grid"></div>
                 </div>
             </div>
         </main>
@@ -503,11 +521,14 @@
                 document.getElementById('nearbyCount').textContent = `${d.places.length}곳`;
                 list.innerHTML = d.places.map(p => `
                     <div class="facility-card">
+                        <div class="facility-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg></div>
                         <div class="name-line">
                             <span class="name">${escapeHtml(p.name)}</span>
-                            ${p.category ? `<span class="category">${escapeHtml(p.category)}</span>` : ''}
                         </div>
-                        ${p.address ? `<div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${escapeHtml(p.address)}${p.phone ? ` · <a href="tel:${escapeHtml(p.phone)}">${escapeHtml(p.phone)}</a>` : ''}${p.place_url ? ` <a class="map-link" href="${escapeHtml(p.place_url)}" target="_blank" rel="noopener">지도에서 보기</a>` : ''}</div>` : ''}
+                        ${p.category ? `<div class="category">${escapeHtml(p.category)}</div>` : ''}
+                        ${p.address ? `<div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${escapeHtml(p.address)}</div>` : ''}
+                        ${p.phone ? `<div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg><a href="tel:${escapeHtml(p.phone)}">${escapeHtml(p.phone)}</a></div>` : ''}
+                        ${p.place_url ? `<a class="map-link" href="${escapeHtml(p.place_url)}" target="_blank" rel="noopener">지도에서 보기 ↗</a>` : ''}
                     </div>`).join('');
             } catch (e) {
                 list.innerHTML = '<div class="empty-note">검색하지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
