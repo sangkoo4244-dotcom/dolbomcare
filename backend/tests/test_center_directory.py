@@ -17,7 +17,7 @@ def client(tmp_path):
 
     db = Session()
     db.add(models.Center(id=1, name="돌봄케어 강남점", address="서울시 강남구", phone="02-1111-1111", is_public_listed=True))
-    db.add(models.Center(id=2, name="돌봄케어 부산점", address="부산시 해운대구", phone="051-2222-2222", is_public_listed=True))
+    db.add(models.Center(id=2, name="돌봄케어 부산점", address="부산시 해운대구", phone="051-2222-2222", is_public_listed=True, institution_code="14139000308"))
     db.add(models.Center(id=3, name="테스트센터", address="서울시 비공개구", phone="02-3333-3333", is_public_listed=False))
     db.commit()
     db.close()
@@ -50,7 +50,13 @@ def test_directory_only_lists_opted_in_centers(client):
 def test_directory_hides_operational_fields(client):
     res = client.get("/api/v1/centers/directory")
     center = res.json()["centers"][0]
-    assert set(center.keys()) == {"id", "name", "address", "phone", "logo_image", "latitude", "longitude", "service_types"}
+    assert set(center.keys()) == {"id", "name", "address", "phone", "logo_image", "latitude", "longitude", "service_types", "institution_verified"}
+
+
+def test_directory_marks_institution_verified_only_when_code_present(client):
+    res = client.get("/api/v1/centers/directory")
+    by_name = {c["name"]: c["institution_verified"] for c in res.json()["centers"]}
+    assert by_name == {"돌봄케어 강남점": False, "돌봄케어 부산점": True}
 
 
 def test_directory_search_by_name(client):

@@ -42,6 +42,8 @@ def _to_directory_dict(center: Center) -> dict:
         "latitude": center.latitude,
         "longitude": center.longitude,
         "service_types": [s for s in (center.service_types or "").split(",") if s],
+        # 실제 11자리 기관코드 자체는 공개하지 않고, 등록 여부만 - 공단에 등록된 기관임을 보호자가 확인할 수 있게
+        "institution_verified": bool(center.institution_code),
     }
 
 
