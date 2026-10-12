@@ -49,6 +49,11 @@
         .search-field input { flex: 1; height: 48px; border: none; outline: none; font-size: 17px; background: transparent; color: var(--charcoal); font-family: inherit; }
         .search-field button { height: 44px; padding: 0 24px; border-radius: 9px; border: none; background: var(--teal); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
         .search-field button:hover { background: var(--teal-dark); }
+        .search-field.warn { border-color: var(--warn-line); }
+        .search-field.warn:focus-within { border-color: var(--warn); box-shadow: 0 0 0 3px rgba(180,83,9,0.12); }
+        .search-field.warn button { background: var(--warn); }
+        .search-field.warn button:hover { background: #8F4007; }
+        .panel-label.warn-label { color: var(--warn); margin-bottom: 10px; }
 
         .section { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 24px 26px; margin-top: 20px; box-shadow: 0 1px 3px rgba(20,40,63,0.05); }
         .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -214,11 +219,15 @@
                             <h2>더 둘러보기</h2>
                         </div>
                     </div>
-                    <p class="section-desc"><span class="ref-tag">참고용</span> · 카카오맵 검색 결과입니다. 공단이 인증한 기관 목록은 아니니, 정확한 정보는 시설에 직접 확인해 주세요.</p>
-                    <div class="search-field">
+                    <p class="section-desc"><span class="ref-tag">참고용</span> · 돌봄케어 가입 여부와 상관없이 카카오맵에 등록된 시설을 보여드려요. 공단이 인증한 기관 목록이 아니니, 정확한 정보는 시설에 직접 확인해 주세요.</p>
+                    <div class="panel-label warn-label">
+                        <span class="icon-circle warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg></span>
+                        카카오맵에서 주변 시설 검색하기
+                    </div>
+                    <div class="search-field warn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
                         <input id="nearbyInput" placeholder="예: 강남구 요양원, 분당 주야간보호센터" autocomplete="off">
-                        <button type="button" onclick="searchNearby()">검색</button>
+                        <button type="button" onclick="searchNearby()">카카오맵 검색</button>
                     </div>
                     <div class="section-head" style="margin-top:18px;">
                         <span></span>
