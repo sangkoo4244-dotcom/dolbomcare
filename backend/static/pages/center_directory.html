@@ -130,6 +130,8 @@
         .facility-card a.map-link:hover { text-decoration: underline; }
 
         .empty-note { text-align: center; padding: 40px 8px; color: var(--muted); font-size: 16px; line-height: 1.6; background: #fff; border: 1px solid var(--line2); border-radius: 12px; }
+        .empty-cta { margin-top: 14px; height: 44px; padding: 0 22px; border-radius: 9px; border: none; background: var(--warn); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .empty-cta:hover { background: #8F4007; }
 
         /* 상담 신청 모달 */
         .trial-modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(20,40,63,0.45); align-items: center; justify-content: center; padding: 20px; z-index: 50; }
@@ -380,7 +382,9 @@
             if (!visible.length) {
                 list.innerHTML = centers.length
                     ? '<div class="empty-note">선택한 조건에 맞는 센터가 없습니다.</div>'
-                    : '<div class="empty-note">아직 이 지역에 공개된 센터가 없습니다. 아래에서 주변 시설을 먼저 둘러보세요.</div>';
+                    : `<div class="empty-note">아직 이 지역에 공개된 센터가 없어요.<br>
+                        <button type="button" class="empty-cta" onclick="jumpToNearbySearch()">주변 시설 바로 찾아보기 ↓</button>
+                       </div>`;
             } else {
                 list.innerHTML = visible.map(c => `
                     <div class="center-card">
@@ -500,6 +504,15 @@
         document.getElementById('searchInput').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') search();
         });
+
+        function jumpToNearbySearch() {
+            const q = document.getElementById('searchInput').value.trim();
+            const nearbyInput = document.getElementById('nearbyInput');
+            if (q) nearbyInput.value = q;
+            document.querySelector('.nearby-head').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            nearbyInput.focus();
+            if (q) searchNearby();
+        }
 
         async function searchNearby() {
             const q = document.getElementById('nearbyInput').value.trim();
