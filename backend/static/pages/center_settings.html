@@ -128,6 +128,13 @@
                         <button type="button" class="btn-outline" onclick="lookupInstitution()">공단 정보 조회</button>
                     </div>
                 </div>
+                <div class="field">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
+                        <input type="checkbox" id="fPublicListed" style="width:16px;height:16px;">
+                        센터를 아직 못 정한 예비 보호자용 공개 디렉토리에 우리 센터 노출하기
+                    </label>
+                    <div class="sub" style="margin-top:4px;">센터명·주소·전화번호만 공개됩니다 (로그인 없이 누구나 볼 수 있는 find_center.html 페이지). 언제든 꺼둘 수 있습니다.</div>
+                </div>
                 <button type="button" class="btn-solid" onclick="saveCenter()">저장</button>
                 <div class="msg" id="saveMsg"></div>
             </div>
@@ -201,6 +208,7 @@
                 document.getElementById('fAddress').value = d.address || '';
                 document.getElementById('fPhone').value = d.phone || '';
                 document.getElementById('fInstCode').value = d.institution_code || '';
+                document.getElementById('fPublicListed').checked = !!d.is_public_listed;
                 document.getElementById('logoPreview').src = d.logo_image || 'assets/user_design/29_top_profile_icon.png';
             } catch (e) {
                 showMsg('센터 정보를 불러오지 못했습니다', false);
@@ -256,6 +264,7 @@
                 address: document.getElementById('fAddress').value,
                 phone: document.getElementById('fPhone').value,
                 institution_code: document.getElementById('fInstCode').value,
+                is_public_listed: document.getElementById('fPublicListed').checked,
             };
             if (pendingLogoImage) body.logo_image = pendingLogoImage;
             try {

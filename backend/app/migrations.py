@@ -46,6 +46,7 @@ ADDITIVE_COLUMNS = [
     ("users", "wage_ratio", "INTEGER"),
     ("salary_statements", "wage_ratio", "INTEGER"),
     ("salary_statements", "wage_base", "INTEGER"),
+    ("centers", "is_public_listed", "BOOLEAN DEFAULT FALSE"),
 ]
 
 

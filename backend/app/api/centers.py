@@ -20,6 +20,18 @@ def _to_dict(center: Center) -> dict:
         "phone": center.phone,
         "institution_code": center.institution_code,
         "logo_image": center.logo_image,
+        "is_public_listed": bool(center.is_public_listed),
+    }
+
+
+def _to_directory_dict(center: Center) -> dict:
+    """공개 디렉토리용 - 센터가 스스로 공개 동의한 항목만, 운영 관련 정보(알림톡 잔액 등)는 빼고 내려준다."""
+    return {
+        "id": center.id,
+        "name": center.name,
+        "address": center.address,
+        "phone": center.phone,
+        "logo_image": center.logo_image,
     }
 
 
@@ -38,6 +50,7 @@ class CenterUpdate(BaseModel):
     phone: Optional[str] = None
     institution_code: Optional[str] = None
     logo_image: Optional[str] = None  # base64 data URL. 빈 문자열이면 이미지 제거로 본다
+    is_public_listed: Optional[bool] = None  # 예비 보호자용 공개 디렉토리 노출 동의
 
 
 @router.put("/me")
@@ -61,6 +74,8 @@ def update_my_center(
         center.institution_code = body.institution_code
     if body.logo_image is not None:
         center.logo_image = body.logo_image or None
+    if body.is_public_listed is not None:
+        center.is_public_listed = body.is_public_listed
 
     db.commit()
     db.refresh(center)

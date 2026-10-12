@@ -103,3 +103,15 @@ def test_manager_can_view_alimtalk_usage(client):
 
 def test_caregiver_cannot_view_alimtalk_usage(client):
     assert client.get("/api/v1/centers/me/alimtalk-usage", headers=CAREGIVER).status_code == 403
+
+
+def test_center_defaults_to_not_publicly_listed(client):
+    res = client.get("/api/v1/centers/me", headers=MANAGER)
+    assert res.json()["is_public_listed"] is False
+
+
+def test_manager_can_opt_into_public_directory(client):
+    res = client.put("/api/v1/centers/me", headers=MANAGER, json={"is_public_listed": True})
+    assert res.json()["data"]["is_public_listed"] is True
+    res = client.get("/api/v1/centers/me", headers=MANAGER)
+    assert res.json()["is_public_listed"] is True
