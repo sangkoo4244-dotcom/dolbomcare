@@ -140,7 +140,17 @@
             html, body { overflow: auto; }
             .login-shell { height: auto; min-height: 100vh; grid-template-columns: 1fr; }
             .login-banner { display: none; }
-            .login-form-wrap { height: auto; padding: 40px 24px; }
+            .login-form-wrap { height: auto; padding: 36px 20px; }
+
+            /* 로그인 화면에 색 입힌 박스가 연달아 3~4개(체험신청·둘러보기·신뢰배지) 쌓이면
+               휴대폰 화면에서 복잡하고 산만해 보인다. 모바일에서는 teal 강조색을 로그인
+               버튼 하나에만 남기고, 나머지는 차분한 톤으로 통일한다. 기능은 그대로 둔다. */
+            .trial-cta-box { background: #F8FAFC; border-color: var(--line2); }
+            .trust-box { background: transparent; border: none; padding: 0; margin-top: 20px; }
+            .trust-icon { background: transparent; color: var(--teal); width: 22px; height: 22px; }
+            /* 체험계정 3버튼을 가로 3분할하면 글자가 좁아 줄바꿈이 들쭉날쭉해진다 - 세로로 쌓는다 */
+            .demo-buttons { flex-direction: column; }
+            .demo-button { width: 100%; }
         }
     </style>
 </head>
