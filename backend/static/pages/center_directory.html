@@ -253,7 +253,10 @@
                         <span></span>
                         <span class="count" id="nearbyCount"></span>
                     </div>
-                    <div id="nearbyList" class="facility-grid"></div>
+                    <div class="list-map-layout" id="nearbyListMapLayout">
+                        <div id="nearbyList" class="facility-grid"></div>
+                        <div class="map-panel" id="nearbyMapPanel"><div id="nearbyMap"></div></div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -297,8 +300,10 @@
         let sortByDistance = false;
         let userCoords = null;
         let kakaoMapReady = false;
-        let mapInstance = null;
         let lastVisible = [];
+        let lastNearbyPlaces = [];
+        const centerMapState = { layoutId: 'listMapLayout', panelId: 'mapPanel', mapDivId: 'centerMap', instance: null };
+        const nearbyMapState = { layoutId: 'nearbyListMapLayout', panelId: 'nearbyMapPanel', mapDivId: 'nearbyMap', instance: null };
 
         function escapeHtml(text) {
             const div = document.createElement('div');
@@ -411,7 +416,7 @@
             }
 
             lastVisible = visible;
-            renderMap(visible);
+            renderPinsOnMap(centerMapState, visible);
         }
 
         async function initKakaoMap() {
@@ -428,17 +433,18 @@
                 });
                 window.kakao.maps.load(() => {
                     kakaoMapReady = true;
-                    renderMap(lastVisible);
+                    renderPinsOnMap(centerMapState, lastVisible);
+                    renderPinsOnMap(nearbyMapState, lastNearbyPlaces);
                 });
             } catch (e) {
                 // 지도 없이도 목록·전화·상담신청 기능은 그대로 동작해야 한다
             }
         }
 
-        function renderMap(visibleCenters) {
-            const layout = document.getElementById('listMapLayout');
-            const panel = document.getElementById('mapPanel');
-            const withCoords = (visibleCenters || []).filter(c => c.latitude != null && c.longitude != null);
+        function renderPinsOnMap(state, items) {
+            const layout = document.getElementById(state.layoutId);
+            const panel = document.getElementById(state.panelId);
+            const withCoords = (items || []).filter(c => c.latitude != null && c.longitude != null);
             if (!kakaoMapReady || !withCoords.length) {
                 panel.style.display = 'none';
                 layout.classList.remove('has-map');
@@ -448,23 +454,23 @@
             layout.classList.add('has-map');
 
             const center = new kakao.maps.LatLng(withCoords[0].latitude, withCoords[0].longitude);
-            if (!mapInstance) {
-                mapInstance = new kakao.maps.Map(document.getElementById('centerMap'), { center, level: 8 });
+            if (!state.instance) {
+                state.instance = new kakao.maps.Map(document.getElementById(state.mapDivId), { center, level: 8 });
             }
-            (mapInstance.__markers || []).forEach(m => m.setMap(null));
-            mapInstance.__markers = withCoords.map(c => {
+            (state.instance.__markers || []).forEach(m => m.setMap(null));
+            state.instance.__markers = withCoords.map(c => {
                 const pos = new kakao.maps.LatLng(c.latitude, c.longitude);
-                const marker = new kakao.maps.Marker({ position: pos, map: mapInstance });
+                const marker = new kakao.maps.Marker({ position: pos, map: state.instance });
                 const iw = new kakao.maps.InfoWindow({ content: `<div style="padding:6px 10px;font-size:13px;white-space:nowrap;">${escapeHtml(c.name)}</div>` });
-                kakao.maps.event.addListener(marker, 'click', () => iw.open(mapInstance, marker));
+                kakao.maps.event.addListener(marker, 'click', () => iw.open(state.instance, marker));
                 return marker;
             });
             if (withCoords.length > 1) {
                 const bounds = new kakao.maps.LatLngBounds();
                 withCoords.forEach(c => bounds.extend(new kakao.maps.LatLng(c.latitude, c.longitude)));
-                mapInstance.setBounds(bounds);
+                state.instance.setBounds(bounds);
             } else {
-                mapInstance.setCenter(center);
+                state.instance.setCenter(center);
             }
         }
 
@@ -525,10 +531,14 @@
                 const d = await res.json();
                 if (!d.ok) {
                     list.innerHTML = `<div class="empty-note">${escapeHtml(d.message || '검색 기능을 쓸 수 없습니다')}</div>`;
+                    lastNearbyPlaces = [];
+                    renderPinsOnMap(nearbyMapState, lastNearbyPlaces);
                     return;
                 }
                 if (!d.places.length) {
                     list.innerHTML = '<div class="empty-note">검색 결과가 없습니다. 다른 지역명으로 찾아보세요.</div>';
+                    lastNearbyPlaces = [];
+                    renderPinsOnMap(nearbyMapState, lastNearbyPlaces);
                     return;
                 }
                 document.getElementById('nearbyCount').textContent = `${d.places.length}곳`;
@@ -543,8 +553,12 @@
                         ${p.phone ? `<div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg><a href="tel:${escapeHtml(p.phone)}">${escapeHtml(p.phone)}</a></div>` : ''}
                         ${p.place_url ? `<a class="map-link" href="${escapeHtml(p.place_url)}" target="_blank" rel="noopener">지도에서 보기 ↗</a>` : ''}
                     </div>`).join('');
+                lastNearbyPlaces = d.places;
+                renderPinsOnMap(nearbyMapState, lastNearbyPlaces);
             } catch (e) {
                 list.innerHTML = '<div class="empty-note">검색하지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
+                lastNearbyPlaces = [];
+                renderPinsOnMap(nearbyMapState, lastNearbyPlaces);
             }
         }
 

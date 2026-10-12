@@ -38,6 +38,12 @@ def search_nearby_facilities(query: str) -> dict:
     except Exception as e:
         return {"ok": False, "message": f"카카오맵 검색 실패: {e}", "places": []}
 
+    def _coord(d, key):
+        try:
+            return float(d[key]) if d.get(key) else None
+        except (TypeError, ValueError):
+            return None
+
     places = [
         {
             "name": d.get("place_name"),
@@ -45,6 +51,8 @@ def search_nearby_facilities(query: str) -> dict:
             "address": d.get("road_address_name") or d.get("address_name"),
             "phone": d.get("phone") or None,
             "place_url": d.get("place_url"),
+            "latitude": _coord(d, "y"),
+            "longitude": _coord(d, "x"),
         }
         for d in data.get("documents", [])
     ]

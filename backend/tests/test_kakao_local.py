@@ -32,6 +32,22 @@ def test_search_parses_places_on_success(monkeypatch):
     assert result["places"][0]["phone"] == "02-1234-5678"
 
 
+def test_search_includes_coordinates_for_map_display(monkeypatch):
+    monkeypatch.setattr(kakao_local, "KAKAO_REST_API_KEY", "dummy-key")
+    monkeypatch.setattr(kakao_local.httpx, "get", lambda *a, **k: SimpleNamespace(
+        raise_for_status=lambda: None,
+        json=lambda: {"documents": [
+            {"place_name": "사랑요양원", "x": "127.0276", "y": "37.4979"},
+            {"place_name": "좌표없는곳", "x": "", "y": ""},
+        ]},
+    ))
+    result = kakao_local.search_nearby_facilities("강남구 요양원")
+    assert result["places"][0]["latitude"] == 37.4979
+    assert result["places"][0]["longitude"] == 127.0276
+    assert result["places"][1]["latitude"] is None
+    assert result["places"][1]["longitude"] is None
+
+
 def test_search_handles_no_results(monkeypatch):
     monkeypatch.setattr(kakao_local, "KAKAO_REST_API_KEY", "dummy-key")
     monkeypatch.setattr(kakao_local.httpx, "get", lambda *a, **k: SimpleNamespace(
