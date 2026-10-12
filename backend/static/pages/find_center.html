@@ -7,116 +7,133 @@
     <link rel="stylesheet" href="theme.css">
     <style>
         :root {
-            --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0;
+            --navy: #14283F; --ink: #1E2B26; --muted: #5B6B7A; --teal: #0F8B80; --teal-dark: #0C756C;
+            --clay: #B5532F; --clay-bg: #FBEDE7; --line: #E4E1DA; --bg: #F6F4F0;
         }
         * { box-sizing: border-box; }
         html, body { margin: 0; background: var(--bg); min-height: 100vh; }
-        body { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif; color: var(--charcoal); }
+        body { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif; color: var(--ink); }
+        @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
-        .top-bar { background: #fff; border-bottom: 1px solid var(--line2); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; }
-        .top-bar .logo { font-size: 18px; font-weight: 800; color: var(--navy); }
-        .top-bar a.back { color: var(--teal); font-weight: 700; font-size: 14px; text-decoration: none; }
+        .top-bar { background: var(--bg); padding: 22px 28px; display: flex; align-items: center; justify-content: space-between; }
+        .top-bar .logo { font-size: 17px; font-weight: 800; color: var(--navy); }
+        .top-bar a.back { color: var(--muted); font-weight: 600; font-size: 13.5px; text-decoration: none; }
+        .top-bar a.back:hover { color: var(--teal); }
 
-        .hero { max-width: 760px; margin: 0 auto; padding: 48px 24px 24px; text-align: center; }
-        .hero h1 { font-size: 28px; font-weight: 800; color: var(--navy); margin: 0 0 10px; }
-        .hero p { font-size: 15px; color: #64748B; margin: 0; line-height: 1.6; }
+        .col { max-width: 720px; margin: 0 auto; padding: 0 28px; }
 
-        .search-wrap { max-width: 560px; margin: 28px auto 0; display: flex; gap: 8px; padding: 0 24px; }
-        .search-wrap input {
-            flex: 1; height: 52px; padding: 0 18px; border: 1.5px solid var(--line2); border-radius: 12px;
-            font-size: 15px; background: #fff; color: var(--charcoal); font-family: inherit;
-        }
-        .search-wrap input:focus { border-color: var(--teal); outline: none; box-shadow: 0 0 0 3px rgba(15,139,128,0.12); }
-        .search-wrap button {
-            height: 52px; padding: 0 22px; border-radius: 12px; border: none; background: var(--teal);
-            color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; font-family: inherit; white-space: nowrap;
-        }
-        .search-wrap button:hover { background: #0C756C; }
+        .hero { padding: 36px 0 40px; text-align: center; }
+        .hero h1 { font-size: 32px; font-weight: 800; color: var(--navy); margin: 0 0 12px; line-height: 1.35; letter-spacing: -0.01em; }
+        .hero p { font-size: 16px; color: var(--muted); margin: 0; line-height: 1.6; }
 
-        .results { max-width: 760px; margin: 32px auto 80px; padding: 0 24px; }
-        .result-count { font-size: 13px; color: #94A3B8; margin-bottom: 14px; }
-        .center-card {
-            background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 20px 22px;
-            margin-bottom: 14px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-        }
-        .center-card img { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; background: #F1F5F9; flex: 0 0 auto; }
-        .center-card .info { flex: 1; min-width: 200px; }
-        .center-card .name { font-size: 17px; font-weight: 800; color: var(--navy); }
-        .center-card .addr { font-size: 13.5px; color: #64748B; margin-top: 4px; }
-        .center-card .phone { font-size: 13.5px; color: #64748B; margin-top: 2px; }
-        .center-card .consult-btn {
-            height: 42px; padding: 0 18px; border-radius: 10px; border: 1.5px solid var(--teal); background: #fff;
-            color: var(--teal); font-size: 14px; font-weight: 800; cursor: pointer; font-family: inherit; white-space: nowrap;
-        }
-        .center-card .consult-btn:hover { background: #EDF8F6; }
+        .search-field { display: flex; align-items: center; gap: 10px; background: #fff; border: 1.5px solid var(--line); border-radius: 14px; padding: 6px 6px 6px 18px; margin-top: 26px; box-shadow: 0 2px 10px rgba(20,40,63,0.04); }
+        .search-field:focus-within { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(15,139,128,0.12); }
+        .search-field svg { width: 19px; height: 19px; color: var(--muted); flex: 0 0 auto; }
+        .search-field input { flex: 1; height: 48px; border: none; outline: none; font-size: 16px; background: transparent; color: var(--ink); font-family: inherit; }
+        .search-field button { height: 44px; padding: 0 22px; border-radius: 10px; border: none; background: var(--teal); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
+        .search-field button:hover { background: var(--teal-dark); }
 
-        .empty-note { text-align: center; padding: 60px 20px; color: #94A3B8; font-size: 14px; }
+        .section { padding: 30px 0; }
+        .section + .section { border-top: 1px solid var(--line); }
+        .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+        .section-head h2 { font-size: 20px; font-weight: 800; color: var(--navy); margin: 0; }
+        .section-head .count { font-size: 13.5px; color: var(--muted); }
+        .section-desc { font-size: 14px; color: var(--muted); margin: 6px 0 18px; line-height: 1.55; max-width: 58ch; }
+        .section-desc .ref-tag { color: var(--clay); font-weight: 700; }
 
-        .nearby-section { max-width: 760px; margin: 0 auto 80px; padding: 0 24px; border-top: 1px solid var(--line2); padding-top: 32px; }
-        .nearby-section h2 { font-size: 20px; font-weight: 800; color: var(--navy); margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
-        .ref-badge { font-size: 11px; font-weight: 700; color: #B45309; background: #FFF7EB; border: 1px solid #FCE2B5; border-radius: 999px; padding: 2px 10px; }
-        .nearby-note { font-size: 13px; color: #94A3B8; margin: 0 0 16px; line-height: 1.5; }
-        .nearby-section .search-wrap { max-width: none; margin-bottom: 0; }
-        .facility-card { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px 20px; margin-bottom: 12px; }
-        .facility-card .name { font-size: 16px; font-weight: 800; color: var(--navy); }
-        .facility-card .category { font-size: 12px; color: var(--teal); margin-top: 2px; }
-        .facility-card .addr { font-size: 13.5px; color: #64748B; margin-top: 6px; }
-        .facility-card .phone { font-size: 13.5px; color: #64748B; margin-top: 2px; }
-        .facility-card a.map-link { display: inline-block; margin-top: 8px; font-size: 13px; color: var(--teal); font-weight: 700; text-decoration: none; }
-        .facility-card a.map-link:hover { text-decoration: underline; }
+        .result-list { animation: riseIn .35s ease both; }
+        @keyframes riseIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 상담 신청 모달 (login.html의 체험 신청 모달과 동일한 패턴) */
+        .center-row { display: flex; align-items: flex-start; gap: 18px; padding: 20px 4px 20px 18px; border-left: 3px solid var(--teal); border-bottom: 1px solid var(--line); background: #fff; }
+        .center-row:first-child { border-top-left-radius: 10px; border-top-right-radius: 10px; }
+        .center-row:last-child { border-bottom: none; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
+        .center-row img { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; background: #F1F5F9; flex: 0 0 auto; margin-top: 2px; }
+        .center-row .info { flex: 1; min-width: 160px; }
+        .center-row .name { font-size: 18px; font-weight: 800; color: var(--navy); }
+        .center-row .meta { font-size: 14.5px; color: var(--muted); margin-top: 5px; line-height: 1.6; }
+        .center-row .consult-btn { height: 40px; padding: 0 18px; border-radius: 9px; border: 1.5px solid var(--teal); background: #fff; color: var(--teal); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; align-self: center; }
+        .center-row .consult-btn:hover { background: #EDF8F6; }
+
+        .facility-row { padding: 15px 4px; border-bottom: 1px solid var(--line); }
+        .facility-row:last-child { border-bottom: none; }
+        .facility-row .name-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+        .facility-row .name { font-size: 15.5px; font-weight: 700; color: var(--ink); }
+        .facility-row .category { font-size: 12.5px; color: var(--teal); }
+        .facility-row .meta { font-size: 13.5px; color: var(--muted); margin-top: 4px; }
+        .facility-row a.map-link { font-size: 13px; color: var(--clay); font-weight: 700; text-decoration: none; margin-left: 8px; }
+        .facility-row a.map-link:hover { text-decoration: underline; }
+
+        .empty-note { padding: 44px 8px; color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+
+        .nearby-field { margin-top: 2px; }
+
+        /* 상담 신청 모달 */
         .trial-modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(20,40,63,0.45); align-items: center; justify-content: center; padding: 20px; z-index: 50; }
         .trial-modal-backdrop.open { display: flex; }
-        .trial-modal { background: #fff; border-radius: 14px; padding: 28px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
-        .trial-modal h3 { font-size: 17px; color: var(--navy); margin: 0 0 6px; }
-        .trial-modal .trial-modal-sub { font-size: 13px; color: #64748B; margin-bottom: 20px; line-height: 1.5; }
+        .trial-modal { background: #fff; border-radius: 16px; padding: 30px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+        .trial-modal h3 { font-size: 19px; font-weight: 800; color: var(--navy); margin: 0 0 6px; }
+        .trial-modal .trial-modal-sub { font-size: 13.5px; color: var(--muted); margin-bottom: 22px; line-height: 1.55; }
         .trial-modal .field { margin-bottom: 14px; }
-        .trial-modal .field label { display: block; font-size: 13px; font-weight: 700; color: var(--charcoal); margin-bottom: 6px; }
+        .trial-modal .field label { display: block; font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
         .trial-modal .field input {
-            width: 100%; height: 46px; padding: 0 14px; border: 1.5px solid var(--line2); border-radius: 9px;
-            font-size: 14px; background: #fff; color: var(--charcoal); font-family: inherit;
+            width: 100%; height: 46px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: 9px;
+            font-size: 14.5px; background: #fff; color: var(--ink); font-family: inherit;
         }
-        .trial-modal .field input:disabled { background: #F8FAFC; color: #64748B; }
+        .trial-modal .field input:disabled { background: #FAF9F7; color: var(--muted); }
         .trial-modal .field input:focus { border-color: var(--teal); outline: none; }
-        .trial-modal-actions { display: flex; gap: 8px; margin-top: 18px; }
-        .trial-modal-actions button { flex: 1; height: 46px; border-radius: 9px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
-        .trial-modal-cancel { background: #F1F5F9; color: var(--charcoal); }
-        .trial-modal-cancel:hover { background: #E2E8F0; }
+        .trial-modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+        .trial-modal-actions button { flex: 1; height: 46px; border-radius: 9px; font-size: 14.5px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
+        .trial-modal-cancel { background: #F1EFEA; color: var(--ink); }
+        .trial-modal-cancel:hover { background: #E7E4DD; }
         .trial-modal-submit { background: var(--teal); color: #fff; }
-        .trial-modal-submit:hover { background: #0C756C; }
-        .trial-modal-note { font-size: 12px; color: #94A3B8; margin-top: 12px; text-align: center; }
+        .trial-modal-submit:hover { background: var(--teal-dark); }
+        .trial-modal-note { font-size: 12px; color: var(--muted); margin-top: 14px; text-align: center; }
+
+        @media (max-width: 560px) {
+            .hero h1 { font-size: 26px; }
+            .center-row { flex-wrap: wrap; }
+            .center-row .consult-btn { width: 100%; }
+        }
     </style>
 </head>
 <body>
     <div class="top-bar">
         <div class="logo">돌봄케어</div>
-        <a class="back" href="./login.html">로그인으로 돌아가기 →</a>
+        <a class="back" href="./login.html">로그인으로 돌아가기</a>
     </div>
 
-    <div class="hero">
-        <h1>가까운 센터 찾기</h1>
-        <p>돌봄케어를 쓰는 센터 중 공개에 동의한 곳을 보여드립니다. 센터명이나 지역으로 검색해 보세요.</p>
+    <div class="col hero">
+        <h1>요양센터, 어디서부터 찾아야 할지<br>막막하신가요</h1>
+        <p>지역을 검색하면 돌봄케어와 함께하는 센터부터 보여드립니다. 상담은 바로 신청할 수 있어요.</p>
+        <div class="search-field">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+            <input id="searchInput" placeholder="센터명 또는 지역 (예: 강남구)" autocomplete="off">
+            <button type="button" onclick="search()">검색</button>
+        </div>
     </div>
 
-    <div class="search-wrap">
-        <input id="searchInput" placeholder="센터명 또는 지역 (예: 강남구)" autocomplete="off">
-        <button type="button" onclick="search()">검색</button>
-    </div>
-
-    <div class="results">
-        <div class="result-count" id="resultCount"></div>
+    <div class="col section">
+        <div class="section-head">
+            <h2>돌봄케어와 함께하는 센터</h2>
+            <span class="count" id="resultCount"></span>
+        </div>
         <div id="resultList"></div>
     </div>
 
-    <div class="nearby-section">
-        <h2>주변 요양시설 검색 <span class="ref-badge">참고용</span></h2>
-        <p class="nearby-note">카카오맵 검색 결과입니다. 공단이 인증한 장기요양기관 목록이 아니니 등급·급여 종류 등은 시설에 직접 확인해 주세요.</p>
-        <div class="search-wrap">
+    <div class="col section">
+        <div class="section-head">
+            <h2>더 둘러보기</h2>
+        </div>
+        <p class="section-desc"><span class="ref-tag">참고용</span> · 카카오맵 검색 결과입니다. 공단이 인증한 기관 목록은 아니니, 정확한 정보는 시설에 직접 확인해 주세요.</p>
+        <div class="search-field nearby-field">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
             <input id="nearbyInput" placeholder="예: 강남구 요양원, 분당 주야간보호센터" autocomplete="off">
             <button type="button" onclick="searchNearby()">검색</button>
         </div>
-        <div class="result-count" id="nearbyCount"></div>
+        <div class="section-head" style="margin-top:18px;">
+            <span></span>
+            <span class="count" id="nearbyCount"></span>
+        </div>
         <div id="nearbyList"></div>
     </div>
 
@@ -163,14 +180,14 @@
         async function search() {
             const q = document.getElementById('searchInput').value.trim();
             const list = document.getElementById('resultList');
-            list.innerHTML = '<div class="empty-note">검색 중...</div>';
+            list.innerHTML = '<div class="empty-note">찾는 중...</div>';
             try {
                 const res = await fetch(`${API_URL}/centers/directory${q ? `?q=${encodeURIComponent(q)}` : ''}`);
                 const d = await res.json();
                 centers = d.centers || [];
                 render();
             } catch (e) {
-                list.innerHTML = '<div class="empty-note">센터 목록을 불러오지 못했습니다</div>';
+                list.innerHTML = '<div class="empty-note">목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
             }
         }
 
@@ -178,19 +195,18 @@
             document.getElementById('resultCount').textContent = centers.length ? `${centers.length}곳` : '';
             const list = document.getElementById('resultList');
             if (!centers.length) {
-                list.innerHTML = '<div class="empty-note">검색 결과가 없습니다. 다른 지역명이나 센터명으로 찾아보세요.</div>';
+                list.innerHTML = '<div class="empty-note">아직 이 지역에 공개된 센터가 없습니다. 아래에서 주변 시설을 먼저 둘러보세요.</div>';
                 return;
             }
-            list.innerHTML = centers.map((c, i) => `
-                <div class="center-card">
+            list.innerHTML = `<div class="result-list">${centers.map((c, i) => `
+                <div class="center-row">
                     <img src="${c.logo_image || 'assets/user_design/29_top_profile_icon.png'}" alt="">
                     <div class="info">
                         <div class="name">${escapeHtml(c.name)}</div>
-                        ${c.address ? `<div class="addr">${escapeHtml(c.address)}</div>` : ''}
-                        ${c.phone ? `<div class="phone">☎ ${escapeHtml(c.phone)}</div>` : ''}
+                        <div class="meta">${[c.address, c.phone].filter(Boolean).map(escapeHtml).join(' · ')}</div>
                     </div>
                     <button type="button" class="consult-btn" onclick="openConsultModal(${i})">상담 신청</button>
-                </div>`).join('');
+                </div>`).join('')}</div>`;
         }
 
         function openConsultModal(i) {
@@ -232,7 +248,7 @@
             const q = document.getElementById('nearbyInput').value.trim();
             const list = document.getElementById('nearbyList');
             if (!q) { alert('검색어를 입력해 주세요 (예: 강남구 요양원)'); return; }
-            list.innerHTML = '<div class="empty-note">검색 중...</div>';
+            list.innerHTML = '<div class="empty-note">찾는 중...</div>';
             document.getElementById('nearbyCount').textContent = '';
             try {
                 const res = await fetch(`${API_URL}/centers/nearby-facilities?q=${encodeURIComponent(q)}`);
@@ -246,16 +262,16 @@
                     return;
                 }
                 document.getElementById('nearbyCount').textContent = `${d.places.length}곳`;
-                list.innerHTML = d.places.map(p => `
-                    <div class="facility-card">
-                        <div class="name">${escapeHtml(p.name)}</div>
-                        ${p.category ? `<div class="category">${escapeHtml(p.category)}</div>` : ''}
-                        ${p.address ? `<div class="addr">${escapeHtml(p.address)}</div>` : ''}
-                        ${p.phone ? `<div class="phone">☎ ${escapeHtml(p.phone)}</div>` : ''}
-                        ${p.place_url ? `<a class="map-link" href="${escapeHtml(p.place_url)}" target="_blank" rel="noopener">카카오맵에서 보기 →</a>` : ''}
-                    </div>`).join('');
+                list.innerHTML = `<div class="result-list">${d.places.map(p => `
+                    <div class="facility-row">
+                        <div class="name-line">
+                            <span class="name">${escapeHtml(p.name)}</span>
+                            ${p.category ? `<span class="category">${escapeHtml(p.category)}</span>` : ''}
+                        </div>
+                        <div class="meta">${[p.address, p.phone].filter(Boolean).map(escapeHtml).join(' · ')}${p.place_url ? ` <a class="map-link" href="${escapeHtml(p.place_url)}" target="_blank" rel="noopener">지도에서 보기</a>` : ''}</div>
+                    </div>`).join('')}</div>`;
             } catch (e) {
-                list.innerHTML = '<div class="empty-note">검색에 실패했습니다</div>';
+                list.innerHTML = '<div class="empty-note">검색하지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
             }
         }
 
