@@ -47,6 +47,9 @@
             .g-header-row { flex-wrap: wrap; row-gap: 10px; }
             .g-date-chip { display: none; }
         }
+        @media (max-width: 480px) {
+            .g-stat-row { grid-template-columns: 1fr; }
+        }
 
         /* 연말정산용 납부확인서 (copay_management.html과 동일한 서식) */
         .cert { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 28px; max-width: 640px; margin: 0 auto; }

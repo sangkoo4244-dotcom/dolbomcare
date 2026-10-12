@@ -37,6 +37,13 @@
         .summary-label { font-size: 13px; font-weight: 700; color: #64748B; }
         .summary-value { font-size: 24px; font-weight: 800; color: var(--navy); line-height: 1.2; font-variant-numeric: tabular-nums; }
         @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 900px) {
+            #notifGrid { grid-template-columns: 1fr !important; }
+            .summary-row { grid-template-columns: 1fr 1fr; }
+            .notif-desc { max-width: none; white-space: normal; font-size: 13px; }
+            .sl-table td { font-size: 14px; }
+            .pager-btn { width: 40px; height: 40px; font-size: 14px; }
+        }
 
         .panel2 { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
         .panel2-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 14px; font-weight: 800; color: var(--navy); }
@@ -161,7 +168,7 @@
                     </button>
                 </div>
 
-                <div style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start;">
+                <div id="notifGrid" style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start;">
                     <!-- 알림 목록 -->
                     <div style="background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden;">
                         <div style="overflow-x:auto;">
