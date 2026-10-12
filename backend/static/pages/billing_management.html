@@ -178,7 +178,6 @@
         }
 
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
             .main-layout { margin-left: 0; }
             .content { padding: 20px; }
         }
@@ -209,6 +208,7 @@
         .summary-value { font-size: 26px; font-weight: 800; color: var(--navy); line-height: 1.2; font-variant-numeric: tabular-nums; }
         .summary-note { font-size: 12px; color: #94A3B8; margin-top: 1px; }
         @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 900px) { #billingGrid { grid-template-columns: 1fr !important; } }
 
         .filter-bar { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
         .filter-input { padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 13px; outline: none; }
@@ -334,7 +334,7 @@
             <span id="submittedToNhisCount" hidden>0</span>
             <span id="reimbursedCount" hidden>0</span>
 
-            <div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;">
+            <div id="billingGrid" style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;">
                 <div style="min-width:0;">
                     <!-- Archive Tabs -->
                     <div class="archive-tabs2">

@@ -48,6 +48,10 @@
         .summary-label { font-size: 13px; font-weight: 700; color: #64748B; }
         .summary-value { font-size: 24px; font-weight: 800; color: var(--navy); line-height: 1.2; font-variant-numeric: tabular-nums; }
         @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 900px) {
+            #salaryTrendGrid { grid-template-columns: 1fr !important; }
+            #statementGrid { grid-template-columns: 1fr !important; }
+        }
 
         .money-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
         .money-row > div { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 16px 18px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
@@ -178,7 +182,7 @@
                 </div>
 
                 <!-- 월별 급여 추이 + 안내 -->
-                <div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;margin-bottom:16px;">
+                <div id="salaryTrendGrid" style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;margin-bottom:16px;">
                     <div class="detail-card">
                         <div class="detail-card-head">
                             <svg style="width:18px;height:18px;color:var(--teal);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8 13 13.7l-4-4L3 16"/></svg>
@@ -246,7 +250,7 @@
                 </div>
 
                 <!-- 급여명세서 + 문의 -->
-                <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:16px;">
+                <div id="statementGrid" style="display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:16px;">
                     <div class="detail-card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
                         <div>
                             <div style="font-size:15px;font-weight:800;color:var(--navy);">급여명세서</div>

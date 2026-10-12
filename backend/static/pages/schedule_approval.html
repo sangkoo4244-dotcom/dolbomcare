@@ -37,6 +37,7 @@
         .summary-value { font-size: 26px; font-weight: 800; color: var(--navy); line-height: 1.2; font-variant-numeric: tabular-nums; }
         .summary-note { font-size: 12px; color: #94A3B8; margin-top: 1px; }
         @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 900px) { #saGrid { grid-template-columns: 1fr !important; } }
 
         /* 필터 툴바 */
         .filter-bar { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
@@ -145,7 +146,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1" style="grid-template-columns: minmax(0,1fr) 300px; gap: 16px; align-items: start; display: grid;">
+                <div id="saGrid" class="grid grid-cols-1" style="grid-template-columns: minmax(0,1fr) 300px; gap: 16px; align-items: start; display: grid;">
                     <div style="min-width:0;">
                         <!-- 필터 -->
                         <div class="filter-bar">
