@@ -1895,8 +1895,7 @@
                     alert(currentResidentId ? '이용자가 수정되었습니다' : '이용자가 추가되었습니다');
                     closeResidentModal();
                     loadResidents();
-                    if (result.caregiver_change && savedResidentId && confirm('담당 요양보호사가 바뀌었습니다. 새 담당자에게 남길 인계 메모를 지금 작성할까요?
-(최근 상태·주의사항·선호를 전해 두면 서비스가 끊기지 않습니다)')) {
+                    if (result.caregiver_change && savedResidentId && confirm('담당 요양보호사가 바뀌었습니다. 새 담당자에게 남길 인계 메모를 지금 작성할까요?\n(최근 상태·주의사항·선호를 전해 두면 서비스가 끊기지 않습니다)')) {
                         window.location.href = `./handover.html?resident_id=${savedResidentId}&to=${result.caregiver_change.new_caregiver_id}`;
                     }
                 } else {
