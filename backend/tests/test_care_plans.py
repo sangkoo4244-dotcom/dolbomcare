@@ -128,3 +128,82 @@ def test_cannot_delete_plan_that_has_change_plan(env):
     first = client.post("/api/v1/care-plans", json=body(), headers=MANAGER).json()["data"]["id"]
     client.post("/api/v1/care-plans", json=body(plan_type="change", change_reason="욕구 변화", written_date="2026-10-12"), headers=MANAGER)
     assert client.delete(f"/api/v1/care-plans/{first}", headers=MANAGER).status_code == 400
+
+
+# ---------------- 보호자 전자서명 / 요양보호사 확인 ----------------
+
+GUARDIAN = auth(9, "guardian", "g@test.com")
+OTHER_GUARDIAN = auth(10, "guardian", "g2@test.com")
+SIG = "data:image/png;base64," + "A" * 600
+
+
+@pytest.fixture
+def linked(env):
+    db, client = env
+    db.add(models.User(id=9, email="g@test.com", full_name="김영희", role="guardian", center_id=1))
+    db.add(models.User(id=10, email="g2@test.com", full_name="남의보호자", role="guardian", center_id=1))
+    resident = db.query(models.Resident).filter(models.Resident.id == 1).first()
+    resident.guardian_id = 9
+    resident.primary_caregiver_id = 2
+    db.commit()
+    pid = client.post("/api/v1/care-plans", json=body(), headers=MANAGER).json()["data"]["id"]
+    return db, client, pid
+
+
+def test_guardian_cannot_see_plan_until_shared(linked):
+    _, client, pid = linked
+    assert client.get("/api/v1/care-plans/guardian", headers=GUARDIAN).json()["plans"] == []
+    res = client.post(f"/api/v1/care-plans/{pid}/share", headers=MANAGER)
+    assert res.status_code == 200 and res.json()["data"]["shared_at"]
+    plans = client.get("/api/v1/care-plans/guardian", headers=GUARDIAN).json()["plans"]
+    assert len(plans) == 1 and plans[0]["signed"] is False and "issues" not in plans[0]
+    assert client.get("/api/v1/care-plans/guardian", headers=OTHER_GUARDIAN).json()["plans"] == []
+
+
+def test_share_needs_linked_guardian(env):
+    _, client = env
+    pid = client.post("/api/v1/care-plans", json=body(), headers=MANAGER).json()["data"]["id"]
+    assert client.post(f"/api/v1/care-plans/{pid}/share", headers=MANAGER).status_code == 400
+
+
+def test_guardian_signs_once_and_manager_is_notified(linked):
+    db, client, pid = linked
+    client.post(f"/api/v1/care-plans/{pid}/share", headers=MANAGER)
+    sign = {"signer_name": "김영희", "relation": "딸", "signature": SIG}
+    assert client.post(f"/api/v1/care-plans/{pid}/sign", json={**sign, "signature": "data:image/png;base64,AAA"}, headers=GUARDIAN).status_code == 400  # 빈 서명
+    assert client.post(f"/api/v1/care-plans/{pid}/sign", json={**sign, "relation": " "}, headers=GUARDIAN).status_code == 400
+    assert client.post(f"/api/v1/care-plans/{pid}/sign", json=sign, headers=OTHER_GUARDIAN).status_code == 404
+    ok = client.post(f"/api/v1/care-plans/{pid}/sign", json=sign, headers=GUARDIAN).json()["data"]
+    assert ok["signed"] and ok["guardian_signer"] == "김영희(딸)"
+    assert client.post(f"/api/v1/care-plans/{pid}/sign", json=sign, headers=GUARDIAN).status_code == 400  # 재서명 불가
+    assert db.query(models.Notification).filter(models.Notification.user_id == 1, models.Notification.kind == "care_plan_signed").count() == 1
+    manager_view = client.get("/api/v1/care-plans?resident_id=1", headers=MANAGER).json()["plans"][0]
+    assert manager_view["signed_via"] == "app" and manager_view["has_signature"] is True
+    assert "signature" not in manager_view  # 서명 이미지 자체는 목록에 싣지 않는다
+
+
+def test_unshared_plan_cannot_be_signed(linked):
+    _, client, pid = linked
+    assert client.post(f"/api/v1/care-plans/{pid}/sign", json={"signer_name": "김영희", "relation": "딸", "signature": SIG}, headers=GUARDIAN).status_code == 404
+
+
+def test_caregiver_sees_and_acknowledges_own_residents_plan(linked):
+    _, client, pid = linked
+    mine = client.get("/api/v1/care-plans/mine", headers=CAREGIVER).json()["plans"]
+    assert [p["resident_name"] for p in mine] == ["김이용"] and mine[0]["acknowledged_at"] is None
+    before = client.get("/api/v1/care-plans?resident_id=1", headers=MANAGER).json()["plans"][0]
+    assert any("요양보호사가 이 계획서를 아직 확인하지 않았습니다" in i for i in before["issues"])
+    assert client.post(f"/api/v1/care-plans/{pid}/ack", headers=CAREGIVER).status_code == 200
+    assert client.post(f"/api/v1/care-plans/{pid}/ack", headers=CAREGIVER).status_code == 200  # 여러 번 눌러도 한 건
+    after = client.get("/api/v1/care-plans?resident_id=1", headers=MANAGER).json()["plans"][0]
+    assert after["caregiver_ack"]["acknowledged_at"] and not any("요양보호사가" in i for i in after["issues"])
+
+
+def test_other_residents_plan_cannot_be_acknowledged_and_roles(linked):
+    db, client, pid = linked
+    db.query(models.Resident).filter(models.Resident.id == 1).first().primary_caregiver_id = None
+    db.commit()
+    assert client.post(f"/api/v1/care-plans/{pid}/ack", headers=CAREGIVER).status_code == 404
+    assert client.get("/api/v1/care-plans/mine", headers=GUARDIAN).status_code == 403
+    assert client.get("/api/v1/care-plans/guardian", headers=CAREGIVER).status_code == 403
+    assert client.post(f"/api/v1/care-plans/{pid}/share", headers=CAREGIVER).status_code == 403

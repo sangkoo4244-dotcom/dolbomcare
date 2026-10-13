@@ -468,7 +468,20 @@ class CarePlan(Base):
     guardian_signed_date = Column(Date, nullable=True)  # 수급자(보호자) 설명·확인서명일
     guardian_signer = Column(String, nullable=True)  # 서명자명(관계)
     nhis_notified_date = Column(Date, nullable=True)  # 공단 통보일
+    shared_at = Column(DateTime, nullable=True)  # 보호자에게 확인·서명을 요청한 시각 (이후부터 보호자에게 보인다)
+    guardian_signature = Column(Text, nullable=True)  # 보호자가 앱에서 한 전자서명 (PNG data URL)
+    signed_via = Column(String, nullable=True)  # 'app'(보호자 앱 전자서명) / 'manual'(센터가 서명일 직접 기록)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CarePlanAck(Base):
+    """요양보호사가 담당 이용자의 급여제공계획을 확인(숙지)했다는 기록 - 평가 '급여제공계획 수립 및 제공'의 요양보호사 숙지 항목 대비."""
+    __tablename__ = "care_plan_acks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, ForeignKey("care_plans.id"), index=True)
+    caregiver_id = Column(Integer, ForeignKey("users.id"), index=True)
+    acknowledged_at = Column(DateTime, default=datetime.utcnow)
 
 
 class ServiceEvaluation(Base):

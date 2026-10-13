@@ -4,7 +4,7 @@ from app.models import (
     ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
     RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken,
     Counseling, CarePlan, ServiceEvaluation, CaseConference,
-    TrainingSession, ResidentNotice,
+    TrainingSession, ResidentNotice, CarePlanAck,
 )
 from sqlalchemy import text
 
@@ -58,6 +58,9 @@ ADDITIVE_COLUMNS = [
     ("needs_assessments", "subjective_needs", "TEXT"),
     ("needs_assessments", "resource_use", "TEXT"),
     ("needs_assessments", "overall_opinion", "TEXT"),
+    ("care_plans", "shared_at", "TIMESTAMP"),
+    ("care_plans", "guardian_signature", "TEXT"),
+    ("care_plans", "signed_via", "VARCHAR"),
 ]
 
 
@@ -70,7 +73,7 @@ def run_migrations():
     """
     for table_cls in (StaffCertificate, SalaryStatement, GuardianInvite, Notification,
                        ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
-                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, ServiceEvaluation, CaseConference, TrainingSession, ResidentNotice):
+                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, ServiceEvaluation, CaseConference, TrainingSession, ResidentNotice, CarePlanAck):
         try:
             table_cls.__table__.create(bind=engine, checkfirst=True)
         except Exception as e:
