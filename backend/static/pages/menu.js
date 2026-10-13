@@ -61,6 +61,7 @@ const SIDEBAR_MENUS = {
         { href: 'my_salary.html', icon: 'salary', label: '나의 급여' },
         { href: 'my_schedule.html', icon: 'schedule', label: '나의 일정' },
         { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
+        { href: 'handover.html', icon: 'messages', label: '인수인계' },
         { href: 'notifications.html', icon: 'notify', label: '알림' },
         { href: 'messages.html', icon: 'messages', label: '보호자 소통' }
     ],
@@ -78,6 +79,7 @@ const SIDEBAR_MENUS = {
         { href: 'voice_record.html', icon: 'voice', label: '음성 기록' },
         { href: 'schedule_approval.html', icon: 'schedule_check', label: '방문계획 승인' },
         { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
+        { href: 'handover.html', icon: 'messages', label: '인수인계' },
         { href: 'billing_management.html', icon: 'billing', label: '청부관리' },
         { href: 'copay_management.html', icon: 'billing', label: '본인부담금' },
         { href: 'audit_prep.html', icon: 'billing', label: '평가 준비 자료' },

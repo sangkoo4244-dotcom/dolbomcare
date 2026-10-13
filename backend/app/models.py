@@ -576,3 +576,17 @@ class IncidentReport(Base):
     guardian_notified_date = Column(Date, nullable=True)
     prevention = Column(Text, nullable=True)  # 재발방지 대책
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class HandoverNote(Base):
+    """업무 인계인수 - 담당 요양보호사가 바뀌거나 대체 방문할 때 이용자의 최근 상태·주의사항을 다음 담당자에게 남기는 메모."""
+    __tablename__ = "handover_notes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    author_id = Column(Integer, ForeignKey("users.id"), index=True)
+    to_caregiver_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    content = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    acknowledged_at = Column(DateTime, nullable=True)
