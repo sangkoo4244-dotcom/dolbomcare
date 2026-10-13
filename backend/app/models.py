@@ -405,3 +405,26 @@ class PasswordResetToken(Base):
     token = Column(String, unique=True, index=True)
     expires_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Counseling(Base):
+    """상담 기록 - 공단 2026 방문요양 평가의 '방문상담관리'(수급자·보호자 월 1회)와 '직원 상담관리'(요양보호사 월 1회),
+    '직원변경'(담당 요양보호사가 바뀌면 14일 이내 상담)을 증빙하는 대장.
+    상담은 대면 또는 유선만 인정되고(문자·SNS 불인정), 내용이 '특이사항 없음' 같은 문구뿐이면 불인정된다."""
+    __tablename__ = "counselings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    kind = Column(String, index=True)  # 'resident'(수급자·보호자 방문상담) / 'staff'(직원 상담)
+    resident_id = Column(Integer, ForeignKey("residents.id"), nullable=True, index=True)
+    staff_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # 직원 상담 대상 요양보호사
+    counselor_id = Column(Integer, ForeignKey("users.id"))  # 상담직원(상담한 관리자)
+    counselee_name = Column(String, nullable=True)  # 상담대상자명(관계) - 예: "김영희(딸)"
+    counsel_date = Column(Date, index=True)
+    method = Column(String, default="visit")  # 'visit'(대면) / 'phone'(유선)
+    reason = Column(String, nullable=True)  # 'monthly'(정기) / 'caregiver_change'(담당 요양보호사 변경)
+    content = Column(Text)
+    action_needed = Column(Boolean, default=False)  # 조치 필요 여부
+    action_note = Column(Text, nullable=True)  # 조치 내용·반영 내역
+    action_done_date = Column(Date, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

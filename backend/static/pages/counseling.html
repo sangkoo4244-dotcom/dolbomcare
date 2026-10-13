@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상담 기록 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --warn: #B45309; --danger2: #DC2626; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .note { background: #FFF7EB; border: 1px solid #FCE2B5; color: #8A4A07; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+        .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .tab { padding: 9px 16px; border-radius: 10px; border: 1.5px solid var(--line2); background: #fff; font-size: 14px; font-weight: 700; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .tab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+        .tab .dot { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 6px; border-radius: 999px; background: #DC2626; color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
+        .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .field { padding: 9px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; }
+        .field:focus { border-color: var(--teal); outline: none; }
+        .btn-solid { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+
+        .panel { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
+        .panel h2 { margin: 0 0 12px; font-size: 16px; color: var(--navy); }
+        .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #F1F5F9; flex-wrap: wrap; }
+        .row:first-of-type { border-top: none; }
+        .row .who { font-weight: 700; font-size: 15px; }
+        .row .sub { font-size: 12.5px; color: #64748B; margin-top: 2px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .badge.ok { background: #E7F7EF; color: #0D8A61; }
+        .badge.no { background: #FEECEC; color: #B91C1C; }
+        .badge.wait { background: #FFF7EB; color: #B45309; }
+        .empty-note { color: #94A3B8; font-size: 13px; padding: 12px 0; }
+        .rec { border-top: 1px solid #F1F5F9; padding: 12px 0; }
+        .rec:first-of-type { border-top: none; }
+        .rec .head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+        .rec .body { margin-top: 6px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+        .rec .meta { font-size: 12.5px; color: #64748B; margin-top: 4px; }
+
+        .modal-back { display: none; position: fixed; inset: 0; background: rgba(20,40,63,0.45); align-items: center; justify-content: center; padding: 16px; z-index: 200; }
+        .modal-back.open { display: flex; }
+        .modal { background: #fff; border-radius: 14px; padding: 24px; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; }
+        .modal h3 { margin: 0 0 4px; font-size: 18px; color: var(--navy); }
+        .modal .fsub { font-size: 13px; color: #64748B; margin-bottom: 14px; }
+        .modal label { display: block; font-size: 13px; font-weight: 700; margin: 12px 0 5px; }
+        .modal input[type=text], .modal input[type=date], .modal select, .modal textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 15px; font-family: inherit; }
+        .modal textarea { min-height: 110px; resize: vertical; }
+        .modal .hint { font-size: 12px; color: #94A3B8; margin-top: 4px; }
+        .modal .err { color: #DC2626; font-size: 13px; margin-top: 10px; display: none; }
+        .modal .actions { display: flex; gap: 8px; margin-top: 18px; }
+        .modal .actions button { flex: 1; height: 44px; }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>상담 기록</h1>
+                <div class="breadcrumb">홈 › 대상자 및 인력 관리 › <b>상담 기록</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">센터장</div>
+                    <div class="user-role">관리자</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="note">
+                공단 2026년 방문요양 평가는 <b>수급자(보호자) 월 1회 방문상담</b>, <b>요양보호사 월 1회 직원 상담</b>, 그리고 <b>담당 요양보호사가 바뀐 뒤 14일 이내 상담</b>을 기록으로 확인합니다.
+                상담은 대면 또는 유선만 인정되고(문자·SNS 불인정), 내용이 "특이사항 없음"처럼 확인되지 않으면 인정되지 않습니다.
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="resident" onclick="showTab('resident')">수급자 방문상담<span class="dot" id="dotResident" style="display:none"></span></button>
+                <button class="tab" data-tab="staff" onclick="showTab('staff')">직원 상담<span class="dot" id="dotStaff" style="display:none"></span></button>
+                <button class="tab" data-tab="change" onclick="showTab('change')">직원 변경 후 14일 상담<span class="dot" id="dotChange" style="display:none"></span></button>
+            </div>
+
+            <div class="bar" id="monthBar">
+                <label for="monthInput" style="font-weight:700;font-size:14px;">상담 월</label>
+                <input type="month" id="monthInput" class="field" onchange="reload()">
+            </div>
+
+            <div id="tabResident"></div>
+            <div id="tabStaff" style="display:none"></div>
+            <div id="tabChange" style="display:none"></div>
+        </div>
+    </div>
+
+    <div class="modal-back" id="formBack">
+        <div class="modal">
+            <h3 id="fTitle">상담 기록</h3>
+            <div class="fsub" id="fSub"></div>
+            <label for="fDate">상담일</label>
+            <input type="date" id="fDate">
+            <label for="fMethod">상담 방법</label>
+            <select id="fMethod"><option value="visit">대면</option><option value="phone">유선</option></select>
+            <div id="fCounseleeWrap">
+                <label for="fCounselee">상담대상자명(관계)</label>
+                <input type="text" id="fCounselee" placeholder="예: 김영희(딸)">
+            </div>
+            <label for="fContent">상담 내용</label>
+            <textarea id="fContent" placeholder="수급자의 상태, 욕구, 건의사항 등을 구체적으로 적어 주세요"></textarea>
+            <div class="hint">"특이사항 없음", "지난달과 동일"처럼 내용이 확인되지 않는 문구는 평가에서 인정되지 않습니다.</div>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:700;"><input type="checkbox" id="fAction"> 조치가 필요한 상담입니다</label>
+            <div id="fActionWrap" style="display:none">
+                <label for="fActionNote">조치 내용 (나중에 반영일을 기록할 수 있습니다)</label>
+                <input type="text" id="fActionNote" placeholder="예: 방문 시간 30분 연장">
+            </div>
+            <div class="err" id="fErr"></div>
+            <div class="actions">
+                <button type="button" class="btn-outline" onclick="closeForm()">취소</button>
+                <button type="button" class="btn-solid" onclick="submitForm()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-back" id="actionBack">
+        <div class="modal">
+            <h3>조치 반영 기록</h3>
+            <div class="fsub" id="aSub"></div>
+            <label for="aNote">조치 내용</label>
+            <input type="text" id="aNote">
+            <label for="aDate">반영일</label>
+            <input type="date" id="aDate">
+            <div class="actions">
+                <button type="button" class="btn-outline" onclick="document.getElementById('actionBack').classList.remove('open')">취소</button>
+                <button type="button" class="btn-solid" onclick="submitAction()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/v1/counseling';
+        let currentUser = null;
+        let currentTab = 'resident';
+        let formCtx = null;
+        let actionId = null;
+        let statusData = null;
+
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const today = () => typeof todayLocal === 'function' ? todayLocal() : new Date().toISOString().slice(0, 10);
+
+        function init() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            if (user.role !== 'center_manager') { window.location.href = './dashboard.html'; return; }
+            currentUser = user;
+            document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
+            if (typeof renderSidebar === 'function') renderSidebar();
+            document.getElementById('monthInput').value = today().slice(0, 7);
+            document.getElementById('fAction').addEventListener('change', e => {
+                document.getElementById('fActionWrap').style.display = e.target.checked ? '' : 'none';
+            });
+            reload();
+        }
+
+        function showTab(name) {
+            currentTab = name;
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+            document.getElementById('tabResident').style.display = name === 'resident' ? '' : 'none';
+            document.getElementById('tabStaff').style.display = name === 'staff' ? '' : 'none';
+            document.getElementById('tabChange').style.display = name === 'change' ? '' : 'none';
+            document.getElementById('monthBar').style.display = name === 'change' ? 'none' : '';
+        }
+
+        async function reload() {
+            const month = document.getElementById('monthInput').value || today().slice(0, 7);
+            try {
+                const [st, rl, sl, ch] = await Promise.all([
+                    fetch(`${API_URL}/status?month=${month}`).then(r => r.json()),
+                    fetch(`${API_URL}?kind=resident&month=${month}`).then(r => r.json()),
+                    fetch(`${API_URL}?kind=staff&month=${month}`).then(r => r.json()),
+                    fetch(`${API_URL}/caregiver-changes`).then(r => r.json()),
+                ]);
+                statusData = st;
+                renderResident(st, rl.counselings || []);
+                renderStaff(st, sl.counselings || []);
+                renderChanges(ch);
+                setDot('dotResident', st.residents_missing);
+                setDot('dotStaff', st.staff_missing);
+                setDot('dotChange', ch.overdue);
+            } catch (e) {
+                document.getElementById('tabResident').innerHTML = '<div class="panel empty-note">불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
+            }
+        }
+
+        function setDot(id, n) {
+            const el = document.getElementById(id);
+            el.style.display = n ? '' : 'none';
+            el.textContent = n || '';
+        }
+
+        function recordsHtml(list, emptyText) {
+            if (!list.length) return `<div class="empty-note">${emptyText}</div>`;
+            return list.map(c => `
+                <div class="rec">
+                    <div class="head"><b>${esc(c.kind === 'staff' ? c.staff_name : c.resident_name)}</b>
+                        <span>${esc(c.counsel_date)} · ${esc(c.method_label)}${c.reason === 'caregiver_change' ? ' · 담당 변경 후 상담' : ''}</span></div>
+                    <div class="body">${esc(c.content)}</div>
+                    <div class="meta">상담직원 ${esc(c.counselor_name || '-')}${c.counselee_name ? ' · 상담대상자 ' + esc(c.counselee_name) : ''}
+                        ${c.action_needed ? ' · 조치 필요: ' + (c.action_done_date ? `<span class="badge ok">${esc(c.action_done_date)} 반영</span> ${esc(c.action_note || '')}` : `<span class="badge wait">미반영</span> ${esc(c.action_note || '')} <button type="button" class="btn-outline" style="padding:3px 10px;font-size:12px;" onclick="openAction(${c.id}, '${esc((c.kind === 'staff' ? c.staff_name : c.resident_name) || '')}')">반영 기록</button>`) : ''}
+                        <button type="button" class="btn-outline" style="padding:3px 10px;font-size:12px;margin-left:6px;" onclick="removeRec(${c.id})">삭제</button></div>
+                </div>`).join('');
+        }
+
+        function renderResident(st, recs) {
+            document.getElementById('tabResident').innerHTML = `
+                <div class="panel"><h2>${esc(st.month)} 수급자 방문상담 현황 <span style="font-size:13px;color:#64748B;font-weight:600;">미실시 ${st.residents_missing}명</span></h2>
+                    ${st.residents.length ? st.residents.map(r => `
+                        <div class="row"><div><div class="who">${esc(r.name)}</div>
+                            <div class="sub">${r.done ? '최근 상담 ' + esc(r.last_date) : '이번 달 상담 기록이 없습니다'}</div></div>
+                            <div><span class="badge ${r.done ? 'ok' : 'no'}">${r.done ? '실시' : '미실시'}</span>
+                            <button type="button" class="btn-outline" onclick="openForm('resident', ${r.id}, '${esc(r.name)}')">상담 기록</button></div></div>`).join('')
+                        : '<div class="empty-note">등록된 이용자가 없습니다.</div>'}
+                </div>
+                <div class="panel"><h2>상담 기록</h2>${recordsHtml(recs, '이 달의 기록이 없습니다.')}</div>`;
+        }
+
+        function renderStaff(st, recs) {
+            document.getElementById('tabStaff').innerHTML = `
+                <div class="panel"><h2>${esc(st.month)} 직원 상담 현황 <span style="font-size:13px;color:#64748B;font-weight:600;">미실시 ${st.staff_missing}명</span></h2>
+                    <div class="sub" style="font-size:12.5px;color:#64748B;margin-bottom:6px;">신규 직원은 입사한 달의 다음 달부터 대상입니다. 상담결과는 반기별 1회 이상 기관운영 등에 반영해야 합니다.</div>
+                    ${st.staff.length ? st.staff.map(r => `
+                        <div class="row"><div><div class="who">${esc(r.name)}</div>
+                            <div class="sub">${r.done ? '최근 상담 ' + esc(r.last_date) : '이번 달 상담 기록이 없습니다'}</div></div>
+                            <div><span class="badge ${r.done ? 'ok' : 'no'}">${r.done ? '실시' : '미실시'}</span>
+                            <button type="button" class="btn-outline" onclick="openForm('staff', ${r.id}, '${esc(r.name)}')">상담 기록</button></div></div>`).join('')
+                        : '<div class="empty-note">상담 대상 요양보호사가 없습니다.</div>'}
+                </div>
+                <div class="panel"><h2>상담 기록</h2>${recordsHtml(recs, '이 달의 기록이 없습니다.')}</div>`;
+        }
+
+        function renderChanges(ch) {
+            const label = { overdue: ['no', '기한 초과'], pending: ['wait', '기한 내'], done: ['ok', '상담 완료'] };
+            document.getElementById('tabChange').innerHTML = `
+                <div class="panel"><h2>담당 요양보호사가 바뀐 이용자 (최근 90일)</h2>
+                    <div class="sub" style="font-size:12.5px;color:#64748B;margin-bottom:6px;">일정의 담당자 변경을 보고 자동으로 찾습니다. 변경일(새 요양보호사의 급여 시작일)부터 토요일·공휴일 포함 14일 이내에 수급자(보호자)와 상담해야 하고, 상담 내용에는 바뀐 뒤 제공받은 급여에 대한 의견이 들어가야 합니다. 14일 안에 원래 요양보호사로 돌아오면 상담하지 않아도 됩니다.</div>
+                    ${ch.changes.length ? ch.changes.map(c => `
+                        <div class="row"><div><div class="who">${esc(c.resident_name)}</div>
+                            <div class="sub">${esc(c.from_caregiver || '-')} → ${esc(c.to_caregiver || '-')} · 변경일 ${esc(c.changed_on)} · 기한 ${esc(c.deadline)}${c.status === 'pending' ? ` (D-${c.days_left})` : ''}</div></div>
+                            <div><span class="badge ${label[c.status][0]}">${label[c.status][1]}</span>
+                            ${c.status === 'done' ? '' : `<button type="button" class="btn-outline" onclick="openForm('resident', ${c.resident_id}, '${esc(c.resident_name)}', 'caregiver_change')">상담 기록</button>`}</div></div>`).join('')
+                        : '<div class="empty-note">최근 90일 동안 담당 요양보호사가 바뀐 이용자가 없습니다.</div>'}
+                </div>`;
+        }
+
+        function openForm(kind, id, name, reason) {
+            formCtx = { kind, id, reason: reason || 'monthly' };
+            document.getElementById('fTitle').textContent = kind === 'staff' ? '직원 상담 기록' : '수급자(보호자) 방문상담 기록';
+            document.getElementById('fSub').textContent = (kind === 'staff' ? '요양보호사 ' : '수급자 ') + name + (reason === 'caregiver_change' ? ' · 담당 요양보호사 변경 후 상담' : '');
+            document.getElementById('fDate').value = today();
+            document.getElementById('fMethod').value = 'visit';
+            document.getElementById('fCounselee').value = '';
+            document.getElementById('fContent').value = '';
+            document.getElementById('fContent').placeholder = reason === 'caregiver_change'
+                ? '요양보호사가 바뀐 뒤 제공받은 급여에 대한 수급자(보호자)의 의견을 포함해 적어 주세요'
+                : (kind === 'staff' ? '근무환경 개선, 건의사항, 애로사항 등을 구체적으로 적어 주세요' : '수급자의 상태, 욕구, 건의사항 등을 구체적으로 적어 주세요');
+            document.getElementById('fCounseleeWrap').style.display = kind === 'staff' ? 'none' : '';
+            document.getElementById('fAction').checked = false;
+            document.getElementById('fActionWrap').style.display = 'none';
+            document.getElementById('fActionNote').value = '';
+            document.getElementById('fErr').style.display = 'none';
+            document.getElementById('formBack').classList.add('open');
+        }
+
+        function closeForm() { document.getElementById('formBack').classList.remove('open'); }
+
+        async function submitForm() {
+            const err = document.getElementById('fErr');
+            err.style.display = 'none';
+            const body = {
+                kind: formCtx.kind,
+                resident_id: formCtx.kind === 'resident' ? formCtx.id : null,
+                staff_id: formCtx.kind === 'staff' ? formCtx.id : null,
+                counselee_name: document.getElementById('fCounselee').value,
+                counsel_date: document.getElementById('fDate').value,
+                method: document.getElementById('fMethod').value,
+                reason: formCtx.reason,
+                content: document.getElementById('fContent').value,
+                action_needed: document.getElementById('fAction').checked,
+                action_note: document.getElementById('fActionNote').value || null,
+            };
+            try {
+                const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const d = await res.json();
+                if (!res.ok) { err.textContent = typeof d.detail === 'string' ? d.detail : '저장하지 못했습니다. 입력 내용을 확인해 주세요'; err.style.display = 'block'; return; }
+                closeForm();
+                reload();
+            } catch (e) {
+                err.textContent = '저장하지 못했습니다. 잠시 후 다시 시도해 주세요';
+                err.style.display = 'block';
+            }
+        }
+
+        function openAction(id, name) {
+            actionId = id;
+            document.getElementById('aSub').textContent = name;
+            document.getElementById('aNote').value = '';
+            document.getElementById('aDate').value = today();
+            document.getElementById('actionBack').classList.add('open');
+        }
+
+        async function submitAction() {
+            await fetch(`${API_URL}/${actionId}/action`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action_note: document.getElementById('aNote').value || null, action_done_date: document.getElementById('aDate').value || null }),
+            });
+            document.getElementById('actionBack').classList.remove('open');
+            reload();
+        }
+
+        async function removeRec(id) {
+            if (!confirm('이 상담 기록을 삭제할까요?')) return;
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            reload();
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
