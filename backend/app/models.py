@@ -502,3 +502,39 @@ class CaseConference(Base):
     resolved = Column(Boolean, nullable=True)  # 선정사유 해결 여부
     next_action = Column(Text, nullable=True)  # 미해결 시 추가 조치 계획
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class TrainingSession(Base):
+    """직원 교육 기록 - 공단 2026 방문요양 평가 '직원교육'(4)·'노인인권보호'(13)·'직원인권보호'(5)·'질향상노력'(7).
+    필수사항: 교육일자·교육방법·강사명·교육내용·참석자명(서명)."""
+    __tablename__ = "training_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    topic = Column(String, index=True)  # operating_rules / care_guidelines / elder_rights / staff_rights_response / cognitive_program
+    session_date = Column(Date, index=True)
+    method = Column(String)  # self(자체교육) / external(외부강사) / online(온라인)
+    instructor = Column(String)
+    content = Column(Text)
+    attendee_ids = Column(Text)  # JSON: 참석한 직원 user id 목록
+    signed_ids = Column(Text)  # JSON: 그중 서명한 직원 user id 목록
+    recorded_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ResidentNotice(Base):
+    """수급자(보호자) 안내 기록 - 공단 2026 평가 '노인인권보호'(8가지 지침 제공·설명)·'직원인권보호'(폭언·폭행·성희롱 예방 및
+    상호존중 안내, 연 1회)·'급여제공안내'(급여제공범위·급여외행위·직원 인권보호 안내, 대면 필수)."""
+    __tablename__ = "resident_notices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    notice_type = Column(String, index=True)  # rights_guide / staff_respect / service_scope
+    notice_date = Column(Date, index=True)
+    method = Column(String)  # visit(대면) / mail(우편) / sms(문자) / email(이메일)
+    recipient = Column(String)  # 안내받은 사람: 수급자 본인 또는 보호자명(관계)
+    items = Column(Text, nullable=True)  # JSON: 제공한 지침 코드 목록 (rights_guide)
+    note = Column(Text, nullable=True)
+    recorded_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)

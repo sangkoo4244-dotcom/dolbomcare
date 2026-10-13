@@ -102,6 +102,21 @@ def run_precheck(db: Session, center_id: int, days: int = 14, now: datetime = No
         issues.append({"type": "case_conference_followup", "resident_id": None, "resident": "센터 전체",
                        "detail": f"사례관리 회의 후 30일 이내 급여 반영·평가 기한이 지난 건이 {cf['overdue_follow_up']}건 있습니다"})
 
+    from app.api.trainings import notice_status, training_status
+    ts = training_status(db, center_id, now.date())
+    for t in ts["topics"]:
+        if t["missing"]:
+            issues.append({"type": "training_missing", "resident_id": None, "resident": "센터 전체",
+                           "detail": f"{t['label']}을(를) 이번 {'연도' if t['cadence'] == 'year' else '반기'}에 받지 않은 직원이 {len(t['missing'])}명 있습니다 "
+                                     f"({', '.join(m['name'] for m in t['missing'][:4])}{' 외' if len(t['missing']) > 4 else ''})"})
+    if ts["new_staff_overdue"]:
+        issues.append({"type": "new_staff_training", "resident_id": None, "resident": "센터 전체",
+                       "detail": f"신규직원 {ts['new_staff_overdue']}건이 근무 시작 후 7일 이내 운영규정·급여제공지침 교육을 받지 못했습니다"})
+    ns = notice_status(db, center_id, now.date())
+    if ns["residents_missing"]:
+        issues.append({"type": "resident_notice_missing", "resident_id": None, "resident": "센터 전체",
+                       "detail": f"노인인권 지침·직원 존중·급여제공범위 안내 기록이 빠진 이용자가 {ns['residents_missing']}명 있습니다"})
+
     counts = {}
     for i in issues:
         counts[i["type"]] = counts.get(i["type"], 0) + 1

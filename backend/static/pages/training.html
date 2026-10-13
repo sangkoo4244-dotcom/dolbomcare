@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교육·안내 기록 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .note { background: #FFF7EB; border: 1px solid #FCE2B5; color: #8A4A07; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+        .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .tab { padding: 9px 16px; border-radius: 10px; border: 1.5px solid var(--line2); background: #fff; font-size: 14px; font-weight: 700; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .tab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+        .tab .dot { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 6px; border-radius: 999px; background: #DC2626; color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
+        .btn-solid { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .panel { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
+        .panel h2 { margin: 0 0 8px; font-size: 16px; color: var(--navy); }
+        .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #F1F5F9; flex-wrap: wrap; }
+        .row .who { font-weight: 700; font-size: 15px; }
+        .sub { font-size: 12.5px; color: #64748B; margin-top: 2px; line-height: 1.5; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; margin: 2px 2px 2px 0; }
+        .badge.ok { background: #E7F7EF; color: #0D8A61; }
+        .badge.no { background: #FEECEC; color: #B91C1C; }
+        .badge.wait { background: #FFF7EB; color: #B45309; }
+        .empty-note { color: #94A3B8; font-size: 13px; padding: 12px 0; }
+        .rec { border-top: 1px solid #F1F5F9; padding: 12px 0; font-size: 14px; line-height: 1.6; }
+        .rec .body { white-space: pre-wrap; margin-top: 4px; }
+        .rec .meta { font-size: 12.5px; color: #64748B; margin-top: 4px; }
+
+        .modal-back { display: none; position: fixed; inset: 0; background: rgba(20,40,63,0.45); align-items: center; justify-content: center; padding: 16px; z-index: 200; }
+        .modal-back.open { display: flex; }
+        .modal { background: #fff; border-radius: 14px; padding: 24px; width: 100%; max-width: 540px; max-height: 92vh; overflow-y: auto; }
+        .modal h3 { margin: 0 0 4px; font-size: 18px; color: var(--navy); }
+        .modal .fsub { font-size: 13px; color: #64748B; margin-bottom: 8px; }
+        .modal label.l { display: block; font-size: 13px; font-weight: 700; margin: 12px 0 5px; }
+        .modal input[type=text], .modal input[type=date], .modal select, .modal textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 15px; font-family: inherit; }
+        .modal textarea { min-height: 80px; resize: vertical; }
+        .modal .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .modal .chk { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 14px; }
+        .modal .chk input { width: auto; }
+        .modal .chk .sg { margin-left: auto; font-size: 12.5px; color: #64748B; }
+        .modal .err { color: #DC2626; font-size: 13px; margin-top: 10px; display: none; }
+        .modal .actions { display: flex; gap: 8px; margin-top: 18px; }
+        .modal .actions button { flex: 1; height: 44px; }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>교육·안내 기록</h1>
+                <div class="breadcrumb">홈 › 대상자 및 인력 관리 › <b>교육·안내 기록</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">센터장</div>
+                    <div class="user-role">관리자</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" data-tab="staff" onclick="showTab('staff')">직원 교육<span class="dot" id="dotStaff" style="display:none"></span></button>
+                <button class="tab" data-tab="notice" onclick="showTab('notice')">수급자(보호자) 안내<span class="dot" id="dotNotice" style="display:none"></span></button>
+            </div>
+            <div id="tabStaff"></div>
+            <div id="tabNotice" style="display:none"></div>
+        </div>
+    </div>
+
+    <div class="modal-back" id="seBack">
+        <div class="modal">
+            <h3>직원 교육 기록</h3>
+            <div class="fsub">교육일자·교육방법·강사명·교육내용·참석자(서명)가 평가에서 확인됩니다.</div>
+            <label class="l" for="seTopic">교육 종류</label><select id="seTopic"></select>
+            <div class="two">
+                <div><label class="l" for="seDate">교육일</label><input type="date" id="seDate"></div>
+                <div><label class="l" for="seMethod">교육 방법</label><select id="seMethod"></select></div>
+            </div>
+            <label class="l" for="seInstructor">강사명</label><input type="text" id="seInstructor">
+            <label class="l" for="seContent">교육내용</label><textarea id="seContent" placeholder="교육한 내용을 구체적으로 적어 주세요"></textarea>
+            <label class="l">참석 직원 (서명한 직원은 오른쪽 체크)</label>
+            <div id="sePeople"></div>
+            <div class="err" id="seErr"></div>
+            <div class="actions">
+                <button type="button" class="btn-outline" onclick="closeModal('seBack')">취소</button>
+                <button type="button" class="btn-solid" onclick="submitSession()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-back" id="rnBack">
+        <div class="modal">
+            <h3>수급자(보호자) 안내 기록</h3>
+            <div class="fsub" id="rnSub"></div>
+            <label class="l" for="rnType">안내 종류</label>
+            <select id="rnType" onchange="onTypeChange()"></select>
+            <div class="two">
+                <div><label class="l" for="rnDate">안내일</label><input type="date" id="rnDate"></div>
+                <div><label class="l" for="rnMethod">안내 방법</label><select id="rnMethod"></select></div>
+            </div>
+            <div class="fsub" id="rnMethodHint" style="margin-top:6px;"></div>
+            <label class="l" for="rnRecipient">안내받은 사람</label><input type="text" id="rnRecipient" placeholder="수급자 본인 또는 김영희(딸)">
+            <div id="rnItemsWrap" style="display:none">
+                <label class="l">설명하고 자료를 제공한 지침 (8가지를 모두 제공해야 인정)</label>
+                <div id="rnItems"></div>
+            </div>
+            <label class="l" for="rnNote">메모 (선택)</label><input type="text" id="rnNote">
+            <div class="err" id="rnErr"></div>
+            <div class="actions">
+                <button type="button" class="btn-outline" onclick="closeModal('rnBack')">취소</button>
+                <button type="button" class="btn-solid" onclick="submitNotice()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = '/api/v1/trainings';
+        let currentUser = null, opts = null, rnCtx = null, staffList = [];
+
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const today = () => typeof todayLocal === 'function' ? todayLocal() : new Date().toISOString().slice(0, 10);
+        const closeModal = (id) => document.getElementById(id).classList.remove('open');
+
+        function init() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            if (user.role !== 'center_manager') { window.location.href = './dashboard.html'; return; }
+            currentUser = user;
+            document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
+            if (typeof renderSidebar === 'function') renderSidebar();
+            load();
+        }
+
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+            document.getElementById('tabStaff').style.display = name === 'staff' ? '' : 'none';
+            document.getElementById('tabNotice').style.display = name === 'notice' ? '' : 'none';
+        }
+
+        function setDot(id, n) { const el = document.getElementById(id); el.style.display = n ? '' : 'none'; el.textContent = n || ''; }
+
+        async function load() {
+            try {
+                const [o, ts, sl, ns, nl] = await Promise.all([
+                    fetch(`${API}/options`).then(r => r.json()),
+                    fetch(`${API}/status`).then(r => r.json()),
+                    fetch(`${API}/sessions`).then(r => r.json()),
+                    fetch(`${API}/notices/status`).then(r => r.json()),
+                    fetch(`${API}/notices`).then(r => r.json()),
+                ]);
+                opts = o;
+                staffList = ts.staff;
+                renderStaff(ts, sl.sessions);
+                renderNotice(ns, nl.notices);
+                setDot('dotStaff', ts.missing_total + ts.new_staff_overdue);
+                setDot('dotNotice', ns.residents_missing);
+            } catch (e) {
+                document.getElementById('tabStaff').innerHTML = '<div class="panel">불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
+            }
+        }
+
+        function renderStaff(ts, sessions) {
+            const rule = { year: '연 1회', half: '반기 1회' };
+            document.getElementById('tabStaff').innerHTML = `
+                <div class="note">공단 2026년 평가: <b>모든 직원</b>(시설장 포함)에게 운영규정·급여제공지침 교육은 연 1회, 노인인권교육은 반기 1회 이상 실시하고 교육일자·방법·강사명·참석자(서명)를 기록해야 합니다.
+                <b>신규직원은 근무 시작일부터 7일 이내</b>에 운영규정·급여제공지침 교육을 받아야 합니다. 요양보호사 역량강화를 위한 인지프로그램 교육도 반기 1회 이상입니다.</div>
+                <div class="panel"><h2>교육 이수 현황 <button type="button" class="btn-solid" style="float:right;" onclick="openSession()">교육 기록</button></h2>
+                    ${ts.topics.map(t => `<div class="row"><div><div class="who">${esc(t.label)} <span class="sub">(${rule[t.cadence]} · ${esc(t.period_start)} ~ ${esc(t.period_end)})</span></div>
+                        <div class="sub">${t.missing.length ? '아직 교육받지 않은 직원: ' + t.missing.map(m => esc(m.name)).join(', ') : '모든 직원이 이수했습니다'}</div></div>
+                        <span class="badge ${t.missing.length ? 'no' : 'ok'}">${t.done_count}/${t.staff_total}명</span></div>`).join('')}
+                </div>
+                ${ts.new_staff.length ? `<div class="panel"><h2>신규직원 7일 이내 교육</h2>${ts.new_staff.map(n => `
+                    <div class="row"><div><div class="who">${esc(n.name)}</div><div class="sub">${esc(n.label)} · 입사 ${esc(n.hired)} · 기한 ${esc(n.deadline)}</div></div>
+                    <span class="badge ${n.state === 'overdue' ? 'no' : 'wait'}">${n.state === 'overdue' ? '기한 초과' : '기한 내'}</span></div>`).join('')}</div>` : ''}
+                <div class="panel"><h2>교육 기록</h2>${sessions.length ? sessions.map(s => `
+                    <div class="rec"><b>${esc(s.topic_label)}</b> · ${esc(s.session_date)} · ${esc(s.method_label)} · 강사 ${esc(s.instructor)}
+                        <div class="body">${esc(s.content)}</div>
+                        <div class="meta">참석 ${s.attendees.map(a => esc(a.name) + (a.signed ? '(서명)' : '')).join(', ')}
+                        <button type="button" class="btn-outline" style="padding:3px 10px;font-size:12px;margin-left:6px;" onclick="removeSession(${s.id})">삭제</button></div></div>`).join('')
+                    : '<div class="empty-note">기록이 없습니다.</div>'}</div>`;
+        }
+
+        function renderNotice(ns, notices) {
+            document.getElementById('tabNotice').innerHTML = `
+                <div class="note">공단 2026년 평가: 모든 수급자(보호자)에게 <b>노인인권 8가지 지침(욕창·낙상·탈수 예방, 배변도움, 관절구축 예방, 치매·감염 예방, 노인인권보호)</b>을 설명하고 자료를 제공해야 하고,
+                <b>폭언·폭행·성희롱 예방과 직원-수급자 상호존중</b>을 연 1회 이상 안내해야 합니다(우편·문자·이메일은 발송내역 확인). 급여제공범위·급여외행위·직원 인권보호 안내는 <b>대면</b>으로 해야 인정됩니다.</div>
+                <div class="panel"><h2>${ns.year}년 안내 현황 <span class="sub">기록이 빠진 이용자 ${ns.residents_missing}명</span></h2>
+                    ${ns.residents.length ? ns.residents.map(r => `<div class="row"><div><div class="who">${esc(r.name)}</div>
+                        <div>${r.missing.length ? r.missing.map(m => `<span class="badge no">${esc(m.label)} 없음</span>`).join('') : '<span class="badge ok">모두 안내함</span>'}</div></div>
+                        <button type="button" class="btn-outline" onclick="openNotice(${r.id}, '${esc(r.name)}')">안내 기록</button></div>`).join('')
+                        : '<div class="empty-note">등록된 이용자가 없습니다.</div>'}
+                </div>
+                <div class="panel"><h2>안내 기록</h2>${notices.length ? notices.map(n => `
+                    <div class="rec"><b>${esc(n.resident_name)}</b> · ${esc(n.notice_date)} · ${esc(n.notice_type_label)} · ${esc(n.method_label)}
+                        <div class="meta">안내받은 사람 ${esc(n.recipient)}${n.note ? ' · ' + esc(n.note) : ''}
+                        <button type="button" class="btn-outline" style="padding:3px 10px;font-size:12px;margin-left:6px;" onclick="removeNotice(${n.id})">삭제</button></div></div>`).join('')
+                    : '<div class="empty-note">기록이 없습니다.</div>'}</div>`;
+        }
+
+        function openSession() {
+            document.getElementById('seTopic').innerHTML = Object.entries(opts.topics).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+            document.getElementById('seMethod').innerHTML = Object.entries(opts.methods).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+            document.getElementById('seDate').value = today();
+            document.getElementById('seInstructor').value = currentUser.full_name || '';
+            document.getElementById('seContent').value = '';
+            document.getElementById('sePeople').innerHTML = staffList.map(u => `
+                <label class="chk"><input type="checkbox" class="sa" value="${u.id}" checked> ${esc(u.name)}
+                <span class="sg"><input type="checkbox" class="ss" value="${u.id}"> 서명</span></label>`).join('');
+            document.getElementById('seErr').style.display = 'none';
+            document.getElementById('seBack').classList.add('open');
+        }
+
+        async function send(url, body, errId, modalId) {
+            const err = document.getElementById(errId);
+            err.style.display = 'none';
+            try {
+                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const d = await res.json();
+                if (!res.ok) { err.textContent = typeof d.detail === 'string' ? d.detail : '입력 내용을 확인해 주세요'; err.style.display = 'block'; return; }
+                closeModal(modalId); load();
+            } catch (e) { err.textContent = '저장하지 못했습니다. 잠시 후 다시 시도해 주세요'; err.style.display = 'block'; }
+        }
+
+        function submitSession() {
+            send(`${API}/sessions`, {
+                topic: document.getElementById('seTopic').value, session_date: document.getElementById('seDate').value,
+                method: document.getElementById('seMethod').value, instructor: document.getElementById('seInstructor').value,
+                content: document.getElementById('seContent').value,
+                attendee_ids: [...document.querySelectorAll('.sa:checked')].map(c => Number(c.value)),
+                signed_ids: [...document.querySelectorAll('.ss:checked')].map(c => Number(c.value)),
+            }, 'seErr', 'seBack');
+        }
+
+        function openNotice(id, name) {
+            rnCtx = id;
+            document.getElementById('rnSub').textContent = '수급자 ' + name;
+            document.getElementById('rnType').innerHTML = Object.entries(opts.notice_types).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+            document.getElementById('rnMethod').innerHTML = Object.entries(opts.notice_methods).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+            document.getElementById('rnItems').innerHTML = Object.entries(opts.rights_guide_items).map(([k, v]) => `<label class="chk"><input type="checkbox" class="ri" value="${k}" checked> ${esc(v)}</label>`).join('');
+            document.getElementById('rnDate').value = today();
+            document.getElementById('rnRecipient').value = '';
+            document.getElementById('rnNote').value = '';
+            document.getElementById('rnErr').style.display = 'none';
+            onTypeChange();
+            document.getElementById('rnBack').classList.add('open');
+        }
+
+        function onTypeChange() {
+            const t = document.getElementById('rnType').value;
+            document.getElementById('rnItemsWrap').style.display = t === 'rights_guide' ? '' : 'none';
+            document.getElementById('rnMethodHint').textContent = t === 'service_scope' ? '이 안내는 시설장(관리자)이 직접 만나서 한 경우(대면)만 인정됩니다. 유선·우편은 인정되지 않습니다.'
+                : '우편·문자·이메일로 안내했다면 발송내역(캡처, 영수증 등)을 따로 보관해 두세요.';
+            if (t === 'service_scope') document.getElementById('rnMethod').value = 'visit';
+        }
+
+        function submitNotice() {
+            send(`${API}/notices`, {
+                resident_id: rnCtx, notice_type: document.getElementById('rnType').value, notice_date: document.getElementById('rnDate').value,
+                method: document.getElementById('rnMethod').value, recipient: document.getElementById('rnRecipient').value,
+                items: [...document.querySelectorAll('.ri:checked')].map(c => c.value), note: document.getElementById('rnNote').value || null,
+            }, 'rnErr', 'rnBack');
+        }
+
+        async function removeSession(id) { if (confirm('이 교육 기록을 삭제할까요?')) { await fetch(`${API}/sessions/${id}`, { method: 'DELETE' }); load(); } }
+        async function removeNotice(id) { if (confirm('이 안내 기록을 삭제할까요?')) { await fetch(`${API}/notices/${id}`, { method: 'DELETE' }); load(); } }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
