@@ -462,3 +462,43 @@ class CarePlan(Base):
     guardian_signer = Column(String, nullable=True)  # 서명자명(관계)
     nhis_notified_date = Column(Date, nullable=True)  # 공단 통보일
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ServiceEvaluation(Base):
+    """급여제공 결과평가 - 공단 2026 방문요양 평가 '급여제공결과평가'(23). 수급자별 급여제공계획에 따른 결과를
+    반기별 1회 이상 평가하고(필수: 일자·총평(종합소견)·작성자명), 평가를 반영해 30일 이내에 급여제공계획을 재작성한다.
+    수급자 상태 변화가 없으면 총평에 '상태가 동일하다는 판단근거'를 적고 재작성하지 않아도 예외로 인정된다."""
+    __tablename__ = "service_evaluations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    evaluated_date = Column(Date, index=True)
+    author_id = Column(Integer, ForeignKey("users.id"))
+    summary = Column(Text)  # 총평 또는 종합소견
+    status_changed = Column(Boolean, default=True)  # 수급자 상태 변화 여부
+    no_change_basis = Column(Text, nullable=True)  # 상태 변화가 없을 때 '동일하다고 판단한 근거'
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CaseConference(Base):
+    """사례관리 회의 - 공단 2026 방문요양 평가 '사례관리'(22). 분기별 1회 이상, 총 3인 이상(시설장 포함) 참석,
+    참가 직원별 의견 필수, 사례관리 계획을 회의 다음날부터 30일 이내 급여에 반영하고 평가(해결 여부·미해결 시 추가 조치)한다."""
+    __tablename__ = "case_conferences"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    conference_date = Column(Date, index=True)
+    author_id = Column(Integer, ForeignKey("users.id"))
+    reason = Column(Text)  # 선정사유
+    content = Column(Text)  # 회의내용
+    attendees = Column(Text)  # JSON: [{"name","role","opinion","signed"}]
+    plan = Column(Text)  # 사례관리 계획
+    reflected_date = Column(Date, nullable=True)  # 급여 등에 반영한 날
+    reflected_note = Column(Text, nullable=True)
+    evaluated_date = Column(Date, nullable=True)  # 반영 후 평가일
+    evaluator_name = Column(String, nullable=True)
+    resolved = Column(Boolean, nullable=True)  # 선정사유 해결 여부
+    next_action = Column(Text, nullable=True)  # 미해결 시 추가 조치 계획
+    created_at = Column(DateTime, default=datetime.utcnow)

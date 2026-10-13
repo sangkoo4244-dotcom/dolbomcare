@@ -3,7 +3,7 @@ from app.models import (
     StaffCertificate, SalaryStatement, GuardianInvite, Notification,
     ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
     RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken,
-    Counseling, CarePlan,
+    Counseling, CarePlan, ServiceEvaluation, CaseConference,
 )
 from sqlalchemy import text
 
@@ -63,7 +63,7 @@ def run_migrations():
     """
     for table_cls in (StaffCertificate, SalaryStatement, GuardianInvite, Notification,
                        ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
-                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan):
+                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, ServiceEvaluation, CaseConference):
         try:
             table_cls.__table__.create(bind=engine, checkfirst=True)
         except Exception as e:

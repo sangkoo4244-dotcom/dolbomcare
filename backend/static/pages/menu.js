@@ -82,6 +82,7 @@ const SIDEBAR_MENUS = {
         { href: 'staff_management.html', icon: 'staff', label: '직원관리' },
         { href: 'counseling.html', icon: 'messages', label: '상담 기록' },
         { href: 'care_plan.html', icon: 'schedule_check', label: '급여제공계획' },
+        { href: 'service_review.html', icon: 'profit', label: '결과평가·사례관리' },
         { href: 'center_settings.html', icon: 'center', label: '센터 정보' },
         { href: 'monthly_settlement.html', icon: 'settlement', label: '월별정산' },
         { href: 'profit_analysis.html', icon: 'profit', label: '수익분석' },

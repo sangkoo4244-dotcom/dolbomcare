@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결과평가·사례관리 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .note { background: #FFF7EB; border: 1px solid #FCE2B5; color: #8A4A07; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+        .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .tab { padding: 9px 16px; border-radius: 10px; border: 1.5px solid var(--line2); background: #fff; font-size: 14px; font-weight: 700; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .tab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+        .tab .dot { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 6px; border-radius: 999px; background: #DC2626; color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
+        .btn-solid { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .panel { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
+        .panel h2 { margin: 0 0 8px; font-size: 16px; color: var(--navy); }
+        .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #F1F5F9; flex-wrap: wrap; }
+        .row .who { font-weight: 700; font-size: 15px; }
+        .sub { font-size: 12.5px; color: #64748B; margin-top: 2px; line-height: 1.5; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .badge.ok { background: #E7F7EF; color: #0D8A61; }
+        .badge.no { background: #FEECEC; color: #B91C1C; }
+        .badge.wait { background: #FFF7EB; color: #B45309; }
+        .empty-note { color: #94A3B8; font-size: 13px; padding: 12px 0; }
+        .rec { border-top: 1px solid #F1F5F9; padding: 12px 0; font-size: 14px; line-height: 1.6; }
+        .rec .body { white-space: pre-wrap; margin-top: 4px; }
+        .rec .meta { font-size: 12.5px; color: #64748B; margin-top: 4px; }
+        .att { font-size: 13px; margin-top: 6px; }
+        .att li { margin: 2px 0; }
+
+        .modal-back { display: none; position: fixed; inset: 0; background: rgba(20,40,63,0.45); align-items: center; justify-content: center; padding: 16px; z-index: 200; }
+        .modal-back.open { display: flex; }
+        .modal { background: #fff; border-radius: 14px; padding: 24px; width: 100%; max-width: 580px; max-height: 92vh; overflow-y: auto; }
+        .modal h3 { margin: 0 0 4px; font-size: 18px; color: var(--navy); }
+        .modal .fsub { font-size: 13px; color: #64748B; margin-bottom: 8px; }
+        .modal label { display: block; font-size: 13px; font-weight: 700; margin: 12px 0 5px; }
+        .modal input[type=text], .modal input[type=date], .modal select, .modal textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 15px; font-family: inherit; }
+        .modal textarea { min-height: 80px; resize: vertical; }
+        .modal .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .modal .person { border: 1px solid var(--line2); border-radius: 12px; padding: 10px; margin-top: 8px; }
+        .modal .err { color: #DC2626; font-size: 13px; margin-top: 10px; display: none; }
+        .modal .actions { display: flex; gap: 8px; margin-top: 18px; }
+        .modal .actions button { flex: 1; height: 44px; }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>결과평가·사례관리</h1>
+                <div class="breadcrumb">홈 › 대상자 및 인력 관리 › <b>결과평가·사례관리</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">센터장</div>
+                    <div class="user-role">관리자</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" data-tab="eval" onclick="showTab('eval')">급여제공 결과평가<span class="dot" id="dotEval" style="display:none"></span></button>
+                <button class="tab" data-tab="conf" onclick="showTab('conf')">사례관리 회의<span class="dot" id="dotConf" style="display:none"></span></button>
+            </div>
+            <div id="tabEval"></div>
+            <div id="tabConf" style="display:none"></div>
+        </div>
+    </div>
+
+    <div class="modal-back" id="evBack">
+        <div class="modal">
+            <h3>급여제공 결과평가 기록</h3>
+            <div class="fsub" id="evSub"></div>
+            <label for="evDate">평가일</label><input type="date" id="evDate">
+            <label for="evSummary">총평(종합소견)</label>
+            <textarea id="evSummary" placeholder="급여제공계획에 따라 제공한 결과와 수급자 상태 변화를 구체적으로 적어 주세요"></textarea>
+            <label for="evChanged">수급자 상태 변화</label>
+            <select id="evChanged" onchange="document.getElementById('evBasisWrap').style.display = this.value === 'no' ? '' : 'none'">
+                <option value="yes">변화 있음 (평가를 반영해 30일 이내 계획서 재작성)</option>
+                <option value="no">변화 없음 (재작성 생략, 판단 근거 필수)</option>
+            </select>
+            <div id="evBasisWrap" style="display:none">
+                <label for="evBasis">상태가 동일하다고 판단한 근거</label>
+                <textarea id="evBasis" placeholder="예: 지난 평가 때와 보행·식사·인지 상태가 같고 방문 요구도 변화 없음"></textarea>
+            </div>
+            <div class="err" id="evErr"></div>
+            <div class="actions">
+                <button type="button" class="btn-outline" onclick="closeModal('evBack')">취소</button>
+                <button type="button" class="btn-solid" onclick="submitEval()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-back" id="cfBack">
+        <div class="modal">
+            <h3>사례관리 회의 기록</h3>
+            <div class="fsub">총 3인 이상(시설장 포함) 참석, 참석자별 의견 필수 (의견이 없으면 "의견없음"이라고 적습니다)</div>
+            <div class="two">
+                <div><label for="cfResident">대상 수급자</label><select id="cfResident"></select></div>
+                <div><label for="cfDate">회의일</label><input type="date" id="cfDate"></div>
+            </div>
+            <label for="cfReason">선정사유</label><textarea id="cfReason" placeholder="예: 낙상 위험이 높아져 방문 환경 점검이 필요함"></textarea>
+            <label for="cfContent">회의내용</label><textarea id="cfContent" placeholder="논의한 내용을 구체적으로 적어 주세요"></textarea>
+            <label for="cfPlan">사례관리 계획</label><textarea id="cfPlan" placeholder="급여에 반영할 계획 (30일 이내 반영·평가)"></textarea>
+            <label>참석자와 의견</label>
+            <div id="cfPeople"></div>
+            <button type="button" class="btn-outline" style="margin-top:8px;" onclick="addPerson()">+ 참석자 추가</button>
+            <div class="err" id="cfErr"></div>
+            <div class="actions">
+                <button type="button" class="btn-outline" onclick="closeModal('cfBack')">취소</button>
+                <button type="button" class="btn-solid" onclick="submitConf()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-back" id="fuBack">
+        <div class="modal">
+            <h3>급여 반영·평가 기록</h3>
+            <div class="fsub" id="fuSub"></div>
+            <div class="two">
+                <div><label for="fuRDate">급여 반영일 (회의 다음날부터)</label><input type="date" id="fuRDate"></div>
+                <div><label for="fuEDate">평가일</label><input type="date" id="fuEDate"></div>
+            </div>
+            <label for="fuRNote">반영 내용</label><textarea id="fuRNote" placeholder="예: 급여제공계획서에 욕실 안전 점검 항목 추가"></textarea>
+            <label for="fuResolved">선정사유 해결 여부</label>
+            <select id="fuResolved" onchange="document.getElementById('fuNextWrap').style.display = this.value === 'no' ? '' : 'none'">
+                <option value="">선택</option><option value="yes">해결됨</option><option value="no">미해결</option>
+            </select>
+            <div id="fuNextWrap" style="display:none"><label for="fuNext">미해결 시 추가 조치 계획</label><textarea id="fuNext"></textarea></div>
+            <div class="err" id="fuErr"></div>
+            <div class="actions">
+                <button type="button" class="btn-outline" onclick="closeModal('fuBack')">취소</button>
+                <button type="button" class="btn-solid" onclick="submitFollowUp()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = '/api/v1/service-reviews';
+        const ROLES = ['시설장(센터장)', '사회복지사', '요양보호사', '간호(조무)사', '기타'];
+        let currentUser = null, evCtx = null, fuId = null, residents = [];
+
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const today = () => typeof todayLocal === 'function' ? todayLocal() : new Date().toISOString().slice(0, 10);
+        const show = (id, on) => document.getElementById(id).style.display = on ? '' : 'none';
+        const closeModal = (id) => document.getElementById(id).classList.remove('open');
+        const badge = (state) => ({ done: 'ok', late: 'wait', pending: 'wait', overdue: 'no' }[state] || 'wait');
+
+        function init() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            if (user.role !== 'center_manager') { window.location.href = './dashboard.html'; return; }
+            currentUser = user;
+            document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
+            if (typeof renderSidebar === 'function') renderSidebar();
+            load();
+        }
+
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+            show('tabEval', name === 'eval'); show('tabConf', name === 'conf');
+        }
+
+        function setDot(id, n) { const el = document.getElementById(id); el.style.display = n ? '' : 'none'; el.textContent = n || ''; }
+
+        async function load() {
+            try {
+                const [es, el, cs, cl] = await Promise.all([
+                    fetch(`${API}/evaluations/status`).then(r => r.json()),
+                    fetch(`${API}/evaluations`).then(r => r.json()),
+                    fetch(`${API}/conferences/status`).then(r => r.json()),
+                    fetch(`${API}/conferences`).then(r => r.json()),
+                ]);
+                residents = es.residents;
+                renderEval(es, el.evaluations);
+                renderConf(cs, cl.conferences);
+                setDot('dotEval', es.missing + es.overdue_follow_up);
+                setDot('dotConf', (cs.quarter_done ? 0 : 1) + cs.overdue_follow_up);
+            } catch (e) {
+                document.getElementById('tabEval').innerHTML = '<div class="panel">불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
+            }
+        }
+
+        function renderEval(st, list) {
+            document.getElementById('tabEval').innerHTML = `
+                <div class="note">공단 2026년 평가: 수급자별 급여제공계획에 따른 결과를 <b>반기별 1회 이상</b> 평가하고(일자·총평·작성자명), 평가를 반영해 <b>30일 이내에 급여제공계획서를 재작성</b>해야 합니다.
+                상태 변화가 없으면 총평에 "동일하다고 판단한 근거"를 적고 재작성을 생략할 수 있습니다. 신규 수급자는 급여 시작이 속한 반기는 확인하지 않습니다. 계획서는 <a href="./care_plan.html">급여제공계획</a>에서 작성합니다.</div>
+                <div class="panel"><h2>${st.year}년 ${st.half === 1 ? '상' : '하'}반기 (${esc(st.start)} ~ ${esc(st.end)}) 결과평가 현황 <span class="sub">미실시 ${st.missing}명</span></h2>
+                    ${st.residents.length ? st.residents.map(r => `
+                        <div class="row"><div><div class="who">${esc(r.name)}</div><div class="sub">${r.done ? '평가일 ' + esc(r.last_date) : '이번 반기 평가 기록이 없습니다'}</div></div>
+                        <div><span class="badge ${r.done ? 'ok' : 'no'}">${r.done ? '실시' : '미실시'}</span>
+                        <button type="button" class="btn-outline" onclick="openEval(${r.id}, '${esc(r.name)}')">결과평가 기록</button></div></div>`).join('')
+                        : '<div class="empty-note">대상 이용자가 없습니다.</div>'}
+                </div>
+                <div class="panel"><h2>평가 기록</h2>${list.length ? list.map(e => `
+                    <div class="rec"><b>${esc(e.resident_name)}</b> · ${esc(e.evaluated_date)} <span class="badge ${badge(e.follow_up.state)}">${esc(e.follow_up.label)}</span>
+                        <div class="body">${esc(e.summary)}</div>
+                        <div class="meta">작성 ${esc(e.author_name || '-')} · ${e.status_changed ? '상태 변화 있음' : '상태 변화 없음: ' + esc(e.no_change_basis || '')}
+                        <button type="button" class="btn-outline" style="padding:3px 10px;font-size:12px;margin-left:6px;" onclick="removeEval(${e.id})">삭제</button></div></div>`).join('')
+                    : '<div class="empty-note">기록이 없습니다.</div>'}</div>`;
+        }
+
+        function renderConf(st, list) {
+            document.getElementById('tabConf').innerHTML = `
+                <div class="note">공단 2026년 평가: 사례관리 회의를 <b>분기별 1회 이상</b>, 시설장 포함 <b>총 3인 이상</b> 참석해 열고 참석자별 의견을 기록합니다.
+                회의 결과는 <b>회의 다음날부터 30일 이내</b>에 급여 등에 반영하고, 반영 후 평가(평가일·해결 여부·미해결 시 추가 조치)까지 남겨야 합니다. 병원 입원 지원, 등급변경 신청, 단순 물품 구매처럼 한 번으로 끝나는 내용은 사례관리로 인정되지 않습니다.</div>
+                <div class="panel"><h2>이번 분기 (${esc(st.quarter_start)} ~ ${esc(st.quarter_end)})
+                    <span class="badge ${st.quarter_done ? 'ok' : 'no'}">${st.quarter_done ? '회의 ' + st.count_this_quarter + '건 실시' : '회의 기록 없음'}</span></h2>
+                    <button type="button" class="btn-solid" onclick="openConf()">사례관리 회의 기록</button></div>
+                <div class="panel"><h2>회의 기록</h2>${list.length ? list.map(c => `
+                    <div class="rec"><b>${esc(c.resident_name)}</b> · ${esc(c.conference_date)} <span class="badge ${badge(c.follow_up.state)}">${esc(c.follow_up.label)}</span>
+                        <div class="body"><b>선정사유</b> ${esc(c.reason)}\n<b>회의내용</b> ${esc(c.content)}\n<b>사례관리 계획</b> ${esc(c.plan)}</div>
+                        <ul class="att">${c.attendees.map(a => `<li>${esc(a.name)}(${esc(a.role)}): ${esc(a.opinion)} ${a.signed ? '· 서명' : ''}</li>`).join('')}</ul>
+                        ${c.reflected_date ? `<div class="meta">급여 반영 ${esc(c.reflected_date)}: ${esc(c.reflected_note || '')}</div>` : ''}
+                        ${c.evaluated_date ? `<div class="meta">평가 ${esc(c.evaluated_date)} (${esc(c.evaluator_name || '')}) · ${c.resolved ? '해결됨' : '미해결 → ' + esc(c.next_action || '')}</div>` : ''}
+                        <div class="meta"><button type="button" class="btn-outline" style="padding:3px 10px;font-size:12px;" onclick="openFollowUp(${c.id}, '${esc(c.resident_name)}')">반영·평가 기록</button>
+                        <button type="button" class="btn-outline" style="padding:3px 10px;font-size:12px;margin-left:6px;" onclick="removeConf(${c.id})">삭제</button></div></div>`).join('')
+                    : '<div class="empty-note">기록이 없습니다.</div>'}</div>`;
+        }
+
+        function openEval(id, name) {
+            evCtx = id;
+            document.getElementById('evSub').textContent = '수급자 ' + name;
+            document.getElementById('evDate').value = today();
+            document.getElementById('evSummary').value = '';
+            document.getElementById('evChanged').value = 'yes';
+            document.getElementById('evBasis').value = '';
+            show('evBasisWrap', false); show('evErr', false);
+            document.getElementById('evBack').classList.add('open');
+        }
+
+        async function post(url, body, errId, modalId) {
+            const err = document.getElementById(errId);
+            err.style.display = 'none';
+            try {
+                const res = await fetch(url.url || url, { method: url.method || 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const d = await res.json();
+                if (!res.ok) { err.textContent = typeof d.detail === 'string' ? d.detail : '입력 내용을 확인해 주세요'; err.style.display = 'block'; return false; }
+                closeModal(modalId); await load(); return true;
+            } catch (e) { err.textContent = '저장하지 못했습니다. 잠시 후 다시 시도해 주세요'; err.style.display = 'block'; return false; }
+        }
+
+        function submitEval() {
+            const unchanged = document.getElementById('evChanged').value === 'no';
+            post(`${API}/evaluations`, {
+                resident_id: evCtx, evaluated_date: document.getElementById('evDate').value, summary: document.getElementById('evSummary').value,
+                status_changed: !unchanged, no_change_basis: unchanged ? document.getElementById('evBasis').value : null,
+            }, 'evErr', 'evBack');
+        }
+
+        async function removeEval(id) { if (confirm('이 평가 기록을 삭제할까요?')) { await fetch(`${API}/evaluations/${id}`, { method: 'DELETE' }); load(); } }
+        async function removeConf(id) { if (confirm('이 회의 기록을 삭제할까요?')) { await fetch(`${API}/conferences/${id}`, { method: 'DELETE' }); load(); } }
+
+        function personHtml(name, role) {
+            return `<div class="person"><div class="two"><input type="text" class="pName" placeholder="이름" value="${esc(name || '')}">
+                <select class="pRole">${ROLES.map(r => `<option ${r === role ? 'selected' : ''}>${r}</option>`).join('')}</select></div>
+                <input type="text" class="pOpinion" style="margin-top:8px;" placeholder="의견 (없으면 의견없음)">
+                <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin:8px 0 0;"><input type="checkbox" class="pSigned"> 서명 받음</label></div>`;
+        }
+
+        function addPerson(name, role) { document.getElementById('cfPeople').insertAdjacentHTML('beforeend', personHtml(name, role)); }
+
+        function openConf() {
+            document.getElementById('cfResident').innerHTML = residents.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
+            document.getElementById('cfDate').value = today();
+            ['cfReason', 'cfContent', 'cfPlan'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('cfPeople').innerHTML = '';
+            addPerson(currentUser.full_name || '', ROLES[0]); addPerson('', ROLES[2]); addPerson('', ROLES[1]);
+            show('cfErr', false);
+            document.getElementById('cfBack').classList.add('open');
+        }
+
+        function submitConf() {
+            const attendees = [...document.querySelectorAll('#cfPeople .person')].map(p => ({
+                name: p.querySelector('.pName').value, role: p.querySelector('.pRole').value,
+                opinion: p.querySelector('.pOpinion').value, signed: p.querySelector('.pSigned').checked,
+            }));
+            post(`${API}/conferences`, {
+                resident_id: Number(document.getElementById('cfResident').value), conference_date: document.getElementById('cfDate').value,
+                reason: document.getElementById('cfReason').value, content: document.getElementById('cfContent').value,
+                plan: document.getElementById('cfPlan').value, attendees,
+            }, 'cfErr', 'cfBack');
+        }
+
+        function openFollowUp(id, name) {
+            fuId = id;
+            document.getElementById('fuSub').textContent = '수급자 ' + name;
+            ['fuRDate', 'fuEDate', 'fuRNote', 'fuNext'].forEach(i => document.getElementById(i).value = '');
+            document.getElementById('fuResolved').value = '';
+            show('fuNextWrap', false); show('fuErr', false);
+            document.getElementById('fuBack').classList.add('open');
+        }
+
+        function submitFollowUp() {
+            const resolved = document.getElementById('fuResolved').value;
+            const body = {};
+            if (document.getElementById('fuRDate').value) { body.reflected_date = document.getElementById('fuRDate').value; body.reflected_note = document.getElementById('fuRNote').value; }
+            if (document.getElementById('fuEDate').value) {
+                body.evaluated_date = document.getElementById('fuEDate').value;
+                body.resolved = resolved === '' ? null : resolved === 'yes';
+                body.next_action = document.getElementById('fuNext').value;
+            }
+            post({ url: `${API}/conferences/${fuId}/follow-up`, method: 'PUT' }, body, 'fuErr', 'fuBack');
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -86,6 +86,22 @@ def run_precheck(db: Session, center_id: int, days: int = 14, now: datetime = No
             issues.append({"type": "care_plan_missing", "resident_id": r["resident_id"], "resident": r["resident_name"],
                            "detail": f"{now.year}년 급여제공계획서가 없습니다 (평가 지표: 급여제공계획 수립, 연 1회 이상)"})
 
+    from app.api.service_reviews import conference_status, evaluation_status
+    ev = evaluation_status(db, center_id, now.date())
+    if ev["missing"]:
+        issues.append({"type": "service_eval_missing", "resident_id": None, "resident": "센터 전체",
+                       "detail": f"{ev['year']}년 {'상' if ev['half'] == 1 else '하'}반기 급여제공 결과평가를 아직 하지 않은 이용자가 {ev['missing']}명 있습니다 (반기별 1회 이상)"})
+    if ev["overdue_follow_up"]:
+        issues.append({"type": "service_eval_followup", "resident_id": None, "resident": "센터 전체",
+                       "detail": f"결과평가 후 30일 이내 급여제공계획서 재작성 기한이 지난 평가가 {ev['overdue_follow_up']}건 있습니다"})
+    cf = conference_status(db, center_id, now.date())
+    if not cf["quarter_done"]:
+        issues.append({"type": "case_conference_missing", "resident_id": None, "resident": "센터 전체",
+                       "detail": f"이번 분기({cf['quarter_start']} ~ {cf['quarter_end']}) 사례관리 회의 기록이 없습니다 (분기별 1회 이상)"})
+    if cf["overdue_follow_up"]:
+        issues.append({"type": "case_conference_followup", "resident_id": None, "resident": "센터 전체",
+                       "detail": f"사례관리 회의 후 30일 이내 급여 반영·평가 기한이 지난 건이 {cf['overdue_follow_up']}건 있습니다"})
+
     counts = {}
     for i in issues:
         counts[i["type"]] = counts.get(i["type"], 0) + 1
