@@ -42,6 +42,8 @@ def env(tmp_path):
     db.add(models.ResidentNotice(center_id=1, resident_id=1, notice_type="staff_respect", notice_date=date(2026, 10, 9), method="sms", recipient="김영희(딸)"))
     db.add(models.CaseConference(center_id=1, resident_id=1, conference_date=date(2026, 10, 10), author_id=1, reason="r", content="c", plan="p", attendees="[]"))
     db.add(models.TrainingSession(center_id=1, topic="operating_rules", session_date=date(2026, 10, 11), method="self", instructor="센터장", content="교육내용", attendee_ids="[1, 2]", signed_ids="[1]", recorded_by=1))
+    db.add(models.IncidentReport(center_id=1, resident_id=1, reporter_id=2, occurred_date=date(2026, 10, 12), incident_type="fall", description="화장실에서 넘어짐", action_taken="부축 후 센터 보고"))
+    db.add(models.IncidentReport(center_id=1, resident_id=1, reporter_id=2, occurred_date=date(2026, 9, 12), incident_type="fall", description="9월 사고 내용", action_taken="9월 조치 내용"))
     db.commit()
     app = FastAPI()
     app.include_router(audit_prep.router, prefix="/api/v1/audit-prep")
@@ -78,6 +80,8 @@ def test_center_packet(env):
     assert [a["name"] for a in data["trainings"][0]["attendees"]] == ["센터장", "요양사"]
     assert [c["staff_name"] for c in data["staff_counselings"]] == ["요양사"]
     assert len(data["conferences"]) == 1
+    assert [(i["resident_name"], i["incident_type_label"]) for i in data["incidents"]] == [("김이용", "낙상")]  # 9월 사고는 범위 밖
+    assert data["incidents"][0]["issues"]
 
 
 def test_center_packet_validation_and_role(env):

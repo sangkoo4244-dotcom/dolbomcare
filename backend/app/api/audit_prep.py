@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user, require_manager
 from app.database import get_db
-from app.models import (CarePlan, CaseConference, Counseling, CopayInvoice, DailyRecord, NeedsAssessment, Resident,
+from app.models import (CarePlan, CaseConference, Counseling, CopayInvoice, DailyRecord, IncidentReport, NeedsAssessment, Resident,
                         ResidentNotice, RiskAssessment, ServiceEvaluation, TrainingSession, User)
 from app.api.needs_assessments import _to_dict as needs_to_dict
 from app.api.risk_assessments import ASSESSMENT_TYPES, _to_dict as risk_to_dict
@@ -13,6 +13,7 @@ from app.api.care_plans import _to_dict as plan_to_dict
 from app.api.counseling import _names as counsel_names, _to_dict as counseling_to_dict
 from app.api.service_reviews import _conf_dict, _ev_dict
 from app.api.trainings import _notice_dict, _session_dict
+from app.api.incidents import _names as incident_names, _to_dict as incident_to_dict
 
 router = APIRouter()
 
@@ -149,10 +150,13 @@ def get_center_audit_packet(start: str, end: str, db: Session = Depends(get_db),
     sessions = db.query(TrainingSession).filter(TrainingSession.center_id == actor.center_id, TrainingSession.session_date >= s_date, TrainingSession.session_date <= e_date).order_by(TrainingSession.session_date).all()
     staff_counsels = db.query(Counseling).filter(Counseling.center_id == actor.center_id, Counseling.kind == "staff", Counseling.counsel_date >= s_date, Counseling.counsel_date <= e_date).order_by(Counseling.counsel_date).all()
     conferences = db.query(CaseConference).filter(CaseConference.center_id == actor.center_id, CaseConference.conference_date >= s_date, CaseConference.conference_date <= e_date).order_by(CaseConference.conference_date).all()
+    incidents = db.query(IncidentReport).filter(IncidentReport.center_id == actor.center_id, IncidentReport.occurred_date >= s_date, IncidentReport.occurred_date <= e_date).order_by(IncidentReport.occurred_date).all()
+    incident_name_map = incident_names(db, incidents)
     today = datetime.now().date()
     return {
         "period": {"start": start, "end": end},
         "trainings": [_session_dict(x, staff_names) for x in sessions],
         "staff_counselings": [counseling_to_dict(c, names) for c in staff_counsels],
         "conferences": [_conf_dict(c, names, today) for c in conferences],
+        "incidents": [incident_to_dict(i, incident_name_map) for i in incidents],
     }

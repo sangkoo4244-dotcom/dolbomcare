@@ -257,7 +257,11 @@
                     ${data.conferences.length ? data.conferences.map(c => `
                         <div style="margin-bottom:10px;">· <b>${esc(c.resident_name)}</b> ${esc(c.conference_date)} — ${esc(c.reason)}<br>
                         <span class="sub">계획: ${esc(c.plan)} / 참석 ${c.attendees.map(a => esc(a.name) + '(' + esc(a.role) + '): ' + esc(a.opinion)).join(', ')} / ${esc(c.follow_up.label)}</span></div>`).join('')
-                        : '<div class="empty-note">기간 내 회의 없음</div>'}</div>`;
+                        : '<div class="empty-note">기간 내 회의 없음</div>'}</div>
+                <div class="packet-section"><h3>사고·응급 대응 (${data.incidents.length}건)</h3>
+                    ${data.incidents.length ? `<table class="plain-table"><thead><tr><th>발생일</th><th>이용자</th><th>유형</th><th>경과·조치</th><th>보호자 통보일</th><th>재발방지 대책</th></tr></thead>
+                        <tbody>${data.incidents.map(i => `<tr><td>${esc(i.occurred_date)}</td><td>${esc(i.resident_name)}</td><td>${esc(i.incident_type_label)}</td><td>${esc(i.description)} / ${esc(i.action_taken)}</td>
+                        <td>${esc(i.guardian_notified_date || '미기록')}</td><td>${esc(i.prevention || '미기록')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty-note">기간 내 사고 기록 없음</div>'}</div>`;
         }
 
         async function loadCenterPacket() {
