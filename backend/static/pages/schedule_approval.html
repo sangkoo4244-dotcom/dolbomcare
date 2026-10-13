@@ -46,6 +46,18 @@
         .btn-outline { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; }
         .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
         .btn-outline:disabled, .btn-solid:disabled { opacity: .5; cursor: not-allowed; }
+        .rc-back { display: none; position: fixed; inset: 0; background: rgba(20,40,63,0.45); align-items: center; justify-content: center; padding: 16px; z-index: 200; }
+        .rc-back.open { display: flex; }
+        .rc-modal { background: #fff; border-radius: 14px; padding: 24px; width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto; }
+        .rc-modal h3 { margin: 0 0 4px; font-size: 18px; }
+        .rc-modal label { display: block; font-size: 13px; font-weight: 700; margin: 12px 0 5px; }
+        .rc-modal input, .rc-modal select { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 15px; font-family: inherit; }
+        .rc-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .rc-days { display: flex; gap: 6px; flex-wrap: wrap; }
+        .rc-days label { margin: 0; display: flex; align-items: center; gap: 4px; padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; cursor: pointer; }
+        .rc-days input { width: auto; }
+        .rc-actions { display: flex; gap: 8px; margin-top: 18px; }
+        .rc-actions button { flex: 1; height: 44px; }
         .btn-solid { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }
         .btn-solid:hover { background: #0C756C; }
 
@@ -162,6 +174,7 @@
                             <input id="searchInput" type="search" placeholder="이용자명, 요양사명, 계획항목 검색" class="filter-input" style="width:220px;">
                             <button type="button" class="btn-outline" onclick="resetFilters()">초기화</button>
                             <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+                                <button type="button" class="btn-outline" onclick="openRecurring()">반복 방문 등록</button>
                                 <button type="button" class="btn-outline" onclick="bulkApprove()">✓ 선택 승인</button>
                                 <button type="button" class="btn-outline" style="color:#DC2626;border-color:#FBCFCF;" onclick="bulkReject()">✕ 선택 반려</button>
                                 <button type="button" class="btn-solid" onclick="approveAllPlans()">승인 대기 계획 모두 승인</button>
@@ -232,6 +245,35 @@
 
     <script src="menu.js"></script>
     <script src="art.js"></script>
+    <div class="rc-back" id="rcBack">
+        <div class="rc-modal">
+            <h3>반복 방문 등록</h3>
+            <div style="font-size:13px;color:#64748B;">요일과 시간을 정하면 기간 안의 해당 날짜마다 방문 일정이 한 번에 만들어집니다. 이미 있는 날짜는 건너뜁니다.</div>
+            <div class="rc-two">
+                <div><label for="rcCaregiver">요양보호사</label><select id="rcCaregiver"></select></div>
+                <div><label for="rcResident">이용자</label><select id="rcResident"></select></div>
+            </div>
+            <label>방문 요일</label>
+            <div class="rc-days" id="rcDays">
+                <label><input type="checkbox" value="0">월</label><label><input type="checkbox" value="1">화</label><label><input type="checkbox" value="2">수</label>
+                <label><input type="checkbox" value="3">목</label><label><input type="checkbox" value="4">금</label><label><input type="checkbox" value="5">토</label><label><input type="checkbox" value="6">일</label>
+            </div>
+            <div class="rc-two">
+                <div><label for="rcStartDate">시작일</label><input type="date" id="rcStartDate"></div>
+                <div><label for="rcEndDate">종료일 (최대 3개월)</label><input type="date" id="rcEndDate"></div>
+            </div>
+            <div class="rc-two">
+                <div><label for="rcTime">방문 시작 시간</label><input type="time" id="rcTime" value="09:00"></div>
+                <div><label for="rcDuration">1회 시간(분)</label><input type="number" id="rcDuration" value="180" min="30" step="10"></div>
+            </div>
+            <div id="rcErr" style="color:#DC2626;font-size:13px;margin-top:10px;display:none;"></div>
+            <div class="rc-actions">
+                <button type="button" class="btn-outline" onclick="closeRecurring()">취소</button>
+                <button type="button" class="btn-solid" onclick="submitRecurring()">등록</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = '/api/v1';
         const CARE_ITEM_LABELS = {
@@ -576,6 +618,37 @@
                 if (box.checked) selectedIds.add(p.schedule_id); else selectedIds.delete(p.schedule_id);
             });
             renderTable();
+        }
+
+        function openRecurring() {
+            document.getElementById('rcCaregiver').innerHTML = caregivers.map(c => `<option value="${c.id}">${c.full_name}</option>`).join('');
+            document.getElementById('rcResident').innerHTML = residents.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            const today = new Date(), end = new Date(today.getTime() + 27 * 86400000);
+            const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            document.getElementById('rcStartDate').value = fmt(today);
+            document.getElementById('rcEndDate').value = fmt(end);
+            document.getElementById('rcErr').style.display = 'none';
+            document.getElementById('rcBack').classList.add('open');
+        }
+
+        function closeRecurring() { document.getElementById('rcBack').classList.remove('open'); }
+
+        async function submitRecurring() {
+            const err = document.getElementById('rcErr');
+            const weekdays = Array.from(document.querySelectorAll('#rcDays input:checked')).map(i => Number(i.value));
+            const res = await fetch(`${API_URL}/schedule/recurring`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    caregiver_id: Number(document.getElementById('rcCaregiver').value), resident_id: Number(document.getElementById('rcResident').value),
+                    weekdays, start_date: document.getElementById('rcStartDate').value, end_date: document.getElementById('rcEndDate').value,
+                    start_time: document.getElementById('rcTime').value, duration_minutes: Number(document.getElementById('rcDuration').value) || null
+                })
+            });
+            const d = await res.json();
+            if (!res.ok) { err.textContent = typeof d.detail === 'string' ? d.detail : '입력 내용을 확인해 주세요'; err.style.display = 'block'; return; }
+            closeRecurring();
+            showMessage(`방문 일정 ${d.created}건을 등록했습니다${d.skipped ? ` (이미 있는 ${d.skipped}건은 건너뜀)` : ''}.`, 'success');
+            loadPlans();
         }
 
         function showMessage(text, type) {

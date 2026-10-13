@@ -140,6 +140,60 @@ async def create_schedule(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"스케줄 생성 중 오류: {str(e)}")
 
+class RecurringCreate(BaseModel):
+    caregiver_id: int
+    resident_id: int
+    weekdays: list  # 0=월 ... 6=일
+    start_date: str  # YYYY-MM-DD
+    end_date: str
+    start_time: str  # HH:MM
+    duration_minutes: int = None
+    service_type: str = "basic_care"
+    planned_items: str = None
+
+MAX_RECURRING_DAYS = 92
+
+@router.post("/recurring")
+def create_recurring_schedule(req: RecurringCreate, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """요일별 반복 방문을 기간 안의 날짜마다 한 번에 만든다 (같은 요양사·이용자·날짜에 이미 있으면 건너뜀)"""
+    caregiver = db.query(User).filter(User.id == req.caregiver_id, User.center_id == actor.center_id, User.role == "caregiver").first()
+    resident = db.query(Resident).filter(Resident.id == req.resident_id, Resident.center_id == actor.center_id).first()
+    if not caregiver or not resident:
+        raise HTTPException(status_code=404, detail="요양사 또는 이용자를 찾을 수 없습니다")
+    try:
+        start = datetime.fromisoformat(req.start_date).date()
+        end = datetime.fromisoformat(req.end_date).date()
+        hour, minute = (int(x) for x in req.start_time.split(":"))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="날짜 또는 시간 형식이 올바르지 않습니다")
+    weekdays = {int(d) for d in req.weekdays if str(d).isdigit() and 0 <= int(d) <= 6}
+    if not weekdays:
+        raise HTTPException(status_code=400, detail="방문 요일을 하나 이상 선택해 주세요")
+    if end < start or (end - start).days >= MAX_RECURRING_DAYS:
+        raise HTTPException(status_code=400, detail=f"기간은 시작일 이후 {MAX_RECURRING_DAYS}일 이내로 정해 주세요")
+    existing = {s.scheduled_date.date() for s in db.query(Schedule).filter(
+        Schedule.caregiver_id == caregiver.id, Schedule.resident_id == resident.id,
+        Schedule.scheduled_date >= datetime.combine(start, datetime.min.time()),
+        Schedule.scheduled_date < datetime.combine(end + timedelta(days=1), datetime.min.time()),
+        Schedule.status != "cancelled").all()}
+    created, skipped = 0, 0
+    day = start
+    while day <= end:
+        if day.weekday() in weekdays:
+            if day in existing:
+                skipped += 1
+            else:
+                db.add(Schedule(caregiver_id=caregiver.id, resident_id=resident.id, center_id=actor.center_id,
+                                scheduled_date=datetime(day.year, day.month, day.day, hour, minute),
+                                duration_minutes=req.duration_minutes, service_type=req.service_type or "basic_care",
+                                planned_items=req.planned_items or None, status="scheduled"))
+                created += 1
+        day += timedelta(days=1)
+    if created:
+        notify(db, caregiver.id, "schedule_assigned", f"{resident.name} 어르신 방문 일정 {created}건이 등록되었습니다. 나의 일정에서 확인해 주세요.")
+    db.commit()
+    return {"status": "success", "created": created, "skipped": skipped}
+
 def _codes(value):
     return [c for c in (value or "").split(",") if c]
 
