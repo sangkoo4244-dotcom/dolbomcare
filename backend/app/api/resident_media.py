@@ -12,9 +12,9 @@ from app.models import Resident, ResidentMedia, User
 
 router = APIRouter()
 
-# base64 데이터 URL 기준 최대 크기 (약 3MB 원본 이미지에 해당). DB에 직접 저장하는 방식이라
+# base64 데이터 URL 기준 최대 크기 (약 750KB 이미지에 해당. 화면에서 1024px로 줄여 올리면 보통 100~170KB). DB에 직접 저장하는 방식이라
 # 너무 큰 사진이 쌓이면 DB가 무거워지니 업로드 단계에서 막는다.
-MAX_IMAGE_DATA_LENGTH = 4_000_000
+MAX_IMAGE_DATA_LENGTH = 1_000_000
 
 
 def _check_access(db: Session, resident_id: int, actor: User) -> Resident:
@@ -61,7 +61,7 @@ def upload_media(
     if not body.image_data.startswith("data:image/"):
         raise HTTPException(status_code=400, detail="이미지 데이터 형식이 올바르지 않습니다")
     if len(body.image_data) > MAX_IMAGE_DATA_LENGTH:
-        raise HTTPException(status_code=400, detail="사진 용량이 너무 큽니다 (최대 약 3MB)")
+        raise HTTPException(status_code=400, detail="사진 용량이 너무 큽니다 (최대 약 1MB)")
 
     _check_access(db, body.resident_id, actor)
 
