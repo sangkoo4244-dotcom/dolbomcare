@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사고·응급 보고 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --warn: #B45309; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .note { background: #FFF7EB; border: 1px solid #FCE2B5; color: #8A4A07; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+        .btn-solid { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .panel { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 16px 20px; margin-bottom: 12px; }
+        .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .who { font-weight: 800; font-size: 16px; }
+        .sub { font-size: 12.5px; color: #64748B; margin-top: 2px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .badge.ok { background: #E7F7EF; color: #0D8A61; }
+        .badge.no { background: #FEECEC; color: #B91C1C; }
+        .badge.wait { background: #FFF7EB; color: #B45309; }
+        .issues { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: #B45309; line-height: 1.6; }
+        .history { margin-top: 12px; border-top: 1px solid #F1F5F9; padding-top: 10px; display: none; }
+        .history.open { display: block; }
+        .plan { border: 1px solid var(--line2); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; font-size: 14px; line-height: 1.6; }
+        .plan dl { margin: 8px 0 0; display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 4px 10px; }
+        .plan dt { color: #64748B; font-size: 12.5px; font-weight: 700; }
+        .plan dd { margin: 0; white-space: pre-wrap; }
+        .prog { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line2); }
+        .prog label { font-size: 12px; font-weight: 700; display: block; margin-bottom: 3px; }
+        .prog input { padding: 8px 10px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; }
+
+        .modal-back { display: none; position: fixed; inset: 0; background: rgba(20,40,63,0.45); align-items: center; justify-content: center; padding: 16px; z-index: 200; }
+        .modal-back.open { display: flex; }
+        .modal { background: #fff; border-radius: 14px; padding: 24px; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; }
+        .modal h3 { margin: 0 0 4px; font-size: 18px; color: var(--navy); }
+        .modal .fsub { font-size: 13px; color: #64748B; margin-bottom: 8px; }
+        .modal label { display: block; font-size: 13px; font-weight: 700; margin: 12px 0 5px; }
+        .modal input, .modal select, .modal textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 15px; font-family: inherit; }
+        .modal textarea { min-height: 80px; resize: vertical; }
+        .modal .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .modal .err { color: #DC2626; font-size: 13px; margin-top: 10px; display: none; }
+        .modal .actions { display: flex; gap: 8px; margin-top: 18px; }
+        .modal .actions button { flex: 1; height: 44px; }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>사고·응급 보고</h1>
+                <div class="breadcrumb">홈 › 방문 서비스 운영 › <b>사고·응급 보고</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">센터장</div>
+                    <div class="user-role">관리자</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="note">
+                낙상·욕창·투약 사고·응급 이송이 생기면 <b>경과와 조치를 바로 기록</b>하고, 센터장은 <b>보호자에게 알린 날짜(사고 당일~다음 날)</b>와 <b>재발방지 대책</b>을 남깁니다.
+                공단 평가에서 사고 발생 시 대응을 확인할 때 이 기록이 증빙이 됩니다. 응급 상황이면 먼저 119에 연락하고, 안정된 뒤에 기록해 주세요.
+            </div>
+            <div style="margin-bottom:14px;"><button type="button" class="btn-solid" onclick="openForm()">사고 보고하기</button></div>
+            <div id="list"><div class="panel">불러오는 중입니다</div></div>
+        </div>
+    </div>
+
+    <div class="modal-back" id="formBack">
+        <div class="modal">
+            <h3>사고·응급 보고</h3>
+            <div class="two">
+                <div><label for="fResident">이용자</label><select id="fResident"></select></div>
+                <div><label for="fDate">발생일</label><input type="date" id="fDate"></div>
+            </div>
+            <label for="fType">사고 유형</label>
+            <select id="fType">
+                <option value="fall">낙상</option><option value="pressure_sore">욕창</option><option value="medication">투약 사고</option>
+                <option value="emergency">응급 이송</option><option value="other">기타</option>
+            </select>
+            <label for="fDesc">발생 경과</label>
+            <textarea id="fDesc" placeholder="언제, 어디서, 어떻게 일어났는지 구체적으로 적어 주세요"></textarea>
+            <label for="fAction">조치 내용</label>
+            <textarea id="fAction" placeholder="현장에서 한 조치와 연락한 곳 (예: 119 연락, 센터장에게 보고)"></textarea>
+            <div class="err" id="fErr"></div>
+            <div class="actions">
+                <button type="button" class="btn-outline" onclick="closeForm()">취소</button>
+                <button type="button" class="btn-solid" onclick="submitForm()">보고</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/v1/incidents';
+        let currentUser = null;
+
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const today = () => typeof todayLocal === 'function' ? todayLocal() : new Date().toISOString().slice(0, 10);
+
+        function init() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            if (!['center_manager', 'caregiver'].includes(user.role)) { window.location.href = './dashboard.html'; return; }
+            currentUser = user;
+            document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
+            if (typeof renderSidebar === 'function') renderSidebar();
+            load();
+        }
+
+        async function load() {
+            const box = document.getElementById('list');
+            try {
+                const d = await fetch(API_URL).then(r => r.json());
+                if (!d.reports.length) { box.innerHTML = '<div class="panel">보고된 사고가 없습니다.</div>'; return; }
+                const isManager = currentUser.role === 'center_manager';
+                box.innerHTML = (isManager ? `<div class="sub" style="margin-bottom:10px;">보완이 필요한 보고 <b>${d.with_issues}건</b></div>` : '') +
+                    d.reports.map(r => `
+                    <div class="panel">
+                        <div class="head">
+                            <div><div class="who">${esc(r.resident_name)} · ${esc(r.incident_type_label)}</div>
+                                <div class="sub">${esc(r.occurred_date)} 발생 · 보고 ${esc(r.reporter_name || '-')}</div></div>
+                            <span class="badge ${r.issues.length ? 'wait' : 'ok'}">${r.issues.length ? '보완 필요' : '대응 완료'}</span>
+                        </div>
+                        <div class="plan" style="margin-top:8px;"><dl>
+                            <dt>발생 경과</dt><dd>${esc(r.description)}</dd><dt>조치 내용</dt><dd>${esc(r.action_taken)}</dd>
+                            <dt>보호자 통보일</dt><dd>${esc(r.guardian_notified_date || '미기록')}</dd><dt>재발방지 대책</dt><dd>${esc(r.prevention || '미기록')}</dd></dl></div>
+                        ${r.issues.length ? `<ul class="issues">${r.issues.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}
+                        ${isManager ? `<div class="prog">
+                            <div><label>보호자 통보일</label><input type="date" id="gn${r.id}" value="${esc(r.guardian_notified_date || '')}"></div>
+                            <div style="flex:1;min-width:200px;"><label>재발방지 대책</label><input id="pv${r.id}" style="width:100%;box-sizing:border-box;" value="${esc(r.prevention || '')}" placeholder="예: 화장실 미끄럼 방지 매트 설치"></div>
+                            <button type="button" class="btn-outline" onclick="saveProgress(${r.id})">저장</button>
+                        </div>` : ''}
+                    </div>`).join('');
+            } catch (e) {
+                box.innerHTML = '<div class="panel">불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
+            }
+        }
+
+        async function saveProgress(id) {
+            const body = { prevention: document.getElementById('pv' + id).value };
+            const gn = document.getElementById('gn' + id).value;
+            if (gn) body.guardian_notified_date = gn;
+            const res = await fetch(`${API_URL}/${id}/progress`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (!res.ok) { const d = await res.json(); alert(d.detail || '저장하지 못했습니다'); return; }
+            load();
+        }
+
+        async function openForm() {
+            const d = await fetch(`${API_URL}/residents`).then(r => r.json());
+            document.getElementById('fResident').innerHTML = d.residents.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
+            document.getElementById('fDate').value = today();
+            document.getElementById('fDesc').value = '';
+            document.getElementById('fAction').value = '';
+            document.getElementById('fErr').style.display = 'none';
+            document.getElementById('formBack').classList.add('open');
+        }
+
+        function closeForm() { document.getElementById('formBack').classList.remove('open'); }
+
+        async function submitForm() {
+            const err = document.getElementById('fErr');
+            const res = await fetch(API_URL, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    resident_id: Number(document.getElementById('fResident').value), occurred_date: document.getElementById('fDate').value,
+                    incident_type: document.getElementById('fType').value, description: document.getElementById('fDesc').value,
+                    action_taken: document.getElementById('fAction').value
+                })
+            });
+            const d = await res.json();
+            if (!res.ok) { err.textContent = typeof d.detail === 'string' ? d.detail : '입력 내용을 확인해 주세요'; err.style.display = 'block'; return; }
+            closeForm();
+            load();
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

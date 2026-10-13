@@ -558,3 +558,21 @@ class ResidentNotice(Base):
     note = Column(Text, nullable=True)
     recorded_by = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class IncidentReport(Base):
+    """사고·응급상황 보고 - 낙상·욕창·투약 사고·응급 이송 등이 생겼을 때 경과, 조치, 보호자 통보, 재발방지 대책을 남기는 대장.
+    공단 평가에서 사고 발생 시 대응(보호자 통보·재발방지)이 확인되는지 증빙한다."""
+    __tablename__ = "incident_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    reporter_id = Column(Integer, ForeignKey("users.id"), index=True)
+    occurred_date = Column(Date, index=True)
+    incident_type = Column(String)  # fall / pressure_sore / medication / emergency / other
+    description = Column(Text)
+    action_taken = Column(Text)
+    guardian_notified_date = Column(Date, nullable=True)
+    prevention = Column(Text, nullable=True)  # 재발방지 대책
+    created_at = Column(DateTime, default=datetime.utcnow)
