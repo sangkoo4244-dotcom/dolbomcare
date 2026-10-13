@@ -64,7 +64,8 @@ def test_recognition_expired_and_expiring_only_for_own_center(db_and_client):
     found = types(db)
     assert ("recognition_expired", "만료자") in found
     assert ("recognition_expiring", "임박자") in found
-    assert not any(name in ("정상자", "타센터") for _, name in found)
+    assert not any(name in ("정상자", "타센터") for kind, name in found if kind.startswith("recognition"))
+    assert ("care_plan_missing", "정상자") in found and not any(name == "타센터" for _, name in found)
 
 
 def test_missing_record_missing_end_gap_and_over_10h(db_and_client):

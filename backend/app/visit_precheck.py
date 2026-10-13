@@ -6,6 +6,7 @@
 - 급여계약 시간과 전송 시간이 30분 이상 차이나면 급여제공기록지를 수기로 작성
 - S2  서비스 시간은 10시간까지만 인정
 - (평가 지표 '직원변경') 담당 요양보호사가 바뀌면 14일 이내에 수급자(보호자)와 상담해야 함
+- (평가 지표 '급여제공계획 수립') 수급자별 급여제공계획서를 연 1회 이상 작성
 
 돌봄케어 안의 일정·기록만 보며 공단 시스템은 조회하지 않는다 (실제 공단 전송 상태와는 다를 수 있다).
 """
@@ -78,6 +79,12 @@ def run_precheck(db: Session, center_id: int, days: int = 14, now: datetime = No
             issues.append({"type": "caregiver_change_counsel", "resident_id": c["resident_id"], "resident": c["resident_name"],
                            "detail": f"담당 요양보호사가 {c['from_caregiver']}에서 {c['to_caregiver']}(으)로 바뀐 뒤({c['changed_on']}) "
                                      f"14일 이내 상담 기한({c['deadline']})이 지났습니다 (평가 지표: 직원변경)"})
+
+    from app.api.care_plans import center_plan_status
+    for r in center_plan_status(db, center_id, now.date())["residents"]:
+        if not r["has_plan_this_year"]:
+            issues.append({"type": "care_plan_missing", "resident_id": r["resident_id"], "resident": r["resident_name"],
+                           "detail": f"{now.year}년 급여제공계획서가 없습니다 (평가 지표: 급여제공계획 수립, 연 1회 이상)"})
 
     counts = {}
     for i in issues:

@@ -428,3 +428,37 @@ class Counseling(Base):
     action_note = Column(Text, nullable=True)  # 조치 내용·반영 내역
     action_done_date = Column(Date, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CarePlan(Base):
+    """급여제공계획서 - 공단 2026 방문요양 평가 '급여제공계획 수립 및 제공'(16)·'급여제공계획 변경'(17) 증빙.
+    필수사항: 급여종류, 수급자명, 작성일자, 작성자명, 장기요양 세부목표·필요내용, 세부제공내용, 횟수, 시간, 종합의견.
+    기관이 실시한 욕구사정·낙상·욕창·인지기능 평가를 반영해야 하며(계획 작성 전에 실시한 것만 인정),
+    수급자(보호자)에게 설명하고 확인서명을 받아 급여제공 시작일까지 공단에 통보해야 한다.
+    공단 통보는 장기요양정보시스템에서 센터가 직접 하므로 여기에는 통보한 날짜만 기록한다."""
+    __tablename__ = "care_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    plan_type = Column(String, default="regular")  # 'regular'(신규·연 1회 정기) / 'change'(기능상태·욕구 변경)
+    parent_id = Column(Integer, ForeignKey("care_plans.id"), nullable=True)  # 변경 전 계획서
+    change_reason = Column(String, nullable=True)  # 변경 사유 (변경일 때 필수)
+    service_type = Column(String, default="방문요양")
+    written_date = Column(Date, index=True)
+    author_id = Column(Integer, ForeignKey("users.id"))
+    service_start_date = Column(Date, nullable=True)  # 이 계획에 따른 급여제공 시작일
+    goals = Column(Text)  # 장기요양 세부목표
+    needs = Column(Text)  # 장기요양 필요내용
+    details = Column(Text)  # 세부제공내용
+    frequency = Column(String)  # 횟수 (예: 주 5회)
+    duration_minutes = Column(Integer, nullable=True)  # 1회 제공시간
+    opinion = Column(Text)  # 종합의견
+    needs_assessment_id = Column(Integer, nullable=True)  # 반영한 욕구사정
+    fall_assessment_id = Column(Integer, nullable=True)
+    pressure_assessment_id = Column(Integer, nullable=True)
+    cognitive_assessment_id = Column(Integer, nullable=True)
+    guardian_signed_date = Column(Date, nullable=True)  # 수급자(보호자) 설명·확인서명일
+    guardian_signer = Column(String, nullable=True)  # 서명자명(관계)
+    nhis_notified_date = Column(Date, nullable=True)  # 공단 통보일
+    created_at = Column(DateTime, default=datetime.utcnow)

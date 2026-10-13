@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>급여제공계획 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --warn: #B45309; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .note { background: #FFF7EB; border: 1px solid #FCE2B5; color: #8A4A07; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+        .btn-solid { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+        .panel { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 16px 20px; margin-bottom: 12px; }
+        .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .who { font-weight: 800; font-size: 16px; }
+        .sub { font-size: 12.5px; color: #64748B; margin-top: 2px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .badge.ok { background: #E7F7EF; color: #0D8A61; }
+        .badge.no { background: #FEECEC; color: #B91C1C; }
+        .badge.wait { background: #FFF7EB; color: #B45309; }
+        .issues { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: #B45309; line-height: 1.6; }
+        .history { margin-top: 12px; border-top: 1px solid #F1F5F9; padding-top: 10px; display: none; }
+        .history.open { display: block; }
+        .plan { border: 1px solid var(--line2); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; font-size: 14px; line-height: 1.6; }
+        .plan dl { margin: 8px 0 0; display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 4px 10px; }
+        .plan dt { color: #64748B; font-size: 12.5px; font-weight: 700; }
+        .plan dd { margin: 0; white-space: pre-wrap; }
+        .prog { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line2); }
+        .prog label { font-size: 12px; font-weight: 700; display: block; margin-bottom: 3px; }
+        .prog input { padding: 8px 10px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; }
+
+        .modal-back { display: none; position: fixed; inset: 0; background: rgba(20,40,63,0.45); align-items: center; justify-content: center; padding: 16px; z-index: 200; }
+        .modal-back.open { display: flex; }
+        .modal { background: #fff; border-radius: 14px; padding: 24px; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; }
+        .modal h3 { margin: 0 0 4px; font-size: 18px; color: var(--navy); }
+        .modal .fsub { font-size: 13px; color: #64748B; margin-bottom: 8px; }
+        .modal label { display: block; font-size: 13px; font-weight: 700; margin: 12px 0 5px; }
+        .modal input, .modal select, .modal textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 15px; font-family: inherit; }
+        .modal textarea { min-height: 80px; resize: vertical; }
+        .modal .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .modal .err { color: #DC2626; font-size: 13px; margin-top: 10px; display: none; }
+        .modal .actions { display: flex; gap: 8px; margin-top: 18px; }
+        .modal .actions button { flex: 1; height: 44px; }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>급여제공계획</h1>
+                <div class="breadcrumb">홈 › 대상자 및 인력 관리 › <b>급여제공계획</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">센터장</div>
+                    <div class="user-role">관리자</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="note">
+                공단 2026년 평가는 이용자마다 <b>급여제공계획서를 연 1회 이상</b> 작성하고(신규는 급여개시일까지), 기관이 실시한 <b>욕구사정·낙상·욕창·인지기능 평가를 반영</b>(계획 작성 전에 실시한 것만 인정)했는지,
+                수급자(보호자)에게 설명하고 <b>확인서명을 받아 급여제공 시작일까지 공단에 통보</b>했는지 확인합니다. 기능상태나 욕구가 바뀌면 <b>변경 사유를 기록한 변경 계획서</b>도 같은 절차를 거쳐야 합니다.
+                공단 통보는 장기요양정보시스템에서 직접 하시고, 여기에는 통보한 날짜만 기록합니다.
+            </div>
+            <div id="list"><div class="panel">불러오는 중입니다</div></div>
+        </div>
+    </div>
+
+    <div class="modal-back" id="formBack">
+        <div class="modal">
+            <h3 id="fTitle">급여제공계획서 작성</h3>
+            <div class="fsub" id="fSub"></div>
+            <div id="fChangeWrap" style="display:none">
+                <label for="fReason">변경 사유</label>
+                <input id="fReason" placeholder="예: 기능상태 악화로 방문 시간을 늘림">
+            </div>
+            <div class="two">
+                <div><label for="fWritten">작성일</label><input type="date" id="fWritten"></div>
+                <div><label for="fStart">급여제공 시작일</label><input type="date" id="fStart"></div>
+            </div>
+            <label for="fGoals">장기요양 세부목표</label>
+            <textarea id="fGoals" placeholder="예: 낙상 없이 일상생활 동작을 유지한다"></textarea>
+            <label for="fNeeds">장기요양 필요내용</label>
+            <textarea id="fNeeds" placeholder="예: 보행 보조, 식사 준비, 위생 관리"></textarea>
+            <label for="fDetails">세부제공내용</label>
+            <textarea id="fDetails" placeholder="예: 신체활동 지원, 식사 준비, 청소, 말벗"></textarea>
+            <div class="two">
+                <div><label for="fFreq">횟수</label><input id="fFreq" placeholder="예: 주 5회"></div>
+                <div><label for="fDur">1회 제공시간(분)</label><input type="number" id="fDur" min="30" step="10" placeholder="180"></div>
+            </div>
+            <label for="fOpinion">종합의견</label>
+            <textarea id="fOpinion" placeholder="욕구사정과 위험도 평가 결과를 반영한 종합소견"></textarea>
+            <div class="fsub" style="margin-top:10px;">작성일 이전에 실시한 욕구사정·낙상·욕창·인지기능 평가가 자동으로 반영됩니다. 저장 후 결과에 빠진 평가가 표시됩니다.</div>
+            <div class="err" id="fErr"></div>
+            <div class="actions">
+                <button type="button" class="btn-outline" onclick="closeForm()">취소</button>
+                <button type="button" class="btn-solid" onclick="submitForm()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/v1/care-plans';
+        let currentUser = null;
+        let formCtx = null;
+        const historyCache = {};
+
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const today = () => typeof todayLocal === 'function' ? todayLocal() : new Date().toISOString().slice(0, 10);
+
+        function init() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            if (user.role !== 'center_manager') { window.location.href = './dashboard.html'; return; }
+            currentUser = user;
+            document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
+            if (typeof renderSidebar === 'function') renderSidebar();
+            load();
+        }
+
+        async function load() {
+            try {
+                const st = await fetch(`${API_URL}/status`).then(r => r.json());
+                const box = document.getElementById('list');
+                if (!st.residents.length) { box.innerHTML = '<div class="panel">등록된 이용자가 없습니다.</div>'; return; }
+                box.innerHTML = `<div class="sub" style="margin-bottom:10px;">${st.year}년 계획서가 없는 이용자 <b>${st.no_plan_this_year}명</b> · 보완이 필요한 계획서 <b>${st.with_issues}건</b></div>` +
+                    st.residents.map(r => `
+                    <div class="panel" id="res${r.resident_id}">
+                        <div class="head">
+                            <div><div class="who">${esc(r.resident_name)}</div>
+                                <div class="sub">${r.has_plan ? '최근 작성 ' + esc(r.latest_written_date) + ' · ' + esc(r.latest_plan_type) : '작성된 계획서가 없습니다'}</div></div>
+                            <div>
+                                <span class="badge ${r.has_plan_this_year ? (r.issues.length ? 'wait' : 'ok') : 'no'}">${r.has_plan_this_year ? (r.issues.length ? '보완 필요' : st.year + '년 완료') : st.year + '년 계획서 없음'}</span>
+                                <button type="button" class="btn-outline" onclick="toggleHistory(${r.resident_id})">${r.has_plan ? '이력 보기' : '이력'}</button>
+                                <button type="button" class="btn-solid" onclick="openForm(${r.resident_id}, '${esc(r.resident_name)}', 'regular')">계획서 작성</button>
+                                ${r.has_plan ? `<button type="button" class="btn-outline" onclick="openForm(${r.resident_id}, '${esc(r.resident_name)}', 'change')">변경 계획서</button>` : ''}
+                            </div>
+                        </div>
+                        ${r.issues.length ? `<ul class="issues">${r.issues.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}
+                        <div class="history" id="hist${r.resident_id}"></div>
+                    </div>`).join('');
+            } catch (e) {
+                document.getElementById('list').innerHTML = '<div class="panel">불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
+            }
+        }
+
+        function planHtml(p) {
+            return `<div class="plan">
+                <div class="head"><b>${esc(p.written_date)} · ${esc(p.plan_type_label)}</b><span class="sub">작성 ${esc(p.author_name || '-')}</span></div>
+                ${p.change_reason ? `<div style="margin-top:4px;color:#B45309;font-size:13px;">변경 사유: ${esc(p.change_reason)}</div>` : ''}
+                <dl><dt>세부목표</dt><dd>${esc(p.goals)}</dd><dt>필요내용</dt><dd>${esc(p.needs)}</dd><dt>세부제공내용</dt><dd>${esc(p.details)}</dd>
+                <dt>횟수·시간</dt><dd>${esc(p.frequency)}${p.duration_minutes ? ' · ' + p.duration_minutes + '분' : ''}</dd><dt>종합의견</dt><dd>${esc(p.opinion)}</dd>
+                <dt>급여 시작일</dt><dd>${esc(p.service_start_date || '-')}</dd></dl>
+                ${p.issues.length ? `<ul class="issues">${p.issues.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : '<div style="margin-top:8px;"><span class="badge ok">확인서명·공단 통보 완료</span></div>'}
+                <div class="prog">
+                    <div><label>보호자 확인서명일</label><input type="date" id="sg${p.id}" value="${esc(p.guardian_signed_date || '')}"></div>
+                    <div><label>서명자(관계)</label><input id="sn${p.id}" value="${esc(p.guardian_signer || '')}" placeholder="김영희(딸)"></div>
+                    <div><label>공단 통보일</label><input type="date" id="nt${p.id}" value="${esc(p.nhis_notified_date || '')}"></div>
+                    <button type="button" class="btn-outline" onclick="saveProgress(${p.id}, ${p.resident_id})">저장</button>
+                    <button type="button" class="btn-outline" onclick="removePlan(${p.id}, ${p.resident_id})">삭제</button>
+                </div></div>`;
+        }
+
+        async function toggleHistory(rid) {
+            const el = document.getElementById('hist' + rid);
+            if (el.classList.contains('open')) { el.classList.remove('open'); return; }
+            await showHistory(rid);
+        }
+
+        async function showHistory(rid) {
+            const el = document.getElementById('hist' + rid);
+            const d = await fetch(`${API_URL}?resident_id=${rid}`).then(r => r.json());
+            historyCache[rid] = d.plans;
+            el.innerHTML = d.plans.length ? d.plans.map(planHtml).join('') : '<div class="sub">작성된 계획서가 없습니다.</div>';
+            el.classList.add('open');
+        }
+
+        async function saveProgress(pid, rid) {
+            const sg = document.getElementById('sg' + pid).value, nt = document.getElementById('nt' + pid).value;
+            const body = {};
+            if (sg) { body.guardian_signed_date = sg; body.guardian_signer = document.getElementById('sn' + pid).value; }
+            if (nt) body.nhis_notified_date = nt;
+            await fetch(`${API_URL}/${pid}/progress`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            await load();
+            await showHistory(rid);
+        }
+
+        async function removePlan(pid, rid) {
+            if (!confirm('이 계획서를 삭제할까요?')) return;
+            const res = await fetch(`${API_URL}/${pid}`, { method: 'DELETE' });
+            if (!res.ok) { const d = await res.json(); alert(d.detail || '삭제하지 못했습니다'); return; }
+            await load();
+            await showHistory(rid);
+        }
+
+        async function openForm(rid, name, type) {
+            formCtx = { rid, type };
+            let prev = null;
+            if (type === 'change' || (historyCache[rid] && historyCache[rid].length)) {
+                const d = await fetch(`${API_URL}?resident_id=${rid}`).then(r => r.json());
+                historyCache[rid] = d.plans; prev = d.plans[0] || null;
+            }
+            document.getElementById('fTitle').textContent = type === 'change' ? '변경 급여제공계획서 작성' : '급여제공계획서 작성';
+            document.getElementById('fSub').textContent = '수급자 ' + name + (type === 'change' ? ' · 기존 계획서를 바탕으로 바뀐 부분을 고쳐 주세요' : '');
+            document.getElementById('fChangeWrap').style.display = type === 'change' ? '' : 'none';
+            document.getElementById('fReason').value = '';
+            document.getElementById('fWritten').value = today();
+            document.getElementById('fStart').value = (prev && prev.service_start_date) || '';
+            const base = prev || {};
+            document.getElementById('fGoals').value = base.goals || '';
+            document.getElementById('fNeeds').value = base.needs || '';
+            document.getElementById('fDetails').value = base.details || '';
+            document.getElementById('fFreq').value = base.frequency || '';
+            document.getElementById('fDur').value = base.duration_minutes || '';
+            document.getElementById('fOpinion').value = base.opinion || '';
+            document.getElementById('fErr').style.display = 'none';
+            document.getElementById('formBack').classList.add('open');
+        }
+
+        function closeForm() { document.getElementById('formBack').classList.remove('open'); }
+
+        async function submitForm() {
+            const err = document.getElementById('fErr');
+            err.style.display = 'none';
+            const body = {
+                resident_id: formCtx.rid, plan_type: formCtx.type,
+                change_reason: document.getElementById('fReason').value || null,
+                written_date: document.getElementById('fWritten').value,
+                service_start_date: document.getElementById('fStart').value || null,
+                goals: document.getElementById('fGoals').value, needs: document.getElementById('fNeeds').value,
+                details: document.getElementById('fDetails').value, frequency: document.getElementById('fFreq').value,
+                duration_minutes: document.getElementById('fDur').value ? Number(document.getElementById('fDur').value) : null,
+                opinion: document.getElementById('fOpinion').value,
+            };
+            try {
+                const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const d = await res.json();
+                if (!res.ok) { err.textContent = typeof d.detail === 'string' ? d.detail : '입력 내용을 확인해 주세요'; err.style.display = 'block'; return; }
+                closeForm();
+                await load();
+                await showHistory(formCtx.rid);
+            } catch (e) {
+                err.textContent = '저장하지 못했습니다. 잠시 후 다시 시도해 주세요';
+                err.style.display = 'block';
+            }
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
