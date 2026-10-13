@@ -87,7 +87,7 @@ def test_approve_page_does_not_ask_for_reason():
 def test_reject_page_asks_for_non_empty_reason():
     script = PAGE.read_text(encoding="utf-8")
     reject = script[script.index("async function rejectBilling"):script.index("async function submitToNHIS")]
-    assert "prompt('거절 사유" in reject
+    assert "prompt('반려 사유" in reject
     assert "reason.trim()" in reject
 
 
