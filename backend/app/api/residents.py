@@ -325,8 +325,12 @@ async def update_resident(
             if provided["care_grade"] is not None and provided["care_grade"] not in [1, 2, 3, 4, 5]:
                 raise HTTPException(status_code=400, detail="Invalid care grade")
             resident.care_grade = provided["care_grade"]  # None = 인지지원등급
+        caregiver_change = None
         if "primary_caregiver_id" in provided:
+            previous_caregiver_id = resident.primary_caregiver_id
             resident.primary_caregiver_id = provided["primary_caregiver_id"]  # None = 배정 해제
+            if provided["primary_caregiver_id"] and provided["primary_caregiver_id"] != previous_caregiver_id:
+                caregiver_change = {"previous_caregiver_id": previous_caregiver_id, "new_caregiver_id": provided["primary_caregiver_id"]}
         if update_data.client_type is not None:
             if update_data.client_type not in ["일반", "차상위계층", "기초생활보장", "의료급여"]:
                 raise HTTPException(status_code=400, detail="Invalid client type")
@@ -366,7 +370,8 @@ async def update_resident(
                 "care_grade": resident.care_grade,
                 "client_type": resident.client_type,
                 "health_status": resident.health_status
-            }
+            },
+            "caregiver_change": caregiver_change
         }
     except HTTPException:
         raise

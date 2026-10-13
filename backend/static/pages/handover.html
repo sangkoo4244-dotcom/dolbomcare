@@ -198,7 +198,17 @@
             load();
         }
 
-        window.addEventListener('load', init);
+        // 담당 요양보호사 변경 직후 이용자 화면에서 넘어오면 이용자와 받는 사람을 채워서 연다
+        async function openFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            if (!params.get('resident_id')) return;
+            await openForm();
+            document.getElementById('fResident').value = params.get('resident_id');
+            document.getElementById('fTo').value = params.get('to') || '';
+            history.replaceState(null, '', window.location.pathname);
+        }
+
+        window.addEventListener('load', () => { init(); openFromQuery(); });
     </script>
 </body>
 </html>

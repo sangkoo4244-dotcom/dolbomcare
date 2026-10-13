@@ -99,3 +99,14 @@ def test_manager_assigns_caregiver_and_list_filters_by_it(client):
     unassign = client.put(f"/api/v1/residents/{id1}", json={"primary_caregiver_id": None})
     assert unassign.status_code == 200
     assert client.get("/api/v1/residents/?caregiver_id=2").json()["residents"] == []
+
+
+def test_response_reports_caregiver_change_only_when_a_new_caregiver_is_assigned(client):
+    rid = client.post("/api/v1/residents/", json=body(name="김1")).json()["data"]["id"]
+    first = client.put(f"/api/v1/residents/{rid}", json={"primary_caregiver_id": 2}).json()["caregiver_change"]
+    assert first == {"previous_caregiver_id": None, "new_caregiver_id": 2}
+    same = client.put(f"/api/v1/residents/{rid}", json={"primary_caregiver_id": 2}).json()
+    assert same["caregiver_change"] is None
+    unassigned = client.put(f"/api/v1/residents/{rid}", json={"primary_caregiver_id": None}).json()
+    assert unassigned["caregiver_change"] is None
+    assert client.put(f"/api/v1/residents/{rid}", json={"health_status": "stable"}).json()["caregiver_change"] is None
