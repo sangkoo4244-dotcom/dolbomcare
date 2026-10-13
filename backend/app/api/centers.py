@@ -8,6 +8,7 @@ from app.alimtalk_billing import get_usage_summary
 from app.auth import require_manager
 from app.database import get_db
 from app.kakao_local import geocode_address
+from app.ltc_stats import get_region_demand
 from app.models import Center, User
 
 router = APIRouter()
@@ -107,3 +108,12 @@ def update_my_center(
 def get_my_alimtalk_usage(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
     """내 센터의 이번 달 알림톡 발송 현황·잔액 (센터장 전용)."""
     return get_usage_summary(db, actor.center_id)
+
+
+@router.get("/me/region-demand")
+def get_my_region_demand(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """센터 주소 지역(시군구)의 장기요양 등급판정 신청 현황 (센터장 전용, 공공데이터 통계)."""
+    center = db.query(Center).filter(Center.id == actor.center_id).first()
+    if not center:
+        raise HTTPException(status_code=404, detail="센터를 찾을 수 없습니다")
+    return get_region_demand(center.address)
