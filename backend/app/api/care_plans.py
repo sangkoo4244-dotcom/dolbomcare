@@ -341,3 +341,12 @@ def caregiver_ack(plan_id: int, db: Session = Depends(get_db), actor: User = Dep
         db.add(CarePlanAck(plan_id=plan_id, caregiver_id=actor.id))
         db.commit()
     return {"status": "success"}
+
+
+@router.get("/{plan_id}/signature")
+def plan_signature(plan_id: int, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """평가 준비·인쇄용: 보호자가 전자서명한 이미지를 센터장만 열람한다."""
+    plan = db.query(CarePlan).filter(CarePlan.id == plan_id, CarePlan.center_id == actor.center_id).first()
+    if not plan or not plan.guardian_signature:
+        raise HTTPException(status_code=404, detail="전자서명이 없습니다")
+    return {"signature": plan.guardian_signature, "signer": plan.guardian_signer, "signed_date": plan.guardian_signed_date.isoformat()}

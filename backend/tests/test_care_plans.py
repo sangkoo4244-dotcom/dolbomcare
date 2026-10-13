@@ -207,3 +207,13 @@ def test_other_residents_plan_cannot_be_acknowledged_and_roles(linked):
     assert client.get("/api/v1/care-plans/mine", headers=GUARDIAN).status_code == 403
     assert client.get("/api/v1/care-plans/guardian", headers=CAREGIVER).status_code == 403
     assert client.post(f"/api/v1/care-plans/{pid}/share", headers=CAREGIVER).status_code == 403
+
+
+def test_manager_can_view_signature_image_only_when_signed(linked):
+    _, client, pid = linked
+    assert client.get(f"/api/v1/care-plans/{pid}/signature", headers=MANAGER).status_code == 404
+    client.post(f"/api/v1/care-plans/{pid}/share", headers=MANAGER)
+    client.post(f"/api/v1/care-plans/{pid}/sign", json={"signer_name": "김영희", "relation": "딸", "signature": SIG}, headers=GUARDIAN)
+    res = client.get(f"/api/v1/care-plans/{pid}/signature", headers=MANAGER).json()
+    assert res["signature"] == SIG and res["signer"] == "김영희(딸)"
+    assert client.get(f"/api/v1/care-plans/{pid}/signature", headers=GUARDIAN).status_code == 403

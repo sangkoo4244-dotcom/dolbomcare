@@ -199,6 +199,7 @@
                 <div class="sub" style="margin-top:8px;">
                     ${p.signed_via === 'app' ? `<span class="badge ok">보호자 전자서명 완료</span>` : (p.shared_at ? '<span class="badge wait">보호자 서명 대기 중</span>' : '')}
                     ${p.caregiver_ack ? (p.caregiver_ack.acknowledged_at ? `<span class="badge ok">${esc(p.caregiver_ack.caregiver_name || '요양보호사')} 확인함</span>` : `<span class="badge wait">${esc(p.caregiver_ack.caregiver_name || '요양보호사')} 미확인</span>`) : ''}
+                    ${p.has_signature ? `<button type="button" class="btn-outline" onclick="viewSignature(${p.id})">서명 이미지 보기</button>` : ''}
                     ${p.signed_via !== 'app' && !p.guardian_signed_date ? `<button type="button" class="btn-outline" onclick="sharePlan(${p.id}, ${p.resident_id})">${p.shared_at ? '보호자에게 다시 알리기' : '보호자에게 확인·서명 요청'}</button>` : ''}
                 </div>
                 <div class="prog">
@@ -232,6 +233,16 @@
             await fetch(`${API_URL}/${pid}/progress`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             await load();
             await showHistory(rid);
+        }
+
+        async function viewSignature(pid) {
+            const res = await fetch(`${API_URL}/${pid}/signature`);
+            if (!res.ok) { alert('서명 이미지를 불러오지 못했습니다'); return; }
+            const d = await res.json();
+            const w = window.open('', '_blank');
+            if (!w) { alert('팝업이 차단되었습니다. 허용 후 다시 눌러 주세요.'); return; }
+            w.document.write(`<title>전자서명</title><body style="font-family:sans-serif;padding:24px"><p>${esc(d.signer)} · ${esc(d.signed_date)} 서명</p><img src="${d.signature}" style="border:1px solid #ccc;max-width:100%"></body>`);
+            w.document.close();
         }
 
         async function sharePlan(pid, rid) {
