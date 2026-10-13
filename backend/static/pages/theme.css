@@ -211,9 +211,39 @@ main [class*="bg-gradient-to"] {
     table { display: block; overflow-x: auto; }
     th, td { white-space: nowrap; min-width: 88px; }
     /* 짧은 버튼(이전·다음 등)은 글자가 줄바꿈되지 않게 */
-    button, .btn, label { white-space: nowrap; }
+    button, .btn { white-space: nowrap; }
     /* 달력처럼 칸이 많은 격자는 칸 사이 여백을 줄인다 */
     [class*="grid-cols-7"] { gap: 2px !important; }
+}
+
+/* ===== 휴대폰 공통 보정 (토스·카카오·Material/HIG 모바일 관례) =====
+   - 가로로 삐져나가는 요소가 있으면 모바일 브라우저가 페이지 전체를 축소해 버리므로 넘침을 막는다
+   - 입력칸은 16px 이상(iOS는 16px 미만이면 터치 때 화면을 확대함), 터치 대상은 최소 44px
+   - 상단바는 제목 한 줄 + 사용자 영역 한 줄로 정리하고, 날짜·직책·경로(breadcrumb)는 숨긴다 */
+@media (max-width: 900px) {
+    html, body { max-width: 100%; overflow-x: hidden; }
+    .main-layout { margin-left: 0 !important; min-width: 0; width: 100%; }
+    .main-layout > *, .content, .content > * { min-width: 0; max-width: 100%; }
+    .topbar { flex-wrap: wrap !important; gap: 8px !important; padding: 12px 16px !important; }
+    .topbar-title { flex: 1 1 100%; min-width: 0; }
+    .topbar-title h1 { font-size: 20px !important; white-space: normal; word-break: keep-all; }
+    .breadcrumb, .date-chip, .user-role { display: none !important; }
+    .user-menu { flex: 1 1 100%; justify-content: flex-end; gap: 10px !important; min-width: 0; }
+    .user-info { text-align: right; min-width: 0; }
+    .user-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+    .logout-btn { padding: 8px 12px !important; min-height: 40px; white-space: nowrap; }
+    #userAvatar { width: 36px !important; height: 36px !important; }
+    input:not([type=checkbox]):not([type=radio]), select, textarea { font-size: 16px !important; }
+    input:not([type=checkbox]):not([type=radio]), select { min-height: 44px; }
+    button, .btn, .side-item { min-height: 40px; }
+    img, svg, video, canvas { max-width: 100%; }
+    .content { padding: 16px !important; }
+    /* 1fr(=minmax(auto,1fr))은 안쪽 내용 최소폭만큼 칸이 늘어나므로 minmax(0,1fr)로 고정 */
+    .layout-grid, .layout-grid2, .vr-layout, .pa-row { grid-template-columns: minmax(0, 1fr) !important; }
+    .layout-grid > *, .layout-grid2 > *, .vr-layout > *, .pa-row > * { min-width: 0; }
+    .pa-card { overflow-x: auto; }
+    /* 카드 안 긴 글자는 줄바꿈 (한글은 단어 단위) */
+    p, li, span, div { overflow-wrap: anywhere; word-break: keep-all; }
 }
 
 @media (prefers-reduced-motion: reduce) {
