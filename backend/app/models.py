@@ -322,6 +322,13 @@ class NeedsAssessment(Base):
     mobility_status = Column(String, nullable=True)  # 'independent', 'independent_with_device', 'assisted', 'assisted_with_device', 'unable'
     function_status = Column(Text, nullable=True)  # JSON 문자열: {"stand_up": "alone", "eating": "guided", ...}
     notes = Column(Text, nullable=True)
+    # 공단 2026 평가 '욕구사정' 9개 항목 중 기존에 없던 항목 (서술형으로 판단 근거를 적는다)
+    cognition_note = Column(Text, nullable=True)  # 인지상태
+    communication_note = Column(Text, nullable=True)  # 의사소통
+    family_env_note = Column(Text, nullable=True)  # 가족 및 환경상태
+    subjective_needs = Column(Text, nullable=True)  # 주관적 욕구
+    resource_use = Column(Text, nullable=True)  # 자원이용 욕구
+    overall_opinion = Column(Text, nullable=True)  # 총평(종합소견)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class CopayInvoice(Base):

@@ -792,6 +792,23 @@
                 <tbody id="needsFunctionBody"></tbody>
             </table>
 
+            <div style="margin-top:16px;padding-top:12px;border-top:1px solid #e5e7eb;">
+                <div style="font-weight:700;margin-bottom:4px;">공단 평가 필수 항목 (서술형)</div>
+                <div style="font-size:12px;color:#6b7280;margin-bottom:8px;">공단 2026 평가는 욕구사정 9개 항목(신체·질병·인지·의사소통·영양·가족환경·주관적 욕구·자원이용·총평)을 확인합니다. 체크만 하지 말고 판단 근거를 함께 적어 주세요.</div>
+                <label style="display:block;font-weight:600;font-size:13px;margin:8px 0 4px;" for="needsCognition">인지상태</label>
+                <textarea id="needsCognition" rows="2" placeholder="예: 날짜·장소는 알지만 최근 일을 자주 잊으심" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;"></textarea>
+                <label style="display:block;font-weight:600;font-size:13px;margin:8px 0 4px;" for="needsCommunication">의사소통</label>
+                <textarea id="needsCommunication" rows="2" placeholder="예: 청력이 약해 큰 소리로 말해야 함, 발음은 또렷함" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;"></textarea>
+                <label style="display:block;font-weight:600;font-size:13px;margin:8px 0 4px;" for="needsFamilyEnv">가족 및 환경상태</label>
+                <textarea id="needsFamilyEnv" rows="2" placeholder="예: 아들 부부와 동거, 낮에는 혼자 계심, 욕실 바닥이 미끄러움" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;"></textarea>
+                <label style="display:block;font-weight:600;font-size:13px;margin:8px 0 4px;" for="needsSubjective">주관적 욕구</label>
+                <textarea id="needsSubjective" rows="2" placeholder="수급자 또는 보호자가 원하시는 도움" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;"></textarea>
+                <label style="display:block;font-weight:600;font-size:13px;margin:8px 0 4px;" for="needsResource">자원이용 욕구</label>
+                <textarea id="needsResource" rows="2" placeholder="의료기관, 복지관, 치매안심센터 등 이용 중이거나 연계가 필요한 곳" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;"></textarea>
+                <label style="display:block;font-weight:600;font-size:13px;margin:8px 0 4px;" for="needsOverall">총평(종합소견) · 서술형</label>
+                <textarea id="needsOverall" rows="2" placeholder="욕구사정 결과를 종합한 소견 (10자 이상 서술형으로 적어 주세요)" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;"></textarea>
+            </div>
+
             <div style="margin-top:16px;">
                 <label style="display:block;font-weight:700;margin-bottom:6px;">비고</label>
                 <textarea id="needsNotes" rows="2" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;"></textarea>
@@ -1421,6 +1438,7 @@
         function resetNeedsForm() {
             document.querySelectorAll('#needsModal input[type=checkbox], #needsModal input[type=radio]').forEach(el => el.checked = false);
             document.getElementById('needsNotes').value = '';
+            ['needsCognition', 'needsCommunication', 'needsFamilyEnv', 'needsSubjective', 'needsResource', 'needsOverall'].forEach(id => document.getElementById(id).value = '');
         }
 
         async function openNeedsAssessment(residentId) {
@@ -1452,6 +1470,7 @@
                         <b>${(a.assessed_date || '').slice(0, 10)}</b> · 작성: ${escapeHtml(a.assessed_by_name || '-')}
                         ${a.diseases_label.length ? ` · 질환: ${a.diseases_label.map(escapeHtml).join(', ')}` : ''}
                         ${a.mobility_status_label ? ` · 보행: ${escapeHtml(a.mobility_status_label)}` : ''}
+                        ${a.missing_items && a.missing_items.length ? `<div style="color:#B45309;font-size:12px;margin-top:2px;">평가 필수 항목 비어 있음: ${a.missing_items.map(escapeHtml).join(', ')}</div>` : ''}
                     </div>`).join('');
             } catch (e) { box.textContent = '이력을 불러올 수 없습니다'; }
         }
@@ -1476,13 +1495,21 @@
                         resident_id: needsResidentId, diseases, nutrition_status: nutritionStatus,
                         nutrition_detail: nutritionDetail, mobility_status: mobilityStatus,
                         function_status: functionStatus, notes,
+                        cognition_note: document.getElementById('needsCognition').value,
+                        communication_note: document.getElementById('needsCommunication').value,
+                        family_env_note: document.getElementById('needsFamilyEnv').value,
+                        subjective_needs: document.getElementById('needsSubjective').value,
+                        resource_use: document.getElementById('needsResource').value,
+                        overall_opinion: document.getElementById('needsOverall').value,
                     })
                 });
                 const d = await r.json().catch(() => ({}));
                 if (!r.ok) { alert(`저장 실패: ${d.detail || '오류'}`); return; }
                 resetNeedsForm();
                 loadNeedsHistory(needsResidentId);
-                alert('욕구사정이 저장되었습니다');
+                alert('욕구사정이 저장되었습니다' + (d.data && d.data.missing_items && d.data.missing_items.length ? `
+
+공단 평가 9개 항목 중 비어 있는 항목: ${d.data.missing_items.join(', ')}` : ''));
             } catch (e) { alert('오류: ' + e.message); }
         }
 

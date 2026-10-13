@@ -52,6 +52,12 @@ ADDITIVE_COLUMNS = [
     ("centers", "latitude", "FLOAT"),
     ("centers", "longitude", "FLOAT"),
     ("centers", "service_types", "VARCHAR"),
+    ("needs_assessments", "cognition_note", "TEXT"),
+    ("needs_assessments", "communication_note", "TEXT"),
+    ("needs_assessments", "family_env_note", "TEXT"),
+    ("needs_assessments", "subjective_needs", "TEXT"),
+    ("needs_assessments", "resource_use", "TEXT"),
+    ("needs_assessments", "overall_opinion", "TEXT"),
 ]
 
 

@@ -43,6 +43,28 @@ class NeedsAssessmentCreate(BaseModel):
     mobility_status: Optional[str] = None
     function_status: dict = {}  # {"stand_up": "alone", ...}
     notes: str = ""
+    cognition_note: str = ""
+    communication_note: str = ""
+    family_env_note: str = ""
+    subjective_needs: str = ""
+    resource_use: str = ""
+    overall_opinion: str = ""
+
+
+def missing_items(a: NeedsAssessment) -> list:
+    """공단 2026 평가가 요구하는 욕구사정 9개 항목 중 아직 비어 있는 항목 이름 (총평은 서술형만 인정)."""
+    filled = {
+        "신체상태": bool(a.mobility_status or a.function_status),
+        "질병상태": bool(a.diseases),
+        "인지상태": bool((a.cognition_note or "").strip()),
+        "의사소통": bool((a.communication_note or "").strip()),
+        "영양상태": bool(a.nutrition_status),
+        "가족 및 환경상태": bool((a.family_env_note or "").strip()),
+        "주관적 욕구": bool((a.subjective_needs or "").strip()),
+        "자원이용": bool((a.resource_use or "").strip()),
+        "총평": len((a.overall_opinion or "").strip()) >= 10,
+    }
+    return [name for name, ok in filled.items() if not ok]
 
 
 def _to_dict(a: NeedsAssessment, assessor_name: Optional[str] = None) -> dict:
@@ -65,6 +87,13 @@ def _to_dict(a: NeedsAssessment, assessor_name: Optional[str] = None) -> dict:
         "mobility_status_label": MOBILITY_LABELS.get(a.mobility_status),
         "function_status": function_status,
         "notes": a.notes,
+        "cognition_note": a.cognition_note,
+        "communication_note": a.communication_note,
+        "family_env_note": a.family_env_note,
+        "subjective_needs": a.subjective_needs,
+        "resource_use": a.resource_use,
+        "overall_opinion": a.overall_opinion,
+        "missing_items": missing_items(a),
         "created_at": a.created_at.isoformat() if a.created_at else None,
     }
 
@@ -113,6 +142,12 @@ def create_assessment(
         mobility_status=body.mobility_status,
         function_status=json.dumps(body.function_status, ensure_ascii=False) if body.function_status else None,
         notes=body.notes or None,
+        cognition_note=body.cognition_note.strip() or None,
+        communication_note=body.communication_note.strip() or None,
+        family_env_note=body.family_env_note.strip() or None,
+        subjective_needs=body.subjective_needs.strip() or None,
+        resource_use=body.resource_use.strip() or None,
+        overall_opinion=body.overall_opinion.strip() or None,
     )
     db.add(assessment)
     db.commit()
