@@ -98,6 +98,31 @@ const SIDEBAR_STYLE = `
 .side-item.active { background: #059669; color: #fff; }
 .side-icon { font-size: 16px; }
 .side-icon svg { display: block; width: 24px; height: 24px; }
+/* 휴대폰 하단 탭바: 자주 쓰는 4개 + 더보기 (토스·카카오 같은 앱 방식). 데스크톱에서는 숨긴다 */
+#mtabbar, #mtabSheet, #mtabBackdrop { display: none; }
+@media (max-width: 900px) {
+  #mtabbar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: #fff; border-top: 1px solid #E2E8F0; padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
+  .mtab { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; padding: 4px 2px; border: none; background: none; color: #64748B; font-size: 11px; font-weight: 600; font-family: inherit; text-decoration: none; position: relative; cursor: pointer; }
+  .mtab .mtab-ico { display: block; width: 24px; height: 24px; opacity: 0.75; }
+  .mtab .mtab-ico svg { display: block; width: 24px; height: 24px; }
+  /* 일부 PNG 아이콘은 이미지 아래쪽에 파일명 글자가 같이 들어 있어서, 위쪽 그림만 보이게 자른다 */
+  .mtab .mtab-ico:has(img), #mtabSheet .mtab-ico:has(img) { overflow: hidden; }
+  .mtab .mtab-ico:has(img) { height: 21px; margin-bottom: 3px; }
+  .mtab .mtab-ico img { display: block; width: 33px; height: auto; max-width: none; margin: 0 -4.5px; }
+  .mtab span.mtab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .mtab.active { color: #0F8B80; font-weight: 800; }
+  .mtab.active .mtab-ico { opacity: 1; }
+  .mtab-badge { position: absolute; top: 2px; left: calc(50% + 6px); min-width: 16px; padding: 0 5px; border-radius: 999px; background: #DC2626; color: #fff; font-size: 11px; font-weight: 700; line-height: 16px; text-align: center; }
+  #mtabBackdrop.open { display: block; position: fixed; inset: 0; background: rgba(20,40,63,0.45); z-index: 70; }
+  #mtabSheet.open { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; background: #fff; border-radius: 16px 16px 0 0; padding: 14px 16px calc(20px + env(safe-area-inset-bottom)); max-height: 80vh; overflow-y: auto; }
+  #mtabSheet .mtab-sheet-title { font-size: 14px; font-weight: 800; color: #14283F; margin: 2px 4px 12px; }
+  #mtabSheet .mtab-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  #mtabSheet .mtab-item { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 84px; padding: 10px 4px; border: 1px solid #E2E8F0; border-radius: 12px; background: #F8FAFC; color: #243247; font-size: 12.5px; font-weight: 600; text-align: center; text-decoration: none; font-family: inherit; cursor: pointer; line-height: 1.3; }
+  #mtabSheet .mtab-item.active { border-color: #0F8B80; background: #EDF8F6; color: #0F8B80; }
+  #mtabSheet .mtab-item .mtab-ico svg { display: block; width: 28px; height: 28px; }
+  #mtabSheet .mtab-item .mtab-ico:has(img) { width: 28px; height: 25px; margin-bottom: 3px; }
+  #mtabSheet .mtab-item .mtab-ico img { display: block; width: 39px; height: auto; max-width: none; margin: 0 -5.5px; }
+}
 `;
 
 function renderSidebar() {
@@ -128,6 +153,7 @@ function renderSidebar() {
             <span>로그아웃</span>
         </a>
     `;
+    renderMobileTabbar(items, current, roleMenu);
     showUnreadMessageBadge();
 
     // groupSidebar()가 #navContent 안쪽을 통째로 다시 그리므로, 거기 휩쓸리지 않게 nav 바깥(aside)에 따로 붙인다
@@ -164,6 +190,53 @@ async function showAdminConsoleLinkIfOperator() {
     } catch (e) { /* 네트워크 오류는 무시 - 없어도 메뉴는 정상 동작해야 한다 */ }
 }
 
+// 휴대폰 하단 탭바. 메뉴가 5개 이하면 전부 탭으로, 많으면 자주 쓰는 4개 + 더보기(아래에서 올라오는 창)로 나눈다.
+const MOBILE_PRIMARY = {
+    center_manager: ['dashboard.html', 'resident_management.html', 'voice_record.html', 'billing_management.html'],
+    caregiver: ['dashboard.html', 'resident_management.html', 'voice_record.html', 'my_schedule.html'],
+};
+const MOBILE_LOGOUT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#B5532F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>';
+
+function renderMobileTabbar(items, current, roleMenu) {
+    ['mtabbar', 'mtabSheet', 'mtabBackdrop'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
+    const icon = (item) => `<span class="mtab-ico">${MENU_ICONS[item.icon] || ''}</span>`;
+    const tabLabel = (item) => ({ '이용자 방문 기록': '방문 기록', '장기요양 신청 안내': '신청 안내', '센터와 메시지': '메시지' }[item.label] || item.label);
+    const primaryHrefs = MOBILE_PRIMARY[roleMenu];
+    const primary = items.length <= 5 || !primaryHrefs ? items : primaryHrefs.map(h => items.find(i => i.href === h)).filter(Boolean);
+    const more = items.filter(i => !primary.includes(i));
+    const moreActive = more.some(i => i.href === current);
+
+    const bar = document.createElement('nav');
+    bar.id = 'mtabbar';
+    bar.setAttribute('aria-label', '하단 메뉴');
+    bar.innerHTML = primary.map(i => `
+        <a class="mtab ${i.href === current ? 'active' : ''}" href="./${i.href}">${icon(i)}<span class="mtab-label">${tabLabel(i)}</span></a>`).join('') + (more.length ? `
+        <button type="button" class="mtab ${moreActive ? 'active' : ''}" id="mtabMore" aria-haspopup="dialog">
+            <span class="mtab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span>
+            <span class="mtab-label">더보기</span>
+        </button>` : '');
+    document.body.appendChild(bar);
+    if (!more.length) return;
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'mtabBackdrop';
+    const sheet = document.createElement('div');
+    sheet.id = 'mtabSheet';
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-label', '전체 메뉴');
+    sheet.innerHTML = `<div class="mtab-sheet-title">전체 메뉴</div><div class="mtab-grid">` + more.map(i => `
+        <a class="mtab-item ${i.href === current ? 'active' : ''}" href="./${i.href}">${icon(i)}<span>${i.label}</span></a>`).join('') + `
+        <button type="button" class="mtab-item" id="mtabLogout"><span class="mtab-ico">${MOBILE_LOGOUT_ICON}</span><span>로그아웃</span></button></div>`;
+    document.body.appendChild(backdrop);
+    document.body.appendChild(sheet);
+
+    const close = () => { sheet.classList.remove('open'); backdrop.classList.remove('open'); };
+    document.getElementById('mtabMore').addEventListener('click', () => { sheet.classList.add('open'); backdrop.classList.add('open'); });
+    backdrop.addEventListener('click', close);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    document.getElementById('mtabLogout').addEventListener('click', () => { close(); if (typeof logout === 'function') logout(); });
+}
+
 // 보호자 소통 메뉴에 안 읽은 메시지 개수를 표시한다 (실패해도 메뉴는 그대로 둔다)
 async function showUnreadMessageBadge() {
     try {
@@ -177,6 +250,15 @@ async function showUnreadMessageBadge() {
             badge.style.cssText = 'margin-left:auto;background:#dc2626;color:#fff;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700;';
             icon.parentElement.appendChild(badge);
         });
+        // 하단 탭바: 메시지 메뉴가 탭이면 그 탭에, 더보기 안에 있으면 더보기 버튼과 항목에 배지를 단다
+        const mkBadge = () => { const b = document.createElement('span'); b.className = 'mtab-badge'; b.textContent = unread_count; return b; };
+        const msgTab = document.querySelector('#mtabbar a[href$="messages.html"]');
+        if (msgTab) msgTab.appendChild(mkBadge());
+        else if (document.querySelector('#mtabSheet a[href$="messages.html"]')) {
+            document.getElementById('mtabMore').appendChild(mkBadge());
+            const item = document.querySelector('#mtabSheet a[href$="messages.html"]');
+            const b = mkBadge(); b.style.left = 'auto'; b.style.right = '8px'; item.appendChild(b);
+        }
     } catch (e) {
         // 배지는 부가 기능이므로 실패해도 무시한다
     }

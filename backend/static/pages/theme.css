@@ -156,6 +156,8 @@ main [class*="bg-gradient-to"] {
 
 /* 휴대폰(900px 이하): 사이드바를 아래쪽 메뉴 줄로 바꾸고, 본문은 전체 폭을 쓴다 */
 @media (max-width: 900px) {
+    /* 하단 메뉴는 menu.js가 만드는 탭바(#mtabbar)를 쓴다. 예전 가로 스크롤 방식 사이드바는 숨긴다 */
+    aside { display: none !important; }
     aside {
         position: fixed !important;
         top: auto !important;
@@ -204,7 +206,7 @@ main [class*="bg-gradient-to"] {
     }
     main h1 { font-size: 24px !important; }
     main > div:nth-child(2), #dashboardContent { padding: 16px !important; }
-    body { padding-bottom: 96px; }
+    body { padding-bottom: 84px; }
     /* 요약 카드(네 칸)는 두 칸으로, 입력 항목(세 칸)은 한 칸으로 쌓는다 */
     .md\:grid-cols-4 { grid-template-columns: 1fr 1fr !important; }
     .md\:grid-cols-3 { grid-template-columns: 1fr !important; }
