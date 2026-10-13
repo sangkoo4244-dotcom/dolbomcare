@@ -431,3 +431,39 @@ async function saveProfile() {
         msg.className = 'pm-msg err';
     }
 }
+
+
+/* 모바일 표 → 카드 변환: 머리글(th) 글자를 각 칸의 data-label로 복사하고 표에 m-cards 클래스를 붙인다.
+   (목록이 JS로 다시 그려질 때마다 반복. 표를 카드로 보이게 하는 CSS는 theme.css) */
+(function () {
+    function prepare(table) {
+        const headRows = table.tHead ? table.tHead.rows : [];
+        if (headRows.length !== 1) return;
+        const labels = Array.from(headRows[0].cells).map(function (th) { return th.textContent.trim(); });
+        table.classList.add('m-cards');
+        Array.from(table.tBodies).forEach(function (body) {
+            Array.from(body.rows).forEach(function (row) {
+                if (row.cells.length !== labels.length) return;
+                Array.from(row.cells).forEach(function (cell, i) {
+                    if (cell.getAttribute('data-label') !== labels[i]) cell.setAttribute('data-label', labels[i]);
+                });
+            });
+        });
+    }
+    var timer = null;
+    function run() {
+        timer = null;
+        document.querySelectorAll('table:not(.no-cards)').forEach(prepare);
+    }
+    function schedule() { if (!timer) timer = setTimeout(run, 50); }
+    new MutationObserver(function (list) {
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].target.closest && list[i].target.closest('table')) { schedule(); return; }
+            for (var j = 0; j < list[i].addedNodes.length; j++) {
+                var n = list[i].addedNodes[j];
+                if (n.nodeType === 1 && (n.tagName === 'TABLE' || n.querySelector('table'))) { schedule(); return; }
+            }
+        }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+    schedule();
+})();
