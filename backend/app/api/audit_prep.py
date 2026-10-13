@@ -5,9 +5,14 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user, require_manager
 from app.database import get_db
-from app.models import CopayInvoice, DailyRecord, NeedsAssessment, Resident, RiskAssessment, User
+from app.models import (CarePlan, CaseConference, Counseling, CopayInvoice, DailyRecord, NeedsAssessment, Resident,
+                        ResidentNotice, RiskAssessment, ServiceEvaluation, TrainingSession, User)
 from app.api.needs_assessments import _to_dict as needs_to_dict
 from app.api.risk_assessments import ASSESSMENT_TYPES, _to_dict as risk_to_dict
+from app.api.care_plans import _to_dict as plan_to_dict
+from app.api.counseling import _names as counsel_names, _to_dict as counseling_to_dict
+from app.api.service_reviews import _conf_dict, _ev_dict
+from app.api.trainings import _notice_dict, _session_dict
 
 router = APIRouter()
 
@@ -90,7 +95,21 @@ def get_resident_audit_packet(
     )
     copay_in_range = [c for c in copay_rows if start[:7] <= c.year_month <= end[:7]]
 
+    s_date, e_date = start_dt.date(), (end_dt - timedelta(days=1)).date()
+    today = datetime.now().date()
+    names = counsel_names(db, actor.center_id)
+    plans = db.query(CarePlan).filter(CarePlan.resident_id == resident_id, CarePlan.written_date >= s_date, CarePlan.written_date <= e_date).order_by(CarePlan.written_date).all()
+    evals = db.query(ServiceEvaluation).filter(ServiceEvaluation.resident_id == resident_id, ServiceEvaluation.evaluated_date >= s_date, ServiceEvaluation.evaluated_date <= e_date).order_by(ServiceEvaluation.evaluated_date).all()
+    counsels = db.query(Counseling).filter(Counseling.resident_id == resident_id, Counseling.counsel_date >= s_date, Counseling.counsel_date <= e_date).order_by(Counseling.counsel_date).all()
+    notices = db.query(ResidentNotice).filter(ResidentNotice.resident_id == resident_id, ResidentNotice.notice_date >= s_date, ResidentNotice.notice_date <= e_date).order_by(ResidentNotice.notice_date).all()
+    conferences = db.query(CaseConference).filter(CaseConference.resident_id == resident_id, CaseConference.conference_date >= s_date, CaseConference.conference_date <= e_date).order_by(CaseConference.conference_date).all()
+
     return {
+        "care_plans": [plan_to_dict(p, db, assessors.get(p.author_id)) for p in plans],
+        "service_evaluations": [_ev_dict(e, db, names, today) for e in evals],
+        "counselings": [counseling_to_dict(c, names) for c in counsels],
+        "notices": [_notice_dict(n, {resident.id: resident.name}) for n in notices],
+        "conferences": [_conf_dict(c, names, today) for c in conferences],
         "resident": {
             "name": resident.name,
             "care_grade": resident.care_grade,
@@ -114,4 +133,26 @@ def get_resident_audit_packet(
             "paid_amount": c.paid_amount,
             "status": c.status,
         } for c in copay_in_range],
+    }
+
+
+@router.get("/center")
+def get_center_audit_packet(start: str, end: str, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """센터 공통 증빙(직원 교육·직원 상담·사례관리 회의)을 기간별로 모은다."""
+    try:
+        s_date = datetime.fromisoformat(start).date()
+        e_date = datetime.fromisoformat(end).date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="날짜 형식이 올바르지 않습니다 (YYYY-MM-DD)")
+    names = counsel_names(db, actor.center_id)
+    staff_names = {u.id: u.full_name for u in db.query(User).filter(User.center_id == actor.center_id).all()}
+    sessions = db.query(TrainingSession).filter(TrainingSession.center_id == actor.center_id, TrainingSession.session_date >= s_date, TrainingSession.session_date <= e_date).order_by(TrainingSession.session_date).all()
+    staff_counsels = db.query(Counseling).filter(Counseling.center_id == actor.center_id, Counseling.kind == "staff", Counseling.counsel_date >= s_date, Counseling.counsel_date <= e_date).order_by(Counseling.counsel_date).all()
+    conferences = db.query(CaseConference).filter(CaseConference.center_id == actor.center_id, CaseConference.conference_date >= s_date, CaseConference.conference_date <= e_date).order_by(CaseConference.conference_date).all()
+    today = datetime.now().date()
+    return {
+        "period": {"start": start, "end": end},
+        "trainings": [_session_dict(x, staff_names) for x in sessions],
+        "staff_counselings": [counseling_to_dict(c, names) for c in staff_counsels],
+        "conferences": [_conf_dict(c, names, today) for c in conferences],
     }

@@ -101,6 +101,7 @@
                 <span style="color:#94A3B8;">~</span>
                 <input type="date" id="fEnd" class="filter-input">
                 <button type="button" class="btn-solid" onclick="loadPacket()">자료 모으기</button>
+                <button type="button" class="btn-outline" onclick="loadCenterPacket()">센터 공통 자료</button>
                 <button type="button" class="btn-outline" onclick="window.print()">인쇄</button>
                 <span style="color:#94A3B8;font-size:12px;">공단 평가번호별 공식 문항은 기관·회차마다 달라질 수 있어 자동 매핑하지 않습니다. 여기서는 기간 내 방문기록·평가·수납 기록을 모아 보여드리니, 실제 평가표와 대조해 사용하세요.</span>
             </div>
@@ -187,6 +188,45 @@
                 </div>
 
                 <div class="packet-section">
+                    <h3>급여제공계획서 (기간 내 ${data.care_plans.length}건)</h3>
+                    ${data.care_plans.length ? data.care_plans.map(p => `
+                        <div style="margin-bottom:8px;">· ${esc(p.written_date)} ${esc(p.plan_type_label)}${p.change_reason ? ' (변경 사유: ' + esc(p.change_reason) + ')' : ''} — ${esc(p.frequency)}${p.duration_minutes ? ' ' + p.duration_minutes + '분' : ''} ·
+                        확인서명 ${p.guardian_signed_date ? esc(p.guardian_signed_date) : '<span class="sig-no">없음</span>'} · 공단 통보 ${p.nhis_notified_date ? esc(p.nhis_notified_date) : '<span class="sig-no">없음</span>'}
+                        ${p.issues.length ? `<div style="color:#B45309;font-size:12px;">보완: ${p.issues.map(esc).join(' / ')}</div>` : ''}</div>`).join('')
+                        : '<div class="empty-note">기간 내 계획서 없음</div>'}
+                </div>
+
+                <div class="packet-section">
+                    <h3>급여제공 결과평가 (기간 내 ${data.service_evaluations.length}건)</h3>
+                    ${data.service_evaluations.length ? data.service_evaluations.map(e => `
+                        <div style="margin-bottom:6px;">· ${esc(e.evaluated_date)} ${esc(e.author_name || '-')} — ${esc(e.summary)} <span class="sub">[${esc(e.follow_up.label)}]</span></div>`).join('')
+                        : '<div class="empty-note">기간 내 평가 없음</div>'}
+                </div>
+
+                <div class="packet-section">
+                    <h3>방문상담 · 담당 변경 후 상담 (기간 내 ${data.counselings.length}건)</h3>
+                    ${data.counselings.length ? `
+                        <table class="plain-table">
+                            <thead><tr><th>상담일</th><th>방법</th><th>상담직원</th><th>상담대상자</th><th>내용</th></tr></thead>
+                            <tbody>${data.counselings.map(c => `<tr><td>${esc(c.counsel_date)}${c.reason === 'caregiver_change' ? '<br><span class="sub">담당 변경 후</span>' : ''}</td><td>${esc(c.method_label)}</td><td>${esc(c.counselor_name || '-')}</td><td>${esc(c.counselee_name || '-')}</td><td>${esc(c.content)}</td></tr>`).join('')}</tbody>
+                        </table>` : '<div class="empty-note">기간 내 상담 기록 없음</div>'}
+                </div>
+
+                <div class="packet-section">
+                    <h3>사례관리 회의 (기간 내 ${data.conferences.length}건)</h3>
+                    ${data.conferences.length ? data.conferences.map(c => `
+                        <div style="margin-bottom:8px;">· ${esc(c.conference_date)} — ${esc(c.reason)} / 계획: ${esc(c.plan)} (참석 ${c.attendees.length}명) <span class="sub">[${esc(c.follow_up.label)}]</span></div>`).join('')
+                        : '<div class="empty-note">기간 내 회의 없음</div>'}
+                </div>
+
+                <div class="packet-section">
+                    <h3>수급자(보호자) 안내 (기간 내 ${data.notices.length}건)</h3>
+                    ${data.notices.length ? data.notices.map(n => `
+                        <div style="margin-bottom:6px;">· ${esc(n.notice_date)} ${esc(n.notice_type_label)} (${esc(n.method_label)}, ${esc(n.recipient)})</div>`).join('')
+                        : '<div class="empty-note">기간 내 안내 기록 없음</div>'}
+                </div>
+
+                <div class="packet-section">
                     <h3>본인부담금 수납 현황</h3>
                     ${data.copay.length ? `
                         <table class="plain-table">
@@ -197,6 +237,41 @@
                         </table>` : '<div class="empty-note">기간 내 본인부담금 기록 없음</div>'}
                 </div>
             `;
+        }
+
+        function esc(t) { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; }
+
+        function renderCenterPacket(data) {
+            document.getElementById('packetBox').innerHTML = `
+                <h2>센터 공통 평가 준비 자료</h2>
+                <div class="sub">기간 ${data.period.start} ~ ${data.period.end}</div>
+                <div class="packet-section"><h3>직원 교육 (${data.trainings.length}건)</h3>
+                    ${data.trainings.length ? `<table class="plain-table"><thead><tr><th>교육일</th><th>종류</th><th>방법</th><th>강사</th><th>교육내용</th><th>참석자(서명)</th></tr></thead>
+                        <tbody>${data.trainings.map(t => `<tr><td>${esc(t.session_date)}</td><td>${esc(t.topic_label)}</td><td>${esc(t.method_label)}</td><td>${esc(t.instructor)}</td><td>${esc(t.content)}</td>
+                        <td>${t.attendees.map(a => esc(a.name) + (a.signed ? '(서명)' : '')).join(', ')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty-note">기간 내 교육 기록 없음</div>'}</div>
+                <div class="packet-section"><h3>직원 상담 (${data.staff_counselings.length}건)</h3>
+                    ${data.staff_counselings.length ? `<table class="plain-table"><thead><tr><th>상담일</th><th>방법</th><th>대상 직원</th><th>내용</th><th>조치</th></tr></thead>
+                        <tbody>${data.staff_counselings.map(c => `<tr><td>${esc(c.counsel_date)}</td><td>${esc(c.method_label)}</td><td>${esc(c.staff_name || '-')}</td><td>${esc(c.content)}</td>
+                        <td>${c.action_needed ? (c.action_done_date ? esc(c.action_done_date) + ' 반영: ' + esc(c.action_note || '') : '미반영') : '-'}</td></tr>`).join('')}</tbody></table>` : '<div class="empty-note">기간 내 직원 상담 기록 없음</div>'}</div>
+                <div class="packet-section"><h3>사례관리 회의 (${data.conferences.length}건)</h3>
+                    ${data.conferences.length ? data.conferences.map(c => `
+                        <div style="margin-bottom:10px;">· <b>${esc(c.resident_name)}</b> ${esc(c.conference_date)} — ${esc(c.reason)}<br>
+                        <span class="sub">계획: ${esc(c.plan)} / 참석 ${c.attendees.map(a => esc(a.name) + '(' + esc(a.role) + '): ' + esc(a.opinion)).join(', ')} / ${esc(c.follow_up.label)}</span></div>`).join('')
+                        : '<div class="empty-note">기간 내 회의 없음</div>'}</div>`;
+        }
+
+        async function loadCenterPacket() {
+            const start = document.getElementById('fStart').value;
+            const end = document.getElementById('fEnd').value;
+            if (!start || !end) { alert('기간을 선택해주세요'); return; }
+            document.getElementById('packetBox').innerHTML = '<div class="empty-note">불러오는 중...</div>';
+            try {
+                const res = await fetch(`${API_URL}/audit-prep/center?start=${start}&end=${end}`);
+                if (!res.ok) throw new Error('조회 실패');
+                renderCenterPacket(await res.json());
+            } catch (e) {
+                document.getElementById('packetBox').innerHTML = '<div class="empty-note" style="color:var(--danger2);">자료를 불러오지 못했습니다</div>';
+            }
         }
 
         async function loadPacket() {
