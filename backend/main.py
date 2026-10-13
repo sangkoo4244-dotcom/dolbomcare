@@ -19,7 +19,7 @@ from app.api import certificates
 from app.api import needs_assessments
 from app.api import copay
 from app.api import risk_assessments
-from app.api import audit_prep
+from app.api import audit_prep, visit_precheck
 from app.api import staff_records
 from app.api import resident_media
 from app.api import centers
@@ -72,6 +72,7 @@ app.include_router(needs_assessments.router, prefix="/api/v1/needs-assessments",
 app.include_router(copay.router, prefix="/api/v1/copay", tags=["copay"], dependencies=[Depends(get_current_user)])
 app.include_router(risk_assessments.router, prefix="/api/v1/risk-assessments", tags=["risk_assessments"], dependencies=[Depends(get_current_user)])
 app.include_router(audit_prep.router, prefix="/api/v1/audit-prep", tags=["audit_prep"], dependencies=[Depends(get_current_user)])
+app.include_router(visit_precheck.router, prefix="/api/v1/visit-precheck", tags=["visit_precheck"], dependencies=[Depends(get_current_user)])
 app.include_router(staff_records.router, prefix="/api/v1/staff-records", tags=["staff_records"], dependencies=[Depends(get_current_user)])
 app.include_router(resident_media.router, prefix="/api/v1/resident-media", tags=["resident_media"], dependencies=[Depends(get_current_user)])
 app.include_router(centers.router, prefix="/api/v1/centers", tags=["centers"], dependencies=[Depends(get_current_user)])
