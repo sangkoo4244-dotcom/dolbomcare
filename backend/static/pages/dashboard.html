@@ -362,7 +362,14 @@
                     </section>
                 </div>
                 <section class="panel" id="regionDemandPanel" style="display:none; margin-bottom:16px;">
-                    <div class="section-head"><h2 class="section-title" id="regionDemandTitle">우리 지역 등급판정 현황</h2></div>
+                    <div class="section-head" style="flex-wrap:wrap;gap:10px;">
+                        <h2 class="section-title">지역별 등급판정 현황</h2>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <select id="regionSido" onchange="fillSigungu(null)" style="height:40px;padding:0 10px;border:1px solid #E2E8F0;border-radius:8px;font-size:14px;background:#fff;"></select>
+                            <select id="regionSigungu" style="height:40px;padding:0 10px;border:1px solid #E2E8F0;border-radius:8px;font-size:14px;background:#fff;"></select>
+                            <button type="button" onclick="queryRegionDemand()" style="height:40px;padding:0 16px;border:none;border-radius:8px;background:#0F8B80;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">조회</button>
+                        </div>
+                    </div>
                     <div id="regionDemandBody"></div>
                 </section>
                 <section class="panel">
@@ -393,14 +400,48 @@
             return `<span class="visit-badge ${cls}">${label}</span>`;
         }
 
-        // 센터 주소 지역의 공단 등급판정 통계. 실패하거나 주소를 못 찾으면 카드를 그냥 숨긴다(다른 화면에 영향 없음).
+        // 지역별 공단 등급판정 통계. 기본은 센터 주소 지역이고, 시도·시군구를 골라 다른 지역도 볼 수 있다.
+        // 공공데이터 호출이 안 되면 카드를 그냥 숨긴다(다른 화면에 영향 없음).
+        let regionOptions = null;
+
         async function loadRegionDemand() {
             try {
-                const res = await fetch(`${API_URL}/centers/me/region-demand`);
+                const res = await fetch(`${API_URL}/centers/me/region-options`);
+                const opt = await res.json();
+                if (!res.ok || !opt.ok) return;
+                regionOptions = opt;
+                const sidoSel = document.getElementById('regionSido');
+                sidoSel.innerHTML = Object.keys(opt.regions).map(s => `<option>${escapeHtml(s)}</option>`).join('');
+                if (opt.own) sidoSel.value = opt.own.sido;
+                fillSigungu(opt.own ? opt.own.sigungu : null);
+                document.getElementById('regionDemandPanel').style.display = '';
+                if (opt.own) queryRegionDemand(true);
+                else document.getElementById('regionDemandBody').innerHTML = '<div class="empty" style="padding:20px 0;">조회할 지역을 선택해 주세요. (센터 주소에서 지역을 찾지 못했습니다)</div>';
+            } catch (e) {
+                console.error('지역 등급판정 현황 로드 실패:', e);
+            }
+        }
+
+        function fillSigungu(selected) {
+            const list = regionOptions.regions[document.getElementById('regionSido').value] || [];
+            const sel = document.getElementById('regionSigungu');
+            sel.style.display = list.length ? '' : 'none';
+            sel.innerHTML = list.map(s => `<option>${escapeHtml(s)}</option>`).join('');
+            if (selected && list.includes(selected)) sel.value = selected;
+        }
+
+        async function queryRegionDemand(isOwn) {
+            const body = document.getElementById('regionDemandBody');
+            const sido = document.getElementById('regionSido').value;
+            const sigungu = document.getElementById('regionSigungu').value;
+            body.innerHTML = '<div class="empty" style="padding:20px 0;">불러오는 중입니다</div>';
+            try {
+                const res = await fetch(`${API_URL}/centers/me/region-demand?sido=${encodeURIComponent(sido)}&sigungu=${encodeURIComponent(sigungu)}`);
                 const d = await res.json();
-                if (!res.ok || !d.ok) return;
+                if (!res.ok || !d.ok) { body.innerHTML = `<div class="empty" style="padding:20px 0;">${escapeHtml(d.message || '조회하지 못했습니다')}</div>`; return; }
                 const [y, m] = d.base_month.split('-');
-                document.getElementById('regionDemandTitle').textContent = `${d.region} 등급판정 현황`;
+                const own = regionOptions.own;
+                const isMyRegion = own && own.sido === sido && (own.sigungu === sigungu || own.sigungu === '_');
                 const maxGrade = Math.max(1, ...Object.values(d.grades));
                 const bars = Object.entries(d.grades).map(([label, n]) => `
                     <div style="display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px;">
@@ -408,18 +449,17 @@
                         <div style="flex:1;height:8px;background:#EEF2F6;border-radius:4px;overflow:hidden;"><div style="width:${Math.round(n / maxGrade * 100)}%;height:100%;background:#0F8B80;"></div></div>
                         <b style="width:56px;text-align:right;color:#14283F;">${n.toLocaleString()}</b>
                     </div>`).join('');
-                document.getElementById('regionDemandBody').innerHTML = `
-                    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;">
+                body.innerHTML = `
+                    <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;margin-bottom:8px;">
                         <b style="font-size:28px;color:#14283F;">${d.applicants.toLocaleString()}명</b>
-                        <span style="font-size:13px;color:#64748B;">등급판정 신청자 · ${y}년 ${Number(m)}월 기준</span>
+                        <span style="font-size:13px;color:#64748B;">${escapeHtml(d.region)} 등급판정 신청자 · ${y}년 ${Number(m)}월 기준${isMyRegion ? ' · 우리 센터 지역' : ''}</span>
                     </div>
                     ${bars}
                     <p style="margin:12px 0 0;font-size:12px;color:#94A3B8;line-height:1.5;">
-                        출처: ${escapeHtml(d.source)}. 센터 주소(${escapeHtml(d.region)}) 기준이며 개별 이용자 정보가 아닌 지역 통계입니다.${d.has_hidden_values ? ' 소수 인원은 공단이 비공개 처리해 실제보다 적게 보일 수 있습니다.' : ''}
+                        출처: ${escapeHtml(d.source)}. 개별 이용자 정보가 아닌 지역 통계입니다.${d.has_hidden_values ? ' 소수 인원은 공단이 비공개 처리해 실제보다 적게 보일 수 있습니다.' : ''}
                     </p>`;
-                document.getElementById('regionDemandPanel').style.display = '';
             } catch (e) {
-                console.error('지역 등급판정 현황 로드 실패:', e);
+                body.innerHTML = '<div class="empty" style="padding:20px 0;">조회하지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
             }
         }
 

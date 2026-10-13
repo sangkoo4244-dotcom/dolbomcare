@@ -8,7 +8,7 @@ from app.alimtalk_billing import get_usage_summary
 from app.auth import require_manager
 from app.database import get_db
 from app.kakao_local import geocode_address
-from app.ltc_stats import get_region_demand
+from app.ltc_stats import get_region_demand, get_region_options
 from app.models import Center, User
 
 router = APIRouter()
@@ -110,10 +110,25 @@ def get_my_alimtalk_usage(db: Session = Depends(get_db), actor: User = Depends(r
     return get_usage_summary(db, actor.center_id)
 
 
-@router.get("/me/region-demand")
-def get_my_region_demand(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
-    """센터 주소 지역(시군구)의 장기요양 등급판정 신청 현황 (센터장 전용, 공공데이터 통계)."""
+def _my_center_address(db: Session, actor: User):
     center = db.query(Center).filter(Center.id == actor.center_id).first()
     if not center:
         raise HTTPException(status_code=404, detail="센터를 찾을 수 없습니다")
-    return get_region_demand(center.address)
+    return center.address
+
+
+@router.get("/me/region-options")
+def get_my_region_options(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """등급판정 현황 카드의 지역 선택 칸 목록 + 센터 주소 기준 기본 지역 (센터장 전용)."""
+    return get_region_options(_my_center_address(db, actor))
+
+
+@router.get("/me/region-demand")
+def get_my_region_demand(
+    sido: Optional[str] = None,
+    sigungu: Optional[str] = None,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_manager),
+):
+    """장기요양 등급판정 신청 현황 (센터장 전용, 공공데이터 통계). 지역을 안 고르면 센터 주소 지역."""
+    return get_region_demand(_my_center_address(db, actor), sido, sigungu)

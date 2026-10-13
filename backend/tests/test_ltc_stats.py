@@ -72,3 +72,24 @@ def test_get_region_demand_unmatched_address(monkeypatch):
     monkeypatch.setenv("ODCLOUD_SERVICE_KEY", "x")
     monkeypatch.setattr(ltc_stats, "_fetch_latest_rows", lambda: ("2026-08", ROWS))
     assert ltc_stats.get_region_demand("주소불명")["ok"] is False
+
+
+def test_region_options_lists_regions_and_own(monkeypatch):
+    monkeypatch.setenv("ODCLOUD_SERVICE_KEY", "x")
+    monkeypatch.setattr(ltc_stats, "_fetch_latest_rows", lambda: ("2026-08", ROWS))
+    result = ltc_stats.get_region_options("서울특별시 강남구 테헤란로")
+    assert result["ok"]
+    assert result["regions"]["서울특별시"] == ["강남구", "중구"]
+    assert result["regions"]["세종특별자치시"] == []
+    assert result["own"] == {"sido": "서울특별시", "sigungu": "강남구"}
+    assert ltc_stats.get_region_options("주소불명")["own"] is None
+
+
+def test_get_region_demand_for_chosen_region(monkeypatch):
+    monkeypatch.setenv("ODCLOUD_SERVICE_KEY", "x")
+    monkeypatch.setattr(ltc_stats, "_fetch_latest_rows", lambda: ("2026-08", ROWS))
+    result = ltc_stats.get_region_demand("주소불명", "서울특별시", "강남구")
+    assert result["ok"] and result["region"] == "서울특별시 강남구"
+    sejong = ltc_stats.get_region_demand("주소불명", "세종특별자치시")
+    assert sejong["ok"] and sejong["region"] == "세종특별자치시"
+    assert ltc_stats.get_region_demand("서울 강남구", "서울특별시", "없는구")["ok"] is False

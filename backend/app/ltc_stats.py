@@ -149,16 +149,50 @@ def summarize(rows, sido, sigungu):
     }
 
 
-def get_region_demand(address):
+def _regions_of(rows):
+    regions = {}
+    for r in rows:
+        regions.setdefault(r["시도"], set()).add(r["시군구"])
+    return regions
+
+
+def get_region_options(address):
+    """시도 -> 시군구 목록(선택 칸용)과, 센터 주소로 찾은 기본 지역(못 찾으면 None)."""
     if not _service_key():
         return {"ok": False, "message": "ODCLOUD_SERVICE_KEY가 설정되지 않았습니다"}
     try:
         month, rows = _fetch_latest_rows()
     except Exception as e:
         return {"ok": False, "message": f"공공데이터 조회 실패: {e}"}
-    region = match_region(address, rows)
-    if not region:
-        return {"ok": False, "message": "센터 주소에서 시군구를 찾지 못했습니다. 센터 정보에서 주소를 확인해 주세요"}
+    regions = _regions_of(rows)
+    own = match_region(address, rows)
+    return {
+        "ok": True,
+        "base_month": month,
+        # 세종처럼 시군구 구분이 없는 시도는 빈 목록
+        "regions": {sido: sorted(n for n in names if n != "_") for sido, names in sorted(regions.items())},
+        "own": {"sido": own[0], "sigungu": own[1]} if own else None,
+    }
+
+
+def get_region_demand(address, sido=None, sigungu=None):
+    """sido(+sigungu)를 주면 그 지역, 안 주면 센터 주소 지역의 현황."""
+    if not _service_key():
+        return {"ok": False, "message": "ODCLOUD_SERVICE_KEY가 설정되지 않았습니다"}
+    try:
+        month, rows = _fetch_latest_rows()
+    except Exception as e:
+        return {"ok": False, "message": f"공공데이터 조회 실패: {e}"}
+    if sido:
+        regions = _regions_of(rows)
+        sigungu = sigungu or "_"
+        if sigungu not in regions.get(sido, set()):
+            return {"ok": False, "message": "선택한 지역의 통계를 찾지 못했습니다"}
+        region = (sido, sigungu)
+    else:
+        region = match_region(address, rows)
+        if not region:
+            return {"ok": False, "message": "센터 주소에서 시군구를 찾지 못했습니다. 센터 정보에서 주소를 확인해 주세요"}
     sido, sigungu = region
     result = summarize(rows, sido, sigungu)
     result.update({
