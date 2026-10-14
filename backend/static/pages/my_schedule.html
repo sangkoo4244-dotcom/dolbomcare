@@ -58,10 +58,21 @@
         .cal-cell.today { border-color: var(--teal); border-width: 2px; }
         .cal-cell.selected { box-shadow: 0 0 0 2px rgba(15,139,128,0.35) inset; }
         .cal-pill { border-radius: 6px; padding: 3px 5px; font-size: 11px; font-weight: 700; line-height: 1.3; margin-bottom: 3px; }
+        .cal-count { display: inline-block; white-space: nowrap; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 800; background: #E6F3F1; color: #0F8B80; }
+        .cal-dots { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 4px; }
+        .cal-dots i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+        .day-panel { margin-top: 16px; padding-top: 14px; border-top: 1px solid #F1F5F9; }
+        .day-panel-head { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 800; color: var(--navy); margin-bottom: 8px; }
+        .day-panel-list { max-height: 360px; overflow-y: auto; overscroll-behavior: contain; }
+        .day-panel-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px 10px; border: none; border-left: 4px solid #CBD5E1; border-radius: 8px; background: #F8FAFC; margin-bottom: 6px; cursor: pointer; font-family: inherit; }
+        .day-panel-time { flex: 0 0 auto; font-size: 12.5px; font-weight: 700; color: var(--navy); width: 92px; }
+        .day-panel-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 700; color: var(--charcoal); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .week-more { display: block; width: 100%; border: none; background: transparent; color: #0F8B80; font-size: 11px; font-weight: 800; padding: 4px 0; cursor: pointer; text-align: center; }
         .legend-dot { width: 10px; height: 10px; border-radius: 999px; display: inline-block; }
         /* 휴대폰: 칸이 좁아 이름이 글자마다 줄바꿈되므로 방문을 색 점으로만 보여 주고, 날짜를 누르면 일간 보기로 상세를 연다 */
         @media (max-width: 700px) {
             .cal-cell { min-height: 56px; padding: 4px 2px; text-align: center; }
+            .day-panel-time { width: 78px; }
             .cal-pill { display: inline-block; width: 8px; height: 8px; padding: 0; margin: 1px; border-radius: 50%; font-size: 0; line-height: 0; background: currentColor !important; }
         }
 
@@ -194,6 +205,7 @@
                         </div>
                         <div id="calendarView">
                             <div id="calendar" class="grid grid-cols-7 gap-2"></div>
+                            <div id="dayPanel" class="day-panel" style="display:none;"></div>
                             <div id="legend" class="flex flex-wrap gap-4 mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600"></div>
                         </div>
                         <div id="weekView" style="display:none;"></div>
@@ -476,7 +488,7 @@
                 const key = dateKey(d);
                 const dayItems = items.filter(it => it.date === key).sort((a, b) => a.time.localeCompare(b.time));
                 const rows = dayItems.length
-                    ? dayItems.map(it => { const c = colorOf(it); return `<button onclick="openItemDetail(${it._idx})" class="week-item" style="background:${c.bg};color:${c.text};"><b>${it.time}</b> ${escapeHtml(it.resident_name || '기타')}</button>`; }).join('')
+                    ? dayItems.slice(0, 5).map(it => { const c = colorOf(it); return `<button onclick="openItemDetail(${it._idx})" class="week-item" style="background:${c.bg};color:${c.text};"><b>${it.time}</b> ${escapeHtml(it.resident_name || '기타')}</button>`; }).join('') + (dayItems.length > 5 ? `<button class="week-more" onclick="event.stopPropagation(); selectedDate='${key}'; setView('day');">+${dayItems.length - 5}건 더 보기</button>` : '')
                     : '<div class="week-empty">일정 없음</div>';
                 return `<div class="week-col ${key === todayKey ? 'today' : ''} ${key === selectedDate ? 'selected' : ''}" onclick="selectDayFromWeek('${key}')">
                     <div class="week-col-head">${'일월화수목금토'[d.getDay()]} ${d.getDate()}</div>
@@ -614,19 +626,40 @@
                 const dayItems = items.filter(it => it.date === key);
                 const cell = document.createElement('div');
                 cell.className = `cal-cell ${key === todayKey ? 'today' : ''} ${key === selectedDate ? 'selected' : ''}`;
-                const pills = dayItems.slice(0, 2).map(it => {
-                    const c = colorOf(it);
-                    return `<div class="cal-pill" style="background:${c.bg};color:${c.text};">${escapeHtml(it.resident_name || '기타')}<br>${timeRange(it)}</div>`;
-                }).join('');
-                const more = dayItems.length > 2 ? `<div class="text-[10px] text-gray-400">+${dayItems.length - 2}건</div>` : '';
-                cell.innerHTML = `<div class="text-sm font-bold text-gray-800 mb-1">${day}</div>${pills}${more}`;
+                // 3건까지는 이름·시간, 4건부터는 건수 + 색 점(최대 4개)만 보여 칸이 넘치지 않게 한다
+                const summary = dayItems.length <= 3
+                    ? dayItems.map(it => {
+                        const c = colorOf(it);
+                        return `<div class="cal-pill" style="background:${c.bg};color:${c.text};">${escapeHtml(it.resident_name || '기타')}<br>${timeRange(it)}</div>`;
+                    }).join('')
+                    : `<span class="cal-count">${dayItems.length}건</span><div class="cal-dots">${dayItems.slice(0, 4).map(it => `<i style="background:${colorOf(it).dot}"></i>`).join('')}</div>`;
+                cell.innerHTML = `<div class="text-sm font-bold text-gray-800 mb-1">${day}</div>${summary}`;
                 cell.onclick = () => {
                     selectedDate = key;
-                    if (window.matchMedia('(max-width: 700px)').matches) { setView('day'); return; }
                     renderCalendar();
+                    document.getElementById('dayPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 };
                 cal.appendChild(cell);
             }
+            renderDayPanel();
+        }
+
+        // 달력에서 날짜를 누르면 그날 일정을 시간순 목록으로 보여 준다 (PC·휴대폰 공통, 건수가 많아도 목록 안에서 스크롤)
+        function renderDayPanel() {
+            const box = document.getElementById('dayPanel');
+            if (!selectedDate) { box.style.display = 'none'; return; }
+            const dayItems = items.filter(it => it.date === selectedDate).sort((a, b) => a.time.localeCompare(b.time));
+            const label = parseLocalDate(selectedDate).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
+            const rows = dayItems.length ? dayItems.map(it => {
+                const c = colorOf(it);
+                return `<button class="day-panel-row" style="border-left-color:${c.dot};" onclick="openItemDetail(${it._idx})">
+                    <span class="day-panel-time">${timeRange(it)}</span>
+                    <span class="day-panel-name">${escapeHtml(it.resident_name || '기타 일정')}</span>
+                    ${badge(it.state)}
+                </button>`;
+            }).join('') : '<div class="text-center py-4 text-gray-400 text-sm">이 날짜에는 일정이 없습니다</div>';
+            box.innerHTML = `<div class="day-panel-head"><span>${label} · ${dayItems.length}건</span><button class="btn-outline" onclick="setView('day')">일간 보기</button></div><div class="day-panel-list">${rows}</div>`;
+            box.style.display = '';
         }
 
         function renderLegend() {
