@@ -276,6 +276,8 @@ def caregiver_schedule_view(
             "review_note": s.review_note,
             "change_date": s.change_date.strftime("%Y-%m-%d %H:%M") if s.change_date else None,
             "change_reason": s.change_reason,
+            "change_service_type": s.change_service_type,
+            "change_planned_items": _codes(s.change_planned_items) if s.change_planned_items is not None else None,
             "planned": True,
         })
 
@@ -496,6 +498,8 @@ def resubmit_schedule(schedule_id: int, req: ResubmitRequest, db: Session = Depe
 class ChangeRequest(BaseModel):
     scheduled_date: str
     duration_minutes: int = None
+    service_type: str = None
+    planned_items: str = None  # 쉼표로 이은 제공 항목 코드 (빈 문자열이면 항목 없음, None이면 변경 없음)
     reason: str = ""
 
 
@@ -503,6 +507,8 @@ def _clear_change(schedule):
     schedule.change_date = None
     schedule.change_duration = None
     schedule.change_reason = None
+    schedule.change_service_type = None
+    schedule.change_planned_items = None
 
 
 @router.post("/{schedule_id}/change-request")
@@ -520,10 +526,16 @@ def request_schedule_change(schedule_id: int, req: ChangeRequest, db: Session = 
     if not reason:
         raise HTTPException(status_code=400, detail="변경 사유를 입력해 주세요")
     new_date = datetime.fromisoformat(req.scheduled_date)
-    if new_date == schedule.scheduled_date and (req.duration_minutes in (None, schedule.duration_minutes)):
+    new_service = req.service_type if req.service_type and req.service_type != schedule.service_type else None
+    new_items = None
+    if req.planned_items is not None and sorted(_codes(req.planned_items)) != sorted(_codes(schedule.planned_items)):
+        new_items = req.planned_items
+    if new_date == schedule.scheduled_date and req.duration_minutes in (None, schedule.duration_minutes) and new_service is None and new_items is None:
         raise HTTPException(status_code=400, detail="기존 일정과 같습니다")
     schedule.change_date = new_date
     schedule.change_duration = req.duration_minutes
+    schedule.change_service_type = new_service
+    schedule.change_planned_items = new_items
     schedule.change_reason = reason
     resident = db.query(Resident).filter(Resident.id == schedule.resident_id).first()
     for mgr in db.query(User).filter(User.center_id == schedule.center_id, User.role == "center_manager", User.is_active == True).all():  # noqa: E712
@@ -561,6 +573,10 @@ def list_change_requests(db: Session = Depends(get_db), actor: User = Depends(re
         "to_date": s.change_date.strftime("%Y-%m-%d %H:%M"),
         "from_duration": s.duration_minutes,
         "to_duration": s.change_duration,
+        "from_service_type": s.service_type,
+        "to_service_type": s.change_service_type,
+        "from_items": _codes(s.planned_items),
+        "to_items": _codes(s.change_planned_items) if s.change_planned_items is not None else None,
         "reason": s.change_reason,
     } for s in rows]}
 
@@ -573,6 +589,10 @@ def approve_schedule_change(schedule_id: int, db: Session = Depends(get_db), act
     schedule.scheduled_date = schedule.change_date
     if schedule.change_duration is not None:
         schedule.duration_minutes = schedule.change_duration
+    if schedule.change_service_type:
+        schedule.service_type = schedule.change_service_type
+    if schedule.change_planned_items is not None:
+        schedule.planned_items = schedule.change_planned_items or None
     _clear_change(schedule)
     notify(db, schedule.caregiver_id, "schedule_change_approved", f"일정 변경이 승인되었습니다 ({schedule.scheduled_date:%m/%d %H:%M})")
     db.commit()

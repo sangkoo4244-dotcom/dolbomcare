@@ -666,11 +666,18 @@
                 const items = (await r.json()).items || [];
                 if (!items.length) { box.style.display = 'none'; return; }
                 const fmt = (d) => d.slice(5, 16).replace('-', '/');
+                const svcName = { basic_care: '기본 돌봄', meal_service: '식사 서빙', medical_care: '의료 관리', emergency: '응급 대응' };
+                const itemsOf = (codes) => (codes || []).map(c => CARE_ITEM_LABELS[c] || c).join(', ') || '없음';
+                const extra = (c) => [
+                    c.to_service_type ? `서비스 유형: ${svcName[c.from_service_type] || c.from_service_type} → <b style="color:#0F8B80;">${svcName[c.to_service_type] || c.to_service_type}</b>` : '',
+                    c.to_items ? `제공 항목: ${itemsOf(c.from_items)} → <b style="color:#0F8B80;">${itemsOf(c.to_items)}</b>` : ''
+                ].filter(Boolean).map(t => `<div style="font-size:13px;color:#475569;">${t}</div>`).join('');
                 box.innerHTML = `<div style="font-weight:800;color:#92400E;margin-bottom:8px;">방문 일정 변경 요청 ${items.length}건</div>` + items.map(c => `
                     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:#fff;border:1px solid #FDE68A;border-radius:10px;padding:10px 12px;margin-bottom:6px;">
                         <div style="flex:1;min-width:220px;">
                             <div style="font-weight:700;">${c.caregiver_name || ''} · ${c.resident_name || ''} 어르신</div>
                             <div style="font-size:13px;color:#475569;">${fmt(c.from_date)} → <b style="color:#0F8B80;">${fmt(c.to_date)}</b>${c.to_duration && c.to_duration !== c.from_duration ? ` (${c.to_duration}분)` : ''}</div>
+                            ${extra(c)}
                             <div style="font-size:12.5px;color:#64748B;">사유: ${(c.reason || '').replace(/</g, '&lt;')}</div>
                         </div>
                         <button class="btn-solid" style="padding:6px 12px;" onclick="decideChange(${c.schedule_id}, 'approve')">변경 승인</button>

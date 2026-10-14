@@ -207,6 +207,8 @@ class Schedule(Base):
     change_date = Column(DateTime, nullable=True)
     change_duration = Column(Integer, nullable=True)
     change_reason = Column(String, nullable=True)
+    change_service_type = Column(String, nullable=True)
+    change_planned_items = Column(String, nullable=True)
 
     status = Column(String, default="scheduled")  # 'scheduled', 'completed', 'cancelled'
     notes = Column(Text, nullable=True)  # 특이사항

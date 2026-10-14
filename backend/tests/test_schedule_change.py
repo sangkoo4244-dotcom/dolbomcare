@@ -108,3 +108,30 @@ def test_caregiver_can_withdraw(ctx):
     request_change(client)
     assert client.post("/api/v1/schedule/1/change-cancel", headers=CG).status_code == 200
     assert Session().query(models.Schedule).get(1).change_date is None
+
+
+def test_service_and_items_change_applies_only_on_approval(ctx):
+    client, Session = ctx
+    db = Session()
+    s = db.query(models.Schedule).get(1)
+    s.service_type, s.planned_items = "basic_care", "meal_assist"
+    db.commit()
+    body = {"scheduled_date": WHEN.isoformat(), "service_type": "medical_care", "planned_items": "meal_assist,bath", "reason": "상태 변화"}
+    assert client.post("/api/v1/schedule/1/change-request", json=body, headers=CG).status_code == 200
+    db.expire_all()
+    s = db.query(models.Schedule).get(1)
+    assert (s.service_type, s.planned_items) == ("basic_care", "meal_assist")  # 승인 전에는 그대로
+    item = client.get("/api/v1/schedule/change-requests", headers=MGR).json()["items"][0]
+    assert item["to_service_type"] == "medical_care" and item["to_items"] == ["meal_assist", "bath"]
+    assert client.post("/api/v1/schedule/1/change-approve", headers=MGR).status_code == 200
+    db.expire_all()
+    s = db.query(models.Schedule).get(1)
+    assert (s.service_type, s.planned_items, s.scheduled_date) == ("medical_care", "meal_assist,bath", WHEN)
+    assert s.change_service_type is None and s.change_planned_items is None
+
+
+def test_request_identical_to_current_is_rejected(ctx):
+    client, Session = ctx
+    s = Session().query(models.Schedule).get(1)
+    body = {"scheduled_date": WHEN.isoformat(), "service_type": s.service_type, "reason": "그냥"}
+    assert client.post("/api/v1/schedule/1/change-request", json=body, headers=CG).status_code == 400
