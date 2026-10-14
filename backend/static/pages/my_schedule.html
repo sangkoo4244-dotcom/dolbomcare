@@ -59,6 +59,11 @@
         .cal-cell.selected { box-shadow: 0 0 0 2px rgba(15,139,128,0.35) inset; }
         .cal-pill { border-radius: 6px; padding: 3px 5px; font-size: 11px; font-weight: 700; line-height: 1.3; margin-bottom: 3px; }
         .legend-dot { width: 10px; height: 10px; border-radius: 999px; display: inline-block; }
+        /* 휴대폰: 칸이 좁아 이름이 글자마다 줄바꿈되므로 방문을 색 점으로만 보여 주고, 날짜를 누르면 일간 보기로 상세를 연다 */
+        @media (max-width: 700px) {
+            .cal-cell { min-height: 56px; padding: 4px 2px; text-align: center; }
+            .cal-pill { display: inline-block; width: 8px; height: 8px; padding: 0; margin: 1px; border-radius: 50%; font-size: 0; line-height: 0; background: currentColor !important; }
+        }
 
         .status-pill2 { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; display: inline-block; }
         .sp-draft { background: #E8F1FC; color: #1D4ED8; }
@@ -96,6 +101,12 @@
         .day-row-name { font-size: 13.5px; font-weight: 700; color: var(--charcoal); display: flex; align-items: center; gap: 8px; }
         .day-row-sub { font-size: 12px; color: #94A3B8; margin-top: 2px; }
         .day-row-actions { flex: 0 0 auto; }
+        @media (max-width: 700px) {
+            .day-row { flex-wrap: wrap; row-gap: 8px; }
+            .day-row-time { width: auto; flex: 1 1 100%; }
+            .day-row-name { flex-wrap: wrap; white-space: nowrap; }
+            .day-row-actions { flex: 1 1 100%; }
+        }
 
         /* 캘린더 인쇄: 사이드바·상단바·요약·우측패널·목록은 숨기고 캘린더만 출력 */
         @media print {
@@ -606,7 +617,11 @@
                 }).join('');
                 const more = dayItems.length > 2 ? `<div class="text-[10px] text-gray-400">+${dayItems.length - 2}건</div>` : '';
                 cell.innerHTML = `<div class="text-sm font-bold text-gray-800 mb-1">${day}</div>${pills}${more}`;
-                cell.onclick = () => { selectedDate = key; renderCalendar(); };
+                cell.onclick = () => {
+                    selectedDate = key;
+                    if (window.matchMedia('(max-width: 700px)').matches) { setView('day'); return; }
+                    renderCalendar();
+                };
                 cal.appendChild(cell);
             }
         }

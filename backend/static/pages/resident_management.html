@@ -473,6 +473,14 @@
 
         .layout-grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
         @media (max-width: 1100px) { .layout-grid { grid-template-columns: 1fr; } .summary-row { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+        /* 휴대폰: 목록 카드가 좌우로 좁아지지 않게 하고, 관리 버튼은 줄바꿈해서 카드 안에 담는다 */
+        @media (max-width: 700px) {
+            #residentsTable.empty-state { padding: 0; text-align: left; }
+            .ptable.m-cards td:nth-child(2) { display: none; }
+            .ptable.m-cards td:last-child { flex-direction: column; align-items: stretch; }
+            .ptable.m-cards td:last-child::before { display: none; }
+            .ptable.m-cards .action-buttons { flex-wrap: wrap; justify-content: flex-start !important; gap: 6px; }
+        }
     </style>
     <script src="menu.js"></script>
     <link rel="stylesheet" href="theme.css">
