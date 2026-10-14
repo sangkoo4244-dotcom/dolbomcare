@@ -648,6 +648,53 @@ async def get_today_center_records(
         ]
     }
 
+@router.get("/prefill")
+def prefill_record(
+    resident_id: int,
+    caregiver_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """기록을 쓰기 전에 미리 채워 줄 값: 오늘 승인된 방문 계획의 제공 항목, 지난 방문의 항목·상태 (요양보호사가 확인·수정한다)."""
+    if actor.role not in ("caregiver", "center_manager"):
+        raise HTTPException(status_code=403, detail="권한이 없습니다")
+    resident = db.query(Resident).filter(Resident.id == resident_id, Resident.center_id == actor.center_id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    writer_id = actor.id if actor.role == "caregiver" else caregiver_id
+
+    planned = None
+    schedule = find_schedule(db, writer_id, resident_id, datetime.now()) if writer_id else None
+    if schedule:
+        planned = {
+            "schedule_id": schedule.id,
+            "items": [c for c in (schedule.planned_items or "").split(",") if c],
+            "duration_minutes": schedule.duration_minutes,
+            "service_type": schedule.service_type,
+            "time": schedule.scheduled_date.strftime("%H:%M"),
+        }
+
+    last_q = db.query(DailyRecord).filter(DailyRecord.resident_id == resident_id)
+    last = None
+    if writer_id:
+        last = last_q.filter(DailyRecord.caregiver_id == writer_id).order_by(DailyRecord.recorded_date.desc()).first()
+    if last is None:
+        last = last_q.order_by(DailyRecord.recorded_date.desc()).first()  # 담당이 바뀐 경우 이전 담당자의 기록을 참고한다
+    last_data = None
+    if last:
+        last_data = {
+            "date": last.recorded_date.strftime("%Y-%m-%d") if last.recorded_date else None,
+            "items": [c for c in (last.care_items or "").split(",") if c],
+            "condition": last.condition,
+            "physical_change": last.physical_change,
+            "meal_change": last.meal_change,
+            "cognitive_change": last.cognitive_change,
+            "duration_minutes": last.duration_minutes,
+            "service_type": last.service_type,
+        }
+    return {"planned": planned, "last": last_data}
+
+
 @router.get("/daily/{record_id}")
 async def get_record(
     record_id: int,

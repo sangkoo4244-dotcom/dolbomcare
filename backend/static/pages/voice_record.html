@@ -199,6 +199,13 @@
                                 </select>
                             </div>
                         </div>
+                        <div id="prefillBar" class="mt-4 p-4 rounded-lg border border-emerald-200 bg-emerald-50" style="display:none;">
+                            <div id="prefillPlanned" class="text-sm text-emerald-800"></div>
+                            <div class="flex flex-wrap items-center gap-3 mt-2">
+                                <button type="button" id="prefillLastBtn" class="px-4 py-2 rounded-lg text-sm font-bold border-2 border-emerald-600 text-emerald-700 bg-white" onclick="applyLastVisit()"></button>
+                                <span class="text-xs text-gray-500">채운 뒤에 달라진 부분만 고쳐 주세요. 기록 내용(메모)은 채우지 않습니다.</span>
+                            </div>
+                        </div>
                         <div class="mt-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
                             <div class="text-sm font-bold text-gray-700 mb-1">변화상태 (공단 제공기록지 항목, 선택)</div>
                             <div class="text-xs text-gray-500 mb-3">지난 방문과 비교해 달라진 점을 골라 주세요. 모르면 비워 두어도 됩니다.</div>
@@ -216,6 +223,7 @@
                         <label class="block text-sm font-bold text-gray-700 mb-2">기록 내용 *</label>
                         <textarea id="notes" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 outline-none transition" rows="4" placeholder="음성 기록을 통해 전달된 내용을 요약하여 입력하세요." required oninput="document.getElementById('noteCount').textContent = this.value.length + ' / 1,000'"></textarea>
                         <div class="text-right text-xs text-gray-400 mt-1" id="noteCount">0 / 1,000</div>
+                        <div id="itemSuggest" class="mt-2" style="display:none;"></div>
                     </div>
 
                     <div>
@@ -374,6 +382,11 @@
         }
 
 
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('notes').addEventListener('input', renderItemSuggest);
+            document.getElementById('caregiverPick').addEventListener('change', loadPrefill);
+        });
+
         // 센터장이 대신 입력할 때 기록 주인이 센터장으로 잡히지 않도록 요양보호사를 직접 고르게 한다
         async function loadCaregiverPick() {
             if (currentUser.role !== 'center_manager') return;
@@ -409,6 +422,7 @@
                     calculateBillingDetails();
                 }
                 applyPlannedItems();
+                loadPrefill();
             } catch (e) { showMessage('이용자 로드 실패', 'error'); }
         }
 
@@ -425,6 +439,100 @@
         function onResidentChange() {
             applyPlannedItems();
             calculateBillingDetails();
+            loadPrefill();
+        }
+
+        // ===== 자동 채우기: 오늘 방문 계획 + 지난 방문 (요양보호사가 확인·수정한다) =====
+        let prefillData = null;
+        function setCareItems(codes) {
+            document.querySelectorAll('input[name="careItem"]').forEach(cb => {
+                cb.checked = codes.includes(cb.value);
+                cb.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        }
+        function setSelectIfOption(id, value) {
+            const el = document.getElementById(id);
+            if (!el || value === null || value === undefined || value === '') return;
+            if ([...el.options].some(o => o.value === String(value))) el.value = String(value);
+        }
+        async function loadPrefill() {
+            const bar = document.getElementById('prefillBar');
+            prefillData = null;
+            bar.style.display = 'none';
+            const rid = document.getElementById('resident').value;
+            if (!rid) return;
+            const cg = currentUser.role === 'center_manager' ? document.getElementById('caregiverPick').value : '';
+            try {
+                const r = await fetch(`${API_URL}/records/prefill?resident_id=${rid}` + (cg ? `&caregiver_id=${cg}` : ''));
+                if (!r.ok) return;
+                prefillData = await r.json();
+            } catch (e) { return; }
+            const planned = prefillData.planned, last = prefillData.last;
+            const lines = [];
+            if (planned && planned.items.length) {
+                // 오늘 승인된 방문 계획이 있으면 그 제공 항목을 미리 선택한다 (이미 고른 항목이 없을 때만)
+                if (!document.querySelector('input[name="careItem"]:checked')) {
+                    setCareItems(planned.items);
+                    setSelectIfOption('serviceType', planned.service_type);
+                    setSelectIfOption('durationMinutes', planned.duration_minutes);
+                    calculateBillingDetails();
+                }
+                lines.push(`오늘 ${planned.time} 방문 계획의 제공 항목을 선택해 두었습니다: ${planned.items.map(c => CARE_ITEM_LABELS[c] || c).join(', ')}`);
+            }
+            const lastBtn = document.getElementById('prefillLastBtn');
+            lastBtn.style.display = last ? '' : 'none';
+            if (last) lastBtn.textContent = `지난 방문(${(last.date || '').slice(5).replace('-', '/')})과 같게 채우기`;
+            document.getElementById('prefillPlanned').textContent = lines.join(' ');
+            bar.style.display = (lines.length || last) ? '' : 'none';
+        }
+        function applyLastVisit() {
+            const last = prefillData && prefillData.last;
+            if (!last) return;
+            setCareItems(last.items || []);
+            setSelectIfOption('serviceType', last.service_type);
+            setSelectIfOption('durationMinutes', last.duration_minutes);
+            setSelectIfOption('condition', last.condition);
+            setSelectIfOption('physicalChange', last.physical_change);
+            setSelectIfOption('mealChange', last.meal_change);
+            setSelectIfOption('cognitiveChange', last.cognitive_change);
+            calculateBillingDetails();
+            showMessage('지난 방문 내용으로 채웠습니다. 달라진 부분만 고쳐 주세요', 'success');
+        }
+
+        // ===== 제공 항목 제안: 기록 내용에서 낱말을 찾아 해당 항목을 눌러 추가하게 한다 (자동 선택하지 않고 사람이 확인) =====
+        const ITEM_KEYWORDS = {
+            meal_assist: ['식사', '밥', '죽', '반찬', '수저', '드시'],
+            toilet_assist: ['화장실', '기저귀', '배변', '배설', '소변', '대변', '용변'],
+            bath: ['목욕', '샤워', '세수', '세면', '머리를 감', '머리 감', '몸을 씻'],
+            dressing: ['옷을 갈아', '갈아입', '옷 입', '환복'],
+            mobility: ['산책', '보행', '부축', '휠체어', '이동', '걷기', '걸으', '외출'],
+            medicine: ['복약', '투약', '약을', '약 드'],
+            vitals: ['혈압', '체온', '혈당', '맥박'],
+            symptom: ['통증', '아프', '어지러', '부기', '붓', '상처', '열이', '기침', '욕창'],
+            emotional: ['말벗', '대화', '이야기', '외로', '우울', '불안'],
+            cognitive: ['인지', '퍼즐', '게임', '기억', '회상', '치매'],
+            cleaning: ['청소', '정리', '설거지', '정돈'],
+            laundry: ['빨래', '세탁', '널어'],
+            shopping: ['장보', '장을', '요리', '음식 만', '취사'],
+        };
+        function suggestItems(text) {
+            const checked = new Set([...document.querySelectorAll('input[name="careItem"]:checked')].map(cb => cb.value));
+            return Object.entries(ITEM_KEYWORDS)
+                .filter(([code, words]) => !checked.has(code) && words.some(w => text.includes(w)))
+                .map(([code]) => code);
+        }
+        function renderItemSuggest() {
+            const box = document.getElementById('itemSuggest');
+            const codes = suggestItems(document.getElementById('notes').value);
+            if (!codes.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+            box.style.display = '';
+            box.innerHTML = '<span class="text-xs text-gray-500 mr-2">기록 내용에서 찾은 제공 항목 (눌러서 추가)</span>' +
+                codes.map(c => `<button type="button" class="quick-tag" onclick="addSuggestedItem('${c}')">+ ${CARE_ITEM_LABELS[c]}</button>`).join(' ');
+        }
+        function addSuggestedItem(code) {
+            const cb = document.querySelector(`input[name="careItem"][value="${code}"]`);
+            if (cb) { cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+            renderItemSuggest();
         }
 
         // 청구 금액 카드는 항상 보이고, 선택 전에는 '-'로 둔다

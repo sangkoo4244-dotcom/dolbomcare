@@ -168,3 +168,33 @@ def test_saving_a_record_marks_its_record_needed_reminder_as_read(env):
     read = {n.message: n.is_read for n in db.query(models.Notification).all()}
     assert read["김이용 방문 기록을 작성해 주세요"] is True
     assert read["다른이용자 방문 기록을 작성해 주세요"] is False
+
+
+def test_prefill_returns_todays_plan_and_last_visit(env):
+    db, client = env
+    now = datetime.now()
+    db.add(models.Schedule(caregiver_id=2, resident_id=1, center_id=1, scheduled_date=now, duration_minutes=90,
+                           planned_items="meal_assist,bath", service_type="basic_care", status="scheduled"))
+    add_record(db, 2, -5, care_items="mobility,emotional", duration_minutes=60, condition="normal",
+               physical_change="maintained", meal_change="improved", cognitive_change="worsened")
+    db.commit()
+    data = client.get("/api/v1/records/prefill?resident_id=1", headers=CG_A).json()
+    assert data["planned"]["items"] == ["meal_assist", "bath"] and data["planned"]["duration_minutes"] == 90
+    assert data["last"]["items"] == ["mobility", "emotional"]
+    assert (data["last"]["physical_change"], data["last"]["meal_change"], data["last"]["cognitive_change"]) == ("maintained", "improved", "worsened")
+    assert data["last"]["condition"] == "normal"
+
+
+def test_prefill_without_history_is_empty_and_blocks_other_center(env):
+    db, client = env
+    data = client.get("/api/v1/records/prefill?resident_id=1", headers=CG_A).json()
+    assert data == {"planned": None, "last": None}
+    assert client.get("/api/v1/records/prefill?resident_id=1", headers=OTHER_MANAGER).status_code == 404
+    assert client.get("/api/v1/records/prefill?resident_id=1", headers=GUARDIAN).status_code == 403
+
+
+def test_prefill_for_new_caregiver_uses_previous_caregivers_last_visit(env):
+    db, client = env
+    add_record(db, 3, -2, care_items="bath", condition="good")  # 이전 담당(B)의 기록
+    data = client.get("/api/v1/records/prefill?resident_id=1", headers=CG_A).json()
+    assert data["last"]["items"] == ["bath"]
