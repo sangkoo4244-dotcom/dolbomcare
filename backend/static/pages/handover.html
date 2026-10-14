@@ -147,8 +147,11 @@
             const box = document.getElementById('list');
             try {
                 const d = await fetch(API_URL).then(r => r.json());
-                if (!d.notes.length) { box.innerHTML = '<div class="panel">인계 메모가 없습니다.</div>'; return; }
-                box.innerHTML = (d.unread_for_me ? `<div class="sub" style="margin-bottom:10px;">아직 확인하지 않은 인계 메모 <b>${d.unread_for_me}건</b></div>` : '') +
+                // 대시보드 처리함에서 넘어온 경우(?unread=1): 받는 사람이 아직 읽지 않은 메모만 보여 준다
+                const onlyUnread = new URLSearchParams(location.search).get('unread') === '1';
+                if (onlyUnread) d.notes = d.notes.filter(n => n.to_caregiver_id && !n.acknowledged_at);
+                if (!d.notes.length) { box.innerHTML = `<div class="panel">${onlyUnread ? '읽지 않은 인계 메모가 없습니다.' : '인계 메모가 없습니다.'}</div>`; return; }
+                box.innerHTML = (onlyUnread ? '<div class="sub" style="margin-bottom:10px;">읽지 않은 인계 메모만 보는 중 · <a href="./handover.html">전체 보기</a></div>' : '') + (d.unread_for_me ? `<div class="sub" style="margin-bottom:10px;">아직 확인하지 않은 인계 메모 <b>${d.unread_for_me}건</b></div>` : '') +
                     d.notes.map(n => {
                         const forMe = n.to_caregiver_id === currentUser.id;
                         const state = !n.to_caregiver_id ? '<span class="badge ok">센터 공유</span>'

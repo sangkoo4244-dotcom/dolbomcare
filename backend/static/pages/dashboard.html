@@ -694,7 +694,7 @@
                 } catch (e) { /* 처리함 조회에 실패해도 대시보드는 그대로 보여 준다 */ }
                 // 우선 처리 업무
                 const tasks = [
-                    ['청구 승인 대기', pendingClaims, './billing_management.html', ICO.fileText, '방문기록 기반 청구 승인'],
+                    ['청구 승인 대기', pendingClaims, './billing_management.html?status=pending', ICO.fileText, '방문기록 기반 청구 승인'],
                     ['방문 계획 승인', pendingPlans, './schedule_approval.html', ICO.calendarCheck, '신규 및 변경 방문 계획'],
                     ['보호자 가입 요청', pendingGuardians, './guardian_management.html', ICO.userRound, '보호자 계정 승인'],
                     ['담당자 미배정 이용자', unassignedResidents.length, './resident_management.html', ICO.users, '담당 요양보호사가 지정되지 않은 이용자'],

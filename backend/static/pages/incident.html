@@ -155,9 +155,12 @@
             const box = document.getElementById('list');
             try {
                 const d = await fetch(API_URL).then(r => r.json());
-                if (!d.reports.length) { box.innerHTML = '<div class="panel">보고된 사고가 없습니다.</div>'; return; }
+                // 대시보드 처리함에서 넘어온 경우(?issues=1): 보완이 필요한 보고만 보여 준다
+                const onlyIssues = new URLSearchParams(location.search).get('issues') === '1';
+                if (onlyIssues) d.reports = d.reports.filter(r => r.issues.length);
+                if (!d.reports.length) { box.innerHTML = `<div class="panel">${onlyIssues ? '보완이 필요한 사고 보고가 없습니다.' : '보고된 사고가 없습니다.'}</div>`; return; }
                 const isManager = currentUser.role === 'center_manager';
-                box.innerHTML = (isManager ? `<div class="sub" style="margin-bottom:10px;">보완이 필요한 보고 <b>${d.with_issues}건</b></div>` : '') +
+                box.innerHTML = (onlyIssues ? '<div class="sub" style="margin-bottom:10px;">보완이 필요한 보고만 보는 중 · <a href="./incident.html">전체 보기</a></div>' : '') + (isManager ? `<div class="sub" style="margin-bottom:10px;">보완이 필요한 보고 <b>${d.with_issues}건</b></div>` : '') +
                     d.reports.map(r => `
                     <div class="panel">
                         <div class="head">

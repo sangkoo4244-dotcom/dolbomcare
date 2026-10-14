@@ -1081,6 +1081,10 @@
         }
 
         window.addEventListener('load', () => {
+            // 대시보드 처리함에서 넘어온 경우(?status=draft 등) 해당 상태만 먼저 보여 준다
+            const wantedStatus = new URLSearchParams(location.search).get('status');
+            const statusSelect = document.getElementById('fStatus');
+            if (wantedStatus && [...statusSelect.options].some(o => o.value === wantedStatus)) statusSelect.value = wantedStatus;
             loadUserInfo();
             loadBillingRecords();
             startAutoRefresh();

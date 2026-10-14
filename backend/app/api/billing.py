@@ -425,6 +425,11 @@ async def submit_billing_for_approval(
     # 제출 처리
     billing.approval_status = "pending"
     billing.status = "submitted"
+    # 센터장이 직접 메뉴를 열지 않아도 승인할 청구가 올라온 것을 알 수 있게 한다 (알림톡 템플릿이 없는 종류라 발송비는 들지 않는다)
+    resident_name = billing.resident_name or "이용자"
+    managers = db.query(User).filter(User.role == "center_manager", User.center_id == billing.center_id).all()
+    for manager in managers:
+        notify(db, manager.id, "claim_submitted", f"{actor.full_name or '요양보호사'}님이 {resident_name}님 방문 청구를 제출했습니다. 확인 후 승인해 주세요")
     db.commit()
     db.refresh(billing)
 

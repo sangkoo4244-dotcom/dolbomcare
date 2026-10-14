@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app import models
-from app.api import inbox
+from app.api import billing, inbox
 from app.api.users import create_access_token
 from app.database import Base, get_db
 
@@ -38,6 +38,7 @@ def env(tmp_path):
     db.commit()
     app = FastAPI()
     app.include_router(inbox.router, prefix="/api/v1/inbox")
+    app.include_router(billing.router, prefix="/api/v1/billing")
 
     def override():
         s = Session()
@@ -93,3 +94,17 @@ def test_counts_each_pending_kind_for_own_center_only(env):
     assert mine == {"missing_record": 1, "draft_claims": 1, "rejected_claims": 1, "change_requests": 1,
                     "handover_unread": 1, "incident_incomplete": 2}
     assert set(counts(client, OTHER_MANAGER).values()) == {0}
+
+
+def test_submitting_a_claim_notifies_only_managers_of_that_center(env):
+    db, client = env
+    db.add(models.BillingRecord(id=7, caregiver_id=2, resident_id=1, center_id=1, resident_name="김이용", approval_status="draft",
+                                recorded_date=datetime.now()))
+    db.commit()
+    r = client.post("/api/v1/billing/7/submit", json={"user_id": 2, "user_role": "caregiver"}, headers=CAREGIVER)
+    assert r.status_code == 200
+    mine = db.query(models.Notification).filter(models.Notification.user_id == 1).all()
+    assert [n.kind for n in mine] == ["claim_submitted"]
+    assert "요양사A" in mine[0].message and "김이용" in mine[0].message
+    assert db.query(models.Notification).filter(models.Notification.user_id == 5).count() == 0  # 다른 센터 센터장
+    assert db.query(models.BillingRecord).get(7).approval_status == "pending"
