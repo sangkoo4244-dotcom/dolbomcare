@@ -111,6 +111,8 @@ def test_compare_finds_ok_time_diff_missing_plan_and_missing_tag(ctx):
     assert r.status_code == 200
     data = r.json()
     status = {x["name"]: x["status"] for x in data["rows"]}
+    assert next(x for x in data["rows"] if x["name"] == "이이")["danger"] is True  # 90분 차이
+    assert next(x for x in data["rows"] if x["name"] == "김일")["danger"] is False
     assert status["김일"] == "ok" and status["이이"] == "time_diff" and status["최없음"] == "unknown_resident" and status["박삼"] == "no_tag"
     assert data["counts"]["ok"] == 1 and data["tag_count"] == 3
 

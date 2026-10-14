@@ -135,7 +135,8 @@
             <div class="wrap guide-main" style="max-width:1100px;">
                 <div class="note-box" style="margin-bottom:14px;">
                     공단 장기요양정보시스템(롱텀)에서 내려받은 <b>전자태그 전송내역 파일</b>(엑셀 .xlsx 또는 CSV)을 올리면, 돌봄케어의 방문 계획·도착 기록과 <b>이용자·날짜·시간</b>으로 맞춰 보고 빠진 건과 시간 차이를 알려 드립니다.
-                    올린 파일은 <b>저장하지 않고</b> 이 화면에서만 사용합니다. 공단 시스템에 연결하거나 인증서를 쓰지 않습니다.
+                    올린 파일은 <b>저장하지 않고</b> 이 화면에서만 사용합니다. 공단 시스템에 연결하거나 인증서를 쓰지 않습니다.<br>
+                    <b>"60분 초과"</b> 표시는 계획(또는 도착)과 태그 시작 시각이 60분을 넘게 다른 건입니다. 타사(하이케어) 안내에 따르면 이런 건은 청구에 쓸 수 없으니 롱텀에서 시간을 먼저 확인하세요. 시간 수정은 공단 롱텀에서 해야 합니다.
                 </div>
 
                 <div class="card">
@@ -265,7 +266,8 @@
                 const [label, cls] = STATUS[r.status] || [r.status, 'badge-gray'];
                 const tag = r.tag_start ? `${esc(r.tag_start)}${r.tag_end ? ' ~ ' + esc(r.tag_end) : ''}${r.tag_minutes ? ' (' + r.tag_minutes + '분)' : ''}` : '-';
                 const plan = r.plan ? `계획 ${esc(r.plan)}${r.arrived ? ' / 도착 ' + esc(r.arrived) : ''}` : '-';
-                return `<tr><td><span class="badge ${cls}">${label}</span></td><td><b>${esc(r.name)}</b></td><td>${tag}</td><td>${plan}</td><td>${esc(r.note)}</td></tr>`;
+                const danger = r.danger ? ' <span class="badge badge-bad">60분 초과</span>' : '';
+                return `<tr><td><span class="badge ${cls}">${label}</span>${danger}</td><td><b>${esc(r.name)}</b></td><td>${tag}</td><td>${plan}</td><td>${esc(r.note)}</td></tr>`;
             }).join('') || '<tr><td colspan="5" style="color:#94A3B8;">해당하는 건이 없습니다</td></tr>';
             document.getElementById('badRows').innerHTML = result.bad_rows.length ? `읽지 못한 줄 ${result.bad_rows.length}건: ` + result.bad_rows.slice(0, 8).map(b => `${b.row}번째 줄`).join(', ') : '';
             document.getElementById('resultCard').style.display = '';

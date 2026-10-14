@@ -113,6 +113,7 @@ def compare(body: CompareRequest, db: Session = Depends(get_db), manager: User =
         row["plan"] = best.scheduled_date.strftime("%H:%M")
         row["arrived"] = best.arrived_at.strftime("%H:%M") if best.arrived_at else None
         row["diff_minutes"] = diff
+        row["danger"] = abs(diff) > 60  # 하이케어 안내: 일정계획과 태그 시간 차이가 60분을 넘으면 청구에 쓸 수 없음(일정상이)
         row["plan_minutes"] = best.duration_minutes
         notes = []
         status = "ok"
