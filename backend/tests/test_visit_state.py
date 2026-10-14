@@ -38,3 +38,7 @@ def test_left_without_record_is_visit_done_needing_record():
 
 def test_record_saved_marks_complete():
     assert _visit_state(plan(arrived_at=PAST, left_at=NOW), object(), NOW) == "완료"
+
+
+def test_record_saved_without_arrival_is_arrival_missing_not_unrecorded():
+    assert _visit_state(plan(scheduled_date=PAST), object(), NOW) == "도착 미기록"

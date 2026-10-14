@@ -94,7 +94,7 @@ def caregiver_board(db: Session = Depends(get_db), actor: User = Depends(require
     return {"caregivers": list(board.values())}
 
 
-VISIT_STATES = ("예정", "방문중", "방문완료", "완료", "미기록")  # 승인 대기·반려 같은 계획 단계는 방문 현황에서 뺀다
+VISIT_STATES = ("예정", "방문중", "방문완료", "완료", "도착 미기록", "미기록")  # 승인 대기·반려 같은 계획 단계는 방문 현황에서 뺀다
 
 
 @router.get("/visits-overview")
@@ -115,7 +115,7 @@ def visits_overview(db: Session = Depends(get_db), actor: User = Depends(require
                 continue
             row = {"date": it["date"], "time": it["time"], "resident": it.get("resident_name"), "caregiver": u.full_name, "state": it["state"]}
             month["total"] += 1
-            if it["state"] in ("완료", "방문완료"):
+            if it["state"] in ("완료", "방문완료", "도착 미기록"):
                 month["done"] += 1
             if it["state"] == "미기록":
                 month["missing"] += 1

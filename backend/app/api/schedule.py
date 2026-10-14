@@ -210,6 +210,8 @@ def _visit_state(schedule, matched, now):
         return "완료"
     if schedule.arrived_at:
         return "방문완료" if schedule.left_at else "방문중"
+    if matched:
+        return "도착 미기록"  # 기록은 저장됐는데 도착 버튼을 누르지 않음: '기록 없음'(미기록)과 구분한다
     return "미기록" if schedule.scheduled_date < now else "예정"
 
 @router.get("/caregiver-view")
