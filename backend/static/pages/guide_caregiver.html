@@ -58,6 +58,9 @@
         .terms dl { margin: 0; display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px 12px; font-size: 15px; line-height: 1.6; }
         .terms dt { font-weight: 800; }
         .terms dd { margin: 0; }
+        .link-table { width: 100%; border-collapse: collapse; font-size: 15px; background: #fff; border: 1px solid #E8ECF1; border-radius: 12px; overflow: hidden; }
+        .link-table th, .link-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #F1F5F9; vertical-align: top; line-height: 1.6; }
+        .link-table th { background: #F8FAFC; color: #64748B; font-size: 13px; }
 
         /* 한 장 요약: 화면에서는 숨기고 인쇄할 때만 보인다 */
         #onePage { display: none; }
@@ -226,6 +229,29 @@
                         <div class="manager-sees">센터장은 <b>급여 확정</b> 화면에서 요양보호사별 금액을 보고 한 번에 확정합니다.</div>
                     </div>
                     <div class="shot-box"><img class="shot" src="assets/guide/cg_9_salary.jpg" alt="나의 급여 화면" loading="lazy"><div class="shot-cap">나의 급여</div></div>
+                </section>
+
+                <section class="terms" style="margin-bottom:16px;">
+                    <h2>공단 태그가 안 찍힐 때 (공단 "스마트장기요양" 앱을 쓰는 센터)</h2>
+                    <p style="font-size:15px;line-height:1.7;margin:4px 0 8px;">돌봄케어가 아니라 <b>공단 앱</b>에서 나는 문제입니다. 공단 안내서(2023.12)의 다빈도 안내를 요약했습니다. 해결이 안 되면 센터장에게 알리세요.</p>
+                    <ol style="margin:0 0 10px;padding-left:22px;font-size:15px;line-height:1.8;">
+                        <li>앱에 로그인한 뒤 <b>5초쯤 기다렸다가</b> 태그에 대세요. 로그인 직후에는 인식이 안 될 수 있습니다.</li>
+                        <li>폰 <b>케이스, 카드, 출입 스티커</b>를 떼고, 폰 뒷면의 NFC 위치를 태그에 <b>5초 이상</b> 붙이고 계세요.</li>
+                        <li>NFC가 켜져 있는지, 앱이 최신 버전인지 확인하고, 안 되면 <b>폰을 껐다 켜세요</b>.</li>
+                        <li>"빈 태그입니다" 같은 메시지가 계속되면 태그가 떨어졌거나 철문·냉장고·물기 근처인지 확인하세요.</li>
+                        <li>종료 전송은 <b>태그를 대고 10분 안에</b> 해야 합니다. 시작 후 30분이 지나야 종료할 수 있고, 방문목욕은 40분 이상이어야 합니다.</li>
+                    </ol>
+                    <table class="link-table">
+                        <tr><th style="width:90px;">오류 코드</th><th>뜻과 할 일</th></tr>
+                        <tr><td><b>A1</b></td><td>수급자 인정 유효기간·계약 여부 확인 → 센터장에게 알리세요</td></tr>
+                        <tr><td><b>A8</b></td><td>급여 일정이 등록돼 있지 않음 → 센터장에게 알리세요</td></tr>
+                        <tr><td><b>B1</b></td><td>요양보호사 인력신고 내용 확인 → 센터장에게 알리세요</td></tr>
+                        <tr><td><b>L1</b></td><td>이 폰이 기관에 등록되지 않음 → 센터장에게 단말기 등록을 요청하세요</td></tr>
+                        <tr><td><b>T1</b></td><td>등록되지 않은 태그입니다 → 센터장에게 알리세요</td></tr>
+                        <tr><td><b>S2</b></td><td>10시간 이상 서비스함 (10시간까지만 인정)</td></tr>
+                        <tr><td><b>J3</b></td><td>방문목욕에서 앞 요양보호사와 태그 시간 차이가 10분을 넘음</td></tr>
+                    </table>
+                    <p style="font-size:13px;color:#64748B;margin:8px 0 0;">그 밖의 코드는 센터장이 공단 앱·안내서에서 확인합니다. 돌봄케어의 도착·퇴실은 이 태그와 별개이며, 센터가 공단 태그를 쓴다면 공단 앱 전송은 계속 하셔야 합니다.</p>
                 </section>
 
                 <section class="mistakes">
