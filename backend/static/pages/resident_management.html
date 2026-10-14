@@ -1229,6 +1229,7 @@
                                 <button class="btn-detail" onclick="editResident(${r.id})">상세보기</button>
                                 <button class="btn-detail" onclick="openNeedsAssessment(${r.id})">욕구사정</button>
                                 <button class="btn-detail" onclick="openAlbumModal(${r.id})">사진첩</button>
+                                <button class="btn-detail" onclick="window.location.href='./care_record_sheet.html?resident_id=${r.id}'">제공기록지</button>
                                 ${currentUser.role === 'caregiver' ? `<button class="btn-detail" onclick="openInviteModal(${r.id})">보호자 초대</button>` : ''}
                                 <button class="btn-kebab" title="삭제" onclick="deleteResident(${r.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                             </div>

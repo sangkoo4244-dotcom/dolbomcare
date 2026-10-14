@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, Body
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Literal, Optional
 from app.billing_rules import split_visit, VALID_DURATIONS, REVENUE_STATUSES
 from app.review import find_schedule
@@ -14,6 +14,8 @@ from datetime import datetime, time
 import os
 
 router = APIRouter()
+
+ChangeStatus = Literal["improved", "maintained", "worsened"]  # 호전 / 유지 / 악화
 
 UPLOAD_DIR = "uploads/audio"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -55,6 +57,11 @@ class CreateRecordRequest(BaseModel):
     duration_minutes: Literal[30, 60, 90, 120, 180, 240] = 60
     recorded_date: Optional[datetime] = None  # 소급 기록용 (미지정 시 현재 시각)
     signature: Optional[str] = None  # 방문 확인 서명 (base64 PNG data URL)
+    physical_change: Optional[ChangeStatus] = None  # 공단 제공기록지 변화상태
+    meal_change: Optional[ChangeStatus] = None
+    cognitive_change: Optional[ChangeStatus] = None
+    stool_accidents: Optional[int] = Field(None, ge=0, le=20)
+    urine_accidents: Optional[int] = Field(None, ge=0, le=20)
 
 class UpdateRecordRequest(BaseModel):
     service_type: Optional[str] = None
@@ -64,6 +71,11 @@ class UpdateRecordRequest(BaseModel):
     duration_minutes: Optional[Literal[30, 60, 90, 120, 180, 240]] = None
     care_items: Optional[str] = None
     condition: Optional[str] = None
+    physical_change: Optional[ChangeStatus] = None
+    meal_change: Optional[ChangeStatus] = None
+    cognitive_change: Optional[ChangeStatus] = None
+    stool_accidents: Optional[int] = Field(None, ge=0, le=20)
+    urine_accidents: Optional[int] = Field(None, ge=0, le=20)
     user_id: Optional[int] = None
 
 class BatchDeleteRequest(BaseModel):
@@ -103,7 +115,12 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
             schedule_id=linked_schedule.id if linked_schedule else None,
             service_type=request.service_type,
             audio_file_url=None,
-            signature=request.signature
+            signature=request.signature,
+            physical_change=request.physical_change,
+            meal_change=request.meal_change,
+            cognitive_change=request.cognitive_change,
+            stool_accidents=request.stool_accidents,
+            urine_accidents=request.urine_accidents,
         )
         db.add(daily_record)
         db.flush()
@@ -701,6 +718,10 @@ async def update_record(
             record.care_items = request.care_items or None
         if request.condition is not None:
             record.condition = request.condition or None
+        for field in ("physical_change", "meal_change", "cognitive_change", "stool_accidents", "urine_accidents"):
+            value = getattr(request, field)
+            if value is not None:
+                setattr(record, field, value)
 
         db.commit()
         db.refresh(record)

@@ -1,0 +1,136 @@
+from datetime import date, datetime, timedelta
+
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from app import models
+from app.api import care_sheet, records
+from app.api.users import create_access_token
+from app.database import Base, get_db
+
+
+def auth(uid, role, email):
+    token = create_access_token({"sub": email, "uid": uid, "role": role}, timedelta(hours=1))
+    return {"Authorization": f"Bearer {token}"}
+
+
+MANAGER = auth(1, "center_manager", "m@test.com")
+CG_A = auth(2, "caregiver", "a@test.com")
+CG_B = auth(3, "caregiver", "b@test.com")
+OTHER_MANAGER = auth(5, "center_manager", "o@test.com")
+GUARDIAN = auth(9, "guardian", "g@test.com")
+
+WEEK = date(2026, 10, 12)  # 월요일
+
+
+@pytest.fixture
+def env(tmp_path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine)
+    db = Session()
+    db.add_all([
+        models.Center(id=1, name="센터", institution_code="12345678901"), models.Center(id=2, name="다른센터"),
+        models.User(id=1, email="m@test.com", full_name="센터장", role="center_manager", center_id=1),
+        models.User(id=2, email="a@test.com", full_name="요양사A", role="caregiver", center_id=1),
+        models.User(id=3, email="b@test.com", full_name="요양사B", role="caregiver", center_id=1),
+        models.User(id=5, email="o@test.com", full_name="타센터장", role="center_manager", center_id=2),
+        models.User(id=9, email="g@test.com", full_name="보호자", role="guardian", center_id=1),
+        models.Resident(id=1, center_id=1, name="김이용", care_grade=3, recognition_number="L1234567890",
+                        birth_date=date(1940, 3, 2)),
+    ])
+    db.commit()
+    app = FastAPI()
+    app.include_router(records.router, prefix="/api/v1/records")
+    app.include_router(care_sheet.router, prefix="/api/v1/care-sheet")
+
+    def override():
+        s = Session()
+        try:
+            yield s
+        finally:
+            s.close()
+
+    app.dependency_overrides[get_db] = override
+    return db, TestClient(app)
+
+
+def add_record(db, caregiver_id, day, **kw):
+    base = dict(resident_id=1, caregiver_id=caregiver_id, recorded_date=datetime(2026, 10, 12 + day, 10, 0),
+                care_items="meal_assist,bath", duration_minutes=60, notes="양호")
+    base.update(kw)
+    db.add(models.DailyRecord(**base))
+    db.commit()
+
+
+def get_sheet(client, headers, **kw):
+    params = {"resident_id": 1, "week_start": WEEK.isoformat()}
+    params.update(kw)
+    return client.get("/api/v1/care-sheet", params=params, headers=headers)
+
+
+def test_week_has_seven_days_and_marks_visited(env):
+    db, client = env
+    add_record(db, 2, 0, physical_change="maintained", meal_change="improved", cognitive_change="worsened",
+               stool_accidents=1, urine_accidents=2)
+    data = get_sheet(client, MANAGER).json()
+    assert [d["date"] for d in data["days"]][0] == "2026-10-12" and len(data["days"]) == 7
+    monday, tuesday = data["days"][0], data["days"][1]
+    assert monday["visited"] and not tuesday["visited"]
+    assert monday["care_items"] == ["meal_assist", "bath"]
+    assert (monday["physical_change"], monday["meal_change"], monday["cognitive_change"]) == ("maintained", "improved", "worsened")
+    assert (monday["stool_accidents"], monday["urine_accidents"]) == (1, 2)
+    assert data["resident"]["recognition_number"] == "L1234567890"
+    assert data["center"]["institution_code"] == "12345678901"
+
+
+def test_two_visits_same_day_merge_items_and_add_minutes(env):
+    db, client = env
+    add_record(db, 2, 0, care_items="meal_assist", duration_minutes=60, stool_accidents=1)
+    add_record(db, 3, 0, care_items="meal_assist,laundry", duration_minutes=30, stool_accidents=2,
+               recorded_date=datetime(2026, 10, 12, 15, 0))
+    monday = get_sheet(client, MANAGER).json()["days"][0]
+    assert monday["care_items"] == ["meal_assist", "laundry"]
+    assert monday["total_minutes"] == 90
+    assert monday["stool_accidents"] == 3
+    assert monday["caregivers"] == ["요양사A", "요양사B"]
+
+
+def test_caregiver_sees_only_own_records(env):
+    db, client = env
+    add_record(db, 2, 0)
+    add_record(db, 3, 1)
+    days = get_sheet(client, CG_A).json()["days"]
+    assert days[0]["visited"] and not days[1]["visited"]
+
+
+def test_other_center_and_guardian_are_blocked(env):
+    db, client = env
+    add_record(db, 2, 0)
+    assert get_sheet(client, OTHER_MANAGER).status_code == 404
+    assert get_sheet(client, GUARDIAN).status_code == 403
+
+
+def test_records_outside_week_are_excluded(env):
+    db, client = env
+    add_record(db, 2, 7)  # 다음 주 월요일
+    assert not any(d["visited"] for d in get_sheet(client, MANAGER).json()["days"])
+
+
+def test_create_record_saves_change_status_and_rejects_bad_values(env):
+    db, client = env
+    payload = {"caregiver_id": 2, "resident_id": 1, "service_type": "basic_care", "notes": "양호",
+               "physical_change": "improved", "meal_change": "maintained", "cognitive_change": "worsened",
+               "stool_accidents": 0, "urine_accidents": 3}
+    assert client.post("/api/v1/records/create", json=payload, headers=CG_A).status_code == 200
+    rec = db.query(models.DailyRecord).one()
+    assert (rec.physical_change, rec.meal_change, rec.cognitive_change) == ("improved", "maintained", "worsened")
+    assert (rec.stool_accidents, rec.urine_accidents) == (0, 3)
+
+    bad = dict(payload, physical_change="great")
+    assert client.post("/api/v1/records/create", json=bad, headers=CG_A).status_code == 422
+    bad = dict(payload, urine_accidents=-1)
+    assert client.post("/api/v1/records/create", json=bad, headers=CG_A).status_code == 422

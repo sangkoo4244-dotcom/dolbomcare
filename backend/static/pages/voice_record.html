@@ -195,6 +195,17 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="mt-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
+                            <div class="text-sm font-bold text-gray-700 mb-1">변화상태 (공단 제공기록지 항목, 선택)</div>
+                            <div class="text-xs text-gray-500 mb-3">지난 방문과 비교해 달라진 점을 골라 주세요. 모르면 비워 두어도 됩니다.</div>
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                <div><label class="block text-xs font-bold text-gray-600 mb-1">신체기능</label><select id="physicalChange" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 outline-none transition"><option value="">선택</option><option value="improved">호전</option><option value="maintained">유지</option><option value="worsened">악화</option></select></div>
+                                <div><label class="block text-xs font-bold text-gray-600 mb-1">식사기능</label><select id="mealChange" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 outline-none transition"><option value="">선택</option><option value="improved">호전</option><option value="maintained">유지</option><option value="worsened">악화</option></select></div>
+                                <div><label class="block text-xs font-bold text-gray-600 mb-1">인지기능</label><select id="cognitiveChange" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 outline-none transition"><option value="">선택</option><option value="improved">호전</option><option value="maintained">유지</option><option value="worsened">악화</option></select></div>
+                                <div><label class="block text-xs font-bold text-gray-600 mb-1">대변 실수(회)</label><input id="stoolAccidents" type="number" min="0" max="20" inputmode="numeric" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 outline-none transition"></div>
+                                <div><label class="block text-xs font-bold text-gray-600 mb-1">소변 실수(회)</label><input id="urineAccidents" type="number" min="0" max="20" inputmode="numeric" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 outline-none transition"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
@@ -641,6 +652,11 @@
                         notes: notes,
                         care_items: careItems,
                         condition: condition || null,
+                        physical_change: document.getElementById('physicalChange').value || null,
+                        meal_change: document.getElementById('mealChange').value || null,
+                        cognitive_change: document.getElementById('cognitiveChange').value || null,
+                        stool_accidents: (() => { const v = document.getElementById('stoolAccidents').value; return v === '' ? null : parseInt(v); })(),
+                        urine_accidents: (() => { const v = document.getElementById('urineAccidents').value; return v === '' ? null : parseInt(v); })(),
                         duration_minutes: parseInt(document.getElementById('durationMinutes').value),
                         recorded_date: `${visitDate}T${visitTime}:00`,
                         signature: getSignatureDataURL()

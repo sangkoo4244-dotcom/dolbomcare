@@ -86,6 +86,11 @@ class DailyRecord(Base):
     service_type = Column(String, default="basic_care")  # 'basic_care', 'meal_service', 'medical_care'
     audio_file_url = Column(String, nullable=True)
     signature = Column(Text, nullable=True)  # 방문 확인 서명 (base64 PNG data URL)
+    physical_change = Column(String, nullable=True)  # 신체기능 변화: improved/maintained/worsened (공단 제공기록지 변화상태)
+    meal_change = Column(String, nullable=True)  # 식사기능 변화
+    cognitive_change = Column(String, nullable=True)  # 인지기능 변화
+    stool_accidents = Column(Integer, nullable=True)  # 대변 실수 횟수
+    urine_accidents = Column(Integer, nullable=True)  # 소변 실수 횟수
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class HealthMetric(Base):

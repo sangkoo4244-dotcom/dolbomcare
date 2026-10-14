@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제공기록지 출력 - 돌봄케어</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; color: #0f172a; background: #f1f5f9; }
+        .bar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; position: sticky; top: 0; z-index: 5; }
+        .bar a { color: #0f766e; font-weight: 700; text-decoration: none; margin-right: 6px; }
+        .bar select, .bar input, .bar button { height: 40px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #fff; }
+        .bar button.primary { background: #0f766e; color: #fff; border-color: #0f766e; font-weight: 700; }
+        .note { max-width: 860px; margin: 12px auto 0; padding: 0 16px; font-size: 12px; color: #64748b; line-height: 1.6; }
+        .paper { max-width: 860px; margin: 12px auto 24px; background: #fff; padding: 24px; border: 1px solid #e2e8f0; overflow-x: auto; }
+        .paper h1 { text-align: center; font-size: 20px; margin: 0 0 12px; }
+        table { border-collapse: collapse; width: 100%; font-size: 12px; min-width: 640px; }
+        th, td { border: 1px solid #334155; padding: 4px 5px; text-align: center; vertical-align: middle; }
+        th { background: #f8fafc; font-weight: 600; }
+        td.left { text-align: left; }
+        .grp { width: 64px; }
+        .sub { width: 64px; }
+        .item { width: 150px; text-align: left; }
+        .mark { font-size: 14px; font-weight: 700; }
+        .empty { padding: 40px 16px; text-align: center; color: #64748b; }
+        @media print {
+            body { background: #fff; }
+            .bar, .note { display: none; }
+            .paper { border: 0; margin: 0; padding: 0; max-width: none; }
+            @page { size: A4; margin: 10mm; }
+        }
+    </style>
+    <script src="menu.js"></script>
+</head>
+<body>
+    <div class="bar">
+        <a href="./resident_management.html">← 이용자 관리</a>
+        <select id="resident" aria-label="이용자"></select>
+        <button type="button" id="prevWeek">◀ 이전 주</button>
+        <input type="date" id="weekStart" aria-label="주 시작일(월요일)">
+        <button type="button" id="nextWeek">다음 주 ▶</button>
+        <button type="button" class="primary" onclick="window.print()">인쇄</button>
+    </div>
+    <div class="note">공단 서식(장기요양급여 제공기록지 방문요양, 2025.12 개정)과 같은 모양으로 한 주(7일) 분량을 보여 줍니다. 돌봄케어에 기록하지 않는 칸(체위변경, 인지행동변화 관리, 개인활동지원, 영역별 제공시간)은 비워 두었으니 필요하면 인쇄 후 손으로 적어 주세요. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다.</div>
+    <div class="paper" id="paper"><div class="empty">이용자를 선택하세요.</div></div>
+
+    <script>
+        const CHANGE_LABEL = { improved: '호전', maintained: '유지', worsened: '악화' };
+        const DAY_NAME = ['일', '월', '화', '수', '목', '금', '토'];
+        // 서식의 각 칸 ← 돌봄케어 제공 항목 코드 (없는 칸은 빈 배열: 손으로 적는 칸)
+        const SERVICE_ROWS = [
+            ['신체활동<br>지원', '개인위생(옷 갈아입기, 세면 등)', ['dressing', 'bath']],
+            ['', '몸 씻기 도움', ['bath']],
+            ['', '식사 도움(영양관리 등)', ['meal_assist']],
+            ['', '체위변경', []],
+            ['', '이동 도움(보행, 보장구 사용 등)', ['mobility']],
+            ['', '화장실 이용하기', ['toilet_assist']],
+            ['인지활동<br>지원', '인지자극활동', ['cognitive']],
+            ['', '일상생활 함께하기', []],
+            ['인지관리<br>지원', '인지행동변화 관리 등', []],
+            ['정서지원', '의사소통 도움', []],
+            ['', '말벗, 격려', ['emotional']],
+            ['가사 및<br>일상생활<br>지원', '식사준비, 청소 및 주변정리 정돈, 세탁 등', ['cleaning', 'laundry', 'shopping']],
+            ['', '개인활동지원(외출시 동행 등)', []],
+        ];
+        let sheet = null;
+
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+        function mondayOf(d) {
+            const x = new Date(d);
+            x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+            return x;
+        }
+
+        function shiftWeek(delta) {
+            const input = document.getElementById('weekStart');
+            const d = new Date(input.value + 'T00:00:00');
+            d.setDate(d.getDate() + delta * 7);
+            input.value = ymd(d);
+            load();
+        }
+
+        function render() {
+            const s = sheet;
+            const days = s.days;
+            const cells = (fn) => days.map(d => `<td>${d.visited ? fn(d) : ''}</td>`).join('');
+            const dayHead = days.map(d => { const dt = new Date(d.date + 'T00:00:00'); return `<th>${dt.getMonth() + 1}/${dt.getDate()}<br>(${DAY_NAME[dt.getDay()]})</th>`; }).join('');
+            const rows = [];
+            rows.push(`<tr><th rowspan="3" class="grp">일정<br>관리</th><th rowspan="3" class="sub">제공<br>시간</th><td class="item">총시간(분)</td>${cells(d => d.total_minutes ?? '')}</tr>`);
+            rows.push(`<tr><td class="item">시작시간</td>${cells(d => d.start_time || '')}</tr>`);
+            rows.push(`<tr><td class="item">종료시간</td>${cells(d => d.end_time || '')}</tr>`);
+            SERVICE_ROWS.forEach(([group, label, codes], i) => {
+                const lead = i === 0 ? `<th rowspan="${SERVICE_ROWS.length}" class="grp">서<br>비<br>스<br><br>제<br>공</th>` : '';
+                const sub = group ? `<th rowspan="${group.includes('가사') ? 2 : (group.startsWith('신체') ? 6 : (group.startsWith('인지활동') ? 2 : (group.startsWith('정서') ? 2 : 1)))}" class="sub">${group}</th>` : '';
+                rows.push(`<tr>${lead}${sub}<td class="item">${label}</td>${cells(d => codes.some(c => d.care_items.includes(c)) ? '<span class="mark">✓</span>' : '')}</tr>`);
+            });
+            const change = (field) => cells(d => CHANGE_LABEL[d[field]] || '');
+            rows.push(`<tr><th rowspan="5" class="grp">변화<br>상태</th><th class="sub" colspan="2">신체기능</th>${change('physical_change')}</tr>`);
+            rows.push(`<tr><th colspan="2">식사기능</th>${change('meal_change')}</tr>`);
+            rows.push(`<tr><th colspan="2">인지기능</th>${change('cognitive_change')}</tr>`);
+            rows.push(`<tr><th colspan="2">대변 실수 횟수</th>${cells(d => d.stool_accidents ?? '')}</tr>`);
+            rows.push(`<tr><th colspan="2">소변 실수 횟수</th>${cells(d => d.urine_accidents ?? '')}</tr>`);
+            rows.push(`<tr><th class="grp">특이<br>사항</th><td class="left" colspan="9">${days.filter(d => d.visited && d.notes).map(d => `${d.date.slice(5).replace('-', '/')} ${esc(d.notes)}`).join('<br>')}</td></tr>`);
+            rows.push(`<tr><th rowspan="2" class="grp">서명</th><th colspan="2">장기요양요원 성명</th>${cells(d => esc(d.caregivers.join(', ')))}</tr>`);
+            rows.push(`<tr><th colspan="2">수급자 또는 보호자 서명</th>${cells(d => d.has_signature ? '전자서명 있음' : '')}</tr>`);
+
+            const any = days.some(d => d.visited);
+            document.getElementById('paper').innerHTML = `
+                <h1>장기요양급여 제공기록지(방문요양)</h1>
+                <table>
+                    <tr><th>수급자 성명</th><td>${esc(s.resident.name)}</td><th>생년월일</th><td>${esc(s.resident.birth_date || '')}</td><th>장기요양등급</th><td>${s.resident.care_grade ? s.resident.care_grade + '등급' : '인지지원'}</td><th>인정번호</th><td>${esc(s.resident.recognition_number || '')}</td></tr>
+                    <tr><th>장기요양기관명</th><td colspan="3">${esc(s.center.name || '')}</td><th>장기요양기관기호</th><td colspan="3">${esc(s.center.institution_code || '')}</td></tr>
+                </table>
+                <table style="margin-top:6px; table-layout:fixed">
+                    <colgroup><col style="width:58px"><col style="width:66px"><col style="width:150px">${days.map(() => '<col>').join('')}</colgroup>
+                    <tr><th colspan="3">일자</th>${dayHead}</tr>
+                    ${rows.join('')}
+                </table>
+                ${any ? '' : '<div class="empty">이 주에 기록된 방문이 없습니다.</div>'}`;
+        }
+
+        async function load() {
+            const rid = document.getElementById('resident').value;
+            const week = document.getElementById('weekStart').value;
+            if (!rid || !week) return;
+            const r = await fetch(`/api/v1/care-sheet?resident_id=${rid}&week_start=${week}`);
+            if (!r.ok) { document.getElementById('paper').innerHTML = '<div class="empty">기록지를 불러오지 못했습니다.</div>'; return; }
+            sheet = await r.json();
+            render();
+        }
+
+        async function init() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            if (!['center_manager', 'caregiver'].includes(user.role)) { window.location.href = './dashboard.html'; return; }
+            const params = new URLSearchParams(location.search);
+            const opts = await fetch('/api/v1/handovers/options').then(r => r.json());
+            const sel = document.getElementById('resident');
+            sel.innerHTML = opts.residents.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
+            if (params.get('resident_id')) sel.value = params.get('resident_id');
+            document.getElementById('weekStart').value = ymd(mondayOf(params.get('week_start') ? new Date(params.get('week_start') + 'T00:00:00') : new Date()));
+            sel.addEventListener('change', load);
+            document.getElementById('weekStart').addEventListener('change', load);
+            document.getElementById('prevWeek').addEventListener('click', () => shiftWeek(-1));
+            document.getElementById('nextWeek').addEventListener('click', () => shiftWeek(1));
+            load();
+        }
+        init();
+    </script>
+</body>
+</html>
