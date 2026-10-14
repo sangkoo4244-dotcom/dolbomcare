@@ -1221,8 +1221,8 @@
             const empty = (t) => `<div style="font-size:13px;color:#94A3B8;padding:6px 0;">${t}</div>`;
             const rowHtml = (i, withDate) => {
                 const [cls, label] = VR_STATE_BADGE[i.state] || ['badge-wait3', i.state];
-                const extra = i.late_minutes != null ? ` · <b style="color:#DC2626;">${i.late_minutes}분 경과</b>` : (i.arrived_at ? ` · 도착 ${i.arrived_at.slice(11, 16)}` : '');
-                return `<div class="visit-row3"><div><div class="vn">${i.resident || '이용자'} 어르신 · ${i.caregiver}</div><div class="vd">${withDate ? i.date + ' ' : ''}${i.time}${extra}</div></div><span class="${cls}">${label}</span></div>`;
+                const extra = i.late_minutes != null ? ` · <b style="color:#DC2626;">${i.late_minutes}분 경과</b>` : (i.arrived_at && !withDate ? ` · 도착 ${i.arrived_at.slice(11, 16)}` : '');
+                return `<div class="visit-row3"><div><div class="vn">${i.resident || '이용자'} 어르신</div><div class="vd">${i.caregiver} · ${withDate ? i.date.slice(5) + ' ' : ''}${i.time}${extra}</div></div><span class="visit-badge3 ${cls}">${label}</span></div>`;
             };
             // 오늘 방문을 한눈에 (공단 태그가 아니라 돌봄케어의 도착·퇴실·기록 기준)
             const summaryHtml = (s) => {
