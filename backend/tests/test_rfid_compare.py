@@ -117,6 +117,31 @@ def test_compare_finds_ok_time_diff_missing_plan_and_missing_tag(ctx):
     assert data["counts"]["ok"] == 1 and data["tag_count"] == 3
 
 
+def test_auto_rate_follows_nhis_formula(ctx):
+    # 김일·이이는 시작·종료 모두 전송(자동), 박삼은 태그 없음(직접 입력) -> 2/3 = 67%
+    rows = [["김일", f"{D} 09:10", f"{D} 10:08"], ["이이", f"{D} 14:00", f"{D} 15:00"]]
+    body = {"rows": rows, "resident_col": 0, "start_col": 1, "end_col": 2}
+    a = ctx.post("/api/v1/rfid-compare/compare", json=body, headers=MGR).json()["auto_rate"]
+    assert (a["total"], a["auto"], a["direct"], a["end_missing"], a["rate"]) == (3, 2, 1, 0, 67)
+    assert a["meets_75"] is False and a["need_more"] == 1
+
+    # 이이의 종료가 전송되지 않으면 자동청구율에서 빠진다 -> 1/3 = 33%
+    rows[1][2] = ""
+    d = ctx.post("/api/v1/rfid-compare/compare", json={**body, "rows": rows}, headers=MGR).json()
+    a = d["auto_rate"]
+    assert (a["auto"], a["end_missing"], a["rate"]) == (1, 1, 33)
+    no_end = next(x for x in d["rows"] if x["name"] == "이이")
+    assert no_end["status"] == "time_diff" and "종료 전송이 없습니다" in no_end["note"]
+
+    # 박삼도 태그가 있으면 3/3 = 100%, 75% 이상이라 14일 지급 대상
+    rows = [["김일", f"{D} 09:10", f"{D} 10:08"], ["이이", f"{D} 14:00", f"{D} 15:00"], ["박삼", f"{D} 11:00", f"{D} 12:00"]]
+    a = ctx.post("/api/v1/rfid-compare/compare", json={**body, "rows": rows}, headers=MGR).json()["auto_rate"]
+    assert a["rate"] == 100 and a["meets_75"] is True and a["need_more"] == 0
+
+    # 종료 시각 열을 지정하지 않으면 계산하지 않는다
+    assert ctx.post("/api/v1/rfid-compare/compare", json={"rows": rows, "resident_col": 0, "start_col": 1}, headers=MGR).json()["auto_rate"] is None
+
+
 def test_compare_needs_readable_rows_and_manager(ctx):
     assert ctx.post("/api/v1/rfid-compare/compare", json={"rows": [["", "x"]], "resident_col": 0, "start_col": 1}, headers=MGR).status_code == 400
     assert ctx.post("/api/v1/rfid-compare/compare", json={"rows": [["김일", f"{D} 09:10"]], "resident_col": 0, "start_col": 1}, headers=CG).status_code == 403

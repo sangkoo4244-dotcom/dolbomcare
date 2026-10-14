@@ -123,6 +123,9 @@ def compare(body: CompareRequest, db: Session = Depends(get_db), manager: User =
         if row["tag_minutes"] is not None and best.duration_minutes and abs(row["tag_minutes"] - best.duration_minutes) > tol:
             status = "time_diff"
             notes.append(f"제공 시간 태그 {row['tag_minutes']}분 / 계획 {best.duration_minutes}분")
+        if body.end_col is not None and t["end"] is None:
+            status = "time_diff"
+            notes.append("종료 전송이 없습니다 (자동청구율에서 빠집니다)")
         if t["caregiver"] and caregivers.get(best.caregiver_id) and t["caregiver"] != caregivers[best.caregiver_id]:
             notes.append(f"요양보호사 다름 (태그 {t['caregiver']} / 돌봄케어 {caregivers[best.caregiver_id]})")
             if status == "ok":
@@ -141,4 +144,24 @@ def compare(body: CompareRequest, db: Session = Depends(get_db), manager: User =
     for r in results:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
     results.sort(key=lambda r: (r["tag_start"] or r["plan"] or ""))
-    return {"range": [str(first_day), str(last_day)], "tag_count": len(tags), "counts": counts, "rows": results, "bad_rows": bad_rows[:50]}
+    return {"range": [str(first_day), str(last_day)], "tag_count": len(tags), "counts": counts, "rows": results, "bad_rows": bad_rows[:50],
+            "auto_rate": _auto_rate(results, has_end_col=body.end_col is not None)}
+
+
+def _auto_rate(results, has_end_col):
+    """공단 산식: (총 청구 서비스건수 - (직접 입력건수 + 종료 미전송 건수)) / 총 청구 서비스건수 x 100, 소수점 이하 반올림.
+    총 건수는 돌봄케어 방문 계획 중 이미 지난 건(태그와 맞춘 건 + 태그 없는 건). 태그 없는 건은 직접 입력으로 본다.
+    자동청구율 75% 이상이면 14일 이내 지급, 아니면 청구일부터 30일 이내."""
+    if not has_end_col:
+        return None
+    matched = [r for r in results if r["row"] is not None and r["plan"]]
+    direct = sum(1 for r in results if r["status"] == "no_tag")
+    end_missing = sum(1 for r in matched if not r["tag_end"])
+    total = len(matched) + direct
+    if total == 0:
+        return None
+    auto = len(matched) - end_missing
+    rate = int(auto * 100 / total + 0.5)
+    need = max(0, -(-total * 149 // 200) - auto)  # 반올림해서 75가 되는 최소 자동 건수(74.5% 이상)
+    return {"total": total, "auto": auto, "direct": direct, "end_missing": end_missing,
+            "rate": rate, "meets_75": rate >= 75, "need_more": need}

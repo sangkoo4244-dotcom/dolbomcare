@@ -259,6 +259,7 @@
                 `대조 기간 <b>${result.range[0]} ~ ${result.range[1]}</b> · 공단 태그 <b>${result.tag_count}건</b><br>` +
                 `<span class="badge badge-ok">정상 ${c.ok || 0}</span> <span class="badge badge-warn">시간 확인 ${c.time_diff || 0}</span> ` +
                 `<span class="badge badge-bad">태그 없음 ${c.no_tag || 0}</span> <span class="badge badge-warn">계획 없음 ${c.no_plan || 0}</span> <span class="badge badge-gray">이름 확인 ${c.unknown_resident || 0}</span>`;
+            document.getElementById('summary').innerHTML += autoRateHtml(result.auto_rate);
             const chips = [['all', `전체 ${total}`], ...Object.keys(STATUS).filter(k => c[k]).map(k => [k, `${STATUS[k][0]} ${c[k]}`])];
             document.getElementById('chips').innerHTML = chips.map(([k, label]) => `<button type="button" class="chip ${filter === k ? 'active' : ''}" onclick="setFilter('${k}')">${label}</button>`).join('');
             const list = result.rows.filter(r => filter === 'all' || r.status === filter);
@@ -272,6 +273,16 @@
             document.getElementById('badRows').innerHTML = result.bad_rows.length ? `읽지 못한 줄 ${result.bad_rows.length}건: ` + result.bad_rows.slice(0, 8).map(b => `${b.row}번째 줄`).join(', ') : '';
             document.getElementById('resultCard').style.display = '';
             document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        function autoRateHtml(a) {
+            if (!a) return '<div style="margin-top:10px;padding:10px 14px;border-radius:10px;background:#F1F5F9;color:#475569;font-size:13.5px;">예상 자동청구율을 계산하려면 종료 시각 열을 지정하고, 지난 방문 계획이 있어야 합니다.</div>';
+            const ok = a.meets_75;
+            const color = ok ? ['#ECFDF5', '#047857'] : ['#FEF2F2', '#B91C1C'];
+            const pay = ok ? '청구일부터 <b>14일 이내</b> 지급 대상' : '청구일부터 <b>30일 이내</b> 지급 (75% 미만)';
+            const help = ok ? '' : `<br>자동 전송으로 처리된 건이 <b>${a.need_more}건</b> 더 있으면 75%에 닿습니다. 태그가 없는 건과 종료를 전송하지 않은 건은 자동청구율에서 빠지니, 아래 "태그 없음" 건부터 확인해 보세요.`;
+            return `<div style="margin-top:10px;padding:12px 16px;border-radius:10px;background:${color[0]};color:${color[1]};font-size:14.5px;line-height:1.7;">` +
+                `예상 자동청구율 <b style="font-size:20px;">${a.rate}%</b> (자동 ${a.auto}건 / 청구 대상 ${a.total}건) · ${pay}${help}<br>` +
+                `<span style="font-size:12.5px;color:#475569;">직접 입력으로 볼 건 ${a.direct}건(태그 없음), 종료 미전송 ${a.end_missing}건. 돌봄케어 방문 계획 기준의 예상치이며 실제 값은 공단 롱텀의 청구 현황에서 확인하세요.</span></div>`;
         }
         function setFilter(k) { filter = k; renderResult(); }
     </script>
