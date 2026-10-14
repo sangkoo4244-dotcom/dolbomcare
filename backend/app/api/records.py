@@ -90,12 +90,17 @@ def test_endpoint():
 
 @router.post("/create")
 def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
-    """일일 기록 생성 및 청부 자동 계산"""
+    """일일 기록 생성 및 청구 자동 계산"""
     caregiver_id = actor.id if actor.role == "caregiver" else request.caregiver_id
     try:
         resident = db.query(Resident).filter(Resident.id == request.resident_id).first()
         if not resident:
             raise HTTPException(status_code=404, detail="Resident not found")
+        if actor.role == "center_manager":
+            # 센터장이 대신 입력할 때: 우리 센터의 이용자와 우리 센터 요양보호사만 허용 (센터장 본인이나 다른 센터 사람 이름으로 기록되지 않게)
+            target = db.query(User).filter(User.id == caregiver_id).first()
+            if resident.center_id != actor.center_id or not target or target.role != "caregiver" or target.center_id != actor.center_id:
+                raise HTTPException(status_code=400, detail="우리 센터의 요양보호사와 이용자만 선택할 수 있습니다")
 
         total_cost, _, amount = split_visit(request.duration_minutes, resident.client_type)
 
@@ -450,7 +455,7 @@ async def get_today_records(
     actor: User = Depends(get_current_user)
 ):
     """
-    오늘의 기록 조회 + 청부액
+    오늘의 기록 조회 + 청구액
     resident_id가 주어지면 해당 이용자의 기록만 조회
     """
     assert_self_or_manager(actor, caregiver_id)
@@ -479,7 +484,7 @@ async def get_today_records(
             BillingRecord.caregiver_id == caregiver_id
         ).all()
 
-        # 일일 기록 ID별 청부액/서비스유형 매핑
+        # 일일 기록 ID별 청구액/서비스유형 매핑
         billing_map = {}
         for b in billings:
             if b.daily_record_id:
@@ -544,12 +549,12 @@ async def get_all_center_records(
         Resident.center_id == center_id
     ).order_by(DailyRecord.recorded_date.desc()).all()
 
-    # 해당 센터의 청부 기록 (음성 기록과 매칭된 것만)
+    # 해당 센터의 청구 기록 (음성 기록과 매칭된 것만)
     billings = db.query(BillingRecord).filter(
         BillingRecord.center_id == center_id
     ).all()
 
-    # daily_record_id별 청부액/승인상태 매핑
+    # daily_record_id별 청구액/승인상태 매핑
     billing_map = {}
     billing_total = 0
     for b in billings:
@@ -605,14 +610,14 @@ async def get_today_center_records(
         DailyRecord.recorded_date <= today_end
     ).all()
 
-    # 해당 센터의 청부 기록 (billing_amount 포함)
+    # 해당 센터의 청구 기록 (billing_amount 포함)
     billings = db.query(BillingRecord).filter(
         BillingRecord.center_id == center_id,
         BillingRecord.recorded_date >= today_start,
         BillingRecord.recorded_date <= today_end
     ).all()
 
-    # daily_record_id별 청부액 매핑
+    # daily_record_id별 청구액 매핑
     billing_map = {}
     billing_total = 0
     for b in billings:
@@ -706,7 +711,7 @@ async def update_record(
         if actor.id is not None and record.caregiver_id != actor.id:
             raise HTTPException(status_code=403, detail="본인의 기록만 수정할 수 있습니다")
         if billing and billing.approval_status not in ("draft", "rejected"):
-            raise HTTPException(status_code=400, detail="작성중 또는 보완 요청 상태의 청부만 수정할 수 있습니다")
+            raise HTTPException(status_code=400, detail="작성중 또는 보완 요청 상태의 청구만 수정할 수 있습니다")
 
         if request.service_type:
             record.service_type = request.service_type
@@ -855,7 +860,7 @@ def get_monthly_statistics(
 
     year_month = f"{year:04d}-{month:02d}"
 
-    # 센터 전체 청부 조회 (반려 포함 원본 목록 → 정산 중단 금액·목록에 사용)
+    # 센터 전체 청구 조회 (반려 포함 원본 목록 → 정산 중단 금액·목록에 사용)
     all_records = db.query(BillingRecord).filter(
         BillingRecord.center_id == center_id,
         BillingRecord.year_month == year_month
@@ -965,13 +970,13 @@ async def delete_record(
     if not (is_manager or is_own_record):
         raise HTTPException(status_code=403, detail="삭제 권한이 없습니다 (자신의 기록만 삭제 가능)")
 
-    # 관련 청구 기록도 함께 삭제 (이 DailyRecord와 연결된 청부만)
+    # 관련 청구 기록도 함께 삭제 (이 DailyRecord와 연결된 청구만)
     billings = db.query(BillingRecord).filter(
         BillingRecord.daily_record_id == record.id
     ).all()
 
     try:
-        # 청구 기록 삭제 (이 DailyRecord와 연결된 청부만)
+        # 청구 기록 삭제 (이 DailyRecord와 연결된 청구만)
         for billing in billings:
             db.delete(billing)
 
@@ -989,7 +994,7 @@ async def delete_record(
         raise HTTPException(status_code=500, detail=f"삭제 중 오류 발생: {str(e)}")
 
 
-# ===== VoiceRecord 자동 청부 생성 =====
+# ===== VoiceRecord 자동 청구 생성 =====
 
 @router.post("/voice/create")
 async def create_voice_record(

@@ -45,7 +45,7 @@ PATIENT_PAY_RATE = {
     }
 }
 
-# 기본 청부액 (등급 미지정 시)
+# 기본 청구액 (등급 미지정 시)
 BILLING_RATES = {
     "basic_care": 30000,      # 기본 요양 30,000원
     "meal_service": 10000,    # 식사 서비스 10,000원
@@ -59,7 +59,7 @@ async def create_billing_record(
     db: Session = Depends(get_db),
     service_category: str = "재가급여"
 ):
-    """음성 기록 → 청구 기록 자동 생성 (등급별 청부액 적용)"""
+    """음성 기록 → 청구 기록 자동 생성 (등급별 청구액 적용)"""
     caregiver = db.query(User).filter(User.id == record.caregiver_id).first()
     if not caregiver:
         raise HTTPException(status_code=404, detail="Caregiver not found")
@@ -72,7 +72,7 @@ async def create_billing_record(
     care_grade = resident.care_grade  # None = 인지지원등급 (CARE_GRADE_LIMITS에 None 키가 있다)
     client_type = resident.client_type if resident.client_type else "일반"
 
-    # 월 인정급여액을 기준으로 청부액 계산 (공단 기준: 월 1회 청구)
+    # 월 인정급여액을 기준으로 청구액 계산 (공단 기준: 월 1회 청구)
     monthly_limit = CARE_GRADE_LIMITS.get(care_grade, CARE_GRADE_LIMITS[1])
 
     # 서비스 카테고리별 본인부담율 적용
@@ -80,7 +80,7 @@ async def create_billing_record(
     patient_rate = category_rates.get(client_type, 0.15)
     insurance_rate = 1 - patient_rate
 
-    # 월 청부액 (월 한도액 기준)
+    # 월 청구액 (월 한도액 기준)
     amount = int(monthly_limit * insurance_rate)
 
     # 상태: "draft" = 미확인 기록, 월별 청구 시 "submitted"로 변환
@@ -174,7 +174,7 @@ async def approve_billing_record(
     if not record:
         raise HTTPException(status_code=404, detail="Billing record not found")
     if record.approval_status != "pending":
-        raise HTTPException(status_code=400, detail="대기 중인 청부만 승인 가능합니다")
+        raise HTTPException(status_code=400, detail="대기 중인 청구만 승인 가능합니다")
 
     record.approval_status = "approved"
     record.approved_by = actor.id
@@ -228,7 +228,7 @@ async def list_billing_records(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user)
 ):
-    """청구 기록 목록 조회 (기본: 활성 청부만, include_archived=true면 아카이브도 포함)"""
+    """청구 기록 목록 조회 (기본: 활성 청구만, include_archived=true면 아카이브도 포함)"""
     if actor.role == "caregiver":
         caregiver_id = actor.id
     query = db.query(BillingRecord)
@@ -242,7 +242,7 @@ async def list_billing_records(
     if status:
         query = query.filter(BillingRecord.approval_status == status)
 
-    # 기본적으로 활성 청부만 표시 (is_archived=False)
+    # 기본적으로 활성 청구만 표시 (is_archived=False)
     if not include_archived:
         query = query.filter(BillingRecord.is_archived == False)
 
@@ -307,16 +307,16 @@ async def submit_billing_to_nhis(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user)
 ):
-    """청부를 건강보험공단에 청구 제출 (센터장만 가능, 수동 처리)"""
+    """청구를 건강보험공단에 청구 제출 (센터장만 가능, 수동 처리)"""
     if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 건보 청구 가능합니다")
 
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
     if not billing:
-        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+        raise HTTPException(status_code=404, detail="청구 기록을 찾을 수 없습니다")
 
     if billing.approval_status != "approved":
-        raise HTTPException(status_code=400, detail="승인된 청부만 건보 청구 가능합니다")
+        raise HTTPException(status_code=400, detail="승인된 청구만 건보 청구 가능합니다")
 
     # 건보 청구 처리 (자동 진행 없음 - 센터장이 수동으로 건보 확인 후 [환급 확인] 클릭)
     billing.approval_status = "submitted_to_nhis"
@@ -326,7 +326,7 @@ async def submit_billing_to_nhis(
 
     return {
         "status": "success",
-        "message": "청부가 건강보험공단에 청구되었습니다. 건보 확인 후 [환급 확인]을 클릭하세요.",
+        "message": "청구가 건강보험공단에 청구되었습니다. 건보 확인 후 [환급 확인]을 클릭하세요.",
         "data": {
             "id": billing.id,
             "approval_status": billing.approval_status,
@@ -341,16 +341,16 @@ async def confirm_reimbursement(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user)
 ):
-    """건보 환급 확인 (센터장만 가능, 완료된 청부는 자동 아카이브)"""
+    """건보 환급 확인 (센터장만 가능, 완료된 청구는 자동 아카이브)"""
     if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 환급 확인 가능합니다")
 
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
     if not billing:
-        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+        raise HTTPException(status_code=404, detail="청구 기록을 찾을 수 없습니다")
 
     if billing.approval_status != "submitted_to_nhis":
-        raise HTTPException(status_code=400, detail="건보 청구된 청부만 환급 확인 가능합니다")
+        raise HTTPException(status_code=400, detail="건보 청구된 청구만 환급 확인 가능합니다")
 
     # 환급 확인 처리
     billing.approval_status = "reimbursed"
@@ -381,10 +381,10 @@ async def cancel_nhis_submission(
 
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
     if not billing:
-        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+        raise HTTPException(status_code=404, detail="청구 기록을 찾을 수 없습니다")
 
     if billing.approval_status != "submitted_to_nhis":
-        raise HTTPException(status_code=400, detail="건보 청구된 청부만 취소 가능합니다")
+        raise HTTPException(status_code=400, detail="건보 청구된 청구만 취소 가능합니다")
 
     # 건보 청구 취소 처리
     billing.approval_status = "approved"
@@ -407,20 +407,20 @@ async def submit_billing_for_approval(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user)
 ):
-    """청부를 센터장 승인을 위해 제출 (요양사만 가능)"""
+    """청구를 센터장 승인을 위해 제출 (요양사만 가능)"""
     if actor.role != "caregiver":
         raise HTTPException(status_code=403, detail="요양사만 제출 가능합니다")
 
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
     if not billing:
-        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+        raise HTTPException(status_code=404, detail="청구 기록을 찾을 수 없습니다")
 
     if billing.caregiver_id != actor.id:
-        raise HTTPException(status_code=403, detail="자신의 청부만 제출 가능합니다")
+        raise HTTPException(status_code=403, detail="자신의 청구만 제출 가능합니다")
 
-    # draft 또는 rejected 상태의 청부만 제출 가능
+    # draft 또는 rejected 상태의 청구만 제출 가능
     if billing.approval_status not in ["draft", "rejected"]:
-        raise HTTPException(status_code=400, detail="임시 저장 또는 거절된 청부만 다시 제출 가능합니다")
+        raise HTTPException(status_code=400, detail="임시 저장 또는 거절된 청구만 다시 제출 가능합니다")
 
     # 제출 처리
     billing.approval_status = "pending"
@@ -430,7 +430,7 @@ async def submit_billing_for_approval(
 
     return {
         "status": "success",
-        "message": "청부가 센터장 승인을 위해 제출되었습니다",
+        "message": "청구가 센터장 승인을 위해 제출되었습니다",
         "data": {
             "id": billing.id,
             "approval_status": billing.approval_status,
@@ -450,13 +450,13 @@ async def update_billing_status(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user)
 ):
-    """청부 상태 되돌리기 (센터장만: approved → pending, pending → draft)"""
+    """청구 상태 되돌리기 (센터장만: approved → pending, pending → draft)"""
     if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 상태를 변경할 수 있습니다")
 
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
     if not billing:
-        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+        raise HTTPException(status_code=404, detail="청구 기록을 찾을 수 없습니다")
 
     allowed = {("approved", "pending"), ("pending", "draft")}
     if (billing.approval_status, status_update.approval_status) not in allowed:
@@ -471,7 +471,7 @@ async def update_billing_status(
 
     return {
         "status": "success",
-        "message": "청부 상태가 변경되었습니다",
+        "message": "청구 상태가 변경되었습니다",
         "data": {
             "id": billing.id,
             "approval_status": billing.approval_status,
@@ -485,10 +485,10 @@ async def delete_billing(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user)
 ):
-    """청부 삭제 (요양사: draft 상태만, 센터장: 자신 것만)"""
+    """청구 삭제 (요양사: draft 상태만, 센터장: 자신 것만)"""
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
     if not billing:
-        raise HTTPException(status_code=404, detail="청부 기록을 찾을 수 없습니다")
+        raise HTTPException(status_code=404, detail="청구 기록을 찾을 수 없습니다")
 
     # 권한 확인
     is_owner = billing.caregiver_id == actor.id
@@ -497,13 +497,13 @@ async def delete_billing(
     if actor.role == "caregiver":
         # 요양사: draft 또는 rejected 상태의 자신 것만 삭제 가능
         if not is_owner:
-            raise HTTPException(status_code=403, detail="자신의 청부만 삭제 가능합니다")
+            raise HTTPException(status_code=403, detail="자신의 청구만 삭제 가능합니다")
         if billing.status != "draft" and billing.approval_status != "rejected":
-            raise HTTPException(status_code=400, detail="임시 저장되었거나 거절된 청부만 삭제 가능합니다")
+            raise HTTPException(status_code=400, detail="임시 저장되었거나 거절된 청구만 삭제 가능합니다")
     elif is_manager:
         # 센터장: pending/approved/rejected 상태 삭제 가능
         if billing.approval_status not in ["pending", "approved", "rejected"]:
-            raise HTTPException(status_code=400, detail="대기 중, 승인됨, 또는 반려된 청부만 삭제 가능합니다")
+            raise HTTPException(status_code=400, detail="대기 중, 승인됨, 또는 반려된 청구만 삭제 가능합니다")
     else:
         raise HTTPException(status_code=403, detail="삭제 권한이 없습니다")
 
@@ -512,6 +512,6 @@ async def delete_billing(
 
     return {
         "status": "success",
-        "message": "청부가 삭제되었습니다",
+        "message": "청구가 삭제되었습니다",
         "data": {"id": billing_id}
     }

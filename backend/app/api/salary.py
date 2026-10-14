@@ -23,7 +23,7 @@ async def get_current_salary(
     today = datetime.now().date()
     year_month = f"{today.year}-{str(today.month).zfill(2)}"
 
-    # 이번 달의 청부 기록 조회
+    # 이번 달의 청구 기록 조회
     billings = db.query(BillingRecord).filter(
         BillingRecord.caregiver_id == caregiver_id,
         BillingRecord.approval_status.in_(REVENUE_STATUSES),
@@ -56,7 +56,7 @@ async def get_salary_history(
     today = datetime.now().date()
     start_date = today - timedelta(days=30 * months)
 
-    # 월별 청부 기록 그룹화
+    # 월별 청구 기록 그룹화
     billings = db.query(
         extract('year', BillingRecord.recorded_date).label('year'),
         extract('month', BillingRecord.recorded_date).label('month'),
@@ -105,7 +105,7 @@ async def get_monthly_salary(
     except:
         raise HTTPException(status_code=400, detail="Invalid year_month format (use YYYY-MM)")
 
-    # 특정 월의 청부 기록 조회
+    # 특정 월의 청구 기록 조회
     billings = db.query(BillingRecord).filter(
         BillingRecord.caregiver_id == caregiver_id,
         BillingRecord.approval_status.in_(REVENUE_STATUSES),

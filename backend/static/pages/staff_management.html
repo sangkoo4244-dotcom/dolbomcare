@@ -515,10 +515,12 @@
 
         // 대시보드·이용자관리·보호자관리와 동일한 사이드바 그룹 라벨 (menu.js는 그대로 두고 이 페이지에서만 DOM 보정)
         const SIDE_GROUPS = [
-            ['매인', ['대시보드']],
-            ['대상자 및 인력 관리', ['이용자관리', '보호자 관리', '직원관리', '상담 기록', '급여제공계획', '결과평가·사례관리', '교육·안내 기록', '센터 정보']],
-            ['방문 서비스 운영', ['음성 기록', '방문계획 승인', '사고·응급 보고', '인수인계', '보호자 소통']],
-            ['청구 및 경영 관리', ['청부관리', '본인부담금', '평가 준비 자료', '월별정산', '수익분석', '급여 확정']],
+            ['메인', ['대시보드', '알림']],
+            ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
+            ['방문 운영', ['나의 일정', '방문계획 승인', '음성 기록', '방문 기록 현황', '인수인계', '사고·응급 보고']],
+            ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
+            ['청구·급여', ['나의 청구', '나의 급여', '청구관리', '본인부담금', '월별정산', '급여 확정', '수익분석']],
+            ['센터·직원', ['직원관리', '센터 정보']],
         ];
         function groupSidebar() {
             const nav = document.getElementById('navContent');
@@ -657,7 +659,7 @@
                     <label>근무 상태<select id="eStatus">${Object.entries(STATUS_LABEL).map(([k, v]) => `<option value="${k}" ${statusOf(s) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
                     ${s.role === 'caregiver' ? `
                     <label>급여 비율(%)<input id="eWageRatio" type="number" min="0" max="100" placeholder="100 (미입력 시 기본값)" value="${s.wage_ratio ?? ''}"></label>
-                    <div style="font-size:11.5px;color:#94A3B8;margin-top:-6px;">이 요양사의 급여 = 공단 청구액(청부액) × 이 비율. 비워두면 100%로 계산됩니다.</div>` : ''}
+                    <div style="font-size:11.5px;color:#94A3B8;margin-top:-6px;">이 요양사의 급여 = 공단 청구액(청구액) × 이 비율. 비워두면 100%로 계산됩니다.</div>` : ''}
                     <div class="st-form-actions">
                         <button class="st-act" onclick="closeStaffModal()">취소</button>
                         <button class="st-add-btn" onclick="saveStaffEdit()">저장</button>

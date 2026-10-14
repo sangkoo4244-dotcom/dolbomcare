@@ -134,3 +134,23 @@ def test_create_record_saves_change_status_and_rejects_bad_values(env):
     assert client.post("/api/v1/records/create", json=bad, headers=CG_A).status_code == 422
     bad = dict(payload, urine_accidents=-1)
     assert client.post("/api/v1/records/create", json=bad, headers=CG_A).status_code == 422
+
+
+def manager_payload(caregiver_id):
+    return {"caregiver_id": caregiver_id, "resident_id": 1, "service_type": "basic_care", "notes": "센터장 대신 입력"}
+
+
+def test_manager_records_for_a_center_caregiver(env):
+    db, client = env
+    assert client.post("/api/v1/records/create", json=manager_payload(2), headers=MANAGER).status_code == 200
+    assert db.query(models.DailyRecord).one().caregiver_id == 2
+
+
+def test_manager_cannot_record_under_own_or_other_center_name(env):
+    db, client = env
+    db.add(models.User(id=6, email="x@test.com", full_name="타센터요양사", role="caregiver", center_id=2))
+    db.commit()
+    assert client.post("/api/v1/records/create", json=manager_payload(1), headers=MANAGER).status_code == 400  # 센터장 본인
+    assert client.post("/api/v1/records/create", json=manager_payload(6), headers=MANAGER).status_code == 400  # 다른 센터 직원
+    assert client.post("/api/v1/records/create", json=manager_payload(2), headers=OTHER_MANAGER).status_code == 400  # 다른 센터 센터장
+    assert db.query(models.DailyRecord).count() == 0

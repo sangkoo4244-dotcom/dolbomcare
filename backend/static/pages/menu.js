@@ -55,9 +55,9 @@ const MENU_ICONS = {
 const SIDEBAR_MENUS = {
     caregiver: [
         { href: 'dashboard.html', icon: 'dashboard', label: '대시보드' },
-        { href: 'resident_management.html', icon: 'residents', label: '이용자관리' },
+        { href: 'resident_management.html', icon: 'residents', label: '담당 이용자' },
         { href: 'voice_record.html', icon: 'voice', label: '음성 기록' },
-        { href: 'caregiver_billing.html', icon: 'billing', label: '나의 청부' },
+        { href: 'caregiver_billing.html', icon: 'billing', label: '나의 청구' },
         { href: 'my_salary.html', icon: 'salary', label: '나의 급여' },
         { href: 'my_schedule.html', icon: 'schedule', label: '나의 일정' },
         { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
@@ -76,11 +76,11 @@ const SIDEBAR_MENUS = {
         { href: 'dashboard.html', icon: 'dashboard', label: '대시보드' },
         { href: 'resident_management.html', icon: 'residents', label: '이용자관리' },
         { href: 'guardian_management.html', icon: 'guardian', label: '보호자 관리' },
-        { href: 'voice_record.html', icon: 'voice', label: '음성 기록' },
+        { href: 'voice_record.html', icon: 'voice', label: '방문 기록 현황' },
         { href: 'schedule_approval.html', icon: 'schedule_check', label: '방문계획 승인' },
         { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
         { href: 'handover.html', icon: 'messages', label: '인수인계' },
-        { href: 'billing_management.html', icon: 'billing', label: '청부관리' },
+        { href: 'billing_management.html', icon: 'billing', label: '청구관리' },
         { href: 'copay_management.html', icon: 'billing', label: '본인부담금' },
         { href: 'audit_prep.html', icon: 'billing', label: '평가 준비 자료' },
         { href: 'staff_management.html', icon: 'staff', label: '직원관리' },
@@ -200,8 +200,8 @@ async function showAdminConsoleLinkIfOperator() {
 
 // 휴대폰 하단 탭바. 메뉴가 5개 이하면 전부 탭으로, 많으면 자주 쓰는 4개 + 더보기(아래에서 올라오는 창)로 나눈다.
 const MOBILE_PRIMARY = {
-    center_manager: ['dashboard.html', 'resident_management.html', 'voice_record.html', 'billing_management.html'],
-    caregiver: ['dashboard.html', 'resident_management.html', 'voice_record.html', 'my_schedule.html'],
+    center_manager: ['dashboard.html', 'schedule_approval.html', 'resident_management.html', 'billing_management.html'],
+    caregiver: ['dashboard.html', 'my_schedule.html', 'voice_record.html', 'resident_management.html'],
 };
 const MOBILE_LOGOUT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#B5532F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>';
 
