@@ -92,3 +92,37 @@ def caregiver_board(db: Session = Depends(get_db), actor: User = Depends(require
         board[rec.caregiver_id]["month_records"] += 1
 
     return {"caregivers": list(board.values())}
+
+
+VISIT_STATES = ("예정", "방문중", "방문완료", "완료", "미기록")  # 승인 대기·반려 같은 계획 단계는 방문 현황에서 뺀다
+
+
+@router.get("/visits-overview")
+def visits_overview(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """방문 기록 현황 오른쪽 패널용: 센터 전체의 오늘 방문, 기록이 비어 있는 방문, 이번 달 이행 현황 (센터장 전용).
+
+    요양보호사별 일정 조회(caregiver_schedule_view)와 같은 판정을 쓰므로 요양보호사 화면과 상태가 일치한다."""
+    from app.api.schedule import caregiver_schedule_view
+
+    now = datetime.now()
+    ym = now.strftime("%Y-%m")
+    today = now.date().isoformat()
+    caregivers = db.query(User).filter(User.center_id == actor.center_id, User.role == "caregiver").order_by(User.full_name).all()
+    today_rows, missing, month = [], [], {"total": 0, "done": 0, "missing": 0}
+    for u in caregivers:
+        for it in caregiver_schedule_view(caregiver_id=u.id, year_month=ym, db=db, actor=actor).get("items", []):
+            if not it.get("planned") or it.get("state") not in VISIT_STATES:
+                continue
+            row = {"date": it["date"], "time": it["time"], "resident": it.get("resident_name"), "caregiver": u.full_name, "state": it["state"]}
+            month["total"] += 1
+            if it["state"] in ("완료", "방문완료"):
+                month["done"] += 1
+            if it["state"] == "미기록":
+                month["missing"] += 1
+            if it["date"] == today:
+                today_rows.append(row)
+            if it["state"] in ("미기록", "방문완료"):
+                missing.append(row)
+    today_rows.sort(key=lambda r: r["time"])
+    missing.sort(key=lambda r: (r["date"], r["time"]), reverse=True)
+    return {"today": today_rows, "missing": missing[:8], "missing_total": len(missing), "month": month}

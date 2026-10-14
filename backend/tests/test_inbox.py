@@ -151,3 +151,36 @@ def test_new_rows_use_korean_local_time_not_utc(env):
     db.add(n)
     db.commit()
     assert abs((n.created_at - datetime.now()).total_seconds()) < 5
+
+
+def test_visits_overview_covers_whole_center(env):
+    db, client = env
+    now = datetime.now()
+    if now.day == 1:
+        pytest.skip("매달 1일에는 '이번 달의 지난 일정'을 만들 수 없다")
+    earlier_this_month = now.replace(day=1, hour=9, minute=0, second=0, microsecond=0)
+    db.add_all([
+        models.User(id=3, email="b@test.com", full_name="요양사B", role="caregiver", center_id=1),
+        models.User(id=6, email="x@test.com", full_name="타센터요양사", role="caregiver", center_id=2),
+        models.Resident(id=2, center_id=2, name="타센터이용자"),
+        # 오늘 일정: A는 도착·퇴실까지 마쳤지만 기록은 없음(기록 필요), B는 앞으로 올 일정
+        models.Schedule(caregiver_id=2, resident_id=1, center_id=1, scheduled_date=now - timedelta(minutes=1), status="scheduled",
+                        arrived_at=now - timedelta(minutes=50), left_at=now - timedelta(minutes=5)),
+        models.Schedule(caregiver_id=3, resident_id=1, center_id=1, scheduled_date=now + timedelta(minutes=1), status="scheduled"),
+        # 이번 달 앞쪽 일정인데 도착·기록이 없음 → 미기록
+        models.Schedule(caregiver_id=3, resident_id=1, center_id=1, scheduled_date=earlier_this_month, status="scheduled"),
+        # 승인 대기 계획과 다른 센터 일정은 포함되면 안 된다
+        models.Schedule(caregiver_id=3, resident_id=1, center_id=1, scheduled_date=now + timedelta(days=1), status="proposed"),
+        models.Schedule(caregiver_id=6, resident_id=2, center_id=2, scheduled_date=earlier_this_month, status="scheduled"),
+    ])
+    db.commit()
+    data = client.get("/api/v1/inbox/visits-overview", headers=MANAGER).json()
+    assert {(r["caregiver"], r["state"]) for r in data["today"]} == {("요양사A", "방문완료"), ("요양사B", "예정")}
+    assert {(r["caregiver"], r["state"]) for r in data["missing"]} == {("요양사A", "방문완료"), ("요양사B", "미기록")}
+    assert data["missing_total"] == 2
+    assert data["month"]["total"] == 3 and data["month"]["missing"] == 1
+
+
+def test_visits_overview_is_manager_only(env):
+    _, client = env
+    assert client.get("/api/v1/inbox/visits-overview", headers=CAREGIVER).status_code == 403

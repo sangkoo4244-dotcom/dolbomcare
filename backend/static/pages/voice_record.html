@@ -122,7 +122,7 @@
             </div>
 
             <div class="px-8 pt-6 flex gap-4 items-stretch flex-wrap xl:flex-nowrap">
-                <div class="flex flex-wrap gap-3" style="width:100%;">
+                <div id="topCards" class="flex flex-wrap gap-3" style="width:100%;">
                     <div class="tip-card"><div class="tip-ico" style="background:#E6F7EE;color:#15803D;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></svg></div><div><div class="tip-title">음성으로 빠르게</div><div class="tip-desc">말로 기록하여 작성 시간을 줄입니다.</div></div></div>
                     <div class="tip-card"><div class="tip-ico" style="background:#E8F1FC;color:#1D4ED8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div><div class="tip-title">정확한 서비스 기록</div><div class="tip-desc">서비스 항목을 빠짐없이 등록합니다.</div></div></div>
                     <div class="tip-card"><div class="tip-ico" style="background:#FDF1E3;color:#B45309;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="tip-title">청구까지 한번에</div><div class="tip-desc">기록된 내용이 청구 데이터와 연동됩니다.</div></div></div>
@@ -265,7 +265,7 @@
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
                     <h2 class="text-xl font-bold text-gray-900 mb-6">월별 현황</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="border-blue-200 border rounded-lg p-5 flex items-center gap-4" style="background:#E8EEF9"><div><div class="text-sm font-bold text-blue-600">전체 기록</div><div class="text-2xl font-bold text-blue-900 mt-1" id="totalRecordsCount">0</div><div class="text-xs text-blue-600 mt-1">이번 달 누적 기록 수</div></div></div><div class="border-amber-200 border rounded-lg p-5 flex items-center gap-4" style="background:#F7F1E6"><div><div class="text-sm font-bold text-amber-600">검토중</div><div class="text-2xl font-bold text-amber-900 mt-1" id="pendingCount">0</div><div class="text-xs text-amber-600 mt-1">검토 대기 중인 기록</div></div></div><div class="border-emerald-200 border rounded-lg p-5 flex items-center gap-4" style="background:#E8F0EA"><div><div class="text-sm font-bold text-emerald-600">승인완료</div><div class="text-2xl font-bold text-emerald-900 mt-1" id="approvedCount">0</div><div class="text-xs text-emerald-600 mt-1">승인된 기록 수</div></div></div><div class="border-indigo-200 border rounded-lg p-5 flex items-center gap-4" style="background:#ECEBF7"><div><div class="text-sm font-bold text-indigo-600">월누적청구</div><div class="text-2xl font-bold text-indigo-900 mt-1" id="monthTotalBilling">₩0</div><div class="text-xs text-indigo-600 mt-1">이번 달 청구 금액</div></div></div>
+                        <div class="border-blue-200 border rounded-lg p-5 flex items-center gap-4" style="background:#E8EEF9"><div><div class="text-sm font-bold text-blue-600">전체 기록</div><div class="text-2xl font-bold text-blue-900 mt-1" id="totalRecordsCount">0</div><div class="text-xs text-blue-600 mt-1">이번 달 누적 기록 수</div></div></div><div class="border-amber-200 border rounded-lg p-5 flex items-center gap-4" style="background:#F7F1E6"><div><div class="text-sm font-bold text-amber-600">검토중</div><div class="text-2xl font-bold text-amber-900 mt-1" id="pendingCount">0</div><div class="text-xs text-amber-600 mt-1">검토 대기 중인 기록</div></div></div><div class="border-emerald-200 border rounded-lg p-5 flex items-center gap-4" style="background:#E8F0EA"><div><div class="text-sm font-bold text-emerald-600">승인완료</div><div class="text-2xl font-bold text-emerald-900 mt-1" id="approvedCount">0</div><div class="text-xs text-emerald-600 mt-1">승인된 기록 수</div></div></div><div class="border-indigo-200 border rounded-lg p-5 flex items-center gap-4" style="background:#ECEBF7"><div><div class="text-sm font-bold text-indigo-600">승인 이상 금액</div><div class="text-2xl font-bold text-indigo-900 mt-1" id="monthTotalBilling">₩0</div><div class="text-xs text-indigo-600 mt-1">이번 달 승인 이상 금액</div></div></div>
                     </div>
                 </div>
 
@@ -305,6 +305,9 @@
                         <select id="recordStatusFilter" class="filter-input">
                             <option value="">상태 전체</option>
                             <option value="draft">작성중</option><option value="pending">검토중</option><option value="approved">승인</option><option value="rejected">보완요청</option>
+                        </select>
+                        <select id="recordCaregiverFilter" class="filter-input" style="display:none;">
+                            <option value="">요양보호사 전체</option>
                         </select>
                         <select id="recordSort" class="filter-input">
                             <option value="new">최신순</option>
@@ -615,9 +618,47 @@
                 }));
                 document.getElementById('allCount').textContent = records.length;
                 document.getElementById('todayCount').textContent = getTodayCount();
+                fillCaregiverFilter();
                 updateDashboard();
                 renderRecords();
             } catch (e) { showMessage('기록 로드 실패', 'error'); }
+        }
+
+        // 센터장 상단 카드: 요양보호사 사용 팁 대신 이번 달 기록을 상태별로 보여 주고, 누르면 아래 목록이 그 상태로 걸러진다
+        function updateManagerCards(monthRecords) {
+            const box = document.getElementById('topCards');
+            if (!box || !currentUser || currentUser.role !== 'center_manager') return;
+            const n = (fn) => monthRecords.filter(fn).length;
+            const card = (status, label, count, desc, bg, fg, extra) => `
+                <div class="tip-card" role="button" tabindex="0" style="cursor:pointer;" onclick="filterByStatus('${status}')">
+                    <div class="tip-ico" style="background:${bg};color:${fg};font-weight:800;font-size:18px;">${count}</div>
+                    <div><div style="font-weight:800;">${label}</div><div style="font-size:12px;color:#64748B;">${desc}</div>${extra || ''}</div>
+                </div>`;
+            box.innerHTML =
+                card('draft', '작성중', n(r => r.approval_status === 'draft'), '요양보호사가 아직 제출하지 않음', '#E8F1FC', '#1D4ED8') +
+                card('pending', '검토중 (승인 대기)', n(r => r.approval_status === 'pending'), '내가 승인할 차례', '#FDF1E3', '#B45309',
+                    '<a href="./billing_management.html?status=pending" onclick="event.stopPropagation()" style="font-size:12px;font-weight:700;color:#0F8B80;">청구관리에서 승인하기 ›</a>') +
+                card('rejected', '보완 요청', n(r => r.approval_status === 'rejected'), '반려 후 아직 고치지 않음', '#FEECEC', '#B91C1C') +
+                card('approved', '승인 이상', n(r => APPROVED_GROUP.includes(r.approval_status)), '승인·공단 청구·환급', '#E6F7EE', '#15803D') +
+                '<div style="flex:1 0 100%;font-size:12px;color:#94A3B8;">이번 달 기록 기준입니다. 카드를 누르면 아래 목록이 해당 상태로 걸러집니다.</div>';
+        }
+
+        function filterByStatus(status) {
+            document.getElementById('recordStatusFilter').value = status;
+            currentTabMode = 'all';
+            document.querySelectorAll('.vr-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === 'all'));
+            renderRecords();
+            scrollToRecordsTable();
+        }
+
+        function fillCaregiverFilter() {
+            const sel = document.getElementById('recordCaregiverFilter');
+            if (!sel || !currentUser || currentUser.role !== 'center_manager') return;
+            const names = [...new Set(records.map(r => r.caregiver_name).filter(Boolean))].sort();
+            const chosen = sel.value;
+            sel.innerHTML = '<option value="">요양보호사 전체</option>' + names.map(nm => `<option value="${nm}">${nm}</option>`).join('');
+            sel.value = names.includes(chosen) ? chosen : '';
+            sel.style.display = '';
         }
 
         function getTodayCount() {
@@ -626,10 +667,14 @@
         }
 
         function updateDashboard() {
-            const thisMonth = new Date().getMonth();
-            const thisMonthRecords = records.filter(r => new Date(r.recorded_date).getMonth() === thisMonth);
+            const nowDate = new Date();
+            const thisMonthRecords = records.filter(r => {
+                const d = new Date(r.recorded_date);
+                return d.getMonth() === nowDate.getMonth() && d.getFullYear() === nowDate.getFullYear();
+            });
             const pending = thisMonthRecords.filter(r => r.approval_status === 'pending');
-            const approved = thisMonthRecords.filter(r => r.approval_status === 'approved');
+            const approved = thisMonthRecords.filter(r => APPROVED_GROUP.includes(r.approval_status));
+            updateManagerCards(thisMonthRecords);
             const monthTotal = approved.reduce((sum, r) => sum + (r.amount || 0), 0);
 
             document.getElementById('totalRecordsCount').textContent = thisMonthRecords.length;
@@ -661,8 +706,11 @@
         const SERVICE_TYPE_LABELS = { basic_care: '기본 돌봄', meal_service: '식사 서빙', medical_care: '의료 관리', emergency: '응급' };
         const STATUS_LABELS = {
             draft: ['작성중', 'sp-draft'], pending: ['검토중', 'sp-pending'],
-            approved: ['승인', 'sp-approved'], rejected: ['보완요청', 'sp-rejected']
+            approved: ['승인', 'sp-approved'], rejected: ['보완요청', 'sp-rejected'],
+            submitted_to_nhis: ['공단 청구', 'sp-approved'], reimbursed: ['환급 완료', 'sp-approved']
         };
+        // 승인 이후 단계(공단 청구·환급)도 '승인 이상'으로 묶는다: 처리할수록 승인 건수가 줄어들어 보이지 않게
+        const APPROVED_GROUP = ['approved', 'submitted_to_nhis', 'reimbursed'];
         let currentTabMode = 'today';
 
         function visibleRecords() {
@@ -671,6 +719,7 @@
             const to = document.getElementById('recordDateTo').value;
             const svc = document.getElementById('recordServiceFilter').value;
             const status = document.getElementById('recordStatusFilter').value;
+            const caregiverFilter = document.getElementById('recordCaregiverFilter').value;
             const order = document.getElementById('recordSort').value;
             const todayStr = new Date().toDateString();
             return records
@@ -679,7 +728,8 @@
                 .filter(r => !from || (r.recorded_date || '') >= from)
                 .filter(r => !to || (r.recorded_date || '') <= to + 'T23:59:59')
                 .filter(r => !svc || r.service_type === svc)
-                .filter(r => !status || r.approval_status === status)
+                .filter(r => !status || (status === 'approved' ? APPROVED_GROUP.includes(r.approval_status) : r.approval_status === status))
+                .filter(r => !caregiverFilter || r.caregiver_name === caregiverFilter)
                 .sort((a, b) => order === 'old' ? new Date(a.recorded_date) - new Date(b.recorded_date) : new Date(b.recorded_date) - new Date(a.recorded_date));
         }
 
@@ -736,6 +786,7 @@
             document.getElementById('recordDateTo').value = '';
             document.getElementById('recordServiceFilter').value = '';
             document.getElementById('recordStatusFilter').value = '';
+            document.getElementById('recordCaregiverFilter').value = '';
             document.getElementById('recordSort').value = 'new';
             renderRecords();
         }
@@ -745,7 +796,7 @@
         }
 
         ['recordSearch'].forEach(id => document.getElementById(id).addEventListener('input', renderRecords));
-        ['recordDateFrom', 'recordDateTo', 'recordServiceFilter', 'recordStatusFilter', 'recordSort'].forEach(id => document.getElementById(id).addEventListener('change', renderRecords));
+        ['recordDateFrom', 'recordDateTo', 'recordServiceFilter', 'recordStatusFilter', 'recordCaregiverFilter', 'recordSort'].forEach(id => document.getElementById(id).addEventListener('change', renderRecords));
 
         document.getElementById('recordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -988,6 +1039,9 @@
             if (user.role === 'center_manager') {
                 // 센터장에게는 입력 화면이 아니라 센터 전체 방문 기록을 점검하는 화면이다 (메뉴 이름과 맞춘다)
                 document.title = '방문 기록 현황 - 돌봄케어';
+                [['오늘 방문 예정', '오늘 방문 (센터 전체)'], ['미기록 방문', '기록이 비어 있는 방문'], ['이번 달 기록 현황', '이번 달 방문 이행 현황']].forEach(([from, to]) => {
+                    document.querySelectorAll('.side-panel3-head span').forEach(sp => { if (sp.textContent.trim() === from) sp.textContent = to; });
+                });
                 const pageH1 = document.querySelector('h1');
                 if (pageH1) pageH1.textContent = '방문 기록 현황';
                 const crumb = document.querySelector('.breadcrumb b');
@@ -1061,7 +1115,35 @@
             '미기록': ['badge-incomplete3', '미기록'],
         };
 
+        // 센터장: 오른쪽 패널은 본인(일정 없음)이 아니라 센터 전체 요양보호사의 방문 기준이다
+        async function loadManagerSidePanels() {
+            const empty = (t) => `<div style="font-size:13px;color:#94A3B8;padding:6px 0;">${t}</div>`;
+            const rowHtml = (i, withDate) => {
+                const [cls, label] = VR_STATE_BADGE[i.state] || ['badge-wait3', i.state];
+                return `<div class="visit-row3"><div><div class="vn">${i.resident || '이용자'} 어르신 · ${i.caregiver}</div><div class="vd">${withDate ? i.date + ' ' : ''}${i.time}</div></div><span class="${cls}">${label}</span></div>`;
+            };
+            try {
+                const r = await fetch(`${API_URL}/inbox/visits-overview`);
+                if (!r.ok) throw new Error('visits-overview ' + r.status);
+                const d = await r.json();
+                document.getElementById('todayVisitsPanel').innerHTML = d.today.length ? d.today.map(i => rowHtml(i, false)).join('') : empty('오늘 예정된 방문이 없습니다');
+                document.getElementById('incompletePanel').innerHTML = d.missing.length
+                    ? d.missing.map(i => rowHtml(i, true)).join('') + (d.missing_total > d.missing.length ? empty(`외 ${d.missing_total - d.missing.length}건`) : '')
+                    : empty('기록이 비어 있는 방문이 없습니다');
+                const m = d.month;
+                const pct = (v) => Math.round(v / (m.total || 1) * 100);
+                document.getElementById('monthStatusPanel').innerHTML = `
+                    <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;">센터 전체 방문 일정 ${m.total}건</div>
+                    <div class="status-bar-row3"><div class="sb-top"><span>완료</span><span>${m.done}건 · ${pct(m.done)}%</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct(m.done)}%;background:#15803D;"></div></div></div>
+                    <div class="status-bar-row3"><div class="sb-top"><span>미기록</span><span>${m.missing}건 · ${pct(m.missing)}%</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct(m.missing)}%;background:#DC2626;"></div></div></div>`;
+            } catch (e) {
+                console.error('센터 방문 현황 로드 실패:', e);
+                document.getElementById('todayVisitsPanel').innerHTML = empty('불러오지 못했습니다');
+            }
+        }
+
         async function loadSidePanels() {
+            if (currentUser && currentUser.role === 'center_manager') return loadManagerSidePanels();
             try {
                 const now = new Date();
                 const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
