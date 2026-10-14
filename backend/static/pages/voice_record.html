@@ -1221,13 +1221,23 @@
             const empty = (t) => `<div style="font-size:13px;color:#94A3B8;padding:6px 0;">${t}</div>`;
             const rowHtml = (i, withDate) => {
                 const [cls, label] = VR_STATE_BADGE[i.state] || ['badge-wait3', i.state];
-                return `<div class="visit-row3"><div><div class="vn">${i.resident || '이용자'} 어르신 · ${i.caregiver}</div><div class="vd">${withDate ? i.date + ' ' : ''}${i.time}</div></div><span class="${cls}">${label}</span></div>`;
+                const extra = i.late_minutes != null ? ` · <b style="color:#DC2626;">${i.late_minutes}분 경과</b>` : (i.arrived_at ? ` · 도착 ${i.arrived_at.slice(11, 16)}` : '');
+                return `<div class="visit-row3"><div><div class="vn">${i.resident || '이용자'} 어르신 · ${i.caregiver}</div><div class="vd">${withDate ? i.date + ' ' : ''}${i.time}${extra}</div></div><span class="${cls}">${label}</span></div>`;
+            };
+            // 오늘 방문을 한눈에 (공단 태그가 아니라 돌봄케어의 도착·퇴실·기록 기준)
+            const summaryHtml = (s) => {
+                if (!s || !s.total) return '';
+                const chip = (n, label, color) => `<span style="display:inline-block;margin:0 6px 6px 0;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;background:${color[0]};color:${color[1]};">${label} ${n}</span>`;
+                return `<div style="margin-bottom:8px;">` +
+                    chip(s.done, '정상완료', ['#E6F3F1', '#0F8B80']) + chip(s.in_progress, '진행중', ['#EEF4FF', '#1E3A8A']) +
+                    chip(s.need_check, '확인필요', ['#FDF1E3', '#B45309']) + chip(s.late, '미처리', ['#FDE8E8', '#DC2626']) + chip(s.scheduled, '예정', ['#F1F5F9', '#64748B']) +
+                    (s.arrival_rate != null ? `<div style="font-size:12.5px;color:#475569;">도착 기록률 <b>${s.arrival_rate}%</b> (${s.arrived}건 / 시작 ${s.started}건) · 공단 태그와는 별개 기록입니다</div>` : '') + `</div>`;
             };
             try {
                 const r = await fetch(`${API_URL}/inbox/visits-overview`);
                 if (!r.ok) throw new Error('visits-overview ' + r.status);
                 const d = await r.json();
-                document.getElementById('todayVisitsPanel').innerHTML = d.today.length ? d.today.map(i => rowHtml(i, false)).join('') : empty('오늘 예정된 방문이 없습니다');
+                document.getElementById('todayVisitsPanel').innerHTML = d.today.length ? summaryHtml(d.today_summary) + d.today.map(i => rowHtml(i, false)).join('') : empty('오늘 예정된 방문이 없습니다');
                 document.getElementById('incompletePanel').innerHTML = d.missing.length
                     ? d.missing.map(i => rowHtml(i, true)).join('') + (d.missing_total > d.missing.length ? empty(`외 ${d.missing_total - d.missing.length}건`) : '')
                     : empty('기록이 비어 있는 방문이 없습니다');

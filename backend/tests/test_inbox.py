@@ -181,6 +181,42 @@ def test_visits_overview_covers_whole_center(env):
     assert data["month"]["total"] == 3 and data["month"]["missing"] == 1
 
 
+def test_today_summary_counts_states_and_arrival_rate_and_lateness(env):
+    db, client = env
+    now = datetime.now()
+    if (now.hour == 0 and now.minute < 40) or (now.hour == 23 and now.minute >= 29):
+        pytest.skip("자정 근처에는 '오늘' 일정을 만들 수 없다")
+    min_ = lambda m: now + timedelta(minutes=m)  # noqa: E731
+    db.add_all([models.User(id=i, email=f"c{i}@test.com", full_name=f"요양사{i}", role="caregiver", center_id=1) for i in (3, 4, 7, 8)])
+    db.add_all([
+        # 3: 도착·퇴실·기록까지 끝남(완료)
+        models.Schedule(caregiver_id=3, resident_id=1, center_id=1, scheduled_date=min_(-30), status="scheduled", arrived_at=min_(-28), left_at=min_(-5)),
+        models.DailyRecord(resident_id=1, caregiver_id=3, recorded_date=min_(-6)),
+        # 4: 도착했고 아직 방문 중
+        models.Schedule(caregiver_id=4, resident_id=1, center_id=1, scheduled_date=min_(-20), status="scheduled", arrived_at=min_(-18)),
+        # 7: 시작 시각이 지났는데 도착도 기록도 없음(미처리)
+        models.Schedule(caregiver_id=7, resident_id=1, center_id=1, scheduled_date=min_(-10), status="scheduled"),
+        # 8: 도착·퇴실은 했는데 기록이 없음(확인 필요)
+        models.Schedule(caregiver_id=8, resident_id=1, center_id=1, scheduled_date=min_(-15), status="scheduled", arrived_at=min_(-14), left_at=min_(-2)),
+        # A: 앞으로 올 일정
+        models.Schedule(caregiver_id=2, resident_id=1, center_id=1, scheduled_date=min_(30), status="scheduled"),
+    ])
+    db.commit()
+    data = client.get("/api/v1/inbox/visits-overview", headers=MANAGER).json()
+    s = data["today_summary"]
+    assert (s["total"], s["scheduled"], s["in_progress"], s["done"], s["need_check"], s["late"]) == (5, 1, 1, 1, 1, 1)
+    assert (s["started"], s["arrived"], s["arrival_rate"]) == (4, 3, 75)  # 예정 1건은 비율에서 뺀다
+    late = next(r for r in data["today"] if r["state"] == "미기록")
+    assert late["caregiver"] == "요양사7" and 9 <= late["late_minutes"] <= 11 and late["arrived_at"] is None
+    assert all("late_minutes" not in r for r in data["today"] if r["state"] != "미기록")
+
+
+def test_today_summary_without_started_visits_has_no_rate(env):
+    _, client = env
+    s = client.get("/api/v1/inbox/visits-overview", headers=MANAGER).json()["today_summary"]
+    assert s["total"] == 0 and s["arrival_rate"] is None
+
+
 def test_visits_overview_is_manager_only(env):
     _, client = env
     assert client.get("/api/v1/inbox/visits-overview", headers=CAREGIVER).status_code == 403

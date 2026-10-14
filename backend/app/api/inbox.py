@@ -116,7 +116,10 @@ def visits_overview(db: Session = Depends(get_db), actor: User = Depends(require
         for it in caregiver_schedule_view(caregiver_id=u.id, year_month=ym, db=db, actor=actor).get("items", []):
             if not it.get("planned") or it.get("state") not in VISIT_STATES:
                 continue
-            row = {"date": it["date"], "time": it["time"], "resident": it.get("resident_name"), "caregiver": u.full_name, "state": it["state"]}
+            row = {"date": it["date"], "time": it["time"], "resident": it.get("resident_name"), "caregiver": u.full_name, "state": it["state"],
+                   "arrived_at": it.get("arrived_at"), "left_at": it.get("left_at")}
+            if it["state"] == "미기록" and it["date"] == today:
+                row["late_minutes"] = max(0, int((now - datetime.strptime(f"{it['date']} {it['time']}", "%Y-%m-%d %H:%M")).total_seconds() // 60))
             month["total"] += 1
             if it["state"] in ("완료", "방문완료", "도착 미기록"):
                 month["done"] += 1
@@ -128,4 +131,16 @@ def visits_overview(db: Session = Depends(get_db), actor: User = Depends(require
                 missing.append(row)
     today_rows.sort(key=lambda r: r["time"])
     missing.sort(key=lambda r: (r["date"], r["time"]), reverse=True)
-    return {"today": today_rows, "missing": missing[:8], "missing_total": len(missing), "month": month}
+    return {"today": today_rows, "today_summary": _today_summary(today_rows), "missing": missing[:8], "missing_total": len(missing), "month": month}
+
+
+def _today_summary(today_rows):
+    """오늘 방문을 한눈에: 정상완료·진행중·확인필요(기록 작성 필요·도착 미기록)·미처리(시작 시각이 지났는데 도착도 기록도 없음).
+    도착 기록률 = 시작했어야 하는(예정이 아닌) 방문 중 도착 시각이 기록된 비율. 공단 태그와는 별개인 돌봄케어 기록 기준이다."""
+    count = lambda *states: sum(1 for r in today_rows if r["state"] in states)  # noqa: E731
+    started = [r for r in today_rows if r["state"] != "예정"]
+    arrived = sum(1 for r in started if r.get("arrived_at"))
+    return {"total": len(today_rows), "scheduled": count("예정"), "in_progress": count("방문중"), "done": count("완료"),
+            "need_check": count("방문완료", "도착 미기록"), "late": count("미기록"),
+            "started": len(started), "arrived": arrived,
+            "arrival_rate": round(arrived * 100 / len(started)) if started else None}

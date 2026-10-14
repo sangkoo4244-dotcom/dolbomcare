@@ -143,6 +143,20 @@
                     <h2>1. 파일 올리기</h2>
                     <input id="fileInput" type="file" accept=".xlsx,.csv,text/csv">
                     <div id="fileInfo" style="font-size:14px;color:#475569;margin-top:8px;"></div>
+                    <details style="margin-top:12px;font-size:14px;line-height:1.7;">
+                        <summary style="cursor:pointer;font-weight:700;color:#0B6B62;">공단에서 파일은 어떻게 받나요?</summary>
+                        <ol style="margin:8px 0 0;padding-left:22px;">
+                            <li>공단 장기요양정보시스템(롱텀)에 기관 로그인합니다.</li>
+                            <li>메뉴 <b>기타 › 엑셀다운로드</b>에서 <b>"RFID 전송내용" 탭</b>을 고릅니다.</li>
+                            <li><b>급여제공월</b>을 고르고 <b>조회</b>를 누른 뒤 <b>엑셀 다운로드</b>를 누릅니다.</li>
+                            <li>받은 파일(.xlsx)을 위에 올립니다. 파일 안의 <b>시작일시·종료일시·수급자명</b> 열을 쓰고, 전송이 안 된 종료일시는 비어 있거나 <b>----</b>로 보입니다.</li>
+                        </ol>
+                        <div style="margin-top:8px;color:#64748B;">
+                            이 경로는 타사(케어포)의 안내 이미지(2017년 화면)를 근거로 한 것이라 지금 롱텀의 메뉴 이름과 다를 수 있습니다.
+                            청구 단계의 <b>"요양요원 전송내역"</b> 화면에도 같은 내용(수급자·요양요원·시작/종료·사용여부)이 있습니다.
+                            파일의 열 제목이 달라도 아래 2단계에서 열을 직접 고를 수 있습니다. 업무에 쓰는 파일은 이 화면에서만 읽고 저장하지 않습니다.
+                        </div>
+                    </details>
                 </div>
 
                 <div class="card" id="mapCard" style="display:none;">
