@@ -22,7 +22,7 @@ class User(Base):
     alimtalk_opt_in = Column(Boolean, default=True)  # 카카오 알림톡 수신 여부 (끄면 인앱 알림만 받음)
     alimtalk_categories = Column(String, nullable=True)  # 받고 싶은 알림 종류 코드 (쉼표 구분). null=전체
     profile_image = Column(Text, nullable=True)  # 프로필 사진 base64 data URL (resident_media.py와 같은 방식)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class Center(Base):
     __tablename__ = "centers"
@@ -42,7 +42,7 @@ class Center(Base):
     manager_id = Column(Integer, ForeignKey("users.id"))
     residents_count = Column(Integer)
     caregivers_count = Column(Integer)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class Resident(Base):
     __tablename__ = "residents"
@@ -66,7 +66,7 @@ class Resident(Base):
     guardian_name = Column(String, nullable=True)
     guardian_phone = Column(String, nullable=True)
     care_notes = Column(Text, nullable=True)  # 요양사가 편집 가능한 요양 기록
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class DailyRecord(Base):
     __tablename__ = "daily_records"
@@ -91,7 +91,7 @@ class DailyRecord(Base):
     cognitive_change = Column(String, nullable=True)  # 인지기능 변화
     stool_accidents = Column(Integer, nullable=True)  # 대변 실수 횟수
     urine_accidents = Column(Integer, nullable=True)  # 소변 실수 횟수
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class HealthMetric(Base):
     __tablename__ = "health_metrics"
@@ -105,7 +105,7 @@ class HealthMetric(Base):
     temperature = Column(Float, nullable=True)
     oxygen_saturation = Column(Float, nullable=True)
     status = Column(String)  # 'normal', 'warning', 'critical'
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class Salary(Base):
     __tablename__ = "salaries"
@@ -119,7 +119,7 @@ class Salary(Base):
     deductions = Column(Integer, default=0)
     total = Column(Integer)
     status = Column(String)  # 'pending', 'approved', 'paid'
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class VoiceRecord(Base):
     __tablename__ = "voice_records"
@@ -136,7 +136,7 @@ class VoiceRecord(Base):
     transcription = Column(Text, nullable=True)  # 음성 인식 텍스트
     audio_file_url = Column(String, nullable=True)  # 음성 파일 URL
     billing_record_id = Column(Integer, ForeignKey("billing_records.id"), nullable=True)  # 자동 생성된 청부 기록
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class BillingRecord(Base):
     __tablename__ = "billing_records"
@@ -164,7 +164,7 @@ class BillingRecord(Base):
     year_month = Column(String, index=True, nullable=True)  # 'YYYY-MM' (정산월)
     is_archived = Column(Boolean, default=False, index=True)  # 아카이브 여부
     archived_at = Column(DateTime, nullable=True)  # 아카이브 시간
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class MonthlySummary(Base):
     """월별 정산 요약"""
@@ -184,8 +184,8 @@ class MonthlySummary(Base):
     submitted_to_nhis_at = Column(DateTime, nullable=True)  # 건보 청구 날짜
     reimbursement_confirmed_at = Column(DateTime, nullable=True)  # 환급 확인 날짜
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
 class Schedule(Base):
@@ -207,8 +207,8 @@ class Schedule(Base):
     status = Column(String, default="scheduled")  # 'scheduled', 'completed', 'cancelled'
     notes = Column(Text, nullable=True)  # 특이사항
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 class ResidentChangeRequest(Base):
     __tablename__ = "resident_change_requests"
@@ -223,7 +223,7 @@ class ResidentChangeRequest(Base):
     reason = Column(String, nullable=True)  # 반려 사유
     decided_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     decided_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class Notification(Base):
     __tablename__ = "notifications"
@@ -233,7 +233,7 @@ class Notification(Base):
     kind = Column(String)  # 'change_approved', 'change_rejected', 'plan_rejected'
     message = Column(String)
     is_read = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class AlimtalkUsage(Base):
     """센터별 월간 알림톡 발송 현황 - 무료 한도 소진 여부와 충전 잔액 차감 건수를 추적한다."""
@@ -246,7 +246,7 @@ class AlimtalkUsage(Base):
     free_sent = Column(Integer, default=0)  # 무료 한도로 보낸 건수
     paid_sent = Column(Integer, default=0)  # 충전 잔액으로 보낸 건수
     blocked_count = Column(Integer, default=0)  # 한도·잔액 부족으로 못 보낸 건수(참고용 - 인앱 알림은 이와 무관하게 전송됨)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 class GuardianInvite(Base):
     __tablename__ = "guardian_invites"
@@ -258,7 +258,7 @@ class GuardianInvite(Base):
     status = Column(String, default="issued")  # issued, submitted, approved, rejected
     guardian_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     expires_at = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class ResidentMessage(Base):
     __tablename__ = "resident_messages"
@@ -270,7 +270,7 @@ class ResidentMessage(Base):
     sender_role = Column(String)  # 'guardian', 'caregiver', 'center_manager'
     body = Column(Text)
     is_deleted = Column(Boolean, default=False)  # 센터장만 삭제 가능, 행은 감사를 위해 남긴다
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class ResidentThreadRead(Base):
     __tablename__ = "resident_thread_reads"
@@ -300,7 +300,7 @@ class SalaryStatement(Base):
     total_deduction = Column(Integer)
     net = Column(Integer)
     confirmed_by = Column(Integer, ForeignKey("users.id"))
-    confirmed_at = Column(DateTime, default=datetime.utcnow)
+    confirmed_at = Column(DateTime, default=datetime.now)
 
 class StaffCertificate(Base):
     __tablename__ = "staff_certificates"
@@ -311,7 +311,7 @@ class StaffCertificate(Base):
     grade = Column(String, nullable=True)  # 등급 (예: 1급)
     issued_on = Column(Date, nullable=True)
     expires_on = Column(Date, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class NeedsAssessment(Base):
     """기초평가(욕구조사) - 공단 표준 욕구사정 서식의 핵심 영역. 방문마다가 아니라 주기적으로(보통 월 1회) 작성한다."""
@@ -320,7 +320,7 @@ class NeedsAssessment(Base):
     id = Column(Integer, primary_key=True, index=True)
     resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
     assessed_by = Column(Integer, ForeignKey("users.id"))
-    assessed_date = Column(DateTime, default=datetime.utcnow)
+    assessed_date = Column(DateTime, default=datetime.now)
     diseases = Column(String, nullable=True)  # 보유질환 코드 (쉼표 구분, care_items와 동일한 저장 방식)
     nutrition_status = Column(String, nullable=True)  # 'good', 'poor'
     nutrition_detail = Column(String, nullable=True)  # 쉼표 구분: appetite_loss, weight_loss, weight_gain
@@ -334,7 +334,7 @@ class NeedsAssessment(Base):
     subjective_needs = Column(Text, nullable=True)  # 주관적 욕구
     resource_use = Column(Text, nullable=True)  # 자원이용 욕구
     overall_opinion = Column(Text, nullable=True)  # 총평(종합소견)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class CopayInvoice(Base):
     """본인부담금 청구/수납 - 이용자(보호자)가 실제로 낸 돈을 월 단위로 추적한다.
@@ -354,8 +354,8 @@ class CopayInvoice(Base):
     paid_date = Column(DateTime, nullable=True)
     memo = Column(String, nullable=True)
     recorded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 class RiskAssessment(Base):
     """낙상위험도·욕창위험도·인지기능평가 - 공단 2026년 평가매뉴얼의 "위험도 평가" 지표(반기 1회).
@@ -367,13 +367,13 @@ class RiskAssessment(Base):
     resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
     assessment_type = Column(String, index=True)  # 'fall_risk', 'pressure_sore_risk', 'cognitive_function'
     assessed_by = Column(Integer, ForeignKey("users.id"))
-    assessed_date = Column(DateTime, default=datetime.utcnow)
+    assessed_date = Column(DateTime, default=datetime.now)
     tool_name = Column(String, nullable=True)  # 'morse_fall_scale', 'braden_scale', 'k_mmse' 등
     score = Column(Integer, nullable=True)
     risk_level = Column(String, nullable=True)  # 'low', 'high'
     item_scores = Column(Text, nullable=True)  # JSON: 체크리스트 문항별 응답 (감사 대비 원본 기록)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class StaffRecord(Base):
     """직원 규정준수 기록 - 고충처리/건강검진/보수교육/연차·유급휴일/퇴직적립금.
@@ -390,7 +390,7 @@ class StaffRecord(Base):
     status = Column(String, nullable=True)  # 고충처리: 'open'/'resolved' 등. 다른 종류는 비워둔다.
     amount = Column(Integer, nullable=True)  # 연차: 일수, 퇴직적립금: 금액 등 종류별로 다르게 쓰는 숫자값
     recorded_by = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 class ResidentMedia(Base):
     """이용자 사진첩 - 보호자 신뢰 구축용 (어린이집 알림장과 같은 개념).
@@ -404,7 +404,7 @@ class ResidentMedia(Base):
     uploaded_by_role = Column(String)  # 업로드 시점의 역할 스냅샷: 'caregiver', 'center_manager', 'guardian'
     image_data = Column(Text)  # base64 data URL (image/jpeg,png 등)
     caption = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 
 class PasswordResetToken(Base):
@@ -416,7 +416,7 @@ class PasswordResetToken(Base):
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     token = Column(String, unique=True, index=True)
     expires_at = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 
 class Counseling(Base):
@@ -439,7 +439,7 @@ class Counseling(Base):
     action_needed = Column(Boolean, default=False)  # 조치 필요 여부
     action_note = Column(Text, nullable=True)  # 조치 내용·반영 내역
     action_done_date = Column(Date, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 
 class CarePlan(Base):
@@ -476,7 +476,7 @@ class CarePlan(Base):
     shared_at = Column(DateTime, nullable=True)  # 보호자에게 확인·서명을 요청한 시각 (이후부터 보호자에게 보인다)
     guardian_signature = Column(Text, nullable=True)  # 보호자가 앱에서 한 전자서명 (PNG data URL)
     signed_via = Column(String, nullable=True)  # 'app'(보호자 앱 전자서명) / 'manual'(센터가 서명일 직접 기록)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 
 class CarePlanAck(Base):
@@ -486,7 +486,7 @@ class CarePlanAck(Base):
     id = Column(Integer, primary_key=True, index=True)
     plan_id = Column(Integer, ForeignKey("care_plans.id"), index=True)
     caregiver_id = Column(Integer, ForeignKey("users.id"), index=True)
-    acknowledged_at = Column(DateTime, default=datetime.utcnow)
+    acknowledged_at = Column(DateTime, default=datetime.now)
 
 
 class ServiceEvaluation(Base):
@@ -503,7 +503,7 @@ class ServiceEvaluation(Base):
     summary = Column(Text)  # 총평 또는 종합소견
     status_changed = Column(Boolean, default=True)  # 수급자 상태 변화 여부
     no_change_basis = Column(Text, nullable=True)  # 상태 변화가 없을 때 '동일하다고 판단한 근거'
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 
 class CaseConference(Base):
@@ -526,7 +526,7 @@ class CaseConference(Base):
     evaluator_name = Column(String, nullable=True)
     resolved = Column(Boolean, nullable=True)  # 선정사유 해결 여부
     next_action = Column(Text, nullable=True)  # 미해결 시 추가 조치 계획
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 
 class TrainingSession(Base):
@@ -544,7 +544,7 @@ class TrainingSession(Base):
     attendee_ids = Column(Text)  # JSON: 참석한 직원 user id 목록
     signed_ids = Column(Text)  # JSON: 그중 서명한 직원 user id 목록
     recorded_by = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 
 class ResidentNotice(Base):
@@ -562,7 +562,7 @@ class ResidentNotice(Base):
     items = Column(Text, nullable=True)  # JSON: 제공한 지침 코드 목록 (rights_guide)
     note = Column(Text, nullable=True)
     recorded_by = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 
 class IncidentReport(Base):
@@ -580,7 +580,7 @@ class IncidentReport(Base):
     action_taken = Column(Text)
     guardian_notified_date = Column(Date, nullable=True)
     prevention = Column(Text, nullable=True)  # 재발방지 대책
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
 
 class HandoverNote(Base):
@@ -593,5 +593,5 @@ class HandoverNote(Base):
     author_id = Column(Integer, ForeignKey("users.id"), index=True)
     to_caregiver_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     content = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
     acknowledged_at = Column(DateTime, nullable=True)

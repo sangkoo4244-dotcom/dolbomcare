@@ -141,3 +141,13 @@ def test_caregiver_board_counts_per_caregiver(env):
 def test_caregiver_board_is_manager_only(env):
     _, client = env
     assert client.get("/api/v1/inbox/caregivers", headers=CAREGIVER).status_code == 403
+
+
+def test_new_rows_use_korean_local_time_not_utc(env):
+    """알림 목록이 9시간 전으로 보이던 문제: 저장 기본 시각이 UTC(utcnow)가 아니라 서버 시간(한국)이어야 한다."""
+    db, _ = env
+    from datetime import datetime
+    n = models.Notification(user_id=1, kind="claim_submitted", message="x")
+    db.add(n)
+    db.commit()
+    assert abs((n.created_at - datetime.now()).total_seconds()) < 5

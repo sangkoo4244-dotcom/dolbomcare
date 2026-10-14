@@ -8,6 +8,7 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
+        "local_timestamp": datetime.now().isoformat(),  # 서버 시간대가 한국 시간으로 맞는지 확인용
         "service": "dolbomcare-api"
     }
 

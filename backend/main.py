@@ -1,3 +1,12 @@
+# 서비스의 모든 시각은 한국 시간 기준이다. 클라우드 서버는 기본이 세계 표준시(UTC)라 datetime.now()가 9시간 늦게
+# 저장·비교되므로, 다른 모듈이 시각을 쓰기 전에 가장 먼저 프로세스 시간대를 서울로 맞춘다 (윈도우 개발 PC에는 tzset이 없어 건너뜀)
+import os
+import time
+
+os.environ["TZ"] = "Asia/Seoul"
+if hasattr(time, "tzset"):
+    time.tzset()
+
 from fastapi import FastAPI, Depends
 from app.auth import get_current_user
 from fastapi.middleware.cors import CORSMiddleware

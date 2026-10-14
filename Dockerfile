@@ -1,5 +1,9 @@
 FROM python:3.11-slim
 
+# 서비스 시각은 한국 시간 기준 (시간대 데이터가 없는 이미지에서도 동작하도록 tzdata를 설치)
+ENV TZ=Asia/Seoul
+RUN (apt-get update && apt-get install -y --no-install-recommends tzdata && rm -rf /var/lib/apt/lists/*) || true
+
 WORKDIR /app
 
 # 복사: requirements

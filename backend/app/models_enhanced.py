@@ -67,8 +67,8 @@ class BillingRecordEnhanced(Base):
     # 시간 정보
     recorded_date = Column(DateTime, index=True)  # 서비스 제공 날짜
     year_month = Column(String, index=True)  # 'YYYY-MM' (정산월)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now, index=True)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
 class BillingAuditLog(Base):
@@ -82,7 +82,7 @@ class BillingAuditLog(Base):
     billing_record_id = Column(Integer, ForeignKey("billing_records_enhanced.id"))
 
     modified_by = Column(Integer, ForeignKey("users.id"))  # 수정자
-    modified_at = Column(DateTime, default=datetime.utcnow, index=True)
+    modified_at = Column(DateTime, default=datetime.now, index=True)
 
     # 수정 내용
     field_name = Column(String)  # 수정된 필드 (예: 'insurance_amount', 'status')
@@ -127,8 +127,8 @@ class MonthlySummary(Base):
     reimbursement_confirmed_at = Column(DateTime, nullable=True)  # 환급 확인 날짜
 
     # 시간 정보
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
 class BillingStatistics(Base):
@@ -156,7 +156,7 @@ class BillingStatistics(Base):
     average_per_service = Column(Integer, default=0)  # 서비스당 평균 청부액
 
     # 시간 정보
-    calculated_at = Column(DateTime, default=datetime.utcnow)
+    calculated_at = Column(DateTime, default=datetime.now)
 
 
 class BillingInvoice(Base):
@@ -174,7 +174,7 @@ class BillingInvoice(Base):
 
     # 송장 정보
     invoice_number = Column(String, unique=True, index=True)  # 청구서 번호
-    issue_date = Column(DateTime, default=datetime.utcnow)
+    issue_date = Column(DateTime, default=datetime.now)
 
     # 내용
     total_amount = Column(Integer)  # 청구액
@@ -189,5 +189,5 @@ class BillingInvoice(Base):
     document_path = Column(String, nullable=True)  # PDF 파일 경로
 
     # 시간 정보
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
