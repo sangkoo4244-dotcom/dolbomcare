@@ -481,6 +481,24 @@
                 }
                 lines.push(`오늘 ${planned.time} 방문 계획의 제공 항목을 선택해 두었습니다: ${planned.items.map(c => CARE_ITEM_LABELS[c] || c).join(', ')}`);
             }
+            // 도착·퇴실 버튼을 눌렀다면 그 시각으로 방문 일시를, 도착~퇴실 시간(가장 가까운 선택지)으로 제공 시간을 채워 다시 입력하지 않게 한다
+            if (planned && planned.arrived_at) {
+                const [arrDate, arrTime] = planned.arrived_at.split('T');
+                document.getElementById('visitDate').value = arrDate;
+                document.getElementById('visitTime').value = arrTime;
+                let text = `도착 ${arrTime} 기준으로 방문 일시를 채웠습니다.`;
+                if (planned.left_at) {
+                    const minutes = Math.round((new Date(planned.left_at) - new Date(planned.arrived_at)) / 60000);
+                    const options = [...document.getElementById('durationMinutes').options].map(o => Number(o.value));
+                    const nearest = options.reduce((a, b) => Math.abs(b - minutes) < Math.abs(a - minutes) ? b : a);
+                    if (minutes > 0) {
+                        setSelectIfOption('durationMinutes', nearest);
+                        calculateBillingDetails();
+                        text += ` 퇴실까지 ${minutes}분 → 제공 시간 ${nearest}분으로 선택했습니다(다르면 고쳐 주세요).`;
+                    }
+                }
+                lines.push(text);
+            }
             const lastBtn = document.getElementById('prefillLastBtn');
             lastBtn.style.display = last ? '' : 'none';
             if (last) lastBtn.textContent = `지난 방문(${(last.date || '').slice(5).replace('-', '/')})과 같게 채우기`;

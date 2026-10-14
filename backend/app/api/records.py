@@ -672,6 +672,8 @@ def prefill_record(
             "duration_minutes": schedule.duration_minutes,
             "service_type": schedule.service_type,
             "time": schedule.scheduled_date.strftime("%H:%M"),
+            "arrived_at": schedule.arrived_at.strftime("%Y-%m-%dT%H:%M") if schedule.arrived_at else None,
+            "left_at": schedule.left_at.strftime("%Y-%m-%dT%H:%M") if schedule.left_at else None,
         }
 
     last_q = db.query(DailyRecord).filter(DailyRecord.resident_id == resident_id)

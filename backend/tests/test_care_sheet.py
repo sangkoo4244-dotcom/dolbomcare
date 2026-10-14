@@ -198,3 +198,15 @@ def test_prefill_for_new_caregiver_uses_previous_caregivers_last_visit(env):
     add_record(db, 3, -2, care_items="bath", condition="good")  # 이전 담당(B)의 기록
     data = client.get("/api/v1/records/prefill?resident_id=1", headers=CG_A).json()
     assert data["last"]["items"] == ["bath"]
+
+
+def test_prefill_includes_arrival_and_departure_times(env):
+    db, client = env
+    now = datetime.now().replace(second=0, microsecond=0)
+    db.add(models.Schedule(caregiver_id=2, resident_id=1, center_id=1, scheduled_date=now - timedelta(minutes=40), duration_minutes=60,
+                           planned_items="meal_assist", service_type="basic_care", status="scheduled",
+                           arrived_at=now - timedelta(minutes=35), left_at=now - timedelta(minutes=5)))
+    db.commit()
+    planned = client.get("/api/v1/records/prefill?resident_id=1", headers=CG_A).json()["planned"]
+    assert planned["arrived_at"] == (now - timedelta(minutes=35)).strftime("%Y-%m-%dT%H:%M")
+    assert planned["left_at"] == (now - timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M")
