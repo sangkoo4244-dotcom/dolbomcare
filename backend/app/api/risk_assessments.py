@@ -154,7 +154,7 @@ def create_risk_assessment(
         resident_id=body.resident_id,
         assessment_type=body.assessment_type,
         assessed_by=actor.id,
-        assessed_date=datetime.utcnow(),
+        assessed_date=datetime.now(),
         tool_name=body.tool_name,
         score=score,
         risk_level=risk_level,
@@ -186,7 +186,7 @@ def list_risk_assessments(
     )
     assessors = {u.id: u.full_name for u in db.query(User).filter(User.center_id == actor.center_id).all()}
 
-    now = datetime.utcnow()
+    now = datetime.now()
     result = {}
     for code, label in ASSESSMENT_TYPES.items():
         history = [_to_dict(a, assessors.get(a.assessed_by)) for a in rows if a.assessment_type == code]

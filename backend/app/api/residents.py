@@ -251,7 +251,7 @@ async def create_resident(
             name=resident_data.name,
             birth_date=birth_date,
             age=resident_data.age,
-            admission_date=datetime.utcnow(),
+            admission_date=datetime.now(),
             health_status=resident_data.health_status,
             care_grade=resident_data.care_grade,
             client_type=resident_data.client_type,

@@ -331,9 +331,11 @@
 
         async function loadBillings() {
             try {
-                const r = await fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}`);
+                // 환급까지 끝나 자동 보관된 청구도 받아서, 나의 급여·대시보드와 같은 금액으로 보이게 한다
+                const r = await fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}&include_archived=true`);
                 const d = await r.json();
-                billings = d.records || [];
+                // 센터장이 공단 청구·환급 처리한 건도 요양보호사에게는 '승인완료'다 (이 화면은 승인 여부만 구분한다)
+                billings = (d.records || []).map(b => ['submitted_to_nhis', 'reimbursed'].includes(b.approval_status) ? { ...b, approval_status: 'approved' } : b);
                 await loadResidentAgeGender();
                 updateSummary();
                 updateThisMonthPanels();

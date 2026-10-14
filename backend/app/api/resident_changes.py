@@ -177,7 +177,7 @@ def approve_change_request(
 
     req.status = "approved"
     req.decided_by = manager.id
-    req.decided_at = datetime.utcnow()
+    req.decided_at = datetime.now()
     notify(db, req.requested_by, "change_approved", f"이용자 정보 변경 요청이 승인되었습니다 ({resident.name})")
     db.commit()
     return {"status": "success", "message": "변경을 승인해 반영했습니다"}
@@ -201,7 +201,7 @@ def reject_change_request(
     req.status = "rejected"
     req.reason = body.reason.strip()
     req.decided_by = manager.id
-    req.decided_at = datetime.utcnow()
+    req.decided_at = datetime.now()
     notify(db, req.requested_by, "change_rejected", f"이용자 정보 변경 요청이 반려되었습니다: {req.reason}")
     db.commit()
     return {"status": "success", "message": "변경 요청을 반려했습니다"}

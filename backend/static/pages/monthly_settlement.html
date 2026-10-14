@@ -516,7 +516,7 @@
 
         // 같은 직원·같은 달의 청구 건수를 방문 횟수로 본다 (billing_management.html과 동일한 파생 방식)
         function visitCount(record) {
-            return allRecords.filter(r => r.caregiver_name === record.caregiver_name && r.year_month === record.year_month).length;
+            return 1; // 정산 한 줄 = 방문 기록 1건 (예전에는 요양보호사 월 전체 건수를 줄마다 보여 줬다)
         }
 
         function actionButtons(tabKey) {

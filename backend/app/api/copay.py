@@ -31,8 +31,7 @@ def _resident_month_total(db: Session, resident_id: int, year_month: str) -> int
     rows = db.query(BillingRecord).filter(
         BillingRecord.resident_id == resident_id,
         BillingRecord.year_month == year_month,
-        BillingRecord.approval_status.in_(REVENUE_STATUSES),
-        BillingRecord.is_archived == False,  # noqa: E712
+        BillingRecord.approval_status.in_(REVENUE_STATUSES),  # 환급까지 끝나 보관된 청구도 본인부담금은 받아야 하므로 보관 여부는 보지 않는다
     ).all()
     return sum((r.total_cost or 0) - (r.amount or 0) for r in rows)
 
@@ -135,7 +134,7 @@ def record_copay_payment(
     invoice.status = _derive_status(invoice.total_amount, invoice.paid_amount)
     invoice.payment_method = body.payment_method or invoice.payment_method
     invoice.memo = body.memo or invoice.memo
-    invoice.paid_date = datetime.utcnow()
+    invoice.paid_date = datetime.now()
     invoice.recorded_by = actor.id
     db.commit()
     db.refresh(invoice)

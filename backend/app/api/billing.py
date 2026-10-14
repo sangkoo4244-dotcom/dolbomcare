@@ -140,7 +140,7 @@ async def get_monthly_billing(
 @router.get("/today")
 async def get_today_billing(db: Session = Depends(get_db)):
     """오늘의 청구 현황"""
-    today = datetime.utcnow().date()
+    today = datetime.now().date()
     records = db.query(BillingRecord).filter(
         BillingRecord.recorded_date >= datetime.combine(today, time.min),
         BillingRecord.recorded_date <= datetime.combine(today, time.max)
@@ -178,7 +178,7 @@ async def approve_billing_record(
 
     record.approval_status = "approved"
     record.approved_by = actor.id
-    record.approved_at = datetime.utcnow()
+    record.approved_at = datetime.now()
     notify(db, record.caregiver_id, "claim_approved", f"청구가 승인되었습니다 ({record.amount:,}원)")
     db.commit()
     db.refresh(record)

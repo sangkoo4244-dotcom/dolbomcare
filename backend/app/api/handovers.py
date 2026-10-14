@@ -101,6 +101,6 @@ def acknowledge(note_id: int, db: Session = Depends(get_db), actor: User = Depen
     if not note or note.to_caregiver_id != actor.id:
         raise HTTPException(status_code=404, detail="받은 인계 메모만 확인할 수 있습니다")
     if not note.acknowledged_at:
-        note.acknowledged_at = datetime.utcnow()
+        note.acknowledged_at = datetime.now()
         db.commit()
     return {"status": "success"}

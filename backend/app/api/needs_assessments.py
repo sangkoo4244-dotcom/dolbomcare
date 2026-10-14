@@ -135,7 +135,7 @@ def create_assessment(
     assessment = NeedsAssessment(
         resident_id=body.resident_id,
         assessed_by=actor.id,
-        assessed_date=datetime.utcnow(),
+        assessed_date=datetime.now(),
         diseases=body.diseases or None,
         nutrition_status=body.nutrition_status,
         nutrition_detail=body.nutrition_detail or None,

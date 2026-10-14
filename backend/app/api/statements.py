@@ -67,7 +67,7 @@ def confirm_statement(body: ConfirmBody, db: Session = Depends(get_db), manager:
         wage_ratio=wage_ratio, wage_base=wage_base,
         income_tax=deductions["income_tax"], pension=deductions["pension"], health=deductions["health"],
         employment=deductions["employment"], total_deduction=deductions["total_deduction"], net=deductions["net"],
-        confirmed_by=manager.id, confirmed_at=datetime.utcnow(),
+        confirmed_by=manager.id, confirmed_at=datetime.now(),
     )
     db.add(statement)
     notify(db, caregiver.id, "statement_confirmed", f"{body.year_month} 급여 명세가 확정되었습니다")

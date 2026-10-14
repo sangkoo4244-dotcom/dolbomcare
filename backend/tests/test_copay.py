@@ -194,3 +194,14 @@ def test_linked_guardian_can_see_copay_history(client):
 def test_unrelated_guardian_cannot_see_copay_history(client):
     res = client.get("/api/v1/copay/resident/1/history", headers=OTHER_GUARDIAN)
     assert res.status_code == 403
+
+
+def test_copay_still_counts_visits_already_reimbursed_and_archived(client):
+    """공단 환급까지 끝나 자동 보관된 청구도 이용자 본인부담금은 받아야 한다 (보관 여부로 빠지면 덜 받게 된다)."""
+    session = next(client.app.dependency_overrides[get_db]())
+    bill = session.query(models.BillingRecord).get(2)
+    bill.approval_status = "reimbursed"
+    bill.is_archived = True
+    session.commit()
+    data = client.get("/api/v1/copay/summary?year_month=2026-10", headers=MANAGER).json()
+    assert data["invoices"][0]["total_amount"] == 7770

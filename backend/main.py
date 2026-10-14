@@ -3,8 +3,8 @@
 import os
 import time
 
-os.environ["TZ"] = "Asia/Seoul"
-if hasattr(time, "tzset"):
+if hasattr(time, "tzset"):  # 리눅스(운영 서버)만. 윈도우는 TZ 값을 다르게 해석해 오히려 세계 표준시가 되므로 건드리지 않는다
+    os.environ["TZ"] = "Asia/Seoul"
     time.tzset()
 
 from fastapi import FastAPI, Depends

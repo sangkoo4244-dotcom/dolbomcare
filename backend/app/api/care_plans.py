@@ -266,7 +266,7 @@ def share_with_guardian(plan_id: int, db: Session = Depends(get_db), actor: User
     resident = db.query(Resident).filter(Resident.id == plan.resident_id).first()
     if not resident or not resident.guardian_id:
         raise HTTPException(status_code=400, detail="이 이용자에게 연결된 보호자 계정이 없습니다. 보호자 초대 후 요청하거나 서명일을 직접 기록해 주세요")
-    plan.shared_at = datetime.utcnow()
+    plan.shared_at = datetime.now()
     notify(db, resident.guardian_id, "care_plan_request",
            f"{resident.name} 어르신의 급여제공계획서가 도착했습니다. 내용을 확인하고 서명해 주세요.")
     db.commit()
