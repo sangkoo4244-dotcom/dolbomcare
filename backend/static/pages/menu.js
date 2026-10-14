@@ -129,6 +129,10 @@ function applySidebarGroups(nav) {
 
 const SIDEBAR_STYLE = `
 .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; }
+/* 메뉴가 화면보다 길면 사이드바 안에서 스크롤된다. 스크롤 막대는 가늘고 은은하게 보이게 한다 */
+#navContent, .sidebar-nav { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent; overscroll-behavior: contain; }
+#navContent::-webkit-scrollbar, .sidebar-nav::-webkit-scrollbar { width: 6px; }
+#navContent::-webkit-scrollbar-thumb, .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
 .side-brand { padding: 24px; border-bottom: 1px solid #374151; display: flex; align-items: center; gap: 12px; }
 .side-logo { font-size: 30px; }
 .side-title { font-size: 18px; font-weight: 700; }
@@ -178,6 +182,11 @@ function renderSidebar() {
     const items = SIDEBAR_MENUS[roleMenu];
     const current = window.location.pathname.split('/').pop();
     const nav = document.querySelector('#navContent, .sidebar-nav');
+    // 일부 화면은 사이드바 틀이 flex가 아니라 메뉴가 화면 높이를 넘어 그대로 잘렸다: 틀을 세로 flex로 맞춰 메뉴 영역 안에서 스크롤되게 한다
+    if (nav.parentElement) {
+        nav.parentElement.style.display = 'flex';
+        nav.parentElement.style.flexDirection = 'column';
+    }
     nav.style.padding = '16px';
     nav.style.overflowY = 'auto';
     nav.style.flex = '1 1 auto';
@@ -194,6 +203,15 @@ function renderSidebar() {
         </a>
     `;
     if (roleMenu !== 'guardian') applySidebarGroups(nav);
+    // 메뉴가 길 때 지금 보고 있는 메뉴가 가려져 있으면 가운데로 스크롤해서 보여 준다
+    const activeItem = nav.querySelector('.side-item.active');
+    if (activeItem && nav.scrollHeight > nav.clientHeight) {
+        const navBox = nav.getBoundingClientRect();
+        const itemBox = activeItem.getBoundingClientRect();
+        if (itemBox.top < navBox.top || itemBox.bottom > navBox.bottom) {
+            nav.scrollTop += (itemBox.top - navBox.top) - (nav.clientHeight - itemBox.height) / 2;
+        }
+    }
     renderMobileTabbar(items, current, roleMenu);
     showUnreadMessageBadge();
 
