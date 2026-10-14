@@ -404,7 +404,7 @@
                 try {
                     const prevDate = new Date(year, month - 2, 1);
                     const prevData = await fetchMonthlyStats(prevDate.getFullYear(), prevDate.getMonth() + 1);
-                    prevCount = (prevData.records || []).filter(r => r.approval_status !== 'rejected').length;
+                    prevCount = (prevData.records || []).filter(r => !['rejected', 'draft'].includes(r.approval_status)).length;
                 } catch (e) { /* 전월 데이터 없으면 비교 생략 */ }
 
                 updateSummaryCards(prevCount);
@@ -428,7 +428,8 @@
         }
 
         function updateSummaryCards(prevCount) {
-            const active = allRecords.filter(r => r.approval_status !== 'rejected');
+            // 요양보호사가 아직 제출하지 않은 작성중 건은 정산 대상이 아니다
+            const active = allRecords.filter(r => !['rejected', 'draft'].includes(r.approval_status));
             const reimbursed = allRecords.filter(r => tabOf(r) === 'reimbursed');
             const pending = allRecords.filter(r => tabOf(r) === 'pending');
             const sum = list => list.reduce((s, r) => s + (r.amount || 0), 0);

@@ -158,4 +158,3 @@ class BillingMonthlySummary(BaseModel):
     pending_count: int
     approved_count: int = 0
     approved_amount: int = 0
-    estimated_savings: int

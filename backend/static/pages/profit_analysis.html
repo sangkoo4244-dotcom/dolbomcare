@@ -443,6 +443,7 @@
                 const pat = patientAmount(r);
                 const total = amount + pat;
                 if (r.approval_status === 'rejected') { cell.suspended += total; return; }
+                if (r.approval_status === 'draft') return; // 제출 전 작성중은 아직 청구가 아니므로 수익에 넣지 않는다
                 cell.total += total;
                 cell.insurance += amount;
                 cell.patient += pat;
@@ -608,7 +609,7 @@
         // 이용자별 집계는 /billing/ 원본 레코드를 이용자 기준으로 묶어서 만든다 (별도 집계 API 없음)
         function renderResidentTable(records, year, month, isMonthSel) {
             const scoped = records.filter(r => {
-                if (!r.recorded_date || r.approval_status === 'rejected') return false;
+                if (!r.recorded_date || r.approval_status === 'rejected' || r.approval_status === 'draft') return false;
                 const [y, m] = r.recorded_date.slice(0, 7).split('-').map(Number);
                 return y === year && (!isMonthSel || m === month);
             });

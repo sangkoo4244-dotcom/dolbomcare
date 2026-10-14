@@ -154,3 +154,17 @@ def test_manager_cannot_record_under_own_or_other_center_name(env):
     assert client.post("/api/v1/records/create", json=manager_payload(6), headers=MANAGER).status_code == 400  # 다른 센터 직원
     assert client.post("/api/v1/records/create", json=manager_payload(2), headers=OTHER_MANAGER).status_code == 400  # 다른 센터 센터장
     assert db.query(models.DailyRecord).count() == 0
+
+
+def test_saving_a_record_marks_its_record_needed_reminder_as_read(env):
+    db, client = env
+    db.add_all([
+        models.Notification(user_id=2, kind="record_needed", message="김이용 방문 기록을 작성해 주세요"),
+        models.Notification(user_id=2, kind="record_needed", message="다른이용자 방문 기록을 작성해 주세요"),
+    ])
+    db.commit()
+    payload = {"caregiver_id": 2, "resident_id": 1, "service_type": "basic_care", "notes": "양호"}
+    assert client.post("/api/v1/records/create", json=payload, headers=CG_A).status_code == 200
+    read = {n.message: n.is_read for n in db.query(models.Notification).all()}
+    assert read["김이용 방문 기록을 작성해 주세요"] is True
+    assert read["다른이용자 방문 기록을 작성해 주세요"] is False

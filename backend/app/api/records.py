@@ -5,7 +5,7 @@ from app.billing_rules import split_visit, VALID_DURATIONS, REVENUE_STATUSES
 from app.review import find_schedule
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary
+from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary, Notification
 from app.schemas import DailyRecordResponse
 from app.database import get_db
 from app.auth import get_current_user, require_manager, assert_self_or_manager
@@ -155,6 +155,11 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
                 resident.name, request.service_type, request.duration_minutes, request.condition, request.notes
             )
             notify(db, resident.guardian_id, "visit_completed", summary)
+        # 이 이용자의 '방문 기록을 작성해 주세요' 알림은 기록을 썼으니 읽음으로 바꾼다
+        db.query(Notification).filter(
+            Notification.user_id == caregiver_id, Notification.kind == "record_needed",
+            Notification.is_read == False, Notification.message.like(f"{resident.name} %"),  # noqa: E712
+        ).update({Notification.is_read: True}, synchronize_session=False)
         db.commit()
 
         return {

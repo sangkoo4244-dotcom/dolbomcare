@@ -121,10 +121,6 @@ async def get_monthly_billing(
     pending_count = len([r for r in records if r.approval_status == "pending"])
     approved_count = len([r for r in records if r.approval_status == "approved"])
 
-    # 청구 시간 절감: 기본 40시간에서 70% 절감 → 12시간
-    # 시간당 평균 급여 15,000원 기준
-    estimated_savings = len(records) * 1000  # 기록 건당 1,000원 절감
-
     return BillingMonthlySummary(
         year_month=year_month,
         total_records=len(records),
@@ -132,7 +128,6 @@ async def get_monthly_billing(
         submitted_count=submitted_count,
         paid_count=paid_count,
         pending_count=pending_count,
-        estimated_savings=estimated_savings,
         approved_count=approved_count,
         approved_amount=approved_amount
     )
