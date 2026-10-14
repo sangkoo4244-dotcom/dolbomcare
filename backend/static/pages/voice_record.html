@@ -880,6 +880,8 @@
                 document.title = '방문 기록 현황 - 돌봄케어';
                 const pageH1 = document.querySelector('h1');
                 if (pageH1) pageH1.textContent = '방문 기록 현황';
+                const crumb = document.querySelector('.breadcrumb b');
+                if (crumb) crumb.textContent = '방문 기록 현황';
             }
             if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
                 const btn = document.getElementById('voiceRecordBtn');
