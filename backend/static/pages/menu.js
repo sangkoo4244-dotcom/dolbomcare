@@ -93,13 +93,14 @@ const SIDEBAR_MENUS = {
         { href: 'monthly_settlement.html', icon: 'settlement', label: '월별정산' },
         { href: 'profit_analysis.html', icon: 'profit', label: '수익분석' },
         { href: 'statement_confirm.html', icon: 'stamp', label: '급여 확정' },
-        { href: 'messages.html', icon: 'messages', label: '보호자 소통' }
+        { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
+        { href: 'guide_manager.html', icon: 'stamp', label: '센터장 안내' }
     ]
 };
 
 // 사이드바 묶음: 모든 페이지가 같은 그룹으로 보이도록 여기서 한 번에 정한다 (페이지마다 따로 그룹을 정하던 방식은 새 페이지에서 빠뜨리기 쉽다)
 const SIDEBAR_GROUPS = [
-    ['메인', ['대시보드', '알림', '사용 안내']],
+    ['메인', ['대시보드', '알림', '사용 안내', '센터장 안내']],
     ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
     ['방문 운영', ['나의 일정', '방문계획 승인', '음성 기록', '방문 기록 현황', '인수인계', '사고·응급 보고']],
     ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
