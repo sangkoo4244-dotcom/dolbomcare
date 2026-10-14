@@ -115,6 +115,8 @@ def compare(body: CompareRequest, db: Session = Depends(get_db), manager: User =
         row["diff_minutes"] = diff
         row["danger"] = abs(diff) > 60  # 하이케어 안내: 일정계획과 태그 시간 차이가 60분을 넘으면 청구에 쓸 수 없음(일정상이)
         row["plan_minutes"] = best.duration_minutes
+        row["caregiver_id"] = best.caregiver_id
+        row["caregiver"] = caregivers.get(best.caregiver_id, "")
         notes = []
         status = "ok"
         if abs(diff) > tol:
@@ -139,13 +141,15 @@ def compare(body: CompareRequest, db: Session = Depends(get_db), manager: User =
             continue
         results.append({"row": None, "name": resident_names.get(s.resident_id, ""), "tag_start": None, "tag_end": None, "tag_minutes": None,
                         "plan": s.scheduled_date.strftime("%Y-%m-%d %H:%M"), "arrived": s.arrived_at.strftime("%H:%M") if s.arrived_at else None,
+                        "caregiver_id": s.caregiver_id, "caregiver": caregivers.get(s.caregiver_id, ""),
                         "status": "no_tag", "note": "방문 계획은 있는데 공단 태그 전송내역이 없습니다"})
     counts = {}
     for r in results:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
     results.sort(key=lambda r: (r["tag_start"] or r["plan"] or ""))
     return {"range": [str(first_day), str(last_day)], "tag_count": len(tags), "counts": counts, "rows": results, "bad_rows": bad_rows[:50],
-            "auto_rate": _auto_rate(results, has_end_col=body.end_col is not None)}
+            "auto_rate": _auto_rate(results, has_end_col=body.end_col is not None),
+            "eval_index": _eval_index(results, has_end_col=body.end_col is not None)}
 
 
 def _auto_rate(results, has_end_col):
@@ -165,3 +169,54 @@ def _auto_rate(results, has_end_col):
     need = max(0, -(-total * 149 // 200) - auto)  # 반올림해서 75가 되는 최소 자동 건수(74.5% 이상)
     return {"total": total, "auto": auto, "direct": direct, "end_missing": end_missing,
             "rate": rate, "meets_75": rate >= 75, "need_more": need}
+
+
+# 공단 2026 재가급여(방문요양) 평가 매뉴얼 지표 17 '재가급여전자관리시스템(RFID) 활용' (3점): (등급, 점수, 참여율 기준, 청구활용률 기준). 두 기준을 모두 넘어야 그 등급이다.
+EVAL_TIERS = [("우수", 3, 95, 90), ("양호", 2.25, 90, 85), ("보통", 1.5, 85, 80)]
+
+
+def _ceil_percent(percent, total):
+    return -(-percent * total // 100)
+
+
+def _eval_index(results, has_end_col):
+    """지표 17의 두 기준을 올린 파일 기간 기준으로 어림한다.
+    ① 참여율 = 태그를 한 번이라도 전송한 요양보호사 / 방문 계획이 있는 요양보호사
+    ② 청구활용률 = 시작·종료가 모두 전송된 건 / 청구 대상 건 (자동청구율과 같은 건수)
+    실제 평가는 공단 전산 자료로 하므로 예상치다."""
+    if not has_end_col:
+        return None
+    stats = {}
+    for r in results:
+        cid = r.get("caregiver_id")
+        if cid is None:
+            continue
+        s = stats.setdefault(cid, {"name": r.get("caregiver") or "(이름 없음)", "visits": 0, "tagged": 0, "auto": 0, "no_tag": 0, "end_missing": 0})
+        s["visits"] += 1
+        if r["status"] == "no_tag":
+            s["no_tag"] += 1
+        else:
+            s["tagged"] += 1
+            if r["tag_end"]:
+                s["auto"] += 1
+            else:
+                s["end_missing"] += 1
+    if not stats:
+        return None
+    n = len(stats)
+    participating = sum(1 for s in stats.values() if s["tagged"])
+    total = sum(s["visits"] for s in stats.values())
+    auto = sum(s["auto"] for s in stats.values())
+    level = next(((label, points) for label, points, part_min, use_min in EVAL_TIERS
+                  if participating * 100 >= part_min * n and auto * 100 >= use_min * total), ("미흡", 0))
+    tier_labels = [t[0] for t in EVAL_TIERS]
+    target = None
+    if level[0] != "우수":
+        label, points, part_min, use_min = EVAL_TIERS[tier_labels.index(level[0]) - 1] if level[0] in tier_labels else EVAL_TIERS[-1]
+        target = {"label": label, "points": points, "part_min": part_min, "use_min": use_min,
+                  "need_caregivers": max(0, _ceil_percent(part_min, n) - participating),
+                  "need_visits": max(0, _ceil_percent(use_min, total) - auto)}
+    caregivers = sorted(stats.values(), key=lambda s: (-(s["no_tag"] + s["end_missing"]), s["name"]))
+    return {"caregiver_total": n, "participating": participating, "participation_rate": round(participating * 100 / n, 1),
+            "visit_total": total, "auto": auto, "use_rate": round(auto * 100 / total, 1),
+            "level": level[0], "points": level[1], "target": target, "caregivers": caregivers}

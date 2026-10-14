@@ -259,14 +259,14 @@
                 `대조 기간 <b>${result.range[0]} ~ ${result.range[1]}</b> · 공단 태그 <b>${result.tag_count}건</b><br>` +
                 `<span class="badge badge-ok">정상 ${c.ok || 0}</span> <span class="badge badge-warn">시간 확인 ${c.time_diff || 0}</span> ` +
                 `<span class="badge badge-bad">태그 없음 ${c.no_tag || 0}</span> <span class="badge badge-warn">계획 없음 ${c.no_plan || 0}</span> <span class="badge badge-gray">이름 확인 ${c.unknown_resident || 0}</span>`;
-            document.getElementById('summary').innerHTML += autoRateHtml(result.auto_rate);
+            document.getElementById('summary').innerHTML += autoRateHtml(result.auto_rate) + evalIndexHtml(result.eval_index);
             const chips = [['all', `전체 ${total}`], ...Object.keys(STATUS).filter(k => c[k]).map(k => [k, `${STATUS[k][0]} ${c[k]}`])];
             document.getElementById('chips').innerHTML = chips.map(([k, label]) => `<button type="button" class="chip ${filter === k ? 'active' : ''}" onclick="setFilter('${k}')">${label}</button>`).join('');
             const list = result.rows.filter(r => filter === 'all' || r.status === filter);
             document.getElementById('resBody').innerHTML = list.map(r => {
                 const [label, cls] = STATUS[r.status] || [r.status, 'badge-gray'];
                 const tag = r.tag_start ? `${esc(r.tag_start)}${r.tag_end ? ' ~ ' + esc(r.tag_end) : ''}${r.tag_minutes ? ' (' + r.tag_minutes + '분)' : ''}` : '-';
-                const plan = r.plan ? `계획 ${esc(r.plan)}${r.arrived ? ' / 도착 ' + esc(r.arrived) : ''}` : '-';
+                const plan = r.plan ? `계획 ${esc(r.plan)}${r.arrived ? ' / 도착 ' + esc(r.arrived) : ''}${r.caregiver ? ' · ' + esc(r.caregiver) : ''}` : '-';
                 const danger = r.danger ? ' <span class="badge badge-bad">60분 초과</span>' : '';
                 return `<tr><td><span class="badge ${cls}">${label}</span>${danger}</td><td><b>${esc(r.name)}</b></td><td>${tag}</td><td>${plan}</td><td>${esc(r.note)}</td></tr>`;
             }).join('') || '<tr><td colspan="5" style="color:#94A3B8;">해당하는 건이 없습니다</td></tr>';
@@ -283,6 +283,27 @@
             return `<div style="margin-top:10px;padding:12px 16px;border-radius:10px;background:${color[0]};color:${color[1]};font-size:14.5px;line-height:1.7;">` +
                 `예상 자동청구율 <b style="font-size:20px;">${a.rate}%</b> (자동 ${a.auto}건 / 청구 대상 ${a.total}건) · ${pay}${help}<br>` +
                 `<span style="font-size:12.5px;color:#475569;">직접 입력으로 볼 건 ${a.direct}건(태그 없음), 종료 미전송 ${a.end_missing}건. 돌봄케어 방문 계획 기준의 예상치이며 실제 값은 공단 롱텀의 청구 현황에서 확인하세요.</span></div>`;
+        }
+        function evalIndexHtml(e) {
+            if (!e) return '';
+            const tone = { '우수': ['#ECFDF5', '#047857'], '양호': ['#FFFBEB', '#B45309'], '보통': ['#FFFBEB', '#B45309'], '미흡': ['#FEF2F2', '#B91C1C'] }[e.level];
+            const t = e.target;
+            const next = t
+                ? `다음 등급 <b>${t.label} ${t.points}점</b>(참여율 ${t.part_min}% · 청구활용률 ${t.use_min}% 이상)까지: ` +
+                  `${t.need_caregivers ? `태그를 한 번도 전송하지 않은 요양보호사 <b>${t.need_caregivers}명</b>이 더 참여` : '참여율은 충족'}, ` +
+                  `${t.need_visits ? `시작·종료가 모두 전송된 건 <b>${t.need_visits}건</b> 더` : '청구활용률은 충족'}`
+                : '가장 높은 등급 기준을 충족합니다.';
+            const rows = e.caregivers.map(c => {
+                const cls = !c.tagged ? 'badge-bad' : (c.no_tag || c.end_missing) ? 'badge-warn' : 'badge-ok';
+                const state = !c.tagged ? '태그 미전송' : (c.no_tag || c.end_missing) ? '확인' : '정상';
+                return `<tr><td><b>${esc(c.name)}</b></td><td>${c.visits}건</td><td>${c.auto}건</td><td>${c.no_tag}건</td><td>${c.end_missing}건</td><td><span class="badge ${cls}">${state}</span></td></tr>`;
+            }).join('');
+            return `<div style="margin-top:10px;padding:12px 16px;border-radius:10px;background:${tone[0]};color:${tone[1]};font-size:14.5px;line-height:1.7;">` +
+                `공단 평가 <b>지표 17 (RFID 활용, 3점)</b> 예상 <b style="font-size:20px;">${esc(e.level)} ${e.points}점</b><br>` +
+                `요양보호사 참여율 <b>${e.participation_rate}%</b> (${e.caregiver_total}명 중 ${e.participating}명) · 청구활용률 <b>${e.use_rate}%</b> (${e.auto}건 / ${e.visit_total}건)<br>${next}` +
+                `<div style="font-size:12.5px;color:#475569;margin-top:6px;">우수는 참여율 95%·청구활용률 90% 이상, 양호 90%·85%, 보통 85%·80%이며 두 기준을 모두 넘어야 합니다(공단 2026 방문요양 평가 매뉴얼). ` +
+                `올린 파일의 기간과 돌봄케어 방문 계획 기준의 예상치이고, 실제 평가는 공단 전산 자료로 하며 지표 적용 기간은 공단 공지를 확인하세요.</div></div>` +
+                `<div style="overflow-x:auto;margin-top:10px;"><table class="res-table"><thead><tr><th>요양보호사</th><th>방문</th><th>자동 전송</th><th>태그 없음</th><th>종료 없음</th><th>상태</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         }
         function setFilter(k) { filter = k; renderResult(); }
     </script>

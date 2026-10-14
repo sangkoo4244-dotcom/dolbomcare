@@ -71,6 +71,7 @@ def ctx(tmp_path):
             s.close()
 
     app.dependency_overrides[get_db] = override
+    app.state.Session = Session
     return TestClient(app)
 
 
@@ -140,6 +141,37 @@ def test_auto_rate_follows_nhis_formula(ctx):
 
     # 종료 시각 열을 지정하지 않으면 계산하지 않는다
     assert ctx.post("/api/v1/rfid-compare/compare", json={"rows": rows, "resident_col": 0, "start_col": 1}, headers=MGR).json()["auto_rate"] is None
+
+
+def test_eval_index_scores_participation_and_use_rate_and_names_who_to_follow_up(ctx):
+    db = ctx.app.state.Session()
+    db.add(models.User(id=3, email="c3@e.com", hashed_password="x", full_name="이요양", role="caregiver", center_id=1))
+    # 이요양은 김일에게 16시 방문이 있지만 태그를 찍지 않았다
+    db.add(models.Schedule(id=4, caregiver_id=3, resident_id=1, center_id=1, scheduled_date=DAY + timedelta(hours=16), duration_minutes=60, status="scheduled"))
+    db.commit()
+    db.close()
+    rows = [["김일", f"{D} 09:10", f"{D} 10:08"], ["이이", f"{D} 14:00", f"{D} 15:00"]]  # 박삼(김요양)·김일 16시(이요양)는 태그 없음
+    body = {"rows": rows, "resident_col": 0, "start_col": 1, "end_col": 2}
+    e = ctx.post("/api/v1/rfid-compare/compare", json=body, headers=MGR).json()["eval_index"]
+    # 요양보호사 2명 중 1명만 참여 50%, 청구 대상 4건 중 자동 2건 50% -> 미흡, 다음은 보통(85%·80%)
+    assert (e["caregiver_total"], e["participating"], e["participation_rate"]) == (2, 1, 50.0)
+    assert (e["visit_total"], e["auto"], e["use_rate"], e["level"], e["points"]) == (4, 2, 50.0, "미흡", 0)
+    assert e["target"]["label"] == "보통" and e["target"]["need_caregivers"] == 1 and e["target"]["need_visits"] == 2
+    first = e["caregivers"][0]  # 문제가 많은 요양보호사부터
+    assert first["name"] in ("김요양", "이요양") and {c["name"]: c["tagged"] for c in e["caregivers"]} == {"김요양": 2, "이요양": 0}
+
+    # 전부 태그를 찍으면 우수(3점), 더 올릴 등급이 없다
+    rows += [["박삼", f"{D} 11:00", f"{D} 12:00"], ["김일", f"{D} 16:00", f"{D} 17:00"]]
+    e = ctx.post("/api/v1/rfid-compare/compare", json={**body, "rows": rows}, headers=MGR).json()["eval_index"]
+    assert (e["participation_rate"], e["use_rate"], e["level"], e["points"], e["target"]) == (100.0, 100.0, "우수", 3, None)
+
+    # 참여율은 95%를 넘어도 청구활용률이 90% 미만이면 우수가 아니다: 종료 전송이 빠진 건이 있는 경우
+    rows[3][2] = ""
+    e = ctx.post("/api/v1/rfid-compare/compare", json={**body, "rows": rows}, headers=MGR).json()["eval_index"]
+    assert (e["participation_rate"], e["use_rate"], e["level"]) == (100.0, 75.0, "미흡")
+
+    # 종료 시각 열이 없으면 계산하지 않는다
+    assert ctx.post("/api/v1/rfid-compare/compare", json={"rows": rows, "resident_col": 0, "start_col": 1}, headers=MGR).json()["eval_index"] is None
 
 
 def test_compare_needs_readable_rows_and_manager(ctx):
