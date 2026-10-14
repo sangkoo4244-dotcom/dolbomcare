@@ -379,24 +379,69 @@ async def update_resident(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"이용자 수정 중 오류: {str(e)}")
 
+# 이용자에 딸린 기록을 건수로 알려 줄 때 쓰는 이름 (없는 테이블은 "기타 기록"으로 묶는다)
+RELATED_LABELS = {
+    "daily_records": "방문 기록", "billing_records": "청구", "schedules": "방문 일정", "resident_messages": "보호자 메시지",
+    "resident_media": "사진첩", "care_plans": "급여제공계획", "counselings": "상담 기록", "needs_assessments": "욕구사정",
+    "risk_assessments": "낙상·욕창·인지 평가", "copay_invoices": "본인부담금", "incident_reports": "사고·응급 보고",
+    "handover_notes": "인수인계", "service_evaluations": "결과평가", "case_conferences": "사례회의",
+    "resident_notices": "이용자 안내", "health_metrics": "건강 지표",
+}
+
+
+def _resident_related_tables():
+    from app.database import Base
+    # 자식 테이블부터 지워야 PostgreSQL의 외래키(FK) 제약을 어기지 않는다
+    return [t for t in reversed(Base.metadata.sorted_tables) if "resident_id" in t.columns and t.name != "residents"]
+
+
+def _count_related(db: Session, resident_id: int) -> dict:
+    counts = {}
+    for t in _resident_related_tables():
+        n = db.query(t).filter(t.c.resident_id == resident_id).count()
+        if n:
+            counts[t.name] = n
+    return counts
+
+
+def _describe(counts: dict) -> str:
+    parts, other = [], 0
+    for name, n in counts.items():
+        if name in RELATED_LABELS:
+            parts.append(f"{RELATED_LABELS[name]} {n}건")
+        else:
+            other += n
+    if other:
+        parts.append(f"기타 기록 {other}건")
+    return ", ".join(parts)
+
+
 @router.delete("/{resident_id}")
 async def delete_resident(
     resident_id: int,
-    user_role: str,
+    force: bool = False,
     db: Session = Depends(get_db),
-    _: User = Depends(require_manager)
+    manager: User = Depends(require_manager)
 ):
-    """이용자 삭제 (센터장만 가능)"""
-    # 권한 검증
-    if user_role not in ["center_manager"]:
-        raise HTTPException(status_code=403, detail="이용자 삭제 권한이 없습니다 (센터장만 삭제 가능)")
-
-    resident = db.query(Resident).filter(Resident.id == resident_id).first()
+    """이용자 삭제 (센터장만 가능, 자기 센터 이용자만).
+    방문 기록·청구 등 딸린 기록이 있으면 기본적으로 삭제하지 않고 무엇이 있는지 알려 준다(409).
+    force=true일 때만 딸린 기록까지 함께 지운다 (복구 불가)."""
+    resident = db.query(Resident).filter(Resident.id == resident_id, Resident.center_id == manager.center_id).first()
     if not resident:
-        raise HTTPException(status_code=404, detail="Resident not found")
+        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+
+    counts = _count_related(db, resident_id)
+    if counts and not force:
+        raise HTTPException(status_code=409, detail={"message": f"이 이용자에게 {_describe(counts)}이 있습니다", "related": counts})
 
     try:
         resident_name = resident.name
+        from app.models import CarePlan, CarePlanAck
+        plan_ids = [p for (p,) in db.query(CarePlan.id).filter(CarePlan.resident_id == resident_id).all()]
+        if plan_ids:
+            db.query(CarePlanAck).filter(CarePlanAck.plan_id.in_(plan_ids)).delete(synchronize_session=False)
+        for t in _resident_related_tables():
+            db.execute(t.delete().where(t.c.resident_id == resident_id))
         db.delete(resident)
         db.commit()
 

@@ -1931,21 +1931,27 @@
             }
         }
 
-        function deleteResident(id) {
-            if (confirm('이용자를 삭제하시겠습니까?')) {
-                fetch(`${API_URL}/residents/${id}`, {
-                    method: 'DELETE'
-                }).then(response => {
-                    if (response.ok) {
-                        alert('이용자가 삭제되었습니다');
-                        loadResidents();
-                    } else {
-                        alert('삭제에 실패했습니다');
-                    }
-                }).catch(error => {
-                    console.error('삭제 오류:', error);
-                    alert('삭제 중 오류가 발생했습니다');
-                });
+        // 딸린 기록(방문 기록·청구 등)이 있으면 서버가 409로 내용을 알려 준다 - 확인을 한 번 더 받아야만 기록까지 함께 지운다
+        async function deleteResident(id) {
+            if (!confirm('이용자를 삭제하시겠습니까?')) return;
+            try {
+                let response = await fetch(`${API_URL}/residents/${id}`, { method: 'DELETE' });
+                if (response.status === 409) {
+                    const err = await response.json().catch(() => ({}));
+                    const msg = (err.detail && err.detail.message) || '딸린 기록이 있습니다';
+                    if (!confirm(`${msg}.\n\n삭제하면 이 기록들도 모두 함께 지워지며 복구할 수 없습니다.\n정말 삭제하시겠습니까?`)) return;
+                    response = await fetch(`${API_URL}/residents/${id}?force=true`, { method: 'DELETE' });
+                }
+                if (response.ok) {
+                    alert('이용자가 삭제되었습니다');
+                    loadResidents();
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    alert('삭제에 실패했습니다: ' + (typeof err.detail === 'string' ? err.detail : (err.detail && err.detail.message) || response.status));
+                }
+            } catch (error) {
+                console.error('삭제 오류:', error);
+                alert('삭제 중 오류가 발생했습니다');
             }
         }
 
