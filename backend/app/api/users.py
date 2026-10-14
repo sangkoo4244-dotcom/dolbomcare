@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.schemas import LoginRequest, LoginResponse, UserCreate, UserResponse
 from app.models import User, Center, PasswordResetToken
@@ -54,7 +55,8 @@ async def register(user_create: UserCreate, db: Session = Depends(get_db), manag
         raise HTTPException(status_code=400, detail="역할은 요양사 또는 센터장만 가능합니다")
     if len(user_create.password) < 8:
         raise HTTPException(status_code=400, detail="비밀번호는 8자 이상이어야 합니다")
-    db_user = db.query(User).filter(User.email == user_create.email).first()
+    # 대소문자만 다른 이메일(Kim@x.com / kim@x.com)도 같은 계정으로 보고 중복 처리한다
+    db_user = db.query(User).filter(func.lower(User.email) == user_create.email.lower()).first()
     if db_user:
         raise HTTPException(status_code=400, detail="이미 등록된 이메일입니다")
 

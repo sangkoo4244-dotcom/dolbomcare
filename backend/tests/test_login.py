@@ -137,3 +137,11 @@ def test_create_rejects_short_password_and_unknown_role(tmp_path):
     assert client.post("/api/v1/users/register", json=short, headers=manager_token()).status_code == 400
     bad_role = {"email": "new4@test.com", "password": "first-pass-1234", "full_name": "x", "role": "guardian"}
     assert client.post("/api/v1/users/register", json=bad_role, headers=manager_token()).status_code == 400
+
+
+def test_register_rejects_email_differing_only_by_case(tmp_path):
+    client = make_staff_client(tmp_path)
+    body = {"email": "Case.Dup@test.com", "password": "first-pass-1234", "full_name": "신규", "role": "caregiver"}
+    assert client.post("/api/v1/users/register", json=body, headers=manager_token()).status_code == 200
+    again = client.post("/api/v1/users/register", json={**body, "email": "case.dup@test.com"}, headers=manager_token())
+    assert again.status_code == 400
