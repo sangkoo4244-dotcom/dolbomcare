@@ -272,6 +272,12 @@
         .health-critical { color: #DC2626; }
         .btn-detail { padding: 10px 18px; border: 1px solid #D6D0C4; border-radius: 10px; background: #fff; font-size: 14px; font-weight: 600; color: #374151; cursor: pointer; }
         .btn-detail:hover { border-color: #B5532F; color: #B5532F; background: #fff; }
+        /* 관리 버튼: 글자가 세로로 쪼개지지 않게 한 줄 유지하고, 칸이 좁으면 버튼 단위로 줄바꿈한다 */
+        .btn-detail { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
+        #residentsTable { overflow-x: auto; }
+        .ptable td:nth-child(3) { min-width: 170px; word-break: keep-all; overflow-wrap: break-word; }
+        .ptable td:last-child { min-width: 260px; }
+        .ptable td:last-child .action-buttons { flex-wrap: wrap; justify-content: center; max-width: 260px; margin: 0 auto; }
         .btn-kebab { width: 36px; height: 36px; border: none; background: transparent; color: #6B7280; cursor: pointer; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
         .btn-kebab svg { width: 18px; height: 18px; }
         .btn-kebab:hover { background: #FEE2E2; color: #B91C1C; }
@@ -472,6 +478,11 @@
         .brand-panel p { font-size: 14px; font-weight: 700; line-height: 1.5; }
 
         .layout-grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+        /* 표 칸이 9개라 오른쪽 패널과 나란히 두면 글자가 쪼개진다: 1600px 이하에서는 패널을 표 아래로 내려 표가 전체 폭을 쓰게 한다 */
+        @media (max-width: 1600px) {
+            .layout-grid { grid-template-columns: minmax(0, 1fr) !important; }
+            .ptable th:nth-child(2), .ptable td:nth-child(2) { display: none; } /* 순번 열은 숨겨 관리 버튼이 잘리지 않게 한다 */
+        }
         @media (max-width: 1100px) { .layout-grid { grid-template-columns: 1fr; } .summary-row { grid-template-columns: repeat(2, minmax(0,1fr)); } }
         /* 휴대폰: 목록 카드가 좌우로 좁아지지 않게 하고, 관리 버튼은 줄바꿈해서 카드 안에 담는다 */
         @media (max-width: 700px) {
