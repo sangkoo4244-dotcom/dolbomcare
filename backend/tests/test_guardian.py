@@ -165,3 +165,18 @@ def test_caregiver_cannot_issue_invite_for_resident_in_another_center(setup):
     db.close()
     response = setup.post("/api/v1/guardian/invites", json={"resident_id": 3}, headers=CAREGIVER)
     assert response.status_code == 404
+
+
+def test_approval_fills_empty_guardian_contact_on_resident_but_keeps_existing(setup):
+    code = issue_code(setup)
+    signup(setup, code)
+    db = setup.Session()
+    resident = db.query(models.Resident).filter(models.Resident.id == 1).first()
+    resident.guardian_name, resident.guardian_phone = None, "010-9999-9999"
+    db.commit(); db.close()
+    assert approve_latest(setup).status_code == 200
+    db = setup.Session()
+    resident = db.query(models.Resident).filter(models.Resident.id == 1).first()
+    guardian = db.query(models.User).filter(models.User.email == "guardian@test.com").first()
+    assert resident.guardian_name == guardian.full_name
+    assert resident.guardian_phone == "010-9999-9999"  # 이미 적어 둔 연락처는 덮어쓰지 않는다

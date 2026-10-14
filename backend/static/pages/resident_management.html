@@ -619,6 +619,7 @@
                         </select>
                         <button type="button" class="btn-ghost" onclick="resetFilters()">초기화</button>
                         <button type="button" class="btn-ghost" onclick="exportResidentsCsv()">⬇ 엑셀 다운로드</button>
+                        <button type="button" class="btn-ghost" id="importBtn" style="display:none;" onclick="openImport()">⬆ 엑셀로 일괄 등록</button>
                         <button type="button" class="btn-teal" onclick="showAddModal()">+ 이용자 등록</button>
                     </div>
                     <div id="residentsTable" class="empty-state">
@@ -942,6 +943,7 @@
             }
 
             currentUser = user;
+            if (user.role === 'center_manager') document.getElementById('importBtn').style.display = '';
             document.getElementById('userName').textContent = user.full_name || '사용자';
             document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
             document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
@@ -1169,6 +1171,109 @@
             }
             btns += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="currentPage++;renderPage()">›</button><button ${currentPage === totalPages ? 'disabled' : ''} onclick="currentPage=${totalPages};renderPage()">»</button>`;
             document.getElementById('pagerBtns').innerHTML = btns;
+        }
+
+        // 이용자 일괄 등록(센터장): CSV(엑셀에서 "CSV로 저장")를 올리면 줄마다 검사해 보여 주고, 문제가 없을 때만 등록한다
+        const IMPORT_HEADER = ['이름', '성별', '생년월일', '요양등급', '소득분류', '인정번호', '인정시작', '인정종료', '주소', '보호자', '보호자연락처'];
+        let importRows = [];
+
+        function parseCsv(text) {
+            text = text.replace(/^\uFEFF/, '');
+            const rows = []; let row = [], cell = '', quoted = false;
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
+                if (quoted) {
+                    if (ch === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+                    else if (ch === '"') quoted = false;
+                    else cell += ch;
+                } else if (ch === '"') quoted = true;
+                else if (ch === ',') { row.push(cell); cell = ''; }
+                else if (ch === '\n' || ch === '\r') {
+                    if (ch === '\r' && text[i + 1] === '\n') i++;
+                    row.push(cell); cell = '';
+                    if (row.some(c => c.trim() !== '')) rows.push(row);
+                    row = [];
+                } else cell += ch;
+            }
+            row.push(cell);
+            if (row.some(c => c.trim() !== '')) rows.push(row);
+            return rows;
+        }
+
+        function downloadImportTemplate() {
+            const sample = ['홍길동', '여', '1945-03-02', '3', '일반', 'L1234567890', '2026-01-01', '2027-12-31', '서울시 송파구 올림픽로 300', '홍자녀', '010-1234-5678'];
+            const csv = [IMPORT_HEADER, sample].map(cols => cols.map(c => `"${c}"`).join(',')).join('\r\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
+            a.download = '이용자_일괄등록_양식.csv';
+            a.click();
+        }
+
+        function openImport() {
+            let m = document.getElementById('importModal');
+            if (!m) {
+                m = document.createElement('div');
+                m.id = 'importModal';
+                m.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;padding:16px;';
+                m.innerHTML = `
+                    <div style="background:#fff;border-radius:16px;padding:22px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;">
+                        <h2 style="margin:0 0 6px;font-size:20px;font-weight:800;">이용자 일괄 등록</h2>
+                        <div style="font-size:13.5px;color:#475569;line-height:1.7;">
+                            1. 양식을 내려받아 엑셀로 이용자를 적습니다 (이름·생년월일·요양등급은 꼭 필요).<br>
+                            2. 엑셀에서 <b>"다른 이름으로 저장 → CSV UTF-8"</b>로 저장해 올립니다. 이용자 목록의 "엑셀 다운로드" 파일도 그대로 올릴 수 있습니다.<br>
+                            3. 줄마다 검사한 결과를 확인하고, 문제가 없으면 등록합니다.
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;">
+                            <button type="button" class="btn-ghost" onclick="downloadImportTemplate()">양식 내려받기</button>
+                            <input id="importFile" type="file" accept=".csv,text/csv" onchange="onImportFile(this.files[0])">
+                        </div>
+                        <div id="importResult" style="font-size:14px;line-height:1.7;"></div>
+                        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+                            <button type="button" class="btn-ghost" onclick="document.getElementById('importModal').style.display='none'">닫기</button>
+                            <button type="button" class="btn-teal" id="importSaveBtn" disabled onclick="saveImport()">등록하기</button>
+                        </div>
+                    </div>`;
+                document.body.appendChild(m);
+            }
+            document.getElementById('importResult').innerHTML = '';
+            document.getElementById('importFile').value = '';
+            document.getElementById('importSaveBtn').disabled = true;
+            importRows = [];
+            m.style.display = 'flex';
+        }
+
+        async function onImportFile(file) {
+            const box = document.getElementById('importResult');
+            const saveBtn = document.getElementById('importSaveBtn');
+            saveBtn.disabled = true;
+            if (!file) return;
+            const table = parseCsv(await file.text());
+            if (table.length < 2) { box.innerHTML = '<span style="color:#DC2626;">내용이 없습니다. 첫 줄은 제목, 둘째 줄부터 이용자를 적어 주세요.</span>'; return; }
+            const header = table[0].map(h => h.trim());
+            if (!header.includes('이름')) { box.innerHTML = '<span style="color:#DC2626;">첫 줄에 "이름" 제목이 없습니다. 양식을 내려받아 사용해 주세요.</span>'; return; }
+            importRows = table.slice(1).map(cols => Object.fromEntries(header.map((h, i) => [h, (cols[i] || '').trim()])));
+            box.textContent = '검사하는 중입니다...';
+            const r = await fetch(`${API_URL}/residents/import`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: importRows, dry_run: true }) });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { box.innerHTML = `<span style="color:#DC2626;">${typeof d.detail === 'string' ? d.detail : '검사에 실패했습니다'}</span>`; return; }
+            if (d.errors.length) {
+                box.innerHTML = `<b style="color:#DC2626;">${d.errors.length}줄에 문제가 있어 등록할 수 없습니다.</b> 고친 뒤 다시 올려 주세요.<ul style="margin:6px 0 0;padding-left:18px;">` +
+                    d.errors.slice(0, 30).map(e => `<li>${e.row}번째 줄${e.name ? ` (${e.name.replace(/</g, '&lt;')})` : ''}: ${e.message}</li>`).join('') + '</ul>';
+            } else {
+                box.innerHTML = `<b style="color:#15803D;">${d.ok_count}명 모두 등록할 수 있습니다.</b> "등록하기"를 누르면 저장됩니다.`;
+                saveBtn.disabled = false;
+            }
+        }
+
+        async function saveImport() {
+            const saveBtn = document.getElementById('importSaveBtn');
+            saveBtn.disabled = true;
+            const r = await fetch(`${API_URL}/residents/import`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: importRows, dry_run: false }) });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok || !d.saved) { alert((typeof d.detail === 'string' && d.detail) || '등록에 실패했습니다. 파일을 다시 확인해 주세요'); saveBtn.disabled = false; return; }
+            document.getElementById('importModal').style.display = 'none';
+            alert(`${d.ok_count}명을 등록했습니다`);
+            loadResidents();
         }
 
         function exportResidentsCsv() {

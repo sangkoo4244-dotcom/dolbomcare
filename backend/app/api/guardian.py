@@ -157,6 +157,13 @@ def approve_request(request_id: int, db: Session = Depends(get_db), manager: Use
     invite = _get_submitted(db, request_id, manager)
     resident = db.query(Resident).filter(Resident.id == invite.resident_id).first()
     resident.guardian_id = invite.guardian_id
+    # 이용자 정보의 보호자 이름·연락처가 비어 있으면 가입한 보호자 계정의 값으로 채운다 (같은 정보를 두 번 입력하지 않게)
+    guardian_user = db.query(User).filter(User.id == invite.guardian_id).first()
+    if guardian_user:
+        if not resident.guardian_name:
+            resident.guardian_name = guardian_user.full_name
+        if not resident.guardian_phone:
+            resident.guardian_phone = guardian_user.phone
     invite.status = "approved"
     db.commit()
     return {"status": "success", "message": "보호자를 연결했습니다"}

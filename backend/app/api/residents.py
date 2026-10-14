@@ -217,6 +217,101 @@ def parse_recognition_dates(start: str | None, end: str | None):
         raise HTTPException(status_code=400, detail="인정 종료일이 시작일보다 빠를 수 없습니다")
     return start_date, end_date
 
+GRADE_WORDS = {"인지지원등급": None, "인지지원": None, "1등급": 1, "2등급": 2, "3등급": 3, "4등급": 4, "5등급": 5}
+CLIENT_TYPES = ("일반", "차상위계층", "기초생활보장", "의료급여")
+
+
+class ImportRows(BaseModel):
+    rows: list[dict]
+    dry_run: bool = True  # true면 검사만 하고 저장하지 않는다
+
+
+def _clean_date(value):
+    value = (value or "").strip().replace(".", "-").replace("/", "-")
+    if value.isdigit() and len(value) == 8:
+        value = f"{value[:4]}-{value[4:6]}-{value[6:]}"
+    return value
+
+
+def _check_import_row(raw: dict):
+    """한 줄을 검사해 (저장할 값, 오류 문구)를 돌려준다."""
+    get = lambda k: str(raw.get(k, "") or "").strip()
+    name = get("이름")
+    if not name:
+        return None, "이름이 없습니다"
+    gender = get("성별")
+    if gender and gender not in ("남", "여"):
+        return None, "성별은 남 또는 여로 적어 주세요"
+    birth = _clean_date(get("생년월일"))
+    birth_date = None
+    if birth:
+        try:
+            birth_date = date.fromisoformat(birth)
+        except ValueError:
+            return None, "생년월일은 2020-01-31 형식으로 적어 주세요"
+    age = None
+    if birth_date:
+        today = date.today()
+        age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+    elif get("나이").isdigit():
+        age = int(get("나이"))
+    if age is None:
+        return None, "생년월일 또는 나이가 필요합니다"
+    grade_text = get("요양등급")
+    if grade_text.isdigit():
+        grade_text += "등급"
+    if grade_text not in GRADE_WORDS:
+        return None, "요양등급은 1~5등급 또는 인지지원등급으로 적어 주세요"
+    client_type = get("소득분류") or "일반"
+    if client_type not in CLIENT_TYPES:
+        return None, "소득분류는 일반, 차상위계층, 기초생활보장, 의료급여 중 하나로 적어 주세요"
+    start, end = get("인정시작"), get("인정종료")
+    period = get("인정기간")
+    if period and "~" in period and not (start or end):
+        start, end = [p.strip() for p in period.split("~", 1)]
+    try:
+        recognition_start, recognition_end = parse_recognition_dates(_clean_date(start) or None, _clean_date(end) or None)
+    except HTTPException as e:
+        return None, e.detail
+    return {
+        "name": name, "gender": gender or None, "birth_date": birth_date, "age": age, "care_grade": GRADE_WORDS[grade_text],
+        "client_type": client_type, "recognition_number": get("인정번호") or None,
+        "recognition_start": recognition_start, "recognition_end": recognition_end, "address": get("주소") or None,
+        "guardian_name": get("보호자") or None, "guardian_phone": get("보호자연락처") or None,
+    }, None
+
+
+@router.post("/import")
+def import_residents(body: ImportRows, db: Session = Depends(get_db), manager: User = Depends(require_manager)):
+    """이용자를 한꺼번에 등록한다 (센터장). 먼저 dry_run으로 검사해 줄마다 문제를 알려 주고,
+    문제가 하나도 없을 때만 저장한다 (일부만 저장되어 다시 올리면 중복되는 일을 막는다)."""
+    if not body.rows:
+        raise HTTPException(status_code=400, detail="올릴 이용자가 없습니다")
+    if len(body.rows) > 500:
+        raise HTTPException(status_code=400, detail="한 번에 500명까지 올릴 수 있습니다")
+    existing = {(r.name, r.birth_date) for r in db.query(Resident).filter(Resident.center_id == manager.center_id).all()}
+    seen, ok, errors = set(), [], []
+    for i, raw in enumerate(body.rows, start=2):  # 엑셀 줄 번호(1줄은 제목)
+        data, error = _check_import_row(raw)
+        if not error:
+            key = (data["name"], data["birth_date"])
+            if key in existing:
+                error = "이미 등록된 이용자입니다 (이름·생년월일 동일)"
+            elif key in seen:
+                error = "파일 안에 같은 이용자가 두 번 있습니다"
+            seen.add(key)
+        if error:
+            errors.append({"row": i, "name": str(raw.get("이름", "") or ""), "message": error})
+        else:
+            ok.append(data)
+    if errors or body.dry_run:
+        return {"status": "checked" if not errors else "has_errors", "ok_count": len(ok), "errors": errors, "saved": False}
+    for data in ok:
+        db.add(Resident(center_id=manager.center_id, admission_date=datetime.now(), health_status="stable", **data))
+    db.commit()
+    return {"status": "saved", "ok_count": len(ok), "errors": [], "saved": True}
+
+
 @router.post("/")
 async def create_resident(
     resident_data: ResidentCreate,
@@ -228,13 +323,16 @@ async def create_resident(
     if actor.role not in ["center_manager", "caregiver"]:
         raise HTTPException(status_code=403, detail="이용자 추가 권한이 없습니다")
 
-    # 센터 존재 여부 확인
+    # 자기 센터에만 등록할 수 있다
+    if resident_data.center_id != actor.center_id:
+        raise HTTPException(status_code=403, detail="다른 센터에는 이용자를 등록할 수 없습니다")
     center = db.query(Center).filter(Center.id == resident_data.center_id).first()
     if not center:
         raise HTTPException(status_code=404, detail="센터를 찾을 수 없습니다")
 
-    # 동일 이름/생년월일 중복 확인
+    # 같은 센터 안에서 동일 이름/생년월일 중복 확인 (다른 센터의 같은 이름과는 무관하다)
     existing = db.query(Resident).filter(
+        Resident.center_id == actor.center_id,
         Resident.name == resident_data.name,
         Resident.birth_date == (date.fromisoformat(resident_data.birth_date) if resident_data.birth_date else None)
     ).first()
