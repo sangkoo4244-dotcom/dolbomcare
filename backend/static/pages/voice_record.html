@@ -817,6 +817,10 @@
             if (isRecording) toggleVoiceRecording();
             document.querySelectorAll('.quick-tag').forEach(b => b.classList.remove('active'));
             clearSignature();
+            // 저장·초기화 후에는 이전 이용자의 자동 채우기 안내와 제안 칩을 치운다
+            document.getElementById('prefillBar').style.display = 'none';
+            prefillData = null;
+            renderItemSuggest();
         }
 
         function setDefaultVisitDateTime() {
