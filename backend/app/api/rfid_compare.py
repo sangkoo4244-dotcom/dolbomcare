@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -26,7 +27,37 @@ async def parse_file(file: UploadFile = File(...), manager: User = Depends(requi
         raise HTTPException(status_code=400, detail=str(e))
     if len(rows) < 2:
         raise HTTPException(status_code=400, detail="내용이 없습니다. 첫 줄은 제목, 둘째 줄부터 내용이어야 합니다")
-    return {"headers": [h.strip() for h in rows[0]], "rows": rows[1:], "row_count": len(rows) - 1}
+    if len(rows) > 2 and _is_sub_header(rows[1]):
+        headers, body = _merge_headers(rows[0], rows[1]), rows[2:]
+    else:
+        headers, body = [h.strip() for h in rows[0]], rows[1:]
+    return {"headers": headers, "rows": body, "row_count": len(body)}
+
+
+def _is_sub_header(row):
+    """공단 전송내역 화면처럼 '급여계약통보서 > 시작/종료', '서비스제공 > 시작/종료'로 제목이 두 줄인 파일인지 본다.
+    둘째 줄이 시작·종료 같은 글자뿐이고 숫자가 하나도 없으면 제목 줄로 본다."""
+    cells = [c.strip() for c in row if c and c.strip()]
+    if not cells or any(re.search(r"\d", c) for c in cells):
+        return False
+    return sum(1 for c in cells if "시작" in c or "종료" in c) >= 2
+
+
+def _merge_headers(top, sub):
+    """묶음 제목(병합된 셀은 첫 칸에만 글자가 있음)을 아래 줄 제목 앞에 붙인다: '서비스제공 시작'."""
+    merged, group = [], None
+    for i in range(max(len(top), len(sub))):
+        t = (top[i] if i < len(top) else "").strip()
+        s = (sub[i] if i < len(sub) else "").strip()
+        if t and s:
+            group = t
+            merged.append(f"{t} {s}")
+        elif s:
+            merged.append(f"{group} {s}" if group else s)
+        else:
+            group = None
+            merged.append(t)
+    return merged
 
 
 class CompareRequest(BaseModel):
@@ -36,6 +67,7 @@ class CompareRequest(BaseModel):
     end_col: int | None = None
     date_col: int | None = None
     caregiver_col: int | None = None
+    use_col: int | None = None  # 공단 전송내역 화면의 '사용여부'(사용/미사용)
     tolerance_minutes: int = 30
 
 
@@ -43,6 +75,11 @@ def _cell(row, idx):
     if idx is None or idx < 0 or idx >= len(row):
         return ""
     return (row[idx] or "").strip()
+
+
+def _person(value):
+    """공단 화면의 '수급자명(서명)'·'요양요원(서명)' 칸처럼 이름 뒤에 괄호나 줄바꿈이 붙은 값에서 이름만 남긴다."""
+    return re.split(r"[\(\（\n]", value, maxsplit=1)[0].strip()
 
 
 @router.post("/compare")
@@ -58,7 +95,7 @@ def compare(body: CompareRequest, db: Session = Depends(get_db), manager: User =
 
     tags, bad_rows = [], []
     for i, row in enumerate(body.rows, start=2):  # 엑셀 줄 번호
-        name = _cell(row, body.resident_col)
+        name = _person(_cell(row, body.resident_col))
         date_hint = _cell(row, body.date_col) if body.date_col is not None else None
         start = to_datetime(_cell(row, body.start_col), date_hint)
         end = to_datetime(_cell(row, body.end_col), date_hint) if body.end_col is not None else None
@@ -68,7 +105,9 @@ def compare(body: CompareRequest, db: Session = Depends(get_db), manager: User =
             continue
         if end is not None and end < start:
             end = None
-        tags.append({"row": i, "name": name, "start": start, "end": end, "caregiver": _cell(row, body.caregiver_col) if body.caregiver_col is not None else ""})
+        tags.append({"row": i, "name": name, "start": start, "end": end,
+                     "caregiver": _person(_cell(row, body.caregiver_col)) if body.caregiver_col is not None else "",
+                     "unused": body.use_col is not None and "미사용" in _cell(row, body.use_col).replace(" ", "")})
     if not tags:
         raise HTTPException(status_code=400, detail="읽을 수 있는 전송내역이 없습니다. 열 지정을 확인해 주세요")
 
@@ -91,7 +130,7 @@ def compare(body: CompareRequest, db: Session = Depends(get_db), manager: User =
         row = {"row": t["row"], "name": t["name"], "tag_start": t["start"].strftime("%Y-%m-%d %H:%M"),
                "tag_end": t["end"].strftime("%H:%M") if t["end"] else None,
                "tag_minutes": int((t["end"] - t["start"]).total_seconds() // 60) if t["end"] else None,
-               "plan": None, "arrived": None, "note": ""}
+               "plan": None, "arrived": None, "note": "", "unused": t["unused"]}
         if not matches:
             row.update(status="unknown_resident", note="돌봄케어에 없는 이름입니다 (이름 표기를 확인하세요)")
             results.append(row)
@@ -128,6 +167,9 @@ def compare(body: CompareRequest, db: Session = Depends(get_db), manager: User =
         if body.end_col is not None and t["end"] is None:
             status = "time_diff"
             notes.append("종료 전송이 없습니다 (자동청구율에서 빠집니다)")
+        if t["unused"]:
+            status = "time_diff"
+            notes.append("공단에서 '미사용'으로 지정된 내역입니다 (직접 입력 건이라 자동청구율에서 빠집니다)")
         if t["caregiver"] and caregivers.get(best.caregiver_id) and t["caregiver"] != caregivers[best.caregiver_id]:
             notes.append(f"요양보호사 다름 (태그 {t['caregiver']} / 돌봄케어 {caregivers[best.caregiver_id]})")
             if status == "ok":
@@ -159,12 +201,13 @@ def _auto_rate(results, has_end_col):
     if not has_end_col:
         return None
     matched = [r for r in results if r["row"] is not None and r["plan"]]
-    direct = sum(1 for r in results if r["status"] == "no_tag")
-    end_missing = sum(1 for r in matched if not r["tag_end"])
-    total = len(matched) + direct
+    unused = sum(1 for r in matched if r.get("unused"))  # 공단에서 '미사용'으로 지정 = 시간을 직접 입력하는 건
+    direct = sum(1 for r in results if r["status"] == "no_tag") + unused
+    end_missing = sum(1 for r in matched if not r["tag_end"] and not r.get("unused"))
+    total = len(matched) + sum(1 for r in results if r["status"] == "no_tag")
     if total == 0:
         return None
-    auto = len(matched) - end_missing
+    auto = len(matched) - end_missing - unused
     rate = int(auto * 100 / total + 0.5)
     need = max(0, -(-total * 149 // 200) - auto)  # 반올림해서 75가 되는 최소 자동 건수(74.5% 이상)
     return {"total": total, "auto": auto, "direct": direct, "end_missing": end_missing,
@@ -191,13 +234,15 @@ def _eval_index(results, has_end_col):
         cid = r.get("caregiver_id")
         if cid is None:
             continue
-        s = stats.setdefault(cid, {"name": r.get("caregiver") or "(이름 없음)", "visits": 0, "tagged": 0, "auto": 0, "no_tag": 0, "end_missing": 0})
+        s = stats.setdefault(cid, {"name": r.get("caregiver") or "(이름 없음)", "visits": 0, "tagged": 0, "auto": 0, "no_tag": 0, "end_missing": 0, "unused": 0})
         s["visits"] += 1
         if r["status"] == "no_tag":
             s["no_tag"] += 1
         else:
             s["tagged"] += 1
-            if r["tag_end"]:
+            if r.get("unused"):
+                s["unused"] += 1
+            elif r["tag_end"]:
                 s["auto"] += 1
             else:
                 s["end_missing"] += 1
@@ -216,7 +261,7 @@ def _eval_index(results, has_end_col):
         target = {"label": label, "points": points, "part_min": part_min, "use_min": use_min,
                   "need_caregivers": max(0, _ceil_percent(part_min, n) - participating),
                   "need_visits": max(0, _ceil_percent(use_min, total) - auto)}
-    caregivers = sorted(stats.values(), key=lambda s: (-(s["no_tag"] + s["end_missing"]), s["name"]))
+    caregivers = sorted(stats.values(), key=lambda s: (-(s["no_tag"] + s["end_missing"] + s["unused"]), s["name"]))
     return {"caregiver_total": n, "participating": participating, "participation_rate": round(participating * 100 / n, 1),
             "visit_total": total, "auto": auto, "use_rate": round(auto * 100 / total, 1),
             "level": level[0], "points": level[1], "target": target, "caregivers": caregivers}

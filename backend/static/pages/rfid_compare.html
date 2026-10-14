@@ -154,6 +154,7 @@
                         <label>종료 시각<select id="mEnd"></select></label>
                         <label>날짜 (시각 열에 날짜가 없을 때만)<select id="mDate"></select></label>
                         <label>요양보호사 이름<select id="mCaregiver"></select></label>
+                        <label>사용여부 (공단 화면의 사용/미사용)<select id="mUse"></select></label>
                         <label>시간 차이 허용(분)<select id="mTol"><option value="10">10분</option><option value="20">20분</option><option value="30" selected>30분</option><option value="60">60분</option></select></label>
                     </div>
                     <div id="samplePreview" style="font-size:13px;color:#64748B;margin-bottom:10px;"></div>
@@ -214,9 +215,13 @@
             buildMapping();
         }
 
+        // 앞에 적은 단어일수록 우선한다 (공단 전송내역은 '급여계약통보서 시작'과 '서비스제공 시작'이 함께 있어 실제 태그 시각을 먼저 찾아야 한다)
         function guess(words) {
-            const i = headers.findIndex(h => words.some(w => h.replace(/\s/g, '').includes(w)));
-            return i >= 0 ? i : '';
+            for (const w of words) {
+                const i = headers.findIndex(h => h.replace(/\s/g, '').includes(w));
+                if (i >= 0) return i;
+            }
+            return '';
         }
 
         function buildMapping() {
@@ -228,8 +233,9 @@
                 return guess(words);
             };
             document.getElementById('mResident').innerHTML = options(pick('resident', ['수급자', '성명', '이용자', '이름']), false);
-            document.getElementById('mStart').innerHTML = options(pick('start', ['시작', '개시', '시작시', '태그시작']), false);
-            document.getElementById('mEnd').innerHTML = options(pick('end', ['종료', '완료', '종료시']), true);
+            document.getElementById('mStart').innerHTML = options(pick('start', ['서비스제공시작', '실제시작', '태그시작', '시작', '개시', '시작시']), false);
+            document.getElementById('mEnd').innerHTML = options(pick('end', ['서비스제공종료', '실제종료', '태그종료', '종료', '완료', '종료시']), true);
+            document.getElementById('mUse').innerHTML = options(pick('use', ['사용여부']), true);
             document.getElementById('mDate').innerHTML = options(pick('date', ['일자', '날짜', '서비스일']), true);
             document.getElementById('mCaregiver').innerHTML = options(pick('caregiver', ['요양보호', '요양요원', '종사자', '직원']), true);
             const sample = rows.slice(0, 3).map(r => r.slice(0, 8).map(esc).join(' | ')).join('<br>');
@@ -240,9 +246,9 @@
         async function runCompare() {
             const val = id => { const v = document.getElementById(id).value; return v === '' ? null : parseInt(v); };
             const body = { rows, resident_col: val('mResident'), start_col: val('mStart'), end_col: val('mEnd'), date_col: val('mDate'),
-                           caregiver_col: val('mCaregiver'), tolerance_minutes: parseInt(document.getElementById('mTol').value) };
+                           caregiver_col: val('mCaregiver'), use_col: val('mUse'), tolerance_minutes: parseInt(document.getElementById('mTol').value) };
             if (body.resident_col === null || body.start_col === null) { document.getElementById('compareMsg').textContent = '수급자 이름과 시작 시각 열을 골라 주세요'; return; }
-            try { localStorage.setItem(MAP_KEY, JSON.stringify({ headers, resident: body.resident_col, start: body.start_col, end: body.end_col ?? '', date: body.date_col ?? '', caregiver: body.caregiver_col ?? '' })); } catch (e) {}
+            try { localStorage.setItem(MAP_KEY, JSON.stringify({ headers, resident: body.resident_col, start: body.start_col, end: body.end_col ?? '', date: body.date_col ?? '', caregiver: body.caregiver_col ?? '', use: body.use_col ?? '' })); } catch (e) {}
             const msg = document.getElementById('compareMsg');
             msg.style.color = '#475569'; msg.textContent = '대조하는 중...';
             const r = await fetch(`/api/v1/rfid-compare/compare`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -294,16 +300,16 @@
                   `${t.need_visits ? `시작·종료가 모두 전송된 건 <b>${t.need_visits}건</b> 더` : '청구활용률은 충족'}`
                 : '가장 높은 등급 기준을 충족합니다.';
             const rows = e.caregivers.map(c => {
-                const cls = !c.tagged ? 'badge-bad' : (c.no_tag || c.end_missing) ? 'badge-warn' : 'badge-ok';
-                const state = !c.tagged ? '태그 미전송' : (c.no_tag || c.end_missing) ? '확인' : '정상';
-                return `<tr><td><b>${esc(c.name)}</b></td><td>${c.visits}건</td><td>${c.auto}건</td><td>${c.no_tag}건</td><td>${c.end_missing}건</td><td><span class="badge ${cls}">${state}</span></td></tr>`;
+                const cls = !c.tagged ? 'badge-bad' : (c.no_tag || c.end_missing || c.unused) ? 'badge-warn' : 'badge-ok';
+                const state = !c.tagged ? '태그 미전송' : (c.no_tag || c.end_missing || c.unused) ? '확인' : '정상';
+                return `<tr><td><b>${esc(c.name)}</b></td><td>${c.visits}건</td><td>${c.auto}건</td><td>${c.no_tag}건</td><td>${c.end_missing}건</td><td>${c.unused}건</td><td><span class="badge ${cls}">${state}</span></td></tr>`;
             }).join('');
             return `<div style="margin-top:10px;padding:12px 16px;border-radius:10px;background:${tone[0]};color:${tone[1]};font-size:14.5px;line-height:1.7;">` +
                 `공단 평가 <b>지표 17 (RFID 활용, 3점)</b> 예상 <b style="font-size:20px;">${esc(e.level)} ${e.points}점</b><br>` +
                 `요양보호사 참여율 <b>${e.participation_rate}%</b> (${e.caregiver_total}명 중 ${e.participating}명) · 청구활용률 <b>${e.use_rate}%</b> (${e.auto}건 / ${e.visit_total}건)<br>${next}` +
                 `<div style="font-size:12.5px;color:#475569;margin-top:6px;">우수는 참여율 95%·청구활용률 90% 이상, 양호 90%·85%, 보통 85%·80%이며 두 기준을 모두 넘어야 합니다(공단 2026 방문요양 평가 매뉴얼). ` +
                 `올린 파일의 기간과 돌봄케어 방문 계획 기준의 예상치이고, 실제 평가는 공단 전산 자료로 하며 지표 적용 기간은 공단 공지를 확인하세요.</div></div>` +
-                `<div style="overflow-x:auto;margin-top:10px;"><table class="res-table"><thead><tr><th>요양보호사</th><th>방문</th><th>자동 전송</th><th>태그 없음</th><th>종료 없음</th><th>상태</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+                `<div style="overflow-x:auto;margin-top:10px;"><table class="res-table"><thead><tr><th>요양보호사</th><th>방문</th><th>자동 전송</th><th>태그 없음</th><th>종료 없음</th><th>미사용</th><th>상태</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         }
         function setFilter(k) { filter = k; renderResult(); }
     </script>

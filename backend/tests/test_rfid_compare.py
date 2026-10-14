@@ -174,6 +174,38 @@ def test_eval_index_scores_participation_and_use_rate_and_names_who_to_follow_up
     assert ctx.post("/api/v1/rfid-compare/compare", json={"rows": rows, "resident_col": 0, "start_col": 1}, headers=MGR).json()["eval_index"] is None
 
 
+def test_nhis_screen_layout_two_row_headers_are_merged_and_single_row_is_unchanged(ctx):
+    # 공단 '요양요원 전송내역' 화면처럼 제목이 두 줄(묶음 제목 + 시작/종료)인 파일
+    two_row = [["구분", "수급자명(서명)", "급여계약통보서", "", "서비스제공", "", "사용여부"],
+               ["", "", "시작", "종료", "시작", "종료", ""],
+               ["자동전송", "김일(서명)", f"{D} 09:00", f"{D} 10:00", f"{D} 09:10", f"{D} 10:08", "사용"]]
+    r = ctx.post("/api/v1/rfid-compare/parse", files={"file": ("x.xlsx", make_xlsx(two_row))}, headers=MGR).json()
+    assert r["headers"] == ["구분", "수급자명(서명)", "급여계약통보서 시작", "급여계약통보서 종료", "서비스제공 시작", "서비스제공 종료", "사용여부"]
+    assert r["row_count"] == 1 and r["rows"][0][1] == "김일(서명)"
+    # 한 줄 제목은 그대로, 데이터 둘째 줄을 제목으로 착각하지 않는다
+    one_row = [["수급자", "시작", "종료"], ["김일", f"{D} 09:10", f"{D} 10:08"], ["이이", f"{D} 14:00", f"{D} 15:00"]]
+    r = ctx.post("/api/v1/rfid-compare/parse", files={"file": ("x.xlsx", make_xlsx(one_row))}, headers=MGR).json()
+    assert r["headers"] == ["수급자", "시작", "종료"] and r["row_count"] == 2
+
+
+def test_name_suffix_is_ignored_and_unused_rows_count_as_direct_input(ctx):
+    rows = [["김일(서명)", f"{D} 09:10", f"{D} 10:08", "사용"],
+            ["이이", f"{D} 14:00", f"{D} 15:00", "미 사용"]]  # 공단에서 미사용으로 지정 = 직접 입력
+    body = {"rows": rows, "resident_col": 0, "start_col": 1, "end_col": 2, "use_col": 3}
+    d = ctx.post("/api/v1/rfid-compare/compare", json=body, headers=MGR).json()
+    by = {x["name"]: x for x in d["rows"] if x["row"]}
+    assert by["김일"]["status"] == "ok"  # '(서명)'이 붙어도 같은 이용자로 맞춘다
+    assert by["이이"]["status"] == "time_diff" and "미사용" in by["이이"]["note"]
+    a = d["auto_rate"]
+    # 청구 대상 3건(김일·이이·박삼): 자동은 김일 1건뿐, 이이(미사용)와 박삼(태그 없음)은 직접 입력
+    assert (a["total"], a["auto"], a["direct"], a["end_missing"]) == (3, 1, 2, 0)
+    e = d["eval_index"]
+    assert (e["visit_total"], e["auto"], e["caregivers"][0]["unused"]) == (3, 1, 1)
+    # 사용여부 열을 지정하지 않으면 미사용 표시를 쓰지 않는다
+    d = ctx.post("/api/v1/rfid-compare/compare", json={**body, "use_col": None}, headers=MGR).json()
+    assert d["auto_rate"]["auto"] == 2
+
+
 def test_compare_needs_readable_rows_and_manager(ctx):
     assert ctx.post("/api/v1/rfid-compare/compare", json={"rows": [["", "x"]], "resident_col": 0, "start_col": 1}, headers=MGR).status_code == 400
     assert ctx.post("/api/v1/rfid-compare/compare", json={"rows": [["김일", f"{D} 09:10"]], "resident_col": 0, "start_col": 1}, headers=CG).status_code == 403
