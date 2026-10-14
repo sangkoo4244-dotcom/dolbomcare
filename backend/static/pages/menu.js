@@ -81,6 +81,7 @@ const SIDEBAR_MENUS = {
         { href: 'handover.html', icon: 'messages', label: '인수인계' },
         { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
         { href: 'billing_management.html', icon: 'billing', label: '청구관리' },
+        { href: 'claim_helper.html', icon: 'billing', label: '청구 입력 도우미' },
         { href: 'copay_management.html', icon: 'billing', label: '본인부담금' },
         { href: 'monthly_settlement.html', icon: 'settlement', label: '월별정산' },
         { href: 'statement_confirm.html', icon: 'stamp', label: '급여 확정' },
@@ -103,7 +104,7 @@ const SIDEBAR_MENUS = {
 const SIDEBAR_GROUPS = [
     ['메인', ['대시보드', '알림']],
     ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '공단 태그 대조', '인수인계', '사고·응급 보고']],
-    ['청구·급여', ['나의 청구', '청구관리', '본인부담금', '월별정산', '급여 확정', '수익분석', '나의 급여']],
+    ['청구·급여', ['나의 청구', '청구관리', '청구 입력 도우미', '본인부담금', '월별정산', '급여 확정', '수익분석', '나의 급여']],
     ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
     ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
     ['센터·직원', ['직원관리', '센터 정보']],

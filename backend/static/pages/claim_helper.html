@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>청구 입력 도우미 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .wrap { max-width: 1100px; margin: 0 auto; }
+        .btn-solid { padding: 10px 18px; border-radius: 10px; font-size: 15px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 14px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .card { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
+        .card h2 { margin: 0 0 8px; font-size: 18px; color: var(--navy); }
+        .note-box { background: #EEF4FF; border: 1px solid #C7D8F5; color: #1E3A8A; border-radius: 10px; padding: 10px 12px; font-size: 14px; line-height: 1.7; margin-bottom: 14px; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .toolbar input[type=month] { padding: 8px 10px; border: 1.5px solid var(--line2); border-radius: 8px; font-size: 15px; font-family: inherit; }
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+        .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 0; font-size: 14px; }
+        .flow span.box { background: #EAF6F4; border: 1px solid #BFE3DE; border-radius: 8px; padding: 5px 10px; font-weight: 700; color: #0B6B62; }
+        .flow span.box.here { background: var(--teal); color: #fff; border-color: var(--teal); }
+        .flow span.arrow { color: #94A3B8; font-weight: 800; }
+        details.resident { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; margin-bottom: 12px; }
+        details.resident > summary { cursor: pointer; padding: 14px 18px; font-size: 15px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; list-style: none; }
+        details.resident > summary::-webkit-details-marker { display: none; }
+        details.resident[open] > summary { border-bottom: 1px solid #F1F5F9; }
+        .res-name { font-size: 17px; font-weight: 800; color: var(--navy); }
+        .res-meta { color: #64748B; font-size: 13.5px; }
+        .res-body { padding: 8px 18px 16px; }
+        .res-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; align-items: center; }
+        .res-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .res-table th, .res-table td { text-align: left; padding: 8px 9px; border-bottom: 1px solid #F1F5F9; vertical-align: top; }
+        .res-table th { background: #F8FAFC; color: #64748B; font-size: 12.5px; white-space: nowrap; }
+        .flag { display: inline-block; margin: 0 4px 4px 0; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; background: #FDF1E3; color: #B45309; }
+        .flag.bad { background: #FDE8E8; color: #DC2626; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; white-space: nowrap; }
+        .badge-ok { background: #E6F3F1; color: #0F8B80; } .badge-warn { background: #FDF1E3; color: #B45309; } .badge-gray { background: #F1F5F9; color: #64748B; }
+        .legend dl { margin: 0; display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 6px 14px; font-size: 14px; line-height: 1.6; }
+        .legend dt { font-weight: 800; }
+        .legend dd { margin: 0; color: #475569; }
+        @media (max-width: 700px) { .legend dl { grid-template-columns: 1fr; } }
+        @media print {
+            html, body { background: #fff !important; }
+            .sidebar, .topbar, .noprint, #mtabbar, #mtabSheet, #mtabBackdrop { display: none !important; }
+            .main-layout { margin-left: 0; } .content { padding: 0; }
+            details.resident { break-inside: avoid; }
+            details.resident:not([open]) > .res-body { display: block; }
+        }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>청구 입력 도우미</h1>
+                <div class="breadcrumb">홈 › 청구·급여 › <b>청구 입력 도우미</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">사용자</div>
+                    <div class="user-role">센터장</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="wrap">
+                <div class="note-box noprint">
+                    공단 장기요양정보시스템에서 방문요양을 청구할 때 <b>[급여내용 자료관리]</b>에 입력할 내용을 이용자별·일자별로 공단 화면 순서대로 모았습니다.
+                    돌봄케어는 공단에 <b>전송하지 않습니다</b>. 공단 화면에서 청구서를 생성하고 <b>청구서 전송</b>까지 누르는 것은 센터가 직접 합니다.
+                    <div class="flow">
+                        <span class="box">요양요원 전송내역</span><span class="arrow">›</span><span class="box">서비스내용 입력</span><span class="arrow">›</span>
+                        <span class="box here">급여내용 자료관리 (이 화면이 돕는 곳)</span><span class="arrow">›</span><span class="box">청구명세서 조회</span><span class="arrow">›</span><span class="box">청구서 전송</span>
+                    </div>
+                </div>
+
+                <div class="card noprint">
+                    <div class="toolbar">
+                        <label for="month" style="font-weight:700;">급여제공월</label>
+                        <input type="month" id="month">
+                        <button type="button" class="btn-solid" onclick="load()">조회</button>
+                        <label style="font-size:14px;"><input type="checkbox" id="onlyFlag" onchange="render()"> 확인할 건이 있는 이용자만</label>
+                        <button type="button" class="btn-outline" onclick="window.print()">인쇄</button>
+                        <span id="msg" style="font-size:14px;"></span>
+                    </div>
+                    <div id="summary" style="margin-top:12px;font-size:14.5px;line-height:1.8;"></div>
+                    <div class="chips" id="flagChips"></div>
+                </div>
+
+                <div id="list"></div>
+
+                <div class="card legend">
+                    <h2>공단 화면에서 직접 확인할 것</h2>
+                    <div style="font-size:13.5px;color:#64748B;margin-bottom:8px;">돌봄케어에 없는 정보입니다. 공단 [서비스내용 입력]·[특정내역등록]에서 확인하거나 입력하세요.</div>
+                    <dl>
+                        <dt>가족관계(친족 여부)</dt><dd>가족요양보호사 여부는 돌봄케어에 기록하지 않습니다. 공단 급여계약 통보 내용이 기준입니다.</dd>
+                        <dt>원거리교통비·가산</dt><dd>원거리교통비, 종일방문요양 가산, 인지활동형 방문요양 가산은 공단 화면에서 선택합니다.</dd>
+                        <dt>2인 요양보호사 제공사유</dt><dd>같은 이용자에게 시간이 겹치는 방문이 있으면 "확인"에 표시됩니다. 실제로 2인이 제공했다면 사유를 입력합니다.</dd>
+                        <dt>120분 미만 제공사유</dt><dd>공단 특정내역에 사유 칸이 있습니다. 해당 여부는 고시에서 확인하세요(이 화면은 표시하지 않습니다).</dd>
+                        <dt>간호(조무)사 방문</dt><dd>돌봄케어에 기록하지 않습니다.</dd>
+                        <dt>청구서 작성인</dt><dd>청구할 때마다 기관 대표자가 직접 입력해야 합니다. 청구서 생성 후 전송까지 눌러야 청구가 끝납니다.</dd>
+                    </dl>
+                    <div style="font-size:12.5px;color:#64748B;margin-top:10px;">근거: 공단 「급여비용 청구 업무 바로알기」(2021.12 기준). 공단 화면이 개편됐을 수 있어 화면 구성은 다를 수 있습니다.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STATUS = {
+            approved: ['승인', 'badge-ok'], submitted_to_nhis: ['공단 청구', 'badge-ok'], reimbursed: ['환급', 'badge-ok'],
+            pending: ['승인 전', 'badge-gray'], rejected: ['반려', 'badge-warn']
+        };
+        const BAD_FLAGS = ['overlap_caregiver', 'overlap_resident', 'recognition_expired'];
+        const READY = ['approved', 'submitted_to_nhis', 'reimbursed'];
+        let data = null, flagFilter = null;
+
+        function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+        const won = n => (n || 0).toLocaleString('ko-KR') + '원';
+
+        function init() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            if (user.role !== 'center_manager') { window.location.href = './dashboard.html'; return; }
+            document.getElementById('userName').textContent = user.full_name || '사용자';
+            if (typeof renderSidebar === 'function') renderSidebar();
+            const prev = new Date(); prev.setDate(1); prev.setMonth(prev.getMonth() - 1);  // 청구는 보통 지난달 분
+            document.getElementById('month').value = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+            load();
+        }
+        window.addEventListener('load', init);
+
+        async function load() {
+            const month = document.getElementById('month').value;
+            const msg = document.getElementById('msg');
+            if (!month) { msg.textContent = '급여제공월을 골라 주세요'; return; }
+            msg.style.color = '#475569'; msg.textContent = '불러오는 중...';
+            const r = await fetch(`/api/v1/claim-helper?year_month=${encodeURIComponent(month)}`);
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { msg.style.color = '#DC2626'; msg.textContent = typeof d.detail === 'string' ? d.detail : '불러오지 못했습니다'; return; }
+            msg.textContent = '';
+            data = d; flagFilter = null; render();
+        }
+
+        function setFlag(k) { flagFilter = flagFilter === k ? null : k; render(); }
+
+        function render() {
+            if (!data) return;
+            const onlyFlag = document.getElementById('onlyFlag').checked;
+            const total = data.residents.length;
+            const flagged = data.residents.filter(r => r.totals.flagged).length;
+            document.getElementById('summary').innerHTML = data.visit_count
+                ? `<b>${esc(data.year_month)}</b> 방문 <b>${data.visit_count}건</b> · 이용자 <b>${total}명</b> · 확인할 건이 있는 이용자 <b>${flagged}명</b>`
+                : `<b>${esc(data.year_month)}</b>에 방문 기록이 없습니다.`;
+            document.getElementById('flagChips').innerHTML = Object.keys(data.flag_counts).map(k =>
+                `<button type="button" class="chip" style="padding:6px 12px;border-radius:999px;border:1.5px solid ${flagFilter === k ? '#14283F' : '#E2E8F0'};background:${flagFilter === k ? '#14283F' : '#fff'};color:${flagFilter === k ? '#fff' : '#243247'};font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;" onclick="setFlag('${k}')" title="${esc(data.flag_labels[k])}">${esc(shortLabel(k))} ${data.flag_counts[k]}</button>`).join('');
+            const residents = data.residents.filter(r =>
+                (!onlyFlag || r.totals.flagged) && (!flagFilter || r.visits.some(v => v.flags.includes(flagFilter))));
+            document.getElementById('list').innerHTML = residents.map((r, i) => residentHtml(r, i)).join('') ||
+                (data.visit_count ? '<div class="card" style="color:#64748B;">조건에 맞는 이용자가 없습니다.</div>' : '');
+        }
+
+        function shortLabel(k) {
+            return { no_arrival: '도착·퇴실 없음', time_gap: '시간 차이', overlap_resident: '이용자 시간 겹침', overlap_caregiver: '요양보호사 시간 겹침',
+                     long_visit: '장시간 연속', grade5: '5등급', recognition_expired: '인정기간 밖' }[k] || k;
+        }
+
+        function residentHtml(r, idx) {
+            const t = r.totals;
+            const grade = r.care_grade ? `${r.care_grade}등급` : '인지지원등급';
+            const rows = r.visits.map(v => {
+                const [label, cls] = STATUS[v.status] || ['청구 없음', 'badge-gray'];
+                const flags = v.flags.map(f => `<span class="flag ${BAD_FLAGS.includes(f) ? 'bad' : ''}" title="${esc(data.flag_labels[f])}">${esc(shortLabel(f))}</span>`).join('');
+                const stay = v.stay_minutes != null && v.stay_minutes !== v.minutes ? ` <span style="color:#94A3B8;">(머문 ${v.stay_minutes}분)</span>` : '';
+                const money = v.total_cost != null ? `<div style="font-size:12.5px;color:#64748B;">총액 ${won(v.total_cost)} / 청구 ${won(v.claim_amount)}</div>` : '';
+                return `<tr><td>${esc(v.date)}</td><td>${esc(v.caregiver)}</td><td>${esc(v.start)}${v.flags.includes('no_arrival') ? '<div style="font-size:11.5px;color:#B45309;">계획 시각</div>' : ''}</td><td>${esc(v.end)}</td>` +
+                    `<td>${v.minutes}분${stay}</td><td>${esc(v.service)}</td><td>${esc(v.items.join(', '))}</td><td><span class="badge ${cls}">${label}</span>${money}</td><td>${flags}</td></tr>`;
+            }).join('');
+            const open = t.flagged ? 'open' : '';
+            return `<details class="resident" ${open}><summary><span class="res-name">${esc(r.name)}</span>` +
+                `<span class="res-meta">인정번호 ${esc(r.recognition_number || '미입력')} · ${grade} · ${esc(r.client_type || '')}</span>` +
+                `<span class="res-meta">방문 ${t.visits}건 · ${t.minutes}분 · 승인 이상 ${t.approved_visits}건 (총액 ${won(t.total_cost)}, 청구 ${won(t.claim_amount)})</span>` +
+                (t.flagged ? `<span class="flag bad">확인 ${t.flagged}건</span>` : '') + `</summary>` +
+                `<div class="res-body"><div class="res-actions noprint"><button type="button" class="btn-outline" onclick="copyResident(${data.residents.indexOf(r)}, this)">이 이용자 표 복사</button>` +
+                `<label style="font-size:13.5px;"><input type="checkbox" class="readyOnly" checked> 승인된 방문만 복사</label></div>` +
+                `<div style="overflow-x:auto;"><table class="res-table"><thead><tr><th>급여제공일</th><th>요양요원</th><th>시작시간</th><th>종료시간</th><th>총시간</th><th>서비스명칭</th><th>급여제공내용</th><th>청구 상태</th><th>확인</th></tr></thead><tbody>${rows}</tbody></table></div></div></details>`;
+        }
+
+        async function copyResident(i, btn) {
+            const r = data.residents[i];
+            const readyOnly = btn.parentElement.querySelector('.readyOnly').checked;
+            const visits = r.visits.filter(v => !readyOnly || READY.includes(v.status));
+            if (!visits.length) { btn.textContent = '복사할 방문이 없습니다'; setTimeout(() => btn.textContent = '이 이용자 표 복사', 2000); return; }
+            const head = ['급여제공일', '요양요원', '시작시간', '종료시간', '총시간(분)', '서비스명칭', '급여제공내용'];
+            const text = [head, ...visits.map(v => [v.date, v.caregiver, v.start, v.end, v.minutes, v.service, v.items.join(', ')])].map(row => row.join('\t')).join('\n');
+            try { await navigator.clipboard.writeText(text); }
+            catch (e) {
+                const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+                try { document.execCommand('copy'); } finally { ta.remove(); }
+            }
+            btn.textContent = `${visits.length}건 복사됨`; setTimeout(() => btn.textContent = '이 이용자 표 복사', 2000);
+        }
+    </script>
+</body>
+</html>
