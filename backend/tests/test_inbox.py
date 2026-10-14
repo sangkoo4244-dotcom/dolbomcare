@@ -73,6 +73,8 @@ def test_counts_each_pending_kind_for_own_center_only(env):
         models.Schedule(caregiver_id=2, resident_id=1, center_id=1, scheduled_date=past, status="scheduled"),
         models.BillingRecord(caregiver_id=2, resident_id=1, center_id=1, approval_status="rejected", recorded_date=past),
         models.BillingRecord(caregiver_id=2, resident_id=1, center_id=1, approval_status="approved", recorded_date=past),
+        models.BillingRecord(caregiver_id=2, resident_id=1, center_id=1, approval_status="draft", recorded_date=datetime.now() - timedelta(days=5)),
+        models.BillingRecord(caregiver_id=2, resident_id=1, center_id=1, approval_status="draft", recorded_date=datetime.now()),
         models.ResidentChangeRequest(resident_id=1, center_id=1, requested_by=2, field="care_grade", status="pending"),
         models.ResidentChangeRequest(resident_id=1, center_id=1, requested_by=2, field="address", status="approved"),
         models.HandoverNote(center_id=1, resident_id=1, author_id=1, to_caregiver_id=2, content="x" * 12),
@@ -88,6 +90,6 @@ def test_counts_each_pending_kind_for_own_center_only(env):
     ])
     db.commit()
     mine = counts(client)
-    assert mine == {"missing_record": 1, "rejected_claims": 1, "change_requests": 1,
+    assert mine == {"missing_record": 1, "draft_claims": 1, "rejected_claims": 1, "change_requests": 1,
                     "handover_unread": 1, "incident_incomplete": 2}
     assert set(counts(client, OTHER_MANAGER).values()) == {0}

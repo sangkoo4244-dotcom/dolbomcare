@@ -3,7 +3,7 @@
 이미 대시보드에 있는 승인 대기(청구·방문 계획·보호자 가입)는 화면에서 계산하고,
 여기서는 각 메뉴 안에만 있던 처리 대기 건수를 모은다.
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import or_
@@ -19,6 +19,7 @@ router = APIRouter()
 ITEMS = [
     # key, 이름, 설명, 이동할 화면
     ("missing_record", "방문 기록 누락", "일정은 지났는데 도착·기록이 없거나 퇴실이 없는 방문 (최근 14일)", "./dashboard.html#precheckPanel"),
+    ("draft_claims", "제출 안 한 방문 기록", "요양보호사가 기록만 하고 3일 넘게 제출하지 않은 청구(작성중)", "./billing_management.html"),
     ("rejected_claims", "보완 요청 후 미처리 청구", "반려했는데 요양보호사가 아직 다시 제출하지 않은 청구", "./billing_management.html"),
     ("change_requests", "이용자 정보 변경 요청", "요양보호사가 요청한 이용자 정보 변경 승인 대기", "./resident_management.html#changeRequestPanel"),
     ("handover_unread", "인수인계 미확인", "받는 요양보호사가 아직 읽지 않은 인계 메모", "./handover.html"),
@@ -32,6 +33,9 @@ def manager_inbox(db: Session = Depends(get_db), actor: User = Depends(require_m
     precheck = run_precheck(db, center, 14, datetime.now())["counts"]
     counts = {
         "missing_record": precheck.get("missing_record", 0) + precheck.get("missing_end", 0),
+        "draft_claims": db.query(BillingRecord).filter(
+            BillingRecord.center_id == center, BillingRecord.approval_status == "draft",
+            BillingRecord.recorded_date <= datetime.now() - timedelta(days=3)).count(),
         "rejected_claims": db.query(BillingRecord).filter(
             BillingRecord.center_id == center, BillingRecord.approval_status == "rejected").count(),
         "change_requests": db.query(ResidentChangeRequest).filter(
