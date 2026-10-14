@@ -55,15 +55,15 @@ const MENU_ICONS = {
 const SIDEBAR_MENUS = {
     caregiver: [
         { href: 'dashboard.html', icon: 'dashboard', label: '대시보드' },
-        { href: 'resident_management.html', icon: 'residents', label: '담당 이용자' },
+        { href: 'notifications.html', icon: 'notify', label: '알림' },
+        { href: 'my_schedule.html', icon: 'schedule', label: '나의 일정' },
         { href: 'voice_record.html', icon: 'voice', label: '음성 기록' },
         { href: 'caregiver_billing.html', icon: 'billing', label: '나의 청구' },
-        { href: 'my_salary.html', icon: 'salary', label: '나의 급여' },
-        { href: 'my_schedule.html', icon: 'schedule', label: '나의 일정' },
-        { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
         { href: 'handover.html', icon: 'messages', label: '인수인계' },
-        { href: 'notifications.html', icon: 'notify', label: '알림' },
+        { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
+        { href: 'resident_management.html', icon: 'residents', label: '담당 이용자' },
         { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
+        { href: 'my_salary.html', icon: 'salary', label: '나의 급여' },
         { href: 'guide_caregiver.html', icon: 'stamp', label: '사용 안내' }
     ],
     guardian: [
@@ -75,37 +75,38 @@ const SIDEBAR_MENUS = {
     ],
     center_manager: [
         { href: 'dashboard.html', icon: 'dashboard', label: '대시보드' },
-        { href: 'resident_management.html', icon: 'residents', label: '이용자관리' },
-        { href: 'guardian_management.html', icon: 'guardian', label: '보호자 관리' },
-        { href: 'voice_record.html', icon: 'voice', label: '방문 기록 현황' },
         { href: 'schedule_approval.html', icon: 'schedule_check', label: '방문계획 승인' },
-        { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
+        { href: 'voice_record.html', icon: 'voice', label: '방문 기록 현황' },
         { href: 'handover.html', icon: 'messages', label: '인수인계' },
+        { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
         { href: 'billing_management.html', icon: 'billing', label: '청구관리' },
         { href: 'copay_management.html', icon: 'billing', label: '본인부담금' },
-        { href: 'audit_prep.html', icon: 'billing', label: '평가 준비 자료' },
-        { href: 'staff_management.html', icon: 'staff', label: '직원관리' },
-        { href: 'counseling.html', icon: 'messages', label: '상담 기록' },
+        { href: 'monthly_settlement.html', icon: 'settlement', label: '월별정산' },
+        { href: 'statement_confirm.html', icon: 'stamp', label: '급여 확정' },
+        { href: 'profit_analysis.html', icon: 'profit', label: '수익분석' },
+        { href: 'resident_management.html', icon: 'residents', label: '이용자관리' },
+        { href: 'guardian_management.html', icon: 'guardian', label: '보호자 관리' },
+        { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
         { href: 'care_plan.html', icon: 'schedule_check', label: '급여제공계획' },
+        { href: 'counseling.html', icon: 'messages', label: '상담 기록' },
         { href: 'service_review.html', icon: 'profit', label: '결과평가·사례관리' },
         { href: 'training.html', icon: 'staff', label: '교육·안내 기록' },
+        { href: 'audit_prep.html', icon: 'billing', label: '평가 준비 자료' },
+        { href: 'staff_management.html', icon: 'staff', label: '직원관리' },
         { href: 'center_settings.html', icon: 'center', label: '센터 정보' },
-        { href: 'monthly_settlement.html', icon: 'settlement', label: '월별정산' },
-        { href: 'profit_analysis.html', icon: 'profit', label: '수익분석' },
-        { href: 'statement_confirm.html', icon: 'stamp', label: '급여 확정' },
-        { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
         { href: 'guide_manager.html', icon: 'stamp', label: '센터장 안내' }
     ]
 };
 
 // 사이드바 묶음: 모든 페이지가 같은 그룹으로 보이도록 여기서 한 번에 정한다 (페이지마다 따로 그룹을 정하던 방식은 새 페이지에서 빠뜨리기 쉽다)
 const SIDEBAR_GROUPS = [
-    ['메인', ['대시보드', '알림', '사용 안내', '센터장 안내']],
+    ['메인', ['대시보드', '알림']],
+    ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '인수인계', '사고·응급 보고']],
+    ['청구·급여', ['나의 청구', '청구관리', '본인부담금', '월별정산', '급여 확정', '수익분석', '나의 급여']],
     ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
-    ['방문 운영', ['나의 일정', '방문계획 승인', '음성 기록', '방문 기록 현황', '인수인계', '사고·응급 보고']],
     ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
-    ['청구·급여', ['나의 청구', '나의 급여', '청구관리', '본인부담금', '월별정산', '급여 확정', '수익분석']],
     ['센터·직원', ['직원관리', '센터 정보']],
+    ['도움말', ['사용 안내', '센터장 안내']],
 ];
 
 function applySidebarGroups(nav) {
@@ -251,8 +252,8 @@ async function showAdminConsoleLinkIfOperator() {
 
 // 휴대폰 하단 탭바. 메뉴가 5개 이하면 전부 탭으로, 많으면 자주 쓰는 4개 + 더보기(아래에서 올라오는 창)로 나눈다.
 const MOBILE_PRIMARY = {
-    center_manager: ['dashboard.html', 'schedule_approval.html', 'resident_management.html', 'billing_management.html'],
-    caregiver: ['dashboard.html', 'my_schedule.html', 'voice_record.html', 'resident_management.html'],
+    center_manager: ['dashboard.html', 'schedule_approval.html', 'messages.html', 'billing_management.html'],
+    caregiver: ['dashboard.html', 'my_schedule.html', 'voice_record.html', 'caregiver_billing.html'],
 };
 const MOBILE_LOGOUT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#B5532F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>';
 
