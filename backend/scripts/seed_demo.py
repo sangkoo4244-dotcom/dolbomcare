@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.database import SessionLocal
-from app.models import User, Center, Resident, DailyRecord, BillingRecord, Notification, ResidentMessage
+from app.models import User, Center, Resident, DailyRecord, BillingRecord, Notification, ResidentMessage, Schedule
 from app.api.users import get_password_hash
 from app.api.notifications import notify
 from app.api.records import guardian_visit_summary, get_year_month
@@ -39,6 +39,7 @@ try:
 
         db.query(Notification).filter(Notification.user_id.in_(old_user_ids)).delete(synchronize_session=False)
         db.query(ResidentMessage).filter(ResidentMessage.center_id == old_center.id).delete(synchronize_session=False)
+        db.query(Schedule).filter(Schedule.center_id == old_center.id).delete(synchronize_session=False)
         db.query(BillingRecord).filter(BillingRecord.resident_id.in_(old_resident_ids)).delete(synchronize_session=False)
         db.query(DailyRecord).filter(DailyRecord.resident_id.in_(old_resident_ids)).delete(synchronize_session=False)
         for r in old_residents:
@@ -114,6 +115,15 @@ try:
                 notify(db, resident.guardian_id, "visit_completed", summary)
     db.commit()
     print(f"[3] 방문 기록 + 청구 {count}건 생성 완료 (승인 상태 - 대시보드/정산에 즉시 반영됨)")
+
+    # 4-2) 앞으로의 방문 일정 (승인된 '예정' 상태) - 나의 일정에서 일정 변경 요청 등을 체험할 수 있게 한다
+    for day_offset in (1, 2, 3):
+        for i, resident in enumerate(residents):
+            when = (datetime.now() + timedelta(days=day_offset)).replace(hour=9 + i * 2, minute=0, second=0, microsecond=0)
+            db.add(Schedule(caregiver_id=caregiver.id, resident_id=resident.id, center_id=center.id, scheduled_date=when,
+                            duration_minutes=60, planned_items="meal_assist,mobility", service_type="basic_care", status="scheduled"))
+    db.commit()
+    print("[3-2] 앞으로 3일치 예정 방문 일정 9건 생성 완료")
 
     # 5) 보호자 소통 데모 메시지 (한 번씩 주고받은 형태)
     linked = next(r for r in residents if r.guardian_id)
