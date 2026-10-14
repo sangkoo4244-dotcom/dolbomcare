@@ -1,0 +1,143 @@
+from datetime import datetime, timedelta
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from app.auth import require_manager
+from app.database import get_db
+from app.models import DailyRecord, Resident, Schedule, User
+from app.sheet_reader import SheetError, read_table, to_datetime
+
+router = APIRouter()
+
+MAX_UPLOAD = 8 * 1024 * 1024
+
+
+@router.post("/parse")
+async def parse_file(file: UploadFile = File(...), manager: User = Depends(require_manager)):
+    """공단에서 내려받은 전자태그 전송내역 파일(.xlsx/.csv)을 읽어 제목 줄과 내용을 돌려준다. 파일은 저장하지 않는다."""
+    data = await file.read()
+    if len(data) > MAX_UPLOAD:
+        raise HTTPException(status_code=400, detail="파일이 너무 큽니다 (8MB까지)")
+    try:
+        rows = read_table(file.filename, data)
+    except SheetError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if len(rows) < 2:
+        raise HTTPException(status_code=400, detail="내용이 없습니다. 첫 줄은 제목, 둘째 줄부터 내용이어야 합니다")
+    return {"headers": [h.strip() for h in rows[0]], "rows": rows[1:], "row_count": len(rows) - 1}
+
+
+class CompareRequest(BaseModel):
+    rows: list[list[str]]
+    resident_col: int
+    start_col: int
+    end_col: int | None = None
+    date_col: int | None = None
+    caregiver_col: int | None = None
+    tolerance_minutes: int = 30
+
+
+def _cell(row, idx):
+    if idx is None or idx < 0 or idx >= len(row):
+        return ""
+    return (row[idx] or "").strip()
+
+
+@router.post("/compare")
+def compare(body: CompareRequest, db: Session = Depends(get_db), manager: User = Depends(require_manager)):
+    """공단 전자태그 전송내역과 돌봄케어의 방문 계획·도착 기록을 이용자·날짜·시간으로 맞춰 본다.
+    올린 내용은 저장하지 않고 이 요청 안에서만 쓴다."""
+    center = manager.center_id
+    residents = db.query(Resident).filter(Resident.center_id == center).all()
+    by_name = {}
+    for r in residents:
+        by_name.setdefault(r.name.strip(), []).append(r)
+    caregivers = {u.id: u.full_name for u in db.query(User).filter(User.center_id == center).all()}
+
+    tags, bad_rows = [], []
+    for i, row in enumerate(body.rows, start=2):  # 엑셀 줄 번호
+        name = _cell(row, body.resident_col)
+        date_hint = _cell(row, body.date_col) if body.date_col is not None else None
+        start = to_datetime(_cell(row, body.start_col), date_hint)
+        end = to_datetime(_cell(row, body.end_col), date_hint) if body.end_col is not None else None
+        if not name or start is None:
+            if name or any(c.strip() for c in row):
+                bad_rows.append({"row": i, "message": "수급자 이름이나 시작 시각을 읽을 수 없습니다"})
+            continue
+        if end is not None and end < start:
+            end = None
+        tags.append({"row": i, "name": name, "start": start, "end": end, "caregiver": _cell(row, body.caregiver_col) if body.caregiver_col is not None else ""})
+    if not tags:
+        raise HTTPException(status_code=400, detail="읽을 수 있는 전송내역이 없습니다. 열 지정을 확인해 주세요")
+
+    first_day = min(t["start"] for t in tags).date()
+    last_day = max(t["start"] for t in tags).date()
+    day_start = datetime.combine(first_day, datetime.min.time())
+    day_end = datetime.combine(last_day, datetime.min.time()) + timedelta(days=1)
+    schedules = db.query(Schedule).filter(
+        Schedule.center_id == center, Schedule.status == "scheduled",
+        Schedule.scheduled_date >= day_start, Schedule.scheduled_date < day_end).all()
+    records = db.query(DailyRecord).join(Resident, Resident.id == DailyRecord.resident_id).filter(
+        Resident.center_id == center, DailyRecord.recorded_date >= day_start, DailyRecord.recorded_date < day_end).all()
+    resident_names = {r.id: r.name for r in residents}
+
+    used = set()
+    results = []
+    tol = max(1, body.tolerance_minutes)
+    for t in sorted(tags, key=lambda x: x["start"]):
+        matches = by_name.get(t["name"], [])
+        row = {"row": t["row"], "name": t["name"], "tag_start": t["start"].strftime("%Y-%m-%d %H:%M"),
+               "tag_end": t["end"].strftime("%H:%M") if t["end"] else None,
+               "tag_minutes": int((t["end"] - t["start"]).total_seconds() // 60) if t["end"] else None,
+               "plan": None, "arrived": None, "note": ""}
+        if not matches:
+            row.update(status="unknown_resident", note="돌봄케어에 없는 이름입니다 (이름 표기를 확인하세요)")
+            results.append(row)
+            continue
+        ids = {m.id for m in matches}
+        candidates = [s for s in schedules if s.resident_id in ids and s.id not in used and s.scheduled_date.date() == t["start"].date()]
+        if not candidates:
+            rec = [r for r in records if r.resident_id in ids and r.recorded_date.date() == t["start"].date()]
+            if rec:
+                row.update(status="no_plan", note="승인된 방문 계획은 없고 방문 기록만 있습니다")
+            else:
+                row.update(status="no_plan", note="돌봄케어에 방문 계획도 기록도 없습니다")
+            results.append(row)
+            continue
+        best = min(candidates, key=lambda s: abs((s.scheduled_date - t["start"]).total_seconds()))
+        used.add(best.id)
+        ref = best.arrived_at or best.scheduled_date
+        diff = int((t["start"] - ref).total_seconds() // 60)
+        row["plan"] = best.scheduled_date.strftime("%H:%M")
+        row["arrived"] = best.arrived_at.strftime("%H:%M") if best.arrived_at else None
+        row["diff_minutes"] = diff
+        row["plan_minutes"] = best.duration_minutes
+        notes = []
+        status = "ok"
+        if abs(diff) > tol:
+            status = "time_diff"
+            notes.append(f"시작 시각이 {'도착 기록' if best.arrived_at else '계획'}과 {abs(diff)}분 차이")
+        if row["tag_minutes"] is not None and best.duration_minutes and abs(row["tag_minutes"] - best.duration_minutes) > tol:
+            status = "time_diff"
+            notes.append(f"제공 시간 태그 {row['tag_minutes']}분 / 계획 {best.duration_minutes}분")
+        if t["caregiver"] and caregivers.get(best.caregiver_id) and t["caregiver"] != caregivers[best.caregiver_id]:
+            notes.append(f"요양보호사 다름 (태그 {t['caregiver']} / 돌봄케어 {caregivers[best.caregiver_id]})")
+            if status == "ok":
+                status = "time_diff"
+        row.update(status=status, note=", ".join(notes))
+        results.append(row)
+
+    now = datetime.now()
+    for s in schedules:
+        if s.id in used or s.scheduled_date >= now:
+            continue
+        results.append({"row": None, "name": resident_names.get(s.resident_id, ""), "tag_start": None, "tag_end": None, "tag_minutes": None,
+                        "plan": s.scheduled_date.strftime("%Y-%m-%d %H:%M"), "arrived": s.arrived_at.strftime("%H:%M") if s.arrived_at else None,
+                        "status": "no_tag", "note": "방문 계획은 있는데 공단 태그 전송내역이 없습니다"})
+    counts = {}
+    for r in results:
+        counts[r["status"]] = counts.get(r["status"], 0) + 1
+    results.sort(key=lambda r: (r["tag_start"] or r["plan"] or ""))
+    return {"range": [str(first_day), str(last_day)], "tag_count": len(tags), "counts": counts, "rows": results, "bad_rows": bad_rows[:50]}

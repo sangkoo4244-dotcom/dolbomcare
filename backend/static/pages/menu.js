@@ -77,6 +77,7 @@ const SIDEBAR_MENUS = {
         { href: 'dashboard.html', icon: 'dashboard', label: '대시보드' },
         { href: 'schedule_approval.html', icon: 'schedule_check', label: '방문계획 승인' },
         { href: 'voice_record.html', icon: 'voice', label: '방문 기록 현황' },
+        { href: 'rfid_compare.html', icon: 'schedule_check', label: '공단 태그 대조' },
         { href: 'handover.html', icon: 'messages', label: '인수인계' },
         { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
         { href: 'billing_management.html', icon: 'billing', label: '청구관리' },
@@ -101,7 +102,7 @@ const SIDEBAR_MENUS = {
 // 사이드바 묶음: 모든 페이지가 같은 그룹으로 보이도록 여기서 한 번에 정한다 (페이지마다 따로 그룹을 정하던 방식은 새 페이지에서 빠뜨리기 쉽다)
 const SIDEBAR_GROUPS = [
     ['메인', ['대시보드', '알림']],
-    ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '인수인계', '사고·응급 보고']],
+    ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '공단 태그 대조', '인수인계', '사고·응급 보고']],
     ['청구·급여', ['나의 청구', '청구관리', '본인부담금', '월별정산', '급여 확정', '수익분석', '나의 급여']],
     ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
     ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],

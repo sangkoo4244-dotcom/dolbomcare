@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공단 태그 대조 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --warn: #B45309; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .wrap { max-width: 860px; margin: 0 auto; }
+        .intro { background: #EAF6F4; border: 1px solid #BFE3DE; border-radius: 14px; padding: 18px 20px; font-size: 16px; line-height: 1.7; margin-bottom: 18px; }
+        .intro b { color: #0B6B62; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+        .btn-solid { padding: 11px 18px; border-radius: 10px; font-size: 15px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-block; }
+        .btn-outline { padding: 10px 16px; border-radius: 10px; font-size: 15px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; text-decoration: none; display: inline-block; }
+
+        .step { background: #fff; border: 1px solid #E8ECF1; border-radius: 16px; padding: 20px; margin-bottom: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+        .step.no-img { grid-template-columns: minmax(0, 1fr); }
+        .step-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .num { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%; background: var(--teal); color: #fff; font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .step h2 { margin: 0; font-size: 20px; color: var(--navy); }
+        .step p { margin: 6px 0; font-size: 16px; line-height: 1.75; }
+        .step ul { margin: 6px 0 0; padding-left: 20px; font-size: 16px; line-height: 1.75; }
+        .btn-name { display: inline-block; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 6px; padding: 0 7px; font-weight: 700; font-size: 15px; }
+        .manager-sees { margin-top: 10px; background: #FFF7EB; border: 1px solid #FCE2B5; color: #8A4A07; border-radius: 10px; padding: 10px 12px; font-size: 14px; line-height: 1.6; }
+        .shot { width: 100%; border: 1px solid #E2E8F0; border-radius: 12px; display: block; }
+        .shot-cap { font-size: 12px; color: #64748B; text-align: center; margin-top: 4px; }
+        
+
+        .mistakes { background: #fff; border: 2px solid #F5C6C6; border-radius: 16px; padding: 18px 20px; margin-bottom: 16px; }
+        .mistakes h2 { margin: 0 0 8px; font-size: 20px; color: #B91C1C; }
+        .mistakes table { width: 100%; border-collapse: collapse; font-size: 15px; }
+        .mistakes th, .mistakes td { text-align: left; padding: 9px 8px; border-bottom: 1px solid #F1F5F9; vertical-align: top; line-height: 1.6; }
+        .mistakes th { color: #64748B; font-size: 13px; white-space: nowrap; }
+        .terms { background: #fff; border: 1px solid #E8ECF1; border-radius: 16px; padding: 18px 20px; margin-bottom: 16px; }
+        .terms h2 { margin: 0 0 8px; font-size: 20px; color: var(--navy); }
+        .terms dl { margin: 0; display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px 12px; font-size: 15px; line-height: 1.6; }
+        .terms dt { font-weight: 800; }
+        .terms dd { margin: 0; }
+
+        /* 한 장 요약: 화면에서는 숨기고 인쇄할 때만 보인다 */
+        #onePage { display: none; }
+        @media print {
+            body, html { background: #fff !important; }
+            .sidebar, .topbar, .toolbar, .guide-main, #mtabbar, #mtabSheet, #mtabBackdrop { display: none !important; }
+            .main-layout { margin-left: 0; }
+            .content { padding: 0; }
+            #onePage { display: block; font-size: 15px; line-height: 1.7; }
+            #onePage h1 { font-size: 24px; margin: 0 0 4px; }
+            #onePage ol { padding-left: 22px; }
+            #onePage li { margin-bottom: 6px; }
+            #onePage .tip { border: 2px solid #333; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
+            @page { size: A4; margin: 14mm; }
+        }
+    .link-table { width: 100%; border-collapse: collapse; font-size: 15px; background: #fff; border: 1px solid #E8ECF1; border-radius: 12px; overflow: hidden; }
+        .link-table th, .link-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #F1F5F9; vertical-align: top; line-height: 1.6; }
+        .link-table th { background: #F8FAFC; color: #64748B; font-size: 13px; }
+        .section-title { font-size: 20px; color: var(--navy); margin: 22px 0 10px; }
+        .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 0; font-size: 15px; }
+        .flow span.box { background: #EAF6F4; border: 1px solid #BFE3DE; border-radius: 8px; padding: 6px 10px; font-weight: 700; color: #0B6B62; }
+        .flow span.arrow { color: #94A3B8; font-weight: 800; }
+        .card { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
+        .card h2 { margin: 0 0 8px; font-size: 18px; color: var(--navy); }
+        .map-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 10px 0; }
+        .map-grid label { display: flex; flex-direction: column; font-size: 13px; font-weight: 700; gap: 4px; color: #475569; }
+        .map-grid select { padding: 8px; border: 1.5px solid var(--line2); border-radius: 8px; font-size: 14px; font-family: inherit; }
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+        .chip { padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--line2); background: #fff; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
+        .chip.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+        .res-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .res-table th, .res-table td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #F1F5F9; vertical-align: top; }
+        .res-table th { background: #F8FAFC; color: #64748B; font-size: 12.5px; }
+        .badge-ok { background: #E6F3F1; color: #0F8B80; } .badge-warn { background: #FDF1E3; color: #B45309; } .badge-bad { background: #FDE8E8; color: #DC2626; } .badge-gray { background: #F1F5F9; color: #64748B; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; white-space: nowrap; }
+        .note-box { background: #EEF4FF; border: 1px solid #C7D8F5; color: #1E3A8A; border-radius: 10px; padding: 10px 12px; font-size: 14px; line-height: 1.7; }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>공단 태그 대조</h1>
+                <div class="breadcrumb">홈 › 방문 운영 › <b>공단 태그 대조</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">사용자</div>
+                    <div class="user-role">센터장</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="wrap guide-main" style="max-width:1100px;">
+                <div class="note-box" style="margin-bottom:14px;">
+                    공단 장기요양정보시스템(롱텀)에서 내려받은 <b>전자태그 전송내역 파일</b>(엑셀 .xlsx 또는 CSV)을 올리면, 돌봄케어의 방문 계획·도착 기록과 <b>이용자·날짜·시간</b>으로 맞춰 보고 빠진 건과 시간 차이를 알려 드립니다.
+                    올린 파일은 <b>저장하지 않고</b> 이 화면에서만 사용합니다. 공단 시스템에 연결하거나 인증서를 쓰지 않습니다.
+                </div>
+
+                <div class="card">
+                    <h2>1. 파일 올리기</h2>
+                    <input id="fileInput" type="file" accept=".xlsx,.csv,text/csv">
+                    <div id="fileInfo" style="font-size:14px;color:#475569;margin-top:8px;"></div>
+                </div>
+
+                <div class="card" id="mapCard" style="display:none;">
+                    <h2>2. 어느 열이 무엇인지 알려 주세요</h2>
+                    <div style="font-size:13.5px;color:#64748B;">제목 줄을 보고 자동으로 골라 두었습니다. 다르면 바꿔 주세요. 선택은 이 브라우저에 기억됩니다.</div>
+                    <div class="map-grid">
+                        <label>수급자 이름 (필수)<select id="mResident"></select></label>
+                        <label>시작 시각 (필수)<select id="mStart"></select></label>
+                        <label>종료 시각<select id="mEnd"></select></label>
+                        <label>날짜 (시각 열에 날짜가 없을 때만)<select id="mDate"></select></label>
+                        <label>요양보호사 이름<select id="mCaregiver"></select></label>
+                        <label>시간 차이 허용(분)<select id="mTol"><option value="10">10분</option><option value="20">20분</option><option value="30" selected>30분</option><option value="60">60분</option></select></label>
+                    </div>
+                    <div id="samplePreview" style="font-size:13px;color:#64748B;margin-bottom:10px;"></div>
+                    <button type="button" class="btn-solid" onclick="runCompare()">대조하기</button>
+                    <span id="compareMsg" style="margin-left:10px;font-size:14px;"></span>
+                </div>
+
+                <div class="card" id="resultCard" style="display:none;">
+                    <h2>3. 대조 결과</h2>
+                    <div id="summary" style="font-size:14.5px;line-height:1.8;"></div>
+                    <div class="chips" id="chips"></div>
+                    <div style="overflow-x:auto;">
+                        <table class="res-table">
+                            <thead><tr><th>구분</th><th>수급자</th><th>공단 태그</th><th>돌봄케어 계획·도착</th><th>설명</th></tr></thead>
+                            <tbody id="resBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="badRows" style="font-size:13px;color:#B45309;margin-top:10px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STATUS = {
+            ok: ['정상', 'badge-ok'], time_diff: ['시간 확인', 'badge-warn'], no_tag: ['태그 없음', 'badge-bad'],
+            no_plan: ['계획 없음', 'badge-warn'], unknown_resident: ['이름 확인', 'badge-gray']
+        };
+        let headers = [], rows = [], result = null, filter = 'all';
+        const MAP_KEY = 'rfidMapping';
+
+        function init() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            if (user.role !== 'center_manager') { window.location.href = './dashboard.html'; return; }
+            document.getElementById('userName').textContent = user.full_name || '사용자';
+            if (typeof renderSidebar === 'function') renderSidebar();
+            document.getElementById('fileInput').addEventListener('change', onFile);
+        }
+        window.addEventListener('load', init);
+
+        function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+        async function onFile(e) {
+            const file = e.target.files[0];
+            const info = document.getElementById('fileInfo');
+            document.getElementById('mapCard').style.display = 'none';
+            document.getElementById('resultCard').style.display = 'none';
+            if (!file) return;
+            info.textContent = '파일을 읽는 중입니다...';
+            const fd = new FormData();
+            fd.append('file', file);
+            const r = await fetch(`/api/v1/rfid-compare/parse`, { method: 'POST', body: fd });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { info.innerHTML = `<span style="color:#DC2626;">${esc(typeof d.detail === 'string' ? d.detail : '파일을 읽지 못했습니다')}</span>`; return; }
+            headers = d.headers; rows = d.rows;
+            info.textContent = `${file.name} · ${d.row_count}줄을 읽었습니다.`;
+            buildMapping();
+        }
+
+        function guess(words) {
+            const i = headers.findIndex(h => words.some(w => h.replace(/\s/g, '').includes(w)));
+            return i >= 0 ? i : '';
+        }
+
+        function buildMapping() {
+            const saved = (() => { try { return JSON.parse(localStorage.getItem(MAP_KEY) || 'null'); } catch (e) { return null; } })();
+            const options = (selected, optional) => (optional ? '<option value="">(없음)</option>' : '') +
+                headers.map((h, i) => `<option value="${i}" ${String(selected) === String(i) ? 'selected' : ''}>${esc(h || ('열 ' + (i + 1)))}</option>`).join('');
+            const pick = (key, words) => {
+                if (saved && saved[key] !== undefined && saved.headers && saved.headers[saved[key]] === headers[saved[key]] && saved[key] !== '') return saved[key];
+                return guess(words);
+            };
+            document.getElementById('mResident').innerHTML = options(pick('resident', ['수급자', '성명', '이용자', '이름']), false);
+            document.getElementById('mStart').innerHTML = options(pick('start', ['시작', '개시', '시작시', '태그시작']), false);
+            document.getElementById('mEnd').innerHTML = options(pick('end', ['종료', '완료', '종료시']), true);
+            document.getElementById('mDate').innerHTML = options(pick('date', ['일자', '날짜', '서비스일']), true);
+            document.getElementById('mCaregiver').innerHTML = options(pick('caregiver', ['요양보호', '요양요원', '종사자', '직원']), true);
+            const sample = rows.slice(0, 3).map(r => r.slice(0, 8).map(esc).join(' | ')).join('<br>');
+            document.getElementById('samplePreview').innerHTML = '파일 앞부분: <br>' + esc(headers.slice(0, 8).join(' | ')) + '<br>' + sample;
+            document.getElementById('mapCard').style.display = '';
+        }
+
+        async function runCompare() {
+            const val = id => { const v = document.getElementById(id).value; return v === '' ? null : parseInt(v); };
+            const body = { rows, resident_col: val('mResident'), start_col: val('mStart'), end_col: val('mEnd'), date_col: val('mDate'),
+                           caregiver_col: val('mCaregiver'), tolerance_minutes: parseInt(document.getElementById('mTol').value) };
+            if (body.resident_col === null || body.start_col === null) { document.getElementById('compareMsg').textContent = '수급자 이름과 시작 시각 열을 골라 주세요'; return; }
+            try { localStorage.setItem(MAP_KEY, JSON.stringify({ headers, resident: body.resident_col, start: body.start_col, end: body.end_col ?? '', date: body.date_col ?? '', caregiver: body.caregiver_col ?? '' })); } catch (e) {}
+            const msg = document.getElementById('compareMsg');
+            msg.style.color = '#475569'; msg.textContent = '대조하는 중...';
+            const r = await fetch(`/api/v1/rfid-compare/compare`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { msg.style.color = '#DC2626'; msg.textContent = typeof d.detail === 'string' ? d.detail : '대조에 실패했습니다'; return; }
+            msg.textContent = '';
+            result = d; filter = 'all'; renderResult();
+        }
+
+        function renderResult() {
+            const c = result.counts;
+            const total = result.rows.length;
+            document.getElementById('summary').innerHTML =
+                `대조 기간 <b>${result.range[0]} ~ ${result.range[1]}</b> · 공단 태그 <b>${result.tag_count}건</b><br>` +
+                `<span class="badge badge-ok">정상 ${c.ok || 0}</span> <span class="badge badge-warn">시간 확인 ${c.time_diff || 0}</span> ` +
+                `<span class="badge badge-bad">태그 없음 ${c.no_tag || 0}</span> <span class="badge badge-warn">계획 없음 ${c.no_plan || 0}</span> <span class="badge badge-gray">이름 확인 ${c.unknown_resident || 0}</span>`;
+            const chips = [['all', `전체 ${total}`], ...Object.keys(STATUS).filter(k => c[k]).map(k => [k, `${STATUS[k][0]} ${c[k]}`])];
+            document.getElementById('chips').innerHTML = chips.map(([k, label]) => `<button type="button" class="chip ${filter === k ? 'active' : ''}" onclick="setFilter('${k}')">${label}</button>`).join('');
+            const list = result.rows.filter(r => filter === 'all' || r.status === filter);
+            document.getElementById('resBody').innerHTML = list.map(r => {
+                const [label, cls] = STATUS[r.status] || [r.status, 'badge-gray'];
+                const tag = r.tag_start ? `${esc(r.tag_start)}${r.tag_end ? ' ~ ' + esc(r.tag_end) : ''}${r.tag_minutes ? ' (' + r.tag_minutes + '분)' : ''}` : '-';
+                const plan = r.plan ? `계획 ${esc(r.plan)}${r.arrived ? ' / 도착 ' + esc(r.arrived) : ''}` : '-';
+                return `<tr><td><span class="badge ${cls}">${label}</span></td><td><b>${esc(r.name)}</b></td><td>${tag}</td><td>${plan}</td><td>${esc(r.note)}</td></tr>`;
+            }).join('') || '<tr><td colspan="5" style="color:#94A3B8;">해당하는 건이 없습니다</td></tr>';
+            document.getElementById('badRows').innerHTML = result.bad_rows.length ? `읽지 못한 줄 ${result.bad_rows.length}건: ` + result.bad_rows.slice(0, 8).map(b => `${b.row}번째 줄`).join(', ') : '';
+            document.getElementById('resultCard').style.display = '';
+            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        function setFilter(k) { filter = k; renderResult(); }
+    </script>
+</body>
+</html>
