@@ -203,6 +203,10 @@ class Schedule(Base):
     left_at = Column(DateTime, nullable=True)  # 실제 퇴실 시각
     review_note = Column(String, nullable=True)  # 계획 반려 사유
     service_type = Column(String, default="basic_care")  # 'basic_care', 'meal_service', 'medical_care'
+    # 승인된 일정의 변경 요청: 센터장이 승인하기 전까지 원래 일정은 그대로 유지된다
+    change_date = Column(DateTime, nullable=True)
+    change_duration = Column(Integer, nullable=True)
+    change_reason = Column(String, nullable=True)
 
     status = Column(String, default="scheduled")  # 'scheduled', 'completed', 'cancelled'
     notes = Column(Text, nullable=True)  # 특이사항

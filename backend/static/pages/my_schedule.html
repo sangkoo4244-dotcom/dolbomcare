@@ -233,7 +233,7 @@
                             <ul class="notice-list2">
                                 <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>방문 전 이용자 컨디션과 준비물을 확인해 주세요.</li>
                                 <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>방문 완료 후에는 당일 중으로 서비스 기록을 작성해 주세요.</li>
-                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>일정 변경이 필요하면 센터장에게 미리 연락해 주세요.</li>
+                                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>일정 변경이 필요하면 예정 일정에서 "일정 변경 요청"을 눌러 주세요. 센터장이 승인하기 전까지는 기존 일정으로 방문합니다.</li>
                                 <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>새 방문 계획을 제안하면 센터장 승인 후 반영됩니다.</li>
                             </ul>
                         </div>
@@ -377,7 +377,12 @@
             if (it.state === '승인 대기') return '<span class="text-sm" style="color:var(--warn);">센터장 승인을 기다리는 중입니다</span>';
             if (it.state === '반려') return `<button onclick="openResubmit(${it.schedule_id})" class="btn-solid">수정 후 다시 제안</button>`;
             if (!it.planned) return `<a href="${recordUrl(it)}" class="text-xs font-bold" style="color:var(--teal);text-decoration:underline;">기록 보기</a>`;
-            if (it.state === '예정') return `<button onclick="markArrived(${it.schedule_id})" class="btn-outline">도착</button>`;
+            if (it.state === '예정') {
+                const pending = it.change_date
+                    ? `<span class="text-xs" style="color:var(--warn);margin-right:8px;">${it.change_date.slice(5, 16).replace('-', '/')}로 변경 요청 중</span><button onclick="cancelChange(${it.schedule_id})" class="btn-outline" style="margin-right:8px;">요청 철회</button>`
+                    : `<button onclick="openChange(${it.schedule_id})" class="btn-outline" style="margin-right:8px;">일정 변경 요청</button>`;
+                return pending + `<button onclick="markArrived(${it.schedule_id})" class="btn-outline">도착</button>`;
+            }
             if (it.state === '방문중') return `<button onclick="markLeft(${it.schedule_id})" class="btn-outline">퇴실</button>
                 <a href="${recordUrl(it)}" class="btn-solid" style="margin-left:8px;display:inline-block;">기록 작성</a>`;
             if (it.state === '방문완료') return `<a href="${recordUrl(it)}" class="btn-solid" style="display:inline-block;">기록 작성</a>`;
@@ -866,6 +871,59 @@
 
         function closePropose() {
             document.getElementById('proposeModal').style.display = 'none';
+        }
+
+        // 승인된 예정 일정의 날짜·시간 변경 요청: 센터장이 승인하기 전까지는 원래 일정으로 방문한다
+        function openChange(scheduleId) {
+            const it = items.find(x => x.schedule_id === scheduleId);
+            if (!it) return;
+            closeItemDetail();
+            let m = document.getElementById('changeModal');
+            if (!m) {
+                m = document.createElement('div');
+                m.id = 'changeModal';
+                m.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;padding:16px;';
+                m.innerHTML = `
+                    <div class="bg-white rounded-2xl p-6 w-full max-w-md">
+                        <h2 class="text-xl font-extrabold text-gray-900 mb-1">일정 변경 요청</h2>
+                        <div id="changeCurrent" class="text-sm text-gray-500 mb-4"></div>
+                        <label class="block text-sm font-bold mb-1">바꿀 날짜와 시간</label>
+                        <input id="changeDate" type="datetime-local" class="w-full px-3 py-2 border border-gray-300 rounded-lg mb-3">
+                        <label class="block text-sm font-bold mb-1">변경 사유 (필수)</label>
+                        <textarea id="changeReason" rows="3" placeholder="예: 이용자 병원 진료로 오후에 방문해 달라고 요청" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                        <div class="text-xs text-gray-500 mt-2">센터장이 승인하기 전까지는 기존 일정으로 방문해 주세요.</div>
+                        <div class="flex justify-end gap-2 mt-4">
+                            <button class="btn-outline" onclick="document.getElementById('changeModal').style.display='none'">취소</button>
+                            <button class="btn-solid" onclick="submitChange()">요청 보내기</button>
+                        </div>
+                    </div>`;
+                document.body.appendChild(m);
+            }
+            m.dataset.id = scheduleId;
+            document.getElementById('changeCurrent').textContent = `${it.resident_name || ''} 어르신 · 현재 ${it.date} ${it.time}`;
+            document.getElementById('changeDate').value = `${it.date}T${it.time}`;
+            document.getElementById('changeReason').value = '';
+            m.style.display = 'flex';
+        }
+
+        async function submitChange() {
+            const m = document.getElementById('changeModal');
+            const date = document.getElementById('changeDate').value;
+            const reason = document.getElementById('changeReason').value.trim();
+            if (!date) { alert('바꿀 날짜와 시간을 입력해 주세요'); return; }
+            if (!reason) { alert('변경 사유를 입력해 주세요'); return; }
+            const r = await fetch(`${API_URL}/schedule/${m.dataset.id}/change-request`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scheduled_date: date, reason }) });
+            if (!r.ok) { const e = await r.json().catch(() => ({})); alert(e.detail || '요청에 실패했습니다'); return; }
+            m.style.display = 'none';
+            loadSchedules();
+        }
+
+        async function cancelChange(scheduleId) {
+            if (!confirm('변경 요청을 철회하시겠습니까?')) return;
+            const r = await fetch(`${API_URL}/schedule/${scheduleId}/change-cancel`, { method: 'POST' });
+            if (!r.ok) { const e = await r.json().catch(() => ({})); alert(e.detail || '철회에 실패했습니다'); return; }
+            closeItemDetail();
+            loadSchedules();
         }
 
         function openResubmit(scheduleId) {

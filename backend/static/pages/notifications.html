@@ -216,6 +216,7 @@
         // app/api/schedule.py가 실제 방문 데이터를 기준으로 보낸다.
         const CATEGORY_OF = {
             plan_approved: 'approval', plan_rejected: 'approval',
+            schedule_change_requested: 'approval', schedule_change_approved: 'approval', schedule_change_rejected: 'approval',
             claim_approved: 'approval', claim_rejected: 'approval', claim_submitted: 'approval',
             change_approved: 'approval', change_rejected: 'approval',
             statement_confirmed: 'salary',
@@ -230,13 +231,16 @@
             guardian: ['#EDE9FE', '#6D28D9'], approval: ['#E6F3F1', '#0F8B80'], system: ['#F1F5F9', '#64748B'],
         };
         // 중요(처리 필요) 알림: 반려된 건은 요양사가 다시 조치해야 한다
-        const IMPORTANT_KINDS = ['claim_rejected', 'plan_rejected', 'change_rejected', 'claim_submitted'];
+        const IMPORTANT_KINDS = ['claim_rejected', 'plan_rejected', 'change_rejected', 'claim_submitted', 'schedule_change_requested', 'schedule_change_rejected'];
         // 알림을 누르면 이동할 화면 (실제로 존재하는 화면만 연결한다)
         const ACTION_LINK = {
             statement_confirmed: ['급여 보기', './my_salary.html'],
             message_received: ['메시지 보기', './messages.html'],
             plan_approved: ['일정 보기', './my_schedule.html'],
             plan_rejected: ['일정 보기', './my_schedule.html'],
+            schedule_change_requested: ['변경 요청 보기', './schedule_approval.html#changePanel'],
+            schedule_change_approved: ['일정 보기', './my_schedule.html'],
+            schedule_change_rejected: ['일정 보기', './my_schedule.html'],
             claim_approved: ['청구 보기', './caregiver_billing.html'],
             claim_rejected: ['청구 보기', './caregiver_billing.html'],
             claim_submitted: ['청구 승인하기', './billing_management.html'],

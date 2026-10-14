@@ -22,6 +22,7 @@ ITEMS = [
     ("draft_claims", "제출 안 한 방문 기록", "요양보호사가 기록만 하고 3일 넘게 제출하지 않은 청구(작성중)", "./billing_management.html?status=draft"),
     ("rejected_claims", "보완 요청 후 미처리 청구", "반려했는데 요양보호사가 아직 다시 제출하지 않은 청구", "./billing_management.html?status=rejected"),
     ("change_requests", "이용자 정보 변경 요청", "요양보호사가 요청한 이용자 정보 변경 승인 대기", "./resident_management.html#changeRequestPanel"),
+    ("schedule_changes", "방문 일정 변경 요청", "요양보호사가 요청한 방문 날짜·시간 변경 승인 대기", "./schedule_approval.html#changePanel"),
     ("handover_unread", "인수인계 미확인", "받는 요양보호사가 아직 읽지 않은 인계 메모", "./handover.html?unread=1"),
     ("incident_incomplete", "사고 보고 보완 필요", "보호자 통보일이나 재발방지 대책이 비어 있는 사고 보고", "./incident.html?issues=1"),
 ]
@@ -40,6 +41,8 @@ def manager_inbox(db: Session = Depends(get_db), actor: User = Depends(require_m
             BillingRecord.center_id == center, BillingRecord.approval_status == "rejected").count(),
         "change_requests": db.query(ResidentChangeRequest).filter(
             ResidentChangeRequest.center_id == center, ResidentChangeRequest.status == "pending").count(),
+        "schedule_changes": db.query(Schedule).filter(
+            Schedule.center_id == center, Schedule.change_date.isnot(None)).count(),
         "handover_unread": db.query(HandoverNote).filter(
             HandoverNote.center_id == center, HandoverNote.to_caregiver_id.isnot(None),
             HandoverNote.acknowledged_at.is_(None)).count(),

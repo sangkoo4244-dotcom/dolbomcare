@@ -274,6 +274,8 @@ def caregiver_schedule_view(
             "arrived_at": s.arrived_at.isoformat() if s.arrived_at else None,
             "left_at": s.left_at.isoformat() if s.left_at else None,
             "review_note": s.review_note,
+            "change_date": s.change_date.strftime("%Y-%m-%d %H:%M") if s.change_date else None,
+            "change_reason": s.change_reason,
             "planned": True,
         })
 
@@ -490,6 +492,106 @@ def resubmit_schedule(schedule_id: int, req: ResubmitRequest, db: Session = Depe
     schedule.review_note = None
     db.commit()
     return {"status": "success", "schedule_id": schedule.id, "schedule_status": schedule.status}
+
+class ChangeRequest(BaseModel):
+    scheduled_date: str
+    duration_minutes: int = None
+    reason: str = ""
+
+
+def _clear_change(schedule):
+    schedule.change_date = None
+    schedule.change_duration = None
+    schedule.change_reason = None
+
+
+@router.post("/{schedule_id}/change-request")
+def request_schedule_change(schedule_id: int, req: ChangeRequest, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    """요양보호사가 승인된 예정 일정의 날짜·시간 변경을 요청 (센터장 승인 전까지 원래 일정 유지)"""
+    if actor.role != "caregiver":
+        raise HTTPException(status_code=403, detail="요양보호사만 변경을 요청할 수 있습니다")
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    if not schedule:
+        raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
+    _assert_owner(schedule, actor.id, actor.role)
+    if schedule.status != "scheduled" or schedule.arrived_at is not None:
+        raise HTTPException(status_code=400, detail="아직 방문하지 않은 승인된 일정만 변경을 요청할 수 있습니다")
+    reason = (req.reason or "").strip()
+    if not reason:
+        raise HTTPException(status_code=400, detail="변경 사유를 입력해 주세요")
+    new_date = datetime.fromisoformat(req.scheduled_date)
+    if new_date == schedule.scheduled_date and (req.duration_minutes in (None, schedule.duration_minutes)):
+        raise HTTPException(status_code=400, detail="기존 일정과 같습니다")
+    schedule.change_date = new_date
+    schedule.change_duration = req.duration_minutes
+    schedule.change_reason = reason
+    resident = db.query(Resident).filter(Resident.id == schedule.resident_id).first()
+    for mgr in db.query(User).filter(User.center_id == schedule.center_id, User.role == "center_manager", User.is_active == True).all():  # noqa: E712
+        notify(db, mgr.id, "schedule_change_requested",
+               f"{actor.full_name} 요양보호사가 {resident.name if resident else ''} 방문 일정 변경을 요청했습니다 ({schedule.scheduled_date:%m/%d %H:%M} → {new_date:%m/%d %H:%M})")
+    db.commit()
+    return {"status": "success", "schedule_id": schedule.id, "message": "변경을 요청했습니다. 센터장이 승인하기 전까지는 기존 일정으로 방문해 주세요"}
+
+
+@router.post("/{schedule_id}/change-cancel")
+def cancel_schedule_change(schedule_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    """요양보호사가 보낸 변경 요청을 철회"""
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    if not schedule:
+        raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
+    _assert_owner(schedule, actor.id, actor.role)
+    if schedule.change_date is None:
+        raise HTTPException(status_code=400, detail="대기 중인 변경 요청이 없습니다")
+    _clear_change(schedule)
+    db.commit()
+    return {"status": "success", "schedule_id": schedule.id}
+
+
+@router.get("/change-requests")
+def list_change_requests(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """센터장 승인 대기 중인 일정 변경 요청"""
+    rows = db.query(Schedule).filter(Schedule.center_id == actor.center_id, Schedule.change_date.isnot(None)).order_by(Schedule.scheduled_date).all()
+    residents = {x.id: x.name for x in db.query(Resident).filter(Resident.center_id == actor.center_id).all()}
+    caregivers = {x.id: x.full_name for x in db.query(User).filter(User.center_id == actor.center_id).all()}
+    return {"items": [{
+        "schedule_id": s.id,
+        "caregiver_name": caregivers.get(s.caregiver_id),
+        "resident_name": residents.get(s.resident_id),
+        "from_date": s.scheduled_date.strftime("%Y-%m-%d %H:%M"),
+        "to_date": s.change_date.strftime("%Y-%m-%d %H:%M"),
+        "from_duration": s.duration_minutes,
+        "to_duration": s.change_duration,
+        "reason": s.change_reason,
+    } for s in rows]}
+
+
+@router.post("/{schedule_id}/change-approve")
+def approve_schedule_change(schedule_id: int, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id, Schedule.center_id == actor.center_id).first()
+    if not schedule or schedule.change_date is None:
+        raise HTTPException(status_code=404, detail="대기 중인 변경 요청을 찾을 수 없습니다")
+    schedule.scheduled_date = schedule.change_date
+    if schedule.change_duration is not None:
+        schedule.duration_minutes = schedule.change_duration
+    _clear_change(schedule)
+    notify(db, schedule.caregiver_id, "schedule_change_approved", f"일정 변경이 승인되었습니다 ({schedule.scheduled_date:%m/%d %H:%M})")
+    db.commit()
+    return {"status": "success", "schedule_id": schedule.id}
+
+
+@router.post("/{schedule_id}/change-reject")
+def reject_schedule_change(schedule_id: int, req: ReviewRequest, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    reason = (req.reason or "").strip()
+    if not reason:
+        raise HTTPException(status_code=400, detail="반려 사유를 입력해 주세요")
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id, Schedule.center_id == actor.center_id).first()
+    if not schedule or schedule.change_date is None:
+        raise HTTPException(status_code=404, detail="대기 중인 변경 요청을 찾을 수 없습니다")
+    _clear_change(schedule)
+    notify(db, schedule.caregiver_id, "schedule_change_rejected", f"일정 변경이 반려되었습니다. 기존 일정({schedule.scheduled_date:%m/%d %H:%M})으로 방문해 주세요: {reason}")
+    db.commit()
+    return {"status": "success", "schedule_id": schedule.id}
+
 
 @router.get("/{schedule_id}")
 async def get_schedule(schedule_id: int, db: Session = Depends(get_db)):

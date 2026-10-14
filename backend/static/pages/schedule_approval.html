@@ -160,6 +160,8 @@
 
                 <div id="saGrid" class="grid grid-cols-1" style="grid-template-columns: minmax(0,1fr) 300px; gap: 16px; align-items: start; display: grid;">
                     <div style="min-width:0;">
+                        <!-- 방문 일정 변경 요청: 요양보호사가 이미 승인된 일정의 날짜·시간을 바꿔 달라고 한 건 (있을 때만 보임) -->
+                        <div id="changePanel" style="display:none;background:#FFFBEB;border:1px solid #FCD34D;border-radius:12px;padding:14px 16px;margin-bottom:14px;"></div>
                         <!-- 필터 -->
                         <div class="filter-bar">
                             <input id="dateFrom" type="date" class="filter-input">
@@ -405,6 +407,7 @@
                 renderWeekStatus();
                 renderCaregiverStats();
                 renderTable();
+                loadChangeRequests();
             } catch (e) { showMessage('방문 계획 로드 실패', 'error'); }
         }
 
@@ -651,6 +654,44 @@
             if (!res.ok) { err.textContent = typeof d.detail === 'string' ? d.detail : '입력 내용을 확인해 주세요'; err.style.display = 'block'; return; }
             closeRecurring();
             showMessage(`방문 일정 ${d.created}건을 등록했습니다${d.skipped ? ` (이미 있는 ${d.skipped}건은 건너뜀)` : ''}.`, 'success');
+            loadPlans();
+        }
+
+        // 방문 일정 변경 요청: 승인하면 일정이 새 날짜·시간으로 바뀌고, 반려하면 원래 일정이 그대로 유지된다
+        async function loadChangeRequests() {
+            const box = document.getElementById('changePanel');
+            try {
+                const r = await fetch(`${API_URL}/schedule/change-requests`);
+                if (!r.ok) throw new Error(r.status);
+                const items = (await r.json()).items || [];
+                if (!items.length) { box.style.display = 'none'; return; }
+                const fmt = (d) => d.slice(5, 16).replace('-', '/');
+                box.innerHTML = `<div style="font-weight:800;color:#92400E;margin-bottom:8px;">방문 일정 변경 요청 ${items.length}건</div>` + items.map(c => `
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:#fff;border:1px solid #FDE68A;border-radius:10px;padding:10px 12px;margin-bottom:6px;">
+                        <div style="flex:1;min-width:220px;">
+                            <div style="font-weight:700;">${c.caregiver_name || ''} · ${c.resident_name || ''} 어르신</div>
+                            <div style="font-size:13px;color:#475569;">${fmt(c.from_date)} → <b style="color:#0F8B80;">${fmt(c.to_date)}</b>${c.to_duration && c.to_duration !== c.from_duration ? ` (${c.to_duration}분)` : ''}</div>
+                            <div style="font-size:12.5px;color:#64748B;">사유: ${(c.reason || '').replace(/</g, '&lt;')}</div>
+                        </div>
+                        <button class="btn-solid" style="padding:6px 12px;" onclick="decideChange(${c.schedule_id}, 'approve')">변경 승인</button>
+                        <button class="btn-outline" style="padding:6px 12px;color:#DC2626;border-color:#FBCFCF;" onclick="decideChange(${c.schedule_id}, 'reject')">반려</button>
+                    </div>`).join('');
+                box.style.display = '';
+            } catch (e) { box.style.display = 'none'; }
+        }
+
+        async function decideChange(scheduleId, action) {
+            let body = {};
+            if (action === 'reject') {
+                const reason = prompt('반려 사유를 입력하세요 (요양보호사에게 전달됩니다):');
+                if (reason === null) return;
+                if (!reason.trim()) { showMessage('반려 사유를 입력해 주세요', 'error'); return; }
+                body = { user_id: currentUser.id, user_role: 'center_manager', reason };
+            } else if (!confirm('요청한 날짜·시간으로 일정을 바꾸시겠습니까?')) return;
+            const r = await fetch(`${API_URL}/schedule/${scheduleId}/change-${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (!r.ok) { const e = await r.json().catch(() => ({})); showMessage(e.detail || '처리 실패', 'error'); return; }
+            showMessage(action === 'approve' ? '일정을 변경했습니다' : '변경 요청을 반려했습니다', 'success');
+            loadChangeRequests();
             loadPlans();
         }
 
