@@ -80,6 +80,7 @@ class DailyRecord(Base):
     medicine_given = Column(Boolean, default=False)
     notes = Column(Text)
     care_items = Column(String, nullable=True)  # 제공 항목 코드 (쉼표 구분)
+    item_minutes = Column(String, nullable=True)  # 항목별 제공 시간(분): "meal_assist:30,bath:30" - 공단 앱 종료 전송 입력용(선택)
     duration_minutes = Column(Integer, nullable=True)  # 1회 제공 시간 (30~240분)
     schedule_id = Column(Integer, ForeignKey("schedules.id"), nullable=True)  # 연결된 방문 계획
     condition = Column(String, nullable=True)  # 'good', 'normal', 'poor'

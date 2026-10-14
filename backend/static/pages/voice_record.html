@@ -239,6 +239,13 @@
                         </div>
                     </div>
 
+                    <div id="itemMinutesBox" style="display:none;" class="rounded-lg p-4 bg-blue-50 border border-blue-100">
+                        <div class="text-sm font-bold text-gray-800 mb-1">항목별 제공 시간 (선택) - 공단 "스마트장기요양" 앱 종료 전송용</div>
+                        <p class="text-xs text-gray-600 mb-3">공단 앱은 종료 전송 때 항목마다 분 단위로 입력하게 합니다. 여기에 적어 두면 저장 후 그대로 옮겨 적을 수 있는 요약이 나옵니다. 공단 앱을 쓰지 않으면 비워 두세요.</p>
+                        <div id="itemMinutesRows" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+                        <div id="itemMinutesSum" class="text-sm font-bold mt-2"></div>
+                    </div>
+
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2">방문 확인 서명 (선택)</label>
                         <p class="text-xs text-gray-500 mb-2">이용자 또는 보호자가 화면에 직접 서명하면 방문 확인 기록으로 저장됩니다. 서명 없이도 저장할 수 있습니다.</p>
@@ -435,7 +442,7 @@
             const sel = document.getElementById('resident');
             const plannedFor = params.get('resident_id');
             const planned = plannedFor && sel.value === plannedFor ? (params.get('planned') || '').split(',').filter(Boolean) : [];
-            document.querySelectorAll('input[name="careItem"]').forEach(cb => { cb.checked = planned.includes(cb.value); });
+            document.querySelectorAll('input[name="careItem"]').forEach(cb => { cb.checked = planned.includes(cb.value); }); renderItemMinutes();
         }
 
         function onResidentChange() {
@@ -816,6 +823,69 @@
         ['recordSearch'].forEach(id => document.getElementById(id).addEventListener('input', renderRecords));
         ['recordDateFrom', 'recordDateTo', 'recordServiceFilter', 'recordStatusFilter', 'recordCaregiverFilter', 'recordSort'].forEach(id => document.getElementById(id).addEventListener('change', renderRecords));
 
+        // 항목별 제공 시간(공단 앱 종료 전송 입력용): 선택한 항목마다 분 입력칸을 만들고, 합계가 제공 시간과 같은지 보여 준다
+        function renderItemMinutes() {
+            const checked = [...document.querySelectorAll('input[name="careItem"]:checked')].map(cb => cb.value);
+            const box = document.getElementById('itemMinutesBox');
+            const rows = document.getElementById('itemMinutesRows');
+            box.style.display = checked.length ? '' : 'none';
+            const keep = {};
+            rows.querySelectorAll('input').forEach(i => { keep[i.dataset.code] = i.value; });
+            rows.innerHTML = checked.map(code => `
+                <label class="flex items-center gap-2 text-sm">
+                    <span style="flex:1;">${CARE_ITEM_LABELS[code] || code}</span>
+                    <input type="number" min="1" max="240" data-code="${code}" value="${keep[code] || ''}" oninput="updateItemMinutesSum()" class="px-2 py-1 border-2 border-gray-200 rounded-lg" style="width:80px;"> 분
+                </label>`).join('');
+            updateItemMinutesSum();
+        }
+        function collectItemMinutes() {
+            return [...document.querySelectorAll('#itemMinutesRows input')]
+                .filter(i => i.value !== '' && Number(i.value) > 0)
+                .map(i => `${i.dataset.code}:${Math.round(Number(i.value))}`).join(',');
+        }
+        function updateItemMinutesSum() {
+            const inputs = [...document.querySelectorAll('#itemMinutesRows input')];
+            const sum = inputs.reduce((a, i) => a + (Number(i.value) || 0), 0);
+            const total = Number(document.getElementById('durationMinutes').value) || 0;
+            const el = document.getElementById('itemMinutesSum');
+            if (!sum) { el.textContent = ''; return; }
+            el.style.color = sum === total ? '#15803D' : '#B45309';
+            el.textContent = sum === total ? `합계 ${sum}분 = 제공 시간 ${total}분` : `합계 ${sum}분 / 제공 시간 ${total}분 (공단 앱에서는 합계가 실제 서비스 시간과 같아야 전송됩니다)`;
+        }
+        document.addEventListener('change', (e) => {
+            if (e.target && e.target.name === 'careItem') renderItemMinutes();
+            if (e.target && e.target.id === 'durationMinutes') updateItemMinutesSum();
+        });
+
+        // 저장 직후 공단 앱 종료 전송에 옮겨 적을 수 있는 요약을 보여 준다 (연동은 아니며, 같은 내용을 다시 생각하지 않게 하는 용도)
+        function showGovSummary(data) {
+            const label = (c) => CARE_ITEM_LABELS[c] || c;
+            const items = data.itemMinutes ? data.itemMinutes.split(',').map(p => { const [c, m] = p.split(':'); return `${label(c)} ${m}분`; }) : [];
+            const change = { improved: '호전', maintained: '유지', worsened: '악화' };
+            const lines = [
+                `[공단 앱 종료 전송 입력값] ${data.residentName}`,
+                items.length ? `제공 내용: ${items.join(', ')}` : '제공 내용: (항목별 분을 적지 않았습니다)',
+                `변화 상태: 신체 ${change[data.physical] || '-'} / 식사 ${change[data.meal] || '-'} / 인지 ${change[data.cognitive] || '-'}`,
+                `특이사항: ${data.notes || '-'}`
+            ];
+            let box = document.getElementById('govSummary');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'govSummary';
+                box.className = 'rounded-lg p-4 bg-blue-50 border border-blue-100 text-sm';
+                box.style.cssText = 'margin-top:12px;white-space:pre-line;line-height:1.7;';
+                document.getElementById('recordForm').insertAdjacentElement('afterend', box);
+            }
+            box.dataset.text = lines.join('\n');
+            box.innerHTML = '<b>공단 "스마트장기요양" 앱을 쓰는 센터라면 종료 전송에 아래 내용을 입력하세요.</b>\n' + lines.slice(1).join('\n').replace(/</g, '&lt;') +
+                '\n<button type="button" class="mt-2 px-3 py-1 bg-white border border-gray-300 rounded-lg font-bold" onclick="copyGovSummary()">복사하기</button>';
+            box.style.display = '';
+        }
+        function copyGovSummary() {
+            const text = document.getElementById('govSummary').dataset.text || '';
+            navigator.clipboard.writeText(text).then(() => showMessage('복사했습니다', 'success'), () => showMessage('복사에 실패했습니다', 'error'));
+        }
+
         document.getElementById('recordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const rid = document.getElementById('resident').value;
@@ -838,6 +908,14 @@
             }
 
             if (isRecording) toggleVoiceRecording();
+            const govData = {
+                residentName: document.getElementById('resident').selectedOptions[0].text.replace(/\s*\(.*$/, ''),
+                itemMinutes: collectItemMinutes(),
+                physical: document.getElementById('physicalChange').value,
+                meal: document.getElementById('mealChange').value,
+                cognitive: document.getElementById('cognitiveChange').value,
+                notes: notes
+            };
 
             try {
                 const r = await fetch(`${API_URL}/records/create`, {
@@ -852,6 +930,7 @@
                         service_type: st,
                         notes: notes,
                         care_items: careItems,
+                        item_minutes: collectItemMinutes() || null,
                         condition: condition || null,
                         physical_change: document.getElementById('physicalChange').value || null,
                         meal_change: document.getElementById('mealChange').value || null,
@@ -868,6 +947,7 @@
                     showMessage('기록이 저장되었습니다 ✅', 'success');
                     document.getElementById('recordForm').reset();
                     onFormReset();
+                    showGovSummary(govData);
                     loadRecords();
                 } else {
                     const err = await r.json();
@@ -880,6 +960,8 @@
 
         function onFormReset() {
             resetBillingDisplay();
+            renderItemMinutes();
+            const gov = document.getElementById('govSummary'); if (gov) gov.style.display = 'none';
             setDefaultVisitDateTime();
             if (isRecording) toggleVoiceRecording();
             document.querySelectorAll('.quick-tag').forEach(b => b.classList.remove('active'));
@@ -961,7 +1043,7 @@
         function quickToggleGroup(idx, btn) {
             const boxes = CARE_GROUPS[idx].map(v => document.querySelector(`input[name="careItem"][value="${v}"]`)).filter(Boolean);
             const allChecked = boxes.every(b => b.checked);
-            boxes.forEach(b => { b.checked = !allChecked; });
+            boxes.forEach(b => { b.checked = !allChecked; }); renderItemMinutes();
             btn.classList.toggle('active', !allChecked);
         }
 
@@ -1209,7 +1291,7 @@
             if (event.target.closest('label, input')) return;
             const boxes = [...card.querySelectorAll('input[name="careItem"]')];
             const allChecked = boxes.every(b => b.checked);
-            boxes.forEach(b => { b.checked = !allChecked; });
+            boxes.forEach(b => { b.checked = !allChecked; }); renderItemMinutes();
             card.classList.toggle('ring-2', !allChecked);
             card.classList.toggle('ring-orange-300', !allChecked);
         }

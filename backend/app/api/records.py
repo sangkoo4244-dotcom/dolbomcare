@@ -53,6 +53,7 @@ class CreateRecordRequest(BaseModel):
     service_type: str
     notes: str = ""
     care_items: str = ""
+    item_minutes: Optional[str] = None  # "meal_assist:30,bath:30" 항목별 분 (선택, 공단 앱 입력용)
     condition: Optional[str] = None
     duration_minutes: Literal[30, 60, 90, 120, 180, 240] = 60
     recorded_date: Optional[datetime] = None  # 소급 기록용 (미지정 시 현재 시각)
@@ -70,6 +71,7 @@ class UpdateRecordRequest(BaseModel):
     client_type: Optional[str] = None  # 소득분류 (스냅샷 수정)
     duration_minutes: Optional[Literal[30, 60, 90, 120, 180, 240]] = None
     care_items: Optional[str] = None
+    item_minutes: Optional[str] = None
     condition: Optional[str] = None
     physical_change: Optional[ChangeStatus] = None
     meal_change: Optional[ChangeStatus] = None
@@ -82,6 +84,20 @@ class BatchDeleteRequest(BaseModel):
     record_ids: list
     user_id: int
     user_role: str
+
+def clean_item_minutes(value, care_items):
+    """항목별 분 문자열("meal_assist:30,bath:30")을 검사해 돌려준다. 제공 항목에 없는 코드나 0 이하 분은 거절한다."""
+    if not value:
+        return None
+    allowed = {c for c in (care_items or "").split(",") if c}
+    pairs = []
+    for part in value.split(","):
+        code, _, minutes = part.partition(":")
+        if code not in allowed or not minutes.isdigit() or not 0 < int(minutes) <= 240:
+            raise HTTPException(status_code=400, detail="항목별 시간이 올바르지 않습니다 (선택한 제공 항목만, 1~240분)")
+        pairs.append(f"{code}:{int(minutes)}")
+    return ",".join(pairs)
+
 
 @router.post("/test")
 def test_endpoint():
@@ -115,6 +131,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
             medicine_given=request.service_type == "medical_care",
             notes=request.notes,
             care_items=request.care_items or None,
+            item_minutes=clean_item_minutes(request.item_minutes, request.care_items),
             condition=request.condition,
             duration_minutes=request.duration_minutes,
             schedule_id=linked_schedule.id if linked_schedule else None,
@@ -355,6 +372,7 @@ async def get_recent_records(
                 "medicine_given": r.medicine_given,
                 "notes": r.notes,
                 "care_items": r.care_items,
+                "item_minutes": r.item_minutes,
                 "condition": r.condition,
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
                 "billing_amount": billing_amount
@@ -431,6 +449,7 @@ async def get_all_records(
                 "medicine_given": r.medicine_given,
                 "notes": r.notes,
                 "care_items": r.care_items,
+                "item_minutes": r.item_minutes,
                 "condition": r.condition,
                 "duration_minutes": r.duration_minutes,
                 "recorded_date": r.recorded_date.isoformat() if r.recorded_date else None,
@@ -521,6 +540,7 @@ async def get_today_records(
                 "medicine_given": r.medicine_given,
                 "notes": r.notes,
                 "care_items": r.care_items,
+                "item_minutes": r.item_minutes,
                 "condition": r.condition,
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
                 "billing_amount": billing_amount
@@ -583,6 +603,7 @@ async def get_all_center_records(
                 "service_type": r.service_type or "basic_care",
                 "notes": r.notes,
                 "care_items": r.care_items,
+                "item_minutes": r.item_minutes,
                 "condition": r.condition,
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
                 "billing_amount": billing_map.get(r.id, {}).get("amount", 0),
@@ -775,6 +796,8 @@ async def update_record(
             record.duration_minutes = request.duration_minutes
         if request.care_items is not None:
             record.care_items = request.care_items or None
+        if request.item_minutes is not None:
+            record.item_minutes = clean_item_minutes(request.item_minutes, request.care_items if request.care_items is not None else record.care_items)
         if request.condition is not None:
             record.condition = request.condition or None
         for field in ("physical_change", "meal_change", "cognitive_change", "stool_accidents", "urine_accidents"):

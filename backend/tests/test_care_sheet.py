@@ -210,3 +210,14 @@ def test_prefill_includes_arrival_and_departure_times(env):
     planned = client.get("/api/v1/records/prefill?resident_id=1", headers=CG_A).json()["planned"]
     assert planned["arrived_at"] == (now - timedelta(minutes=35)).strftime("%Y-%m-%dT%H:%M")
     assert planned["left_at"] == (now - timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M")
+
+
+def test_item_minutes_are_saved_and_validated(env):
+    db, client = env
+    base = {"caregiver_id": 2, "resident_id": 1, "service_type": "basic_care", "notes": "양호", "care_items": "meal_assist,bath", "duration_minutes": 60}
+    ok = client.post("/api/v1/records/create", json={**base, "item_minutes": "meal_assist:30,bath:30"}, headers=CG_A)
+    assert ok.status_code == 200
+    assert db.query(models.DailyRecord).order_by(models.DailyRecord.id.desc()).first().item_minutes == "meal_assist:30,bath:30"
+    for bad in ("laundry:30", "meal_assist:0", "meal_assist:abc", "meal_assist:300"):
+        assert client.post("/api/v1/records/create", json={**base, "item_minutes": bad}, headers=CG_A).status_code == 400
+    assert client.post("/api/v1/records/create", json=base, headers=CG_A).status_code == 200  # 비워 둬도 저장된다
