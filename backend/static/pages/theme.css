@@ -246,6 +246,8 @@ main [class*="bg-gradient-to"] {
     .pa-card { overflow-x: auto; }
     /* 카드 안 긴 글자는 줄바꿈 (한글은 단어 단위) */
     p, li, span, div { overflow-wrap: anywhere; word-break: keep-all; }
+    /* 상단 사용자 이름·역할은 한 글자씩 쪼개지지 않게 */
+    #userName, #userRole { white-space: nowrap; overflow-wrap: normal; }
 }
 
 /* ===== 휴대폰: 표를 한 줄 한 줄 카드로 (옆으로 밀어서 보지 않게). 머리글 글자는 menu.js가 data-label로 넣어 준다 ===== */
@@ -259,6 +261,10 @@ main [class*="bg-gradient-to"] {
     table.m-cards td[data-label]::before { content: attr(data-label); flex: 0 0 auto; max-width: 42%; color: #64748b; font-size: 12px; font-weight: 600; text-align: left; }
     table.m-cards td[data-label=""]::before { display: none; }
     table.m-cards td[colspan] { display: block; text-align: center; }
+    /* 칸에 직접 적힌 너비(width:140px 등)가 카드에서는 줄 전체 폭을 막지 않게 한다 */
+    table.m-cards td { width: auto !important; max-width: none !important; }
+    table.m-cards tr.unread { border-left: 4px solid #0F8B80; }
+    table.m-cards tr.unread td:first-child { box-shadow: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

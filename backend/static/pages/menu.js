@@ -63,7 +63,8 @@ const SIDEBAR_MENUS = {
         { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
         { href: 'handover.html', icon: 'messages', label: '인수인계' },
         { href: 'notifications.html', icon: 'notify', label: '알림' },
-        { href: 'messages.html', icon: 'messages', label: '보호자 소통' }
+        { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
+        { href: 'guide_caregiver.html', icon: 'stamp', label: '사용 안내' }
     ],
     guardian: [
         { href: 'guardian_home.html', icon: 'home', label: '이용자 방문 기록' },
@@ -96,7 +97,37 @@ const SIDEBAR_MENUS = {
     ]
 };
 
+// 사이드바 묶음: 모든 페이지가 같은 그룹으로 보이도록 여기서 한 번에 정한다 (페이지마다 따로 그룹을 정하던 방식은 새 페이지에서 빠뜨리기 쉽다)
+const SIDEBAR_GROUPS = [
+    ['메인', ['대시보드', '알림', '사용 안내']],
+    ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
+    ['방문 운영', ['나의 일정', '방문계획 승인', '음성 기록', '방문 기록 현황', '인수인계', '사고·응급 보고']],
+    ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
+    ['청구·급여', ['나의 청구', '나의 급여', '청구관리', '본인부담금', '월별정산', '급여 확정', '수익분석']],
+    ['센터·직원', ['직원관리', '센터 정보']],
+];
+
+function applySidebarGroups(nav) {
+    const links = Array.from(nav.querySelectorAll(':scope > a.side-item'));
+    const byLabel = {};
+    links.forEach(a => { byLabel[(a.querySelector('span:last-child') || a).textContent.trim()] = a; });
+    const frag = document.createDocumentFragment();
+    SIDEBAR_GROUPS.forEach(([label, names]) => {
+        const found = names.map(n => byLabel[n]).filter(Boolean);
+        if (!found.length) return;
+        const h = document.createElement('div');
+        h.className = 'side-group-label';
+        h.textContent = label;
+        frag.appendChild(h);
+        found.forEach(a => frag.appendChild(a));
+    });
+    links.forEach(a => { if (!frag.contains(a)) frag.appendChild(a); });
+    nav.innerHTML = '';
+    nav.appendChild(frag);
+}
+
 const SIDEBAR_STYLE = `
+.side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; }
 .side-brand { padding: 24px; border-bottom: 1px solid #374151; display: flex; align-items: center; gap: 12px; }
 .side-logo { font-size: 30px; }
 .side-title { font-size: 18px; font-weight: 700; }
@@ -161,6 +192,7 @@ function renderSidebar() {
             <span>로그아웃</span>
         </a>
     `;
+    if (roleMenu !== 'guardian') applySidebarGroups(nav);
     renderMobileTabbar(items, current, roleMenu);
     showUnreadMessageBadge();
 

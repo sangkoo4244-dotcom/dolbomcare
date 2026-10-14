@@ -249,7 +249,7 @@
         // 요양사·센터장 메뉴 라벨을 모두 포함해 두면, groupSidebar()가 실제로 있는 항목만 걸러서 묶는다
         // (다른 재구축 페이지들과 동일한 SIDE_GROUPS_CG)
         const SIDE_GROUPS_CG = [
-            ['메인', ['대시보드', '알림']],
+            ['메인', ['대시보드', '알림', '사용 안내']],
             ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
             ['방문 운영', ['나의 일정', '방문계획 승인', '음성 기록', '방문 기록 현황', '인수인계', '사고·응급 보고']],
             ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
@@ -281,6 +281,7 @@
             document.getElementById('pageTitle').textContent = '대시보드';
             document.getElementById('pageSub').textContent = '오늘의 방문과 기록 현황을 확인하세요.';
             document.getElementById('dashboardContent').innerHTML = `
+                <section class="panel" id="onboardPanel" style="display:none; margin-bottom:16px;"></section>
                 ${summaryRow([
                     ['오늘 방문', 'todayVisits', '계획된 방문', ICO.calendarCheck, 'b'],
                     ['기록 필요', 'needRecord', '방문을 마치고 기록 전', ICO.clipboard, 'c'],
@@ -537,6 +538,37 @@
             }
         }
 
+        // 처음 시작하기 체크리스트: 해낸 단계는 체크하고, 모두 끝나거나 닫으면 더 보이지 않는다 (브라우저에만 기억)
+        function renderOnboarding(hasPlan, hasRecord, hasSubmitted) {
+            const box = document.getElementById('onboardPanel');
+            if (!box) return;
+            const store = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+            const guideSeen = store('guideCaregiverSeen') === '1';
+            if (store('onboardDismissed') === '1') return;
+            const steps = [
+                [hasPlan, '방문 일정(계획) 만들기·확인하기', './my_schedule.html', '나의 일정'],
+                [hasRecord, '첫 음성 기록 저장하기', './voice_record.html', '음성 기록'],
+                [hasSubmitted, '청구 제출하기 (센터장에게 승인 요청)', './caregiver_billing.html', '나의 청구'],
+                [guideSeen, '사용 안내 읽어 보기', './guide_caregiver.html', '사용 안내'],
+            ];
+            const done = steps.filter(s => s[0]).length;
+            if (done === steps.length) return;
+            box.style.display = '';
+            box.innerHTML = `
+                <div class="section-head"><div class="section-head-left"><h2 class="section-title">처음 시작하기 (${done}/${steps.length})</h2></div>
+                    <button type="button" onclick="dismissOnboarding()" style="border:none;background:none;color:#64748B;font-size:13px;cursor:pointer;">닫기</button></div>
+                <ul style="list-style:none;margin:0;padding:0;">${steps.map(([ok, label, href, linkLabel]) => `
+                    <li style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F1F5F9;font-size:15px;">
+                        <span style="flex:0 0 auto;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;background:${ok ? '#0F8B80' : '#CBD5E1'};">${ok ? '✓' : ''}</span>
+                        <span style="flex:1;${ok ? 'color:#94A3B8;text-decoration:line-through;' : 'font-weight:600;'}">${label}</span>
+                        ${ok ? '' : `<a href="${href}" style="color:#0F8B80;font-weight:700;white-space:nowrap;">${linkLabel} ›</a>`}
+                    </li>`).join('')}</ul>`;
+        }
+        function dismissOnboarding() {
+            try { localStorage.setItem('onboardDismissed', '1'); } catch (e) { /* 저장이 막혀도 이번 화면에서는 닫는다 */ }
+            document.getElementById('onboardPanel').style.display = 'none';
+        }
+
         async function loadCaregiverData() {
             try {
                 const now = new Date();
@@ -546,6 +578,8 @@
                     fetch(`${API_URL}/billing/?caregiver_id=${currentUser.id}&include_archived=true`).then(r => r.json()),
                     fetch(`${API_URL}/schedule/caregiver-view?caregiver_id=${currentUser.id}&year_month=${ym}&user_id=${currentUser.id}&user_role=${currentUser.role}`).then(r => r.json()),
                 ]);
+
+                renderOnboarding((plan.items || []).length > 0, (recs.records || []).length > 0, (bills.records || []).some(b => b.approval_status !== 'draft'));
 
                 const today = todayKey();
                 const todays = (plan.items || []).filter(i => i.date === today && i.schedule_id);
