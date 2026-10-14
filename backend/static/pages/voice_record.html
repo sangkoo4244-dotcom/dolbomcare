@@ -630,7 +630,7 @@
             if (!box || !currentUser || currentUser.role !== 'center_manager') return;
             const n = (fn) => monthRecords.filter(fn).length;
             const card = (status, label, count, desc, bg, fg, extra) => `
-                <div class="tip-card" role="button" tabindex="0" style="cursor:pointer;" onclick="filterByStatus('${status}')">
+                <div class="tip-card" role="button" tabindex="0" style="cursor:pointer;flex:1 1 220px;" onclick="filterByStatus('${status}')">
                     <div class="tip-ico" style="background:${bg};color:${fg};font-weight:800;font-size:18px;">${count}</div>
                     <div><div style="font-weight:800;">${label}</div><div style="font-size:12px;color:#64748B;">${desc}</div>${extra || ''}</div>
                 </div>`;
