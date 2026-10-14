@@ -376,6 +376,10 @@
                         <ul class="priority-list" id="taskList"></ul>
                     </section>
                 </div>
+                <section class="panel" id="boardPanel" style="margin-bottom:16px;">
+                    <div class="section-head"><div class="section-head-left">${ICO.users}<h2 class="section-title">요양보호사별 현황</h2></div></div>
+                    <div id="boardBody"><div class="empty">불러오는 중입니다</div></div>
+                </section>
                 <section class="panel" id="precheckPanel" style="display:none; margin-bottom:16px;">
                     <div class="section-head"><h2 class="section-title">공단 전송 사전점검</h2><span style="font-size:13px;color:#64748B;">최근 14일 · 돌봄케어 기록 기준</span></div>
                     <div id="precheckBody"></div>
@@ -692,6 +696,16 @@
                     const inboxRes = await fetch(`${API_URL}/inbox`);
                     if (inboxRes.ok) inboxItems = (await inboxRes.json()).items || [];
                 } catch (e) { /* 처리함 조회에 실패해도 대시보드는 그대로 보여 준다 */ }
+                // 요양보호사별 현황판: 한 사람씩 밀린 일이 있는지 본다
+                try {
+                    const boardRes = await fetch(`${API_URL}/inbox/caregivers`);
+                    const rows = boardRes.ok ? ((await boardRes.json()).caregivers || []) : [];
+                    const warn = (n) => n ? `<b style="color:#B45309;">${n}건</b>` : '0건';
+                    document.getElementById('boardBody').innerHTML = rows.length
+                        ? `<table class="visit-table"><thead><tr><th>요양보호사</th><th>담당 이용자</th><th>오늘 방문(도착/예정)</th><th>기록 누락</th><th>제출 전(작성중)</th><th>반려</th><th>이번 달 기록</th></tr></thead><tbody>${rows.map(r => `
+                            <tr><td>${escapeHtml(r.name || '-')}</td><td>${r.residents}명</td><td>${r.today_arrived}/${r.today_planned}</td><td>${warn(r.missing_records)}</td><td>${warn(r.draft_claims)}</td><td>${warn(r.rejected_claims)}</td><td>${r.month_records}건</td></tr>`).join('')}</tbody></table>`
+                        : emptyState('등록된 요양보호사가 없습니다.');
+                } catch (e) { document.getElementById('boardBody').innerHTML = emptyState('요양보호사별 현황을 불러오지 못했습니다.'); }
                 // 우선 처리 업무
                 const tasks = [
                     ['청구 승인 대기', pendingClaims, './billing_management.html?status=pending', ICO.fileText, '방문기록 기반 청구 승인'],

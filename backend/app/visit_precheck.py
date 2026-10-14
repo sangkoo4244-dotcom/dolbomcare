@@ -120,4 +120,4 @@ def run_precheck(db: Session, center_id: int, days: int = 14, now: datetime = No
     counts = {}
     for i in issues:
         counts[i["type"]] = counts.get(i["type"], 0) + 1
-    return {"days": days, "total": len(issues), "counts": counts, "issues": issues[:30]}
+    return {"days": days, "total": len(issues), "counts": counts, "issues": issues[:30], "all_issues": issues}

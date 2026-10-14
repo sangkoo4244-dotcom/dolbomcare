@@ -108,3 +108,36 @@ def test_submitting_a_claim_notifies_only_managers_of_that_center(env):
     assert "요양사A" in mine[0].message and "김이용" in mine[0].message
     assert db.query(models.Notification).filter(models.Notification.user_id == 5).count() == 0  # 다른 센터 센터장
     assert db.query(models.BillingRecord).get(7).approval_status == "pending"
+
+
+def test_caregiver_board_counts_per_caregiver(env):
+    db, client = env
+    now = datetime.now()
+    db.add_all([
+        models.User(id=3, email="b@test.com", full_name="요양사B", role="caregiver", center_id=1),
+        models.User(id=6, email="x@test.com", full_name="타센터요양사", role="caregiver", center_id=2),
+    ])
+    resident = db.query(models.Resident).get(1)
+    resident.primary_caregiver_id = 2
+    db.add_all([
+        # 오늘 방문: A는 2건 중 1건 도착, 취소 건은 제외
+        models.Schedule(caregiver_id=2, resident_id=1, center_id=1, scheduled_date=now, status="scheduled", arrived_at=now, left_at=now),
+        models.Schedule(caregiver_id=2, resident_id=1, center_id=1, scheduled_date=now, status="scheduled"),
+        models.Schedule(caregiver_id=2, resident_id=1, center_id=1, scheduled_date=now, status="cancelled"),
+        # 기록 누락: 시간이 지났는데 도착·기록이 없는 오늘 일정 1건 + 이틀 전 일정 1건 (도착·퇴실을 마친 건은 제외)
+        models.Schedule(caregiver_id=2, resident_id=1, center_id=1, scheduled_date=now - timedelta(days=2), status="scheduled"),
+        models.BillingRecord(caregiver_id=2, resident_id=1, center_id=1, approval_status="draft", recorded_date=now),
+        models.BillingRecord(caregiver_id=3, resident_id=1, center_id=1, approval_status="rejected", recorded_date=now),
+        models.DailyRecord(resident_id=1, caregiver_id=3, recorded_date=now, notes="x"),
+    ])
+    db.commit()
+    rows = {r["name"]: r for r in client.get("/api/v1/inbox/caregivers", headers=MANAGER).json()["caregivers"]}
+    assert set(rows) == {"요양사A", "요양사B"}  # 다른 센터 요양보호사는 안 나옴
+    a, b = rows["요양사A"], rows["요양사B"]
+    assert (a["residents"], a["today_planned"], a["today_arrived"], a["missing_records"], a["draft_claims"]) == (1, 2, 1, 2, 1)
+    assert (b["rejected_claims"], b["month_records"], b["residents"]) == (1, 1, 0)
+
+
+def test_caregiver_board_is_manager_only(env):
+    _, client = env
+    assert client.get("/api/v1/inbox/caregivers", headers=CAREGIVER).status_code == 403

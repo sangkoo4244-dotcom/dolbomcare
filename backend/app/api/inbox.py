@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import require_manager
 from app.database import get_db
-from app.models import BillingRecord, HandoverNote, IncidentReport, ResidentChangeRequest, User
+from app.models import BillingRecord, DailyRecord, HandoverNote, IncidentReport, Resident, ResidentChangeRequest, Schedule, User
 from app.visit_precheck import run_precheck
 
 router = APIRouter()
@@ -50,3 +50,45 @@ def manager_inbox(db: Session = Depends(get_db), actor: User = Depends(require_m
     }
     return {"items": [{"key": k, "label": label, "desc": desc, "href": href, "count": counts[k]}
                       for k, label, desc, href in ITEMS]}
+
+
+@router.get("/caregivers")
+def caregiver_board(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """요양보호사별 현황판 - 한 사람씩 무엇이 밀려 있는지 한눈에 본다 (센터장 전용)."""
+    center = actor.center_id
+    now = datetime.now()
+    day_start = datetime.combine(now.date(), datetime.min.time())
+    month_start = day_start.replace(day=1)
+    caregivers = db.query(User).filter(User.center_id == center, User.role == "caregiver").order_by(User.full_name).all()
+    board = {u.id: {"caregiver_id": u.id, "name": u.full_name, "residents": 0, "today_planned": 0, "today_arrived": 0,
+                    "missing_records": 0, "draft_claims": 0, "rejected_claims": 0, "month_records": 0} for u in caregivers}
+
+    for r in db.query(Resident).filter(Resident.center_id == center, Resident.primary_caregiver_id.isnot(None)).all():
+        if r.primary_caregiver_id in board:
+            board[r.primary_caregiver_id]["residents"] += 1
+
+    today = db.query(Schedule).filter(
+        Schedule.center_id == center, Schedule.scheduled_date >= day_start,
+        Schedule.scheduled_date < day_start + timedelta(days=1), Schedule.status.notin_(["cancelled", "proposed", "rejected"])).all()
+    for sch in today:
+        if sch.caregiver_id in board:
+            board[sch.caregiver_id]["today_planned"] += 1
+            if sch.arrived_at:
+                board[sch.caregiver_id]["today_arrived"] += 1
+
+    missing_ids = {i["schedule_id"] for i in run_precheck(db, center, 14, now)["all_issues"]
+                   if i["type"] in ("missing_record", "missing_end") and i.get("schedule_id")}
+    if missing_ids:
+        for sch in db.query(Schedule).filter(Schedule.id.in_(missing_ids)).all():
+            if sch.caregiver_id in board:
+                board[sch.caregiver_id]["missing_records"] += 1
+
+    for status, key in (("draft", "draft_claims"), ("rejected", "rejected_claims")):
+        for b in db.query(BillingRecord).filter(BillingRecord.center_id == center, BillingRecord.approval_status == status).all():
+            if b.caregiver_id in board:
+                board[b.caregiver_id][key] += 1
+
+    for rec in db.query(DailyRecord).filter(DailyRecord.recorded_date >= month_start, DailyRecord.caregiver_id.in_(list(board) or [0])).all():
+        board[rec.caregiver_id]["month_records"] += 1
+
+    return {"caregivers": list(board.values())}
