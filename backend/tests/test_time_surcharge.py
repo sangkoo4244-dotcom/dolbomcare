@@ -24,10 +24,10 @@ def test_night_surcharge_follows_the_nhis_formula_and_rounds_to_10_won():
 
 
 def test_spec_example_first_leg_22_00_to_22_30_of_270_minutes():
-    """공단 세부지침 예시: 18:00 시작 360분 중 최초 270분은 가산 적용 30분(22:00~22:30) → 기본 × 0.3 × 30 ÷ 270."""
+    """공단 세부지침 예시(2026.1.1 시행): 18:00 시작 360분 중 최초 270분은 급여제공시간 240분(표 가-8), 가산 적용 30분 → 기본 × 0.3 × 30 ÷ 240."""
     fee = 100000
     assert benefits.surcharge_minutes(MON.replace(hour=18), 270) == 30
-    assert benefits.visit_surcharge(fee, MON.replace(hour=18), 270) == int((fee * 3 * 30 / (10 * 270) + 5) // 10) * 10
+    assert benefits.visit_surcharge(fee, MON.replace(hour=18), 270, fee_minutes=240) == int((fee * 3 * 30 / (10 * 240) + 5) // 10) * 10
 
 
 def test_sunday_is_surcharged_and_overlap_with_night_is_not_counted_twice():

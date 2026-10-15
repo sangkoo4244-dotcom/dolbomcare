@@ -78,7 +78,7 @@ def _compute(db: Session, actor: User, body: AttendanceIn, exclude_id: Optional[
         raise HTTPException(status_code=400, detail="퇴실 시각이 도착 시각보다 늦어야 합니다. 24시 이후까지 보호하면 급여비용을 청구할 수 없습니다(고시 제32조 ①)")
     minutes = int((left - arrived).total_seconds() // 60)
     try:
-        fee_total, patient, insurer = split_day_night(minutes, resident.care_grade, resident.client_type)
+        fee_total, patient, insurer = split_day_night(minutes, resident.care_grade, resident.client_type, arrived, left)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -118,6 +118,11 @@ def _compute(db: Session, actor: User, body: AttendanceIn, exclude_id: Optional[
         notes.append("표준급여제공시간(08~22시) 밖의 시간이 있습니다")
     if bath_note:
         notes.append(bath_note)
+    evening = benefits.day_night_surcharge_minutes(arrived, left)
+    if evening:
+        notes.append(f"18~22시에 {evening}분 이용해 급여비용의 20%를 이용 시간 비율만큼 가산했습니다")
+    if benefits.is_possible_public_holiday(body.attendance_date):
+        notes.append("공휴일(또는 일요일·근로자의 날)에는 급여비용의 30% 가산이 있을 수 있으나 고시가 대상 날짜를 정하지 않아 계산하지 않았습니다. 공단 화면에서 확인해 주세요")
     return {
         "resident": resident, "center": center, "arrived": arrived, "left": left, "minutes": minutes,
         "fee_total": fee_total, "patient": patient, "insurer": insurer, "transport_code": transport_code,

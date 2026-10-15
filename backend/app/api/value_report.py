@@ -36,7 +36,7 @@ def _time_surcharge(visit: dict) -> int:
             return 0
     else:
         base = VISIT_FEES.get(visit["minutes"], 0)
-    return benefits.visit_surcharge(base, start, visit["minutes"])
+    return benefits.visit_surcharge(base, start, visit["minutes"], benefits.visit_fee_minutes(visit["benefit_type"], visit["minutes"]))
 
 
 @router.get("")

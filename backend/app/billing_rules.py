@@ -27,9 +27,11 @@ def split_visit(duration_minutes: int, client_type: str | None) -> tuple[int, in
     return _split(VISIT_FEES[duration_minutes], client_type)
 
 
-def split_day_night(minutes: int, grade, client_type: str | None) -> tuple[int, int, int]:
-    """주·야간보호 1일의 (급여비용 총액, 본인부담금, 공단부담금). 이동서비스비용·목욕 가산은 수급자 부담이 없고 월 한도 밖이라 여기에 넣지 않는다."""
-    return _split(benefits.day_night_fee(minutes, grade), client_type)
+def split_day_night(minutes: int, grade, client_type: str | None, arrived=None, left=None) -> tuple[int, int, int]:
+    """주·야간보호 1일의 (급여비용 총액, 본인부담금, 공단부담금). 이동서비스비용·목욕 가산은 수급자 부담이 없고 월 한도 밖이라 여기에 넣지 않는다.
+    도착·퇴실 시각을 주면 18~22시 가산 20%를 급여비용에 더한다(본인부담 대상)."""
+    base = benefits.day_night_fee(minutes, grade)
+    return _split(base + benefits.day_night_surcharge(base, arrived, left), client_type)
 
 
 def split_benefit(benefit_type: str | None, duration_minutes: int | None, client_type: str | None, bath_mode: str | None = None,
@@ -47,7 +49,7 @@ def split_benefit(benefit_type: str | None, duration_minutes: int | None, client
         return _split(benefits.home_bath_fee(bath_mode, duration_minutes, solo_exception), client_type)
     if benefit_type == "home_nursing":
         base = benefits.home_nursing_fee(duration_minutes)
-        return _split(base + benefits.visit_surcharge(base, start, duration_minutes), client_type)
+        return _split(base + benefits.visit_surcharge(base, start, duration_minutes, benefits.visit_fee_minutes(benefit_type, duration_minutes)), client_type)
     raise ValueError(f"지원하지 않는 급여 종류: {benefit_type}")
 
 # 승인 이후 상태만 청구 금액(월별 정산·급여·대시보드)에 포함한다

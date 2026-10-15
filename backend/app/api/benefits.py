@@ -38,7 +38,7 @@ def visit_surcharge_preview(benefit_type: str, minutes: int, start: str, actor: 
     else:
         base = 0
     return {
-        "amount": benefits.visit_surcharge(base, start_at, minutes),
+        "amount": benefits.visit_surcharge(base, start_at, minutes, benefits.visit_fee_minutes(benefit_type, minutes)),
         "covered_minutes": benefits.surcharge_minutes(start_at, minutes) if base else 0,
         "holiday_table_missing": benefits.holiday_table_missing(start_at),
         "unconfirmed_holiday": benefits.possible_unconfirmed_holiday(start_at, minutes),

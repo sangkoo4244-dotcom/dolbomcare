@@ -153,16 +153,63 @@ def surcharge_minutes(start, minutes: int | None) -> int:
     return sum(1 for pct in _surcharge_by_minute(start, minutes) if pct)
 
 
-def visit_surcharge(base_fee: int, start, minutes: int | None) -> int:
-    """방문요양·방문간호 1회의 시간 가산금액(원). 해당 없으면 0."""
+def visit_surcharge(base_fee: int, start, minutes: int | None, fee_minutes: int | None = None) -> int:
+    """방문요양·방문간호 1회의 시간 가산금액(원). 해당 없으면 0.
+    fee_minutes는 공단 세부지침 제5조(2026.1.1 시행)의 '급여제공시간', 곧 급여비용 표 구간의 최저시간이다(방문간호 15·30·60분).
+    비우면 실제 제공 시간으로 나눈다. 방문요양은 제공 시간이 표의 값과 같아 결과가 같다.
+    가산 적용 시간이 이 시간을 넘으면 가산 비율만 적용한다(예: 방문간호 45분 전부 야간이면 30%)."""
     if not start or not minutes or minutes <= 0 or not base_fee:
         return 0
-    total_percent = sum(_surcharge_by_minute(start, minutes))
+    percents = _surcharge_by_minute(start, minutes)
+    total_percent = sum(percents)
     if not total_percent:
         return 0
     from fractions import Fraction
-    exact = Fraction(base_fee * total_percent, 100 * minutes)
-    return int((exact + 5) // 10) * 10  # 10원 단위 반올림
+    denominator = fee_minutes or minutes
+    ratio = Fraction(total_percent, 100 * denominator)
+    ratio = min(ratio, Fraction(max(percents), 100))
+    return int((base_fee * ratio + 5) // 10) * 10  # 10원 단위 반올림
+
+
+def visit_fee_minutes(benefit_type: str | None, minutes: int | None) -> int | None:
+    """가산 계산의 분모가 되는 급여비용 표 구간의 최저시간. 방문간호만 구간(15~30·30~60·60~)이 있고 방문요양은 제공 시간 그대로다."""
+    if benefit_type == "home_nursing" and minutes:
+        for low, high, _fee in HOME_NURSING_FEES:
+            if minutes >= low and (high is None or minutes < high):
+                return low
+    return minutes
+
+
+# 주·야간보호 시간 가산(고시 제33조 ①1호 + 공단 세부지침 제7조, 2026.1.1 시행)
+#   18시 이후 22시 이전에 급여를 제공한 시간만큼: 가산금액 = 1일 급여비용 × 0.2 × 가산 적용 시간(분) ÷ 급여 제공 시간(분)   (10원 미만 반올림)
+#   공휴일 30%(제3호)는 '공휴일'이 일요일·근로자의 날을 포함하는지 고시에 정해져 있지 않아 계산하지 않고 화면에서 알린다.
+DAY_NIGHT_EVENING_START, DAY_NIGHT_EVENING_END = 18, 22
+DAY_NIGHT_EVENING_PERCENT = 20
+
+
+def is_possible_public_holiday(day) -> bool:
+    """주·야간보호 공휴일 30% 가산이 걸릴 수 있는 날(일요일·공휴일·근로자의 날). 고시가 '공휴일'의 범위를 정하지 않아 계산은 하지 않고 알리기만 한다."""
+    return day.weekday() == 6 or day in PAID_HOLIDAYS or day in UNCERTAIN_HOLIDAYS
+
+
+def day_night_surcharge_minutes(arrived, left) -> int:
+    """주·야간보호 이용 시간 중 18~22시에 걸친 분."""
+    from datetime import timedelta
+    start = arrived.replace(hour=DAY_NIGHT_EVENING_START, minute=0, second=0, microsecond=0)
+    end = arrived.replace(hour=DAY_NIGHT_EVENING_END, minute=0, second=0, microsecond=0)
+    covered = (min(left, end) - max(arrived, start)) // timedelta(minutes=1)
+    return max(0, covered)
+
+
+def day_night_surcharge(base_fee: int, arrived, left) -> int:
+    """주·야간보호 1일의 18~22시 가산금액(원). 해당 없으면 0."""
+    total = (left - arrived).total_seconds() // 60 if arrived and left else 0
+    covered = day_night_surcharge_minutes(arrived, left) if total > 0 else 0
+    if not covered or not base_fee:
+        return 0
+    from fractions import Fraction
+    exact = base_fee * Fraction(DAY_NIGHT_EVENING_PERCENT * covered, 100 * int(total))
+    return int((exact + 5) // 10) * 10
 
 
 def holiday_table_missing(start) -> bool:
