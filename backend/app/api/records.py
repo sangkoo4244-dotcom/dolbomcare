@@ -319,9 +319,9 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
         raise
     except Exception as e:
         import traceback
-        error_msg = f"{type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
-        print(f"[ERROR] create_record: {error_msg}")
-        raise HTTPException(status_code=500, detail=error_msg)
+        db.rollback()
+        print(f"[ERROR] create_record: {type(e).__name__}: {e}\n{traceback.format_exc()}")  # 자세한 내용은 서버 기록에만 남긴다
+        raise HTTPException(status_code=500, detail="기록을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.")
 
 @router.post("/batch-delete")
 def batch_delete_records(
