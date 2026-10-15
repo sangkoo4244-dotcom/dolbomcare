@@ -198,7 +198,7 @@
                     <button type="submit" id="loginButton" class="login-button">로그인</button>
                 </form>
 
-                <div class="trial-cta-box">
+                <div class="trial-cta-box" id="trialCtaBox">
                     <div class="demo-title">아직 계정이 없는 센터장이신가요?</div>
                     <p class="trial-cta-desc">우리 센터로 1개월 무료체험을 신청하면, 확인 후 로그인 정보를 보내드립니다.</p>
                     <button type="button" class="trial-cta-button" onclick="openTrialRequestModal()">1개월 무료체험 신청하기</button>
@@ -458,6 +458,7 @@
                         ? '이메일 또는 비밀번호가 올바르지 않습니다.'
                         : (response.status === 422 ? '이메일 형식을 확인해 주세요. (예: name@example.com)' : (typeof data.detail === 'string' && data.detail) || '로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.'),
                         response.status === 403);
+                    if (response.status === 401) { passwordInput.focus(); passwordInput.select(); }  // 비밀번호만 다시 쓰면 되도록
                     return;
                 }
 
@@ -501,6 +502,7 @@
             const expired = isDemoTrialExpired();
             document.getElementById('demoActiveBox').style.display = expired ? 'none' : '';
             document.getElementById('demoExpiredBox').style.display = expired ? '' : 'none';
+            document.getElementById('trialCtaBox').style.display = expired ? 'none' : '';  // 같은 신청 버튼이 두 번 보이지 않게(체험 종료 안내가 그 역할을 한다)
         }
 
         async function handleDemoLogin(email, password) {
