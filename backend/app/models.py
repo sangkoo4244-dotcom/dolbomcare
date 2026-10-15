@@ -103,6 +103,7 @@ class DailyRecord(Base):
     special_note = Column(String, nullable=True)  # 산정 사유: 방문요양 2인 동시 제공의 수급자 동의·상태, 방문목욕 1인 몸 씻기 예외·주 1회 초과 사유 (공단 기록지에 적는 내용)
     bath_solo_exception = Column(Boolean, default=False)  # 방문목욕에서 수치심 등으로 몸 씻기만 1인이 제공한 예외(차량 미이용만)
     pair_record_id = Column(Integer, nullable=True)  # 방문요양 2인 동시 제공: 함께 제공한 요양보호사의 기록(요양보호사별로 각각 청구한다)
+    bath_companion = Column(Boolean, default=False)  # 방문목욕에서 함께 간 요양보호사의 기록(급여비용 0원, 중증 가산만 받음). 주 1회 횟수에서 뺀다
     created_at = Column(DateTime, default=datetime.now)
 
 class HealthMetric(Base):

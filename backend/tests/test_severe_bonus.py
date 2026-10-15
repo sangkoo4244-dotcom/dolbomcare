@@ -50,13 +50,14 @@ def test_bath_bonus_and_pair_caregivers_each_get_their_own_bonus(env):
     db.query(models.Resident).filter_by(id=1).update({"care_grade": 1})
     db.commit()
     client.post("/api/v1/records/create", json=bath(recorded_date=DAY.isoformat()), headers=CG_A)
-    assert [b.extra_amount for b in db.query(models.BillingRecord).all()] == [3000]
+    assert [b.extra_amount for b in db.query(models.BillingRecord).order_by(models.BillingRecord.id).all()] == [3000, 3000]  # 주 담당 3,000 + 동행 3,000 (수급자 한도 6,000 안)
     # 방문요양 2인 동시 제공: 요양보호사별로 각각 가산
     r = client.post("/api/v1/records/create", json=payload(benefit_type="home_care", duration_minutes=180, co_caregiver_id=3, special_note="동의함, 거동 불가",
                                                           recorded_date=(DAY - timedelta(days=1)).isoformat()), headers=CG_A)
     assert r.status_code == 200, r.text
+    # 한도는 수급자 1인 1일 6,000원(고시 제19조의2): 주 담당(2)이 먼저 6,000원을 쓰면 동행(3)의 몫은 남은 한도가 없어 0원
     rows = db.query(models.BillingRecord).filter(models.BillingRecord.benefit_type == "home_care").all()
-    assert sorted((b.caregiver_id, b.extra_amount) for b in rows) == [(2, 6000), (3, 6000)]
+    assert sorted((b.caregiver_id, b.extra_amount) for b in rows) == [(2, 6000), (3, 0)]
 
 
 def test_extra_amount_reaches_settlement_statistics_and_salary_status(env):

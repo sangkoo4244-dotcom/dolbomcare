@@ -77,7 +77,7 @@ def test_bath_visit_bills_the_nhis_bath_fee_with_the_second_caregiver(env):
     body = payload(benefit_type="home_bath", bath_mode="vehicle_in", co_caregiver_id=3, duration_minutes=60)
     r = client.post("/api/v1/records/create", json=body, headers=CG_A)
     assert r.status_code == 200, r.text
-    rec, bill = db.query(models.DailyRecord).one(), db.query(models.BillingRecord).one()
+    rec, bill = db.query(models.DailyRecord).filter_by(bath_companion=False).one(), db.query(models.BillingRecord).filter_by(caregiver_id=2).one()
     assert (rec.benefit_type, rec.bath_mode, rec.co_caregiver_id) == ("home_bath", "vehicle_in", 3)
     assert (bill.benefit_type, bill.total_cost, bill.amount) == ("home_bath", 88990, 75650)  # 총액 88,990원, 일반 본인부담 15%
     # 보호자에게는 방문목욕이라고 알린다
@@ -123,7 +123,7 @@ def test_updating_a_bath_record_recalculates_by_mode_and_keeps_rules(env):
     rid = client.post("/api/v1/records/create", json=body, headers=CG_A).json()["data"]["record_id"]
     r = client.patch(f"/api/v1/records/daily/{rid}", json={"bath_mode": "no_vehicle"}, headers=CG_A)
     assert r.status_code == 200, r.text
-    bill = db.query(models.BillingRecord).one()
+    bill = db.query(models.BillingRecord).filter_by(caregiver_id=2).one()
     assert (bill.total_cost, bill.amount) == (50100, 42590)
     # 목욕 기록의 동행자를 본인으로 바꾸려 하면 거절
     assert client.patch(f"/api/v1/records/daily/{rid}", json={"co_caregiver_id": 2}, headers=CG_A).status_code == 400
@@ -139,7 +139,7 @@ def test_bath_under_60_minutes_is_billed_at_80_percent_and_under_40_is_refused(e
     db, client = env
     assert client.post("/api/v1/records/create", json=bath(duration_minutes=30), headers=CG_A).status_code == 400
     assert client.post("/api/v1/records/create", json=bath(duration_minutes=45), headers=CG_A).status_code == 200
-    bill = db.query(models.BillingRecord).one()
+    bill = db.query(models.BillingRecord).filter_by(caregiver_id=2).one()
     assert (bill.total_cost, bill.amount) == (71192, 60522)  # 88,990원의 80%, 본인부담 15%(10원 절사)
 
 
@@ -150,7 +150,7 @@ def test_bath_is_limited_to_once_a_week_unless_a_reason_is_given(env):
     assert again.status_code == 400 and "주" in again.json()["detail"]
     ok = client.post("/api/v1/records/create", json=bath(special_note="변실금으로 피부 관리 필요"), headers=CG_A)
     assert ok.status_code == 200
-    assert db.query(models.DailyRecord).filter_by(benefit_type="home_bath").count() == 2
+    assert db.query(models.DailyRecord).filter_by(benefit_type="home_bath", bath_companion=False).count() == 2  # 동행 기록은 횟수에 세지 않는다
     assert db.query(models.DailyRecord).order_by(models.DailyRecord.id.desc()).first().special_note == "변실금으로 피부 관리 필요"
 
 

@@ -126,7 +126,7 @@ def _week_bounds(when):
 def _bath_visits_that_week(db, resident_id, when, exclude_id=None):
     start, end = _week_bounds(when)
     q = db.query(DailyRecord).filter(DailyRecord.resident_id == resident_id, DailyRecord.benefit_type == "home_bath",
-                                     DailyRecord.recorded_date >= start, DailyRecord.recorded_date < end)
+                                     DailyRecord.bath_companion.isnot(True), DailyRecord.recorded_date >= start, DailyRecord.recorded_date < end)
     if exclude_id:
         q = q.filter(DailyRecord.id != exclude_id)
     return q.count()
@@ -138,13 +138,14 @@ def _record_in_my_center(db, record, actor) -> bool:
     return bool(resident and actor.center_id is not None and resident.center_id == actor.center_id)
 
 
-def _severe_bonus(db, caregiver_id, day, benefit_type, grade, minutes, exclude_billing_id=None) -> int:
-    """중증 가산(1·2등급)을 그 요양보호사의 같은 날 같은 급여 가산과 합쳐 1일 한도(6,000원) 안에서 계산한다."""
+def _severe_bonus(db, resident_id, day, benefit_type, grade, minutes, exclude_billing_id=None) -> int:
+    """중증 가산(1·2등급)을 그 수급자의 같은 날 같은 급여 가산과 합쳐 1일 한도(6,000원)에서 계산한다.
+    한도는 수급자 1인 기준이라(고시 제19조의2·제26조의2) 요양보호사가 여러 명이어도 수급자당 6,000원을 넘지 않는다. 요양보호사별 금액은 각자 계산한다."""
     raw = benefit_catalog.severe_bonus(benefit_type, grade, minutes)
     if not raw:
         return 0
     start = datetime.combine(day, datetime.min.time())
-    q = db.query(BillingRecord).filter(BillingRecord.caregiver_id == caregiver_id, BillingRecord.recorded_date >= start,
+    q = db.query(BillingRecord).filter(BillingRecord.resident_id == resident_id, BillingRecord.recorded_date >= start,
                                        BillingRecord.recorded_date < start + timedelta(days=1))
     q = q.filter(BillingRecord.benefit_type == "home_bath") if benefit_type == "home_bath" else q.filter(
         or_(BillingRecord.benefit_type == "home_care", BillingRecord.benefit_type.is_(None)))
@@ -254,7 +255,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
             benefit_type=visit["benefit_type"],
             amount=amount,
             total_cost=total_cost,
-            extra_amount=_severe_bonus(db, caregiver_id, now.date(), visit["benefit_type"], resident.care_grade, request.duration_minutes),
+            extra_amount=_severe_bonus(db, resident.id, now.date(), visit["benefit_type"], resident.care_grade, request.duration_minutes),
             recorded_date=now,
             year_month=get_year_month(now),
             status="draft",
@@ -284,11 +285,34 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
                 daily_record_id=pair_record.id, caregiver_id=co_id, resident_id=request.resident_id, center_id=resident.center_id,
                 resident_name=resident.name, care_grade=resident.care_grade, client_type=resident.client_type, service_category="재가급여",
                 service_type=request.service_type, benefit_type="home_care", amount=amount, total_cost=total_cost, recorded_date=now,
-                extra_amount=_severe_bonus(db, co_id, now.date(), "home_care", resident.care_grade, request.duration_minutes),
+                extra_amount=_severe_bonus(db, resident.id, now.date(), "home_care", resident.care_grade, request.duration_minutes),
                 year_month=get_year_month(now), status="draft", approval_status="draft",
             )
             db.add(pair_billing)
             notify(db, co_id, "record_pair", f"{resident.name} 어르신 방문요양이 2인 동시 제공으로 기록되었습니다 (함께 제공: {actor.full_name or '동료'}). 나의 청구에서 확인해 주세요.")
+        if visit["benefit_type"] == "home_bath" and visit["co_caregiver_id"]:
+            # 방문목욕 2인 제공: 함께 간 요양보호사도 중증 가산(1인당 3,000원)을 따로 받는다. 급여비용은 주 담당 청구에 이미 들어 있어 0원
+            co_id = visit["co_caregiver_id"]
+            companion_record = DailyRecord(
+                resident_id=request.resident_id, caregiver_id=co_id, recorded_date=now, notes=request.notes, condition=request.condition,
+                duration_minutes=request.duration_minutes, service_type=request.service_type, signature=request.signature,
+                physical_change=request.physical_change, meal_change=request.meal_change, cognitive_change=request.cognitive_change,
+                stool_accidents=request.stool_accidents, urine_accidents=request.urine_accidents, benefit_type="home_bath",
+                bath_mode=visit["bath_mode"], co_caregiver_id=caregiver_id, special_note=special_note, bath_companion=True,
+                pair_record_id=daily_record.id,
+            )
+            db.add(companion_record)
+            db.flush()
+            daily_record.pair_record_id = companion_record.id
+            companion_billing = BillingRecord(
+                daily_record_id=companion_record.id, caregiver_id=co_id, resident_id=request.resident_id, center_id=resident.center_id,
+                resident_name=resident.name, care_grade=resident.care_grade, client_type=resident.client_type, service_category="재가급여",
+                service_type=request.service_type, benefit_type="home_bath", amount=0, total_cost=0, recorded_date=now,
+                extra_amount=_severe_bonus(db, resident.id, now.date(), "home_bath", resident.care_grade, request.duration_minutes),
+                year_month=get_year_month(now), status="draft", approval_status="draft",
+            )
+            db.add(companion_billing)
+            notify(db, co_id, "record_pair", f"{resident.name} 어르신 방문목욕에 함께 가셨습니다 (주 담당: {actor.full_name or '동료'}). 나의 청구에서 중증 가산을 확인해 주세요.")
         if resident.guardian_id:
             summary = guardian_visit_summary(
                 resident.name, request.service_type, request.duration_minutes, request.condition, request.notes,
@@ -950,7 +974,7 @@ async def update_record(
         pair, pair_billing = _pair_of(db, record)
         if pair and _pair_is_locked(pair_billing):
             raise HTTPException(status_code=400, detail="함께 제공한 요양보호사의 청구가 이미 제출·승인되어 이 기록을 수정할 수 없습니다")
-        if (record.benefit_type or "home_care") == "home_care" and request.co_caregiver_id and request.co_caregiver_id != record.co_caregiver_id:
+        if request.co_caregiver_id and request.co_caregiver_id != record.co_caregiver_id:
             raise HTTPException(status_code=400, detail="2인 동시 제공은 기록을 새로 입력할 때만 지정할 수 있습니다")
         new_note = request.special_note if request.special_note is not None else record.special_note
         visit = normalize_visit_benefit(
@@ -999,7 +1023,7 @@ async def update_record(
                 raise HTTPException(status_code=400, detail=str(e))
             billing.total_cost = total_cost
             billing.amount = insurance_amount
-            billing.extra_amount = _severe_bonus(db, billing.caregiver_id, billing.recorded_date.date(), visit["benefit_type"], billing.care_grade,
+            billing.extra_amount = _severe_bonus(db, billing.resident_id, billing.recorded_date.date(), visit["benefit_type"], billing.care_grade,
                                                  record.duration_minutes, exclude_billing_id=billing.id)
             if billing.approval_status == "rejected":
                 billing.approval_status = "draft"
@@ -1014,9 +1038,10 @@ async def update_record(
                 setattr(pair, field, getattr(record, field))
             if pair_billing:
                 pair_billing.service_type = record.service_type
-                pair_billing.total_cost = billing.total_cost if billing else pair_billing.total_cost
-                pair_billing.amount = billing.amount if billing else pair_billing.amount
-                pair_billing.extra_amount = _severe_bonus(db, pair_billing.caregiver_id, pair_billing.recorded_date.date(), "home_care", pair_billing.care_grade,
+                if pair_billing.benefit_type != "home_bath":  # 방문목욕 동행자는 급여비용 0원, 중증 가산만 받는다
+                    pair_billing.total_cost = billing.total_cost if billing else pair_billing.total_cost
+                    pair_billing.amount = billing.amount if billing else pair_billing.amount
+                pair_billing.extra_amount = _severe_bonus(db, pair_billing.resident_id, pair_billing.recorded_date.date(), pair_billing.benefit_type, pair_billing.care_grade,
                                                           record.duration_minutes, exclude_billing_id=pair_billing.id)
                 if pair_billing.approval_status == "rejected":
                     pair_billing.approval_status = "draft"

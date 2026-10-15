@@ -87,6 +87,7 @@ ADDITIVE_COLUMNS = [
     ("daily_records", "special_note", "VARCHAR"),
     ("daily_records", "bath_solo_exception", "BOOLEAN DEFAULT FALSE"),
     ("daily_records", "pair_record_id", "INTEGER"),
+    ("daily_records", "bath_companion", "BOOLEAN DEFAULT FALSE"),
     ("billing_records", "extra_amount", "INTEGER DEFAULT 0"),
 ]
 
