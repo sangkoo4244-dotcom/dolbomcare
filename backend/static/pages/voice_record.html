@@ -44,6 +44,8 @@
         .side-panel3-head a { font-size: 12px; font-weight: 600; color: var(--teal); text-decoration: none; }
         .visit-row3 { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F3F5F8; }
         .visit-row3:last-child { border-bottom: none; }
+        .visit-row3.pickable { cursor: pointer; }
+        .visit-row3.pickable:hover { background: #F5F9F8; }
         .visit-row3 .vn { font-size: 13px; font-weight: 700; }
         .visit-row3 .vd { font-size: 11px; color: #94A3B8; }
         .visit-badge3 { margin-left: auto; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
@@ -456,6 +458,17 @@
             document.querySelectorAll('input[name="careItem"]').forEach(cb => { cb.checked = planned.includes(cb.value); }); renderItemMinutes();
         }
 
+        // 오른쪽 방문 목록의 줄을 누르면 그 이용자·날짜·시각으로 기록 양식을 채우고 양식으로 올라간다
+        function pickVisit(residentId, date, time) {
+            const sel = document.getElementById('resident');
+            if (!sel || ![...sel.options].some(o => o.value === String(residentId))) return;
+            sel.value = String(residentId);
+            document.getElementById('visitDate').value = date;
+            document.getElementById('visitTime').value = time;
+            onResidentChange();
+            sel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
         function onResidentChange() {
             applyPlannedItems();
             calculateBillingDetails();
@@ -493,6 +506,13 @@
                 benefitUi.set({ benefit_type: planned.benefit_type, bath_mode: planned.bath_mode, co_caregiver_id: planned.co_caregiver_id });
                 lines.push(planned.benefit_type && planned.benefit_type !== 'home_care'
                     ? `오늘 방문 계획은 ${BenefitFields.label(planned.benefit_type)}입니다.` : '오늘 방문 계획은 요양보호사 2인이 함께 제공하는 방문입니다.');
+            }
+            if (planned && !planned.items.length && planned.duration_minutes) {
+                // 계획에 제공 항목이 없어도 계획한 제공 시간은 채워 둔다: 기본값(60분)으로 저장해 청구가 틀어지는 일을 막는다
+                setSelectIfOption('durationMinutes', planned.duration_minutes);
+                setSelectIfOption('serviceType', planned.service_type);
+                calculateBillingDetails();
+                lines.push(`오늘 ${planned.time} 방문 계획의 제공 시간 ${planned.duration_minutes}분으로 채웠습니다(실제와 다르면 고쳐 주세요).`);
             }
             if (planned && planned.items.length) {
                 // 오늘 승인된 방문 계획이 있으면 그 제공 항목을 미리 선택한다 (이미 고른 항목이 없을 때만)
@@ -825,6 +845,7 @@
                 if (r.ok) {
                     showMessage('기록이 삭제되었습니다', 'success');
                     loadRecords();
+                    loadSidePanels();
                 } else {
                     const err = await r.json();
                     showMessage('삭제 실패: ' + (err.detail || '오류 발생'), 'error');
@@ -977,6 +998,7 @@
                     onFormReset();
                     showGovSummary(govData);
                     loadRecords();
+                    loadSidePanels();
                 } else {
                     const err = await r.json();
                     showMessage('저장 실패: ' + (err.detail || '오류 발생'), 'error');
@@ -1303,14 +1325,14 @@
                 todayEl.innerHTML = todays.length
                     ? todays.map(i => {
                         const [cls, label] = VR_STATE_BADGE[i.state] || ['badge-wait3', i.state];
-                        return `<div class="visit-row3"><div><div class="vn">${(i.resident_name || '이용자')} 어르신</div><div class="vd">${i.time}</div></div><span class="visit-badge3 ${cls}">${label}</span></div>`;
+                        return `<div class="visit-row3 pickable" onclick="pickVisit(${i.resident_id}, '${i.date}', '${i.time}')" title="눌러서 이 방문 기록하기"><div><div class="vn">${(i.resident_name || '이용자')} 어르신</div><div class="vd">${i.time}</div></div><span class="visit-badge3 ${cls}">${label}</span></div>`;
                     }).join('')
                     : '<div style="font-size:13px;color:#94A3B8;padding:6px 0;">오늘 예정된 방문이 없습니다</div>';
 
                 const incomplete = items.filter(i => i.state === '미기록').slice(0, 5);
                 const incEl = document.getElementById('incompletePanel');
                 incEl.innerHTML = incomplete.length
-                    ? incomplete.map(i => `<div class="visit-row3"><div><div class="vn">${(i.resident_name || '이용자')} 어르신</div><div class="vd">${i.date} ${i.time}</div></div><span class="visit-badge3 badge-incomplete3">미기록</span></div>`).join('')
+                    ? incomplete.map(i => `<div class="visit-row3 pickable" onclick="pickVisit(${i.resident_id}, '${i.date}', '${i.time}')" title="눌러서 이 방문 기록하기"><div><div class="vn">${(i.resident_name || '이용자')} 어르신</div><div class="vd">${i.date} ${i.time}</div></div><span class="visit-badge3 badge-incomplete3">미기록</span></div>`).join('')
                     : '<div style="font-size:13px;color:#94A3B8;padding:6px 0;">미기록 방문이 없습니다</div>';
 
                 const monthItems = items.filter(i => i.date.startsWith(ym));

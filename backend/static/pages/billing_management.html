@@ -213,6 +213,7 @@
         .filter-bar { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
         .filter-input { padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 13px; outline: none; }
         .filter-input:focus { border-color: var(--teal); }
+        .filter-bar .filter-input { width: auto; max-width: 100%; }  /* 전역 input{width:100%} 때문에 한 줄씩 쌓여 목록이 화면 아래로 밀리던 것 */
         .btn-outline { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; }
         .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
         .btn-solid { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; }

@@ -422,7 +422,7 @@
                     // 403은 지금 이 로그인 엔드포인트에서 체험 기간 종료일 때만 쓴다
                     showError(response.status === 401
                         ? '이메일 또는 비밀번호가 올바르지 않습니다.'
-                        : (data.detail || '로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.'),
+                        : (response.status === 422 ? '이메일 형식을 확인해 주세요. (예: name@example.com)' : (typeof data.detail === 'string' && data.detail) || '로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.'),
                         response.status === 403);
                     return;
                 }
