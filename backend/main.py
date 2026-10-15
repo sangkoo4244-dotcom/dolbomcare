@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from app.api import juso
 from app.api import rfid_compare
 from app.api import claim_helper
+from app.api import benefits as benefits_api
 from app.api import health
 from app.api import resident_changes
 from app.api import users
@@ -101,6 +102,7 @@ app.include_router(nhis.router, prefix="/api/v1/nhis", tags=["nhis"], dependenci
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"], dependencies=[Depends(get_current_user)])
 app.include_router(rfid_compare.router, prefix="/api/v1/rfid-compare", tags=["rfid_compare"], dependencies=[Depends(get_current_user)])
 app.include_router(claim_helper.router, prefix="/api/v1/claim-helper", tags=["claim_helper"], dependencies=[Depends(get_current_user)])
+app.include_router(benefits_api.router, prefix="/api/v1/benefits", tags=["benefits"], dependencies=[Depends(get_current_user)])
 app.include_router(juso.router)
 
 @app.middleware("http")

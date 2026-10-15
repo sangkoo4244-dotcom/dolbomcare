@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app import models
-from app.api import centers
+from app.api import benefits as benefits_api, centers
 from app.api.users import create_access_token
 from app.database import Base, get_db
 
@@ -33,6 +33,7 @@ def client(tmp_path):
 
     app = FastAPI()
     app.include_router(centers.router, prefix="/api/v1/centers")
+    app.include_router(benefits_api.router, prefix="/api/v1/benefits")
 
     def override_get_db():
         session = Session()
@@ -145,3 +146,19 @@ def test_address_change_stores_geocoded_coordinates(client, monkeypatch):
     data = res.json()["data"]
     assert data["latitude"] == 35.163
     assert data["longitude"] == 129.163
+
+
+def test_service_options_include_facility_benefits_and_benefits_api_follows_center_choice(client):
+    res = client.put("/api/v1/centers/me", headers=MANAGER, json={"service_types": ["방문요양", "주야간보호", "노인요양시설", "가사활동 지원"]})
+    assert res.json()["data"]["service_types"] == ["방문요양", "주야간보호", "노인요양시설", "가사활동 지원"]
+    body = client.get("/api/v1/benefits", headers=MANAGER).json()
+    assert body["enabled"] == ["home_care", "day_night", "nursing_home"]  # 급여가 아닌 '가사활동 지원'은 급여 목록에서 빠진다
+    flat = {b["code"]: b for p in body["programs"] for b in p["benefits"]}
+    assert flat["nursing_home"]["enabled"] and not flat["nursing_home"]["implemented"] and flat["home_care"]["implemented"]
+    # 요양보호사도 같은 센터의 급여를 본다. 다른 센터의 선택은 보이지 않는다.
+    assert client.get("/api/v1/benefits", headers=CAREGIVER).json()["enabled"] == body["enabled"]
+
+
+def test_benefits_api_with_no_selection_or_no_center_is_empty(client):
+    assert client.get("/api/v1/benefits", headers=MANAGER).json()["enabled"] == []
+    assert client.get("/api/v1/benefits").status_code in (401, 403)

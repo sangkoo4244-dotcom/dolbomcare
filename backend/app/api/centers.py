@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.alimtalk_billing import get_usage_summary
 from app.auth import require_manager
+from app.benefits import BENEFITS
 from app.database import get_db
 from app.kakao_local import geocode_address
 from app.ltc_stats import get_region_demand, get_region_options
@@ -14,7 +15,7 @@ from app.models import Center, User
 router = APIRouter()
 
 # 장기요양보험 급여 종류 중 센터가 실제로 제공 중인 항목을 직접 고르게 한다 (추측으로 채우지 않음).
-SERVICE_TYPE_OPTIONS = ["방문요양", "방문목욕", "방문간호", "주야간보호", "단기보호", "가사활동 지원"]
+SERVICE_TYPE_OPTIONS = [b["label"] for b in BENEFITS] + ["가사활동 지원"]  # 급여 종류는 benefits.py의 목록을 따른다
 
 
 def _to_dict(center: Center) -> dict:

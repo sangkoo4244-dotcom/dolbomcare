@@ -167,16 +167,30 @@
         let currentUser = null;
 
         // app/api/centers.py의 SERVICE_TYPE_OPTIONS와 동일하게 맞춘다. 여기 없는 값은 서버가 무시한다.
-        const SERVICE_TYPE_OPTIONS = ['방문요양', '방문목욕', '방문간호', '주야간보호', '단기보호', '가사활동 지원'];
+        const SERVICE_TYPE_OPTIONS = ['방문요양', '방문목욕', '방문간호', '주야간보호', '단기보호', '노인요양시설', '노인요양공동생활가정', '가사활동 지원'];
         let selectedServiceTypes = new Set();
+        // 돌봄케어에 기능이 만들어진 급여(서버 /benefits의 implemented). 받아 오기 전에는 방문요양만 된다고 본다. '가사활동 지원'은 급여가 아니라 표시만 한다.
+        let benefitLabels = new Set(SERVICE_TYPE_OPTIONS.filter(s => s !== '가사활동 지원'));
+        let readyLabels = new Set(['방문요양']);
 
         function renderServiceTypeOptions() {
             const wrap = document.getElementById('serviceTypeOptions');
             wrap.innerHTML = SERVICE_TYPE_OPTIONS.map(s => `
                 <label class="svc-pill ${selectedServiceTypes.has(s) ? 'checked' : ''}" data-svc="${s}">
                     <input type="checkbox" ${selectedServiceTypes.has(s) ? 'checked' : ''} onchange="toggleServiceType('${s}', this.checked)">
-                    ${s}
+                    ${s}${benefitLabels.has(s) && !readyLabels.has(s) ? ' <small style="color:#94A3B8;font-weight:600;">(준비 중)</small>' : ''}
                 </label>`).join('');
+        }
+
+        async function loadBenefitReadiness() {
+            try {
+                const r = await fetch(`${API_URL}/benefits`);
+                if (!r.ok) return;
+                const all = (await r.json()).programs.flatMap(p => p.benefits);
+                benefitLabels = new Set(all.map(b => b.label));
+                readyLabels = new Set(all.filter(b => b.implemented).map(b => b.label));
+                renderServiceTypeOptions();
+            } catch (e) { /* 못 받아도 기본 표시를 그대로 둔다 */ }
         }
 
         function toggleServiceType(s, checked) {
@@ -196,6 +210,7 @@
             document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
             if (typeof renderSidebar === 'function') renderSidebar();
             loadCenter();
+            loadBenefitReadiness();
             loadAlimtalkUsage();
         }
 
