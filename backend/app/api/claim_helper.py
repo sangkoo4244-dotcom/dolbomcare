@@ -34,6 +34,7 @@ FLAG_LABELS = {
     "nursing_no_order": "방문간호지시서 확인 메모가 없습니다 (지시서가 있어야 청구할 수 있음)",
     "bath_reduced": "방문목욕이 60분 미만(40분 이상)이라 급여비용의 80%만 청구됩니다 (1인 몸 씻기 예외는 70%)",
     "bath_too_short": "방문목욕이 40분 미만이라 청구할 수 없습니다",
+    "surcharge": "야간(22~06시) 또는 일요일 가산 30%가 포함된 방문입니다 (공단 [서비스내용 입력]에서 가산을 선택하고, 급여제공기록지·계획서에 가산이 필요한 사유를 적었는지 확인)",
     "bath_weekly_over": "같은 주에 방문목욕이 2회 이상입니다 (주 1회까지 산정, 불가피한 사유 기록이 없으면 초과분은 청구할 수 없음)",
 }
 
@@ -124,6 +125,8 @@ def claim_helper(year_month: str = Query(..., description="급여제공월 YYYY-
                 visit["flags"].append("bath_reduced")
         if benefit == "home_nursing" and not (r.nursing_order_note or "").strip():
             visit["flags"].append("nursing_no_order")
+        if benefit in ("home_care", "home_nursing") and benefits.surcharge_minutes(start_at, minutes):
+            visit["flags"].append("surcharge")
         rec_day = start_at.date()
         if (resident.recognition_start and rec_day < resident.recognition_start) or (resident.recognition_end and rec_day > resident.recognition_end):
             visit["flags"].append("recognition_expired")

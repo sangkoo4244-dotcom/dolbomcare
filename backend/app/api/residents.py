@@ -5,7 +5,7 @@ from typing import Optional
 from app.models import Resident, Center, User
 from app.schemas import ResidentCreate
 from app.database import get_db
-from app.auth import get_current_user, require_manager, assert_self_or_manager
+from app.auth import get_current_user, require_manager, assert_self_or_manager, assert_my_center
 from datetime import datetime, date
 
 class CareNotesUpdate(BaseModel):
@@ -47,6 +47,7 @@ async def update_care_notes(
     resident = db.query(Resident).filter(Resident.id == resident_id).first()
     if not resident:
         raise HTTPException(status_code=404, detail="Resident not found")
+    assert_my_center(actor, resident.center_id)
 
     try:
         resident.care_notes = update_data.care_notes
@@ -70,14 +71,14 @@ async def update_care_notes(
 async def get_residents(
     center_id: int = None,
     caregiver_id: int = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
-    """이용자 목록 조회 (center_id, caregiver_id로 필터링 가능).
+    """이용자 목록 조회 (caregiver_id로 필터링 가능). 항상 로그인한 사람의 센터 이용자만 보인다.
     caregiver_id는 담당 요양보호사(primary_caregiver_id)로 지정된 이용자만 걸러낸다."""
-    query = db.query(Resident)
-
-    if center_id:
-        query = query.filter(Resident.center_id == center_id)
+    if actor.role not in ("caregiver", "center_manager") or not actor.center_id:
+        raise HTTPException(status_code=403, detail="이용자 목록을 볼 수 있는 권한이 없습니다")
+    query = db.query(Resident).filter(Resident.center_id == actor.center_id)
 
     if caregiver_id:
         query = query.filter(Resident.primary_caregiver_id == caregiver_id)
@@ -116,9 +117,13 @@ async def get_residents(
 @router.get("/center/{center_id}")
 async def get_residents_by_center(
     center_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
-    """센터 내 모든 이용자 조회"""
+    """센터 내 모든 이용자 조회 (내 센터만)"""
+    if actor.role not in ("caregiver", "center_manager"):
+        raise HTTPException(status_code=403, detail="이용자 목록을 볼 수 있는 권한이 없습니다")
+    assert_my_center(actor, center_id)
     residents = db.query(Resident).filter(Resident.center_id == center_id).all()
 
     return {
@@ -142,12 +147,18 @@ async def get_residents_by_center(
 @router.get("/{resident_id}")
 async def get_resident(
     resident_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
-    """이용자 상세 조회"""
+    """이용자 상세 조회 (내 센터 이용자, 보호자는 연결된 이용자만)"""
     resident = db.query(Resident).filter(Resident.id == resident_id).first()
     if not resident:
         raise HTTPException(status_code=404, detail="Resident not found")
+    if actor.role == "guardian":
+        if resident.guardian_id != actor.id:
+            raise HTTPException(status_code=404, detail="Resident not found")
+    else:
+        assert_my_center(actor, resident.center_id)
 
     return {
         "id": resident.id,
@@ -175,12 +186,13 @@ async def update_resident_grade(
     client_type: str,
     care_grade: Optional[int] = None,  # None = 인지지원등급
     db: Session = Depends(get_db),
-    _: User = Depends(require_manager)
+    actor: User = Depends(require_manager)
 ):
     """이용자 등급 및 클라이언트 타입 수정"""
     resident = db.query(Resident).filter(Resident.id == resident_id).first()
     if not resident:
         raise HTTPException(status_code=404, detail="Resident not found")
+    assert_my_center(actor, resident.center_id)
 
     # 유효성 검증
     if care_grade is not None and care_grade not in [1, 2, 3, 4, 5]:
@@ -398,6 +410,7 @@ async def update_resident(
     resident = db.query(Resident).filter(Resident.id == resident_id).first()
     if not resident:
         raise HTTPException(status_code=404, detail="Resident not found")
+    assert_my_center(actor, resident.center_id)
 
     try:
         # care_grade는 None 자체가 유효한 값(인지지원등급)이라, "값을 안 보냄"과 "null로 보냄"을 구분해야 한다

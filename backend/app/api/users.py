@@ -189,16 +189,15 @@ async def list_users(
     role: Optional[str] = Query(None),
     center_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user)
+    actor: User = Depends(get_current_user)
 ):
-    """사용자 목록 조회 (선택적으로 역할, 센터로 필터링)"""
-    query = db.query(User)
+    """사용자 목록 조회 (선택적으로 역할로 필터링). 항상 로그인한 사람의 센터 직원만 보인다 (이메일·연락처가 있어 다른 센터에는 보이면 안 된다)."""
+    if actor.role not in ("caregiver", "center_manager") or not actor.center_id:
+        raise HTTPException(status_code=403, detail="직원 목록을 볼 수 있는 권한이 없습니다")
+    query = db.query(User).filter(User.center_id == actor.center_id)
 
     if role:
         query = query.filter(User.role == role)
-
-    if center_id:
-        query = query.filter(User.center_id == center_id)
 
     users = query.all()
 
@@ -383,11 +382,13 @@ async def update_my_notification_settings(
     return {"status": "success", "alimtalk_opt_in": actor.alimtalk_opt_in, "alimtalk_categories": actor.alimtalk_categories}
 
 @router.delete("/{user_id}")
-async def delete_user(user_id: int, db: Session = Depends(get_db), _: User = Depends(require_manager)):
-    """사용자 삭제"""
-    user = db.query(User).filter(User.id == user_id).first()
+async def delete_user(user_id: int, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """사용자 삭제 (내 센터 직원만, 본인 계정은 불가)"""
+    user = db.query(User).filter(User.id == user_id, User.center_id == actor.center_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    if user.id == actor.id:
+        raise HTTPException(status_code=400, detail="본인 계정은 삭제할 수 없습니다")
 
     db.delete(user)
     db.commit()

@@ -55,6 +55,19 @@ def require_platform_admin(user: User = Depends(get_current_user)) -> User:
     return user
 
 
-def assert_self_or_manager(actor: User, caregiver_id: int) -> None:
-    if actor.role != "center_manager" and actor.id != caregiver_id:
+def assert_self_or_manager(actor: User, caregiver_id: int, db=None) -> None:
+    """본인이거나, 같은 센터의 센터장만 통과한다. db를 주면 센터장이 다른 센터 직원의 정보를 보는 것도 막는다."""
+    if actor.id == caregiver_id:
+        return
+    if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="본인의 정보만 조회할 수 있습니다")
+    if db is not None:
+        target = db.query(User).filter(User.id == caregiver_id).first()
+        if not target or target.center_id != actor.center_id:
+            raise HTTPException(status_code=403, detail="우리 센터 직원의 정보만 조회할 수 있습니다")
+
+
+def assert_my_center(actor: User, center_id) -> None:
+    """내 센터의 자료가 아니면 '없음'으로 응답한다(다른 센터 번호를 넣어도 존재 여부를 알 수 없게)."""
+    if center_id is None or center_id != actor.center_id:
+        raise HTTPException(status_code=404, detail="찾을 수 없습니다")

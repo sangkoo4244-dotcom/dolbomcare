@@ -8,7 +8,7 @@ from app.review import record_fits_schedule
 from app.visit_benefit import normalize_visit_benefit
 from sqlalchemy import or_
 from app.database import get_db
-from app.auth import get_current_user, require_manager, assert_self_or_manager
+from app.auth import get_current_user, require_manager, assert_self_or_manager, assert_my_center
 from datetime import datetime, timedelta
 
 class ScheduleCreate(BaseModel):
@@ -46,13 +46,13 @@ async def get_schedules(
     caregiver_id: int = None,
     resident_id: int = None,
     status: str = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
-    """스케줄 목록 조회 (필터링 가능)"""
-    query = db.query(Schedule)
-
-    if center_id:
-        query = query.filter(Schedule.center_id == center_id)
+    """스케줄 목록 조회 (필터링 가능). 항상 로그인한 사람의 센터 일정만 보인다."""
+    if actor.role not in ("caregiver", "center_manager") or not actor.center_id:
+        raise HTTPException(status_code=403, detail="일정을 볼 수 있는 권한이 없습니다")
+    query = db.query(Schedule).filter(Schedule.center_id == actor.center_id)
     if caregiver_id:
         query = query.filter(Schedule.caregiver_id == caregiver_id)
     if resident_id:
@@ -98,16 +98,16 @@ async def get_schedules(
 async def create_schedule(
     schedule_data: ScheduleCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_manager)
+    actor: User = Depends(require_manager)
 ):
-    """스케줄 생성 (센터장만 가능)"""
+    """스케줄 생성 (센터장만 가능, 내 센터의 요양사·이용자만)"""
     try:
         # 요양사, 이용자, 센터 검증
-        caregiver = db.query(User).filter(User.id == schedule_data.caregiver_id).first()
+        caregiver = db.query(User).filter(User.id == schedule_data.caregiver_id, User.center_id == actor.center_id).first()
         if not caregiver:
             raise HTTPException(status_code=404, detail="요양사를 찾을 수 없습니다")
 
-        resident = db.query(Resident).filter(Resident.id == schedule_data.resident_id).first()
+        resident = db.query(Resident).filter(Resident.id == schedule_data.resident_id, Resident.center_id == actor.center_id).first()
         if not resident:
             raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
 
@@ -221,6 +221,12 @@ def create_recurring_schedule(req: RecurringCreate, db: Session = Depends(get_db
 def _codes(value):
     return [c for c in (value or "").split(",") if c]
 
+def _my_schedule(db, schedule_id, actor):
+    """내 센터의 일정만 돌려준다(다른 센터 일정은 없는 것으로 본다)."""
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    return schedule if schedule and schedule.center_id == actor.center_id else None
+
+
 def _assert_owner(schedule, user_id, user_role):
     if user_role == "caregiver" and schedule.caregiver_id != user_id:
         raise HTTPException(status_code=403, detail="본인의 일정만 기록할 수 있습니다")
@@ -248,6 +254,8 @@ def caregiver_schedule_view(
     """요양사 방문 계획: 계획된 방문과 실제 기록·도착/퇴실 시각을 날짜·이용자 기준으로 맞춘 결과"""
     if actor.role == "caregiver" and actor.id != caregiver_id:
         raise HTTPException(status_code=403, detail="본인의 일정만 조회할 수 있습니다")
+    if actor.role == "center_manager":
+        assert_self_or_manager(actor, caregiver_id, db)
     start = datetime.strptime(f"{year_month}-01", "%Y-%m-%d")
     end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
     now = datetime.now()
@@ -370,7 +378,7 @@ def caregiver_schedule_view(
 @router.post("/{schedule_id}/arrive")
 def mark_arrived(schedule_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     """도착 시각 기록 (이미 도착한 경우 처음 시각 유지)"""
-    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
     _assert_owner(schedule, actor.id, actor.role)
@@ -384,7 +392,7 @@ def mark_arrived(schedule_id: int, db: Session = Depends(get_db), actor: User = 
 @router.post("/{schedule_id}/depart")
 def mark_left(schedule_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     """퇴실 시각 기록 (도착 기록 이후에만 가능). 처음 퇴실 기록 시 방문 기록 작성 알림을 보낸다."""
-    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
     _assert_owner(schedule, actor.id, actor.role)
@@ -494,7 +502,7 @@ def approve_schedule(schedule_id: int, req: ReviewRequest, db: Session = Depends
     """센터장이 방문 계획 승인 → 요양사 나의일정에 확정"""
     if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 승인할 수 있습니다")
-    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
     if schedule.status != "proposed":
@@ -513,7 +521,7 @@ def reject_schedule(schedule_id: int, req: ReviewRequest, db: Session = Depends(
     reason = (req.reason or "").strip()
     if not reason:
         raise HTTPException(status_code=400, detail="반려 사유를 입력해 주세요")
-    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
     if schedule.status != "proposed":
@@ -529,7 +537,7 @@ def resubmit_schedule(schedule_id: int, req: ResubmitRequest, db: Session = Depe
     """요양사가 반려된 계획을 수정해 다시 제안"""
     if actor.role != "caregiver":
         raise HTTPException(status_code=403, detail="요양사만 다시 제안할 수 있습니다")
-    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
     _assert_owner(schedule, actor.id, actor.role)
@@ -573,7 +581,7 @@ def request_schedule_change(schedule_id: int, req: ChangeRequest, db: Session = 
     """요양보호사가 승인된 예정 일정의 날짜·시간 변경을 요청 (센터장 승인 전까지 원래 일정 유지)"""
     if actor.role != "caregiver":
         raise HTTPException(status_code=403, detail="요양보호사만 변경을 요청할 수 있습니다")
-    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
     _assert_owner(schedule, actor.id, actor.role)
@@ -605,7 +613,7 @@ def request_schedule_change(schedule_id: int, req: ChangeRequest, db: Session = 
 @router.post("/{schedule_id}/change-cancel")
 def cancel_schedule_change(schedule_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     """요양보호사가 보낸 변경 요청을 철회"""
-    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
     _assert_owner(schedule, actor.id, actor.role)
@@ -671,9 +679,9 @@ def reject_schedule_change(schedule_id: int, req: ReviewRequest, db: Session = D
 
 
 @router.get("/{schedule_id}")
-async def get_schedule(schedule_id: int, db: Session = Depends(get_db)):
+async def get_schedule(schedule_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     """스케줄 상세 조회"""
-    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
         raise HTTPException(status_code=404, detail="스케줄을 찾을 수 없습니다")
 
@@ -698,10 +706,10 @@ async def update_schedule(
     schedule_id: int,
     update_data: ScheduleUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_manager)
+    actor: User = Depends(require_manager)
 ):
     """스케줄 수정 (센터장만 가능)"""
-    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
         raise HTTPException(status_code=404, detail="스케줄을 찾을 수 없습니다")
 
@@ -752,10 +760,10 @@ async def update_schedule_status(
     schedule_id: int,
     status_data: ScheduleStatusUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_manager)
+    actor: User = Depends(require_manager)
 ):
     """스케줄 상태 변경"""
-    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
         raise HTTPException(status_code=404, detail="스케줄을 찾을 수 없습니다")
 
@@ -781,9 +789,9 @@ async def update_schedule_status(
         raise HTTPException(status_code=500, detail=f"상태 변경 중 오류: {str(e)}")
 
 @router.delete("/{schedule_id}")
-async def delete_schedule(schedule_id: int, db: Session = Depends(get_db), _: User = Depends(require_manager)):
+async def delete_schedule(schedule_id: int, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
     """스케줄 삭제 (센터장만 가능)"""
-    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
         raise HTTPException(status_code=404, detail="스케줄을 찾을 수 없습니다")
 

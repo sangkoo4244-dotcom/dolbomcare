@@ -105,6 +105,36 @@ def severe_bonus(benefit_type: str | None, grade, minutes: int | None) -> int:
     return 0
 
 
+# 방문요양·방문간호 시간 가산(고시 제20조 + 공단 세부지침 제5조): 22시~06시 야간과 일요일은 급여비용의 30%를 가산한다.
+# 1회 방문 안에서 가산 시간대와 아닌 시간대가 섞이면 '가산 적용 시간 / 총 급여제공시간' 비율로 가산한다.
+#   가산금액 = 기본급여비용 × 0.3 × 가산적용시간(분) ÷ 총급여제공시간(분)  (가산 또는 감액 금액의 10원 미만은 반올림, 고시 제47조)
+# 야간과 일요일이 겹쳐도 중복 가산하지 않는다. 유급휴일·근로자의 날(50%)은 공휴일 달력이 필요해 아직 계산하지 않는다.
+SURCHARGE_RATE_PERCENT = 30
+NIGHT_START_HOUR, NIGHT_END_HOUR = 22, 6
+
+
+def _is_surcharged(moment) -> bool:
+    return moment.weekday() == 6 or moment.hour >= NIGHT_START_HOUR or moment.hour < NIGHT_END_HOUR
+
+
+def surcharge_minutes(start, minutes: int | None) -> int:
+    """방문 안에서 야간(22~06시) 또는 일요일에 해당하는 분."""
+    if not start or not minutes or minutes <= 0:
+        return 0
+    from datetime import timedelta
+    return sum(1 for m in range(minutes) if _is_surcharged(start + timedelta(minutes=m)))
+
+
+def visit_surcharge(base_fee: int, start, minutes: int | None) -> int:
+    """방문요양·방문간호 1회의 야간·일요일 가산금액(원). 해당 없으면 0."""
+    covered = surcharge_minutes(start, minutes)
+    if not covered or not base_fee:
+        return 0
+    from fractions import Fraction
+    exact = Fraction(base_fee * SURCHARGE_RATE_PERCENT * covered, 100 * minutes)
+    return int((exact + 5) // 10) * 10  # 10원 단위 반올림
+
+
 def home_bath_fee(mode: str, minutes: int | None = None, solo_exception: bool = False) -> int:
     """방문목욕 1회 급여비용. minutes를 주면 제26조의 시간별 산정(60분 이상 전액, 40~60분 80%, 40분 미만 불가)을 적용한다.
     solo_exception은 차량 미이용에서 수치심으로 몸 씻기만 1인이 제공한 예외(80% 또는 70%)다."""

@@ -19,7 +19,7 @@ async def get_current_salary(
     """
     현재 월의 급여 조회
     """
-    assert_self_or_manager(actor, caregiver_id)
+    assert_self_or_manager(actor, caregiver_id, db)
     today = datetime.now().date()
     year_month = f"{today.year}-{str(today.month).zfill(2)}"
 
@@ -52,7 +52,7 @@ async def get_salary_history(
     """
     최근 급여 내역 조회 (최대 12개월)
     """
-    assert_self_or_manager(actor, caregiver_id)
+    assert_self_or_manager(actor, caregiver_id, db)
     today = datetime.now().date()
     start_date = today - timedelta(days=30 * months)
 
@@ -99,7 +99,7 @@ async def get_monthly_salary(
     """
     특정 월의 상세 급여 정보
     """
-    assert_self_or_manager(actor, caregiver_id)
+    assert_self_or_manager(actor, caregiver_id, db)
     try:
         year, month = map(int, year_month.split('-'))
     except:
@@ -168,12 +168,14 @@ def get_estimated_payment_date(target_date: date) -> str:
 @router.get("/contract")
 async def get_contract(
     caregiver_id: int = Query(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     근로계약서 정보 조회
     실제 파일 다운로드는 별도 구현
     """
+    assert_self_or_manager(actor, caregiver_id, db)
     user = db.query(User).filter(User.id == caregiver_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

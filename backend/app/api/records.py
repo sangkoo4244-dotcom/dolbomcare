@@ -132,6 +132,12 @@ def _bath_visits_that_week(db, resident_id, when, exclude_id=None):
     return q.count()
 
 
+def _record_in_my_center(db, record, actor) -> bool:
+    """센터장이 다른 센터의 방문 기록을 건드리지 못하게, 기록의 이용자가 내 센터 소속인지 확인한다."""
+    resident = db.query(Resident).filter(Resident.id == record.resident_id).first()
+    return bool(resident and resident.center_id == actor.center_id)
+
+
 def _severe_bonus(db, caregiver_id, day, benefit_type, grade, minutes, exclude_billing_id=None) -> int:
     """중증 가산(1·2등급)을 그 요양보호사의 같은 날 같은 급여 가산과 합쳐 1일 한도(6,000원) 안에서 계산한다."""
     raw = benefit_catalog.severe_bonus(benefit_type, grade, minutes)
@@ -186,11 +192,11 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
                                         duration_minutes=request.duration_minutes, require_duration=True, strict_home_care_duration=True,
                                         special_note=request.special_note, solo_exception=request.bath_solo_exception, for_record=True)
         try:
-            total_cost, _, amount = split_benefit(visit["benefit_type"], request.duration_minutes, resident.client_type, visit["bath_mode"], visit["solo_exception"])
+            now = request.recorded_date or datetime.now()  # 소급 기록 시 선택한 시각, 아니면 현재 시각(로컬)
+            total_cost, _, amount = split_benefit(visit["benefit_type"], request.duration_minutes, resident.client_type, visit["bath_mode"], visit["solo_exception"], start=now)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
-        now = request.recorded_date or datetime.now()  # 소급 기록 시 선택한 시각, 아니면 현재 시각(로컬)
         special_note = (request.special_note or "").strip() or None
         # 같은 날 같은 수급자에게 주·야간보호를 제공했다면 방문목욕은 청구하지 않는다(고시 제32조 ②: 한 종류만 산정)
         if visit["benefit_type"] == "home_bath" and db.query(DayCareAttendance).filter(
@@ -334,6 +340,8 @@ def batch_delete_records(
             is_own_record = record.caregiver_id == actor.id
             if not (is_manager or is_own_record):
                 continue
+            if is_manager and not is_own_record and not _record_in_my_center(db, record, actor):
+                continue  # 다른 센터 기록은 지울 수 없다
 
             pair, pair_billing = _pair_of(db, record)
             if pair and _pair_is_locked(pair_billing):
@@ -440,7 +448,7 @@ async def get_recent_records(
     지난 N일간의 기록 조회 (기본: 7일)
     resident_id가 주어지면 해당 이용자의 기록만 조회
     """
-    assert_self_or_manager(actor, caregiver_id)
+    assert_self_or_manager(actor, caregiver_id, db)
     try:
         from datetime import date, datetime as dt, time as time_cls, timedelta
 
@@ -528,7 +536,7 @@ async def get_all_records(
     모든 기록 조회
     resident_id가 주어지면 해당 이용자의 기록만 조회
     """
-    assert_self_or_manager(actor, caregiver_id)
+    assert_self_or_manager(actor, caregiver_id, db)
     try:
         query = db.query(DailyRecord).filter(
             DailyRecord.caregiver_id == caregiver_id
@@ -611,7 +619,7 @@ async def get_today_records(
     오늘의 기록 조회 + 청구액
     resident_id가 주어지면 해당 이용자의 기록만 조회
     """
-    assert_self_or_manager(actor, caregiver_id)
+    assert_self_or_manager(actor, caregiver_id, db)
     try:
         from datetime import date, datetime as dt, time as time_cls
 
@@ -973,7 +981,7 @@ async def update_record(
                 billing.client_type = request.client_type
             try:
                 total_cost, _, insurance_amount = split_benefit(visit["benefit_type"], record.duration_minutes or (60 if visit["benefit_type"] == "home_care" else None),
-                                                                billing.client_type, visit["bath_mode"], visit["solo_exception"])
+                                                                billing.client_type, visit["bath_mode"], visit["solo_exception"], start=record.recorded_date)
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
             billing.total_cost = total_cost
@@ -1224,6 +1232,8 @@ async def delete_record(
 
     if not (is_manager or is_own_record):
         raise HTTPException(status_code=403, detail="삭제 권한이 없습니다 (자신의 기록만 삭제 가능)")
+    if is_manager and not is_own_record and not _record_in_my_center(db, record, actor):
+        raise HTTPException(status_code=404, detail="기록을 찾을 수 없습니다")
 
     pair, pair_billing = _pair_of(db, record)
     if pair and _pair_is_locked(pair_billing):

@@ -15,6 +15,12 @@ import random
 
 router = APIRouter()
 
+
+def _in_my_center(db: Session, billing_id: int, actor: User):
+    """내 센터의 청구만 돌려준다. 다른 센터 청구는 번호를 알아도 없는 것처럼 취급한다(센터 간 정보 분리)."""
+    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    return billing if billing and billing.center_id == actor.center_id else None
+
 # Request 모델
 class ApprovalRequest(BaseModel):
     user_id: int
@@ -57,7 +63,8 @@ BILLING_RATES = {
 async def create_billing_record(
     record: BillingRecordCreate,
     db: Session = Depends(get_db),
-    service_category: str = "재가급여"
+    service_category: str = "재가급여",
+    actor: User = Depends(require_manager),
 ):
     """음성 기록 → 청구 기록 자동 생성 (등급별 청구액 적용)"""
     caregiver = db.query(User).filter(User.id == record.caregiver_id).first()
@@ -65,7 +72,7 @@ async def create_billing_record(
         raise HTTPException(status_code=404, detail="Caregiver not found")
 
     resident = db.query(Resident).filter(Resident.id == record.resident_id).first()
-    if not resident:
+    if not resident or resident.center_id != actor.center_id or caregiver.center_id != actor.center_id:
         raise HTTPException(status_code=404, detail="Resident not found")
 
     # 청구액 계산: 등급 기반
@@ -102,10 +109,12 @@ async def create_billing_record(
 @router.get("/monthly/{year_month}", response_model=BillingMonthlySummary)
 async def get_monthly_billing(
     year_month: str,  # 'YYYY-MM' format
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_manager),
 ):
     """월간 청구 현황 조회 (자동 계산)"""
     records = db.query(BillingRecord).filter(
+        BillingRecord.center_id == actor.center_id,
         BillingRecord.recorded_date >= datetime.strptime(f"{year_month}-01", "%Y-%m-%d"),
         BillingRecord.recorded_date < (
             datetime.strptime(f"{year_month}-01", "%Y-%m-%d") + timedelta(days=32)
@@ -133,10 +142,11 @@ async def get_monthly_billing(
     )
 
 @router.get("/today")
-async def get_today_billing(db: Session = Depends(get_db)):
+async def get_today_billing(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
     """오늘의 청구 현황"""
     today = datetime.now().date()
     records = db.query(BillingRecord).filter(
+        BillingRecord.center_id == actor.center_id,
         BillingRecord.recorded_date >= datetime.combine(today, time.min),
         BillingRecord.recorded_date <= datetime.combine(today, time.max)
     ).all()
@@ -165,7 +175,7 @@ async def approve_billing_record(
     if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 승인 가능합니다")
 
-    record = db.query(BillingRecord).filter(BillingRecord.id == record_id).first()
+    record = _in_my_center(db, record_id, actor)
     if not record:
         raise HTTPException(status_code=404, detail="Billing record not found")
     if record.approval_status != "pending":
@@ -196,7 +206,7 @@ async def reject_billing_record(
     if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 거절 가능합니다")
 
-    record = db.query(BillingRecord).filter(BillingRecord.id == record_id).first()
+    record = _in_my_center(db, record_id, actor)
     if not record:
         raise HTTPException(status_code=404, detail="Billing record not found")
 
@@ -224,12 +234,14 @@ async def list_billing_records(
     actor: User = Depends(get_current_user)
 ):
     """청구 기록 목록 조회 (기본: 활성 청구만, include_archived=true면 아카이브도 포함)"""
+    if actor.role not in ("caregiver", "center_manager") or not actor.center_id:
+        raise HTTPException(status_code=403, detail="청구를 볼 수 있는 권한이 없습니다")
     if actor.role == "caregiver":
         caregiver_id = actor.id
+    center_id = actor.center_id  # 다른 센터 번호를 넣어도 내 센터 청구만 보인다
     query = db.query(BillingRecord)
 
-    if center_id:
-        query = query.filter(BillingRecord.center_id == center_id)
+    query = query.filter(BillingRecord.center_id == center_id)
 
     if caregiver_id:
         query = query.filter(BillingRecord.caregiver_id == caregiver_id)
@@ -279,6 +291,7 @@ async def list_billing_records(
             "total_amount": r.amount,
             "total_cost": r.total_cost,
             "extra_amount": r.extra_amount or 0,
+            "duration_minutes": dailies[r.daily_record_id].duration_minutes if r.daily_record_id in dailies else None,
             "status": r.status,
             "approval_status": r.approval_status,
             "rejection_reason": r.rejection_reason,
@@ -307,7 +320,7 @@ async def submit_billing_to_nhis(
     if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 건보 청구 가능합니다")
 
-    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    billing = _in_my_center(db, billing_id, actor)
     if not billing:
         raise HTTPException(status_code=404, detail="청구 기록을 찾을 수 없습니다")
 
@@ -341,7 +354,7 @@ async def confirm_reimbursement(
     if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 환급 확인 가능합니다")
 
-    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    billing = _in_my_center(db, billing_id, actor)
     if not billing:
         raise HTTPException(status_code=404, detail="청구 기록을 찾을 수 없습니다")
 
@@ -375,7 +388,7 @@ async def cancel_nhis_submission(
     if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 건보 청구 취소 가능합니다")
 
-    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    billing = _in_my_center(db, billing_id, actor)
     if not billing:
         raise HTTPException(status_code=404, detail="청구 기록을 찾을 수 없습니다")
 
@@ -407,7 +420,7 @@ async def submit_billing_for_approval(
     if actor.role != "caregiver":
         raise HTTPException(status_code=403, detail="요양사만 제출 가능합니다")
 
-    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    billing = _in_my_center(db, billing_id, actor)
     if not billing:
         raise HTTPException(status_code=404, detail="청구 기록을 찾을 수 없습니다")
 
@@ -455,7 +468,7 @@ async def update_billing_status(
     if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 상태를 변경할 수 있습니다")
 
-    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    billing = _in_my_center(db, billing_id, actor)
     if not billing:
         raise HTTPException(status_code=404, detail="청구 기록을 찾을 수 없습니다")
 
@@ -487,7 +500,7 @@ async def delete_billing(
     actor: User = Depends(get_current_user)
 ):
     """청구 삭제 (요양사: draft 상태만, 센터장: 자신 것만)"""
-    billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
+    billing = _in_my_center(db, billing_id, actor)
     if not billing:
         raise HTTPException(status_code=404, detail="청구 기록을 찾을 수 없습니다")
 
