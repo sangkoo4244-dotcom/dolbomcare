@@ -19,7 +19,7 @@ router = APIRouter()
 def _in_my_center(db: Session, billing_id: int, actor: User):
     """내 센터의 청구만 돌려준다. 다른 센터 청구는 번호를 알아도 없는 것처럼 취급한다(센터 간 정보 분리)."""
     billing = db.query(BillingRecord).filter(BillingRecord.id == billing_id).first()
-    return billing if billing and billing.center_id == actor.center_id else None
+    return billing if billing and actor.center_id is not None and billing.center_id == actor.center_id else None
 
 # Request 모델
 class ApprovalRequest(BaseModel):

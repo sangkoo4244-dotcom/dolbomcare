@@ -135,7 +135,7 @@ def _bath_visits_that_week(db, resident_id, when, exclude_id=None):
 def _record_in_my_center(db, record, actor) -> bool:
     """센터장이 다른 센터의 방문 기록을 건드리지 못하게, 기록의 이용자가 내 센터 소속인지 확인한다."""
     resident = db.query(Resident).filter(Resident.id == record.resident_id).first()
-    return bool(resident and resident.center_id == actor.center_id)
+    return bool(resident and actor.center_id is not None and resident.center_id == actor.center_id)
 
 
 def _severe_bonus(db, caregiver_id, day, benefit_type, grade, minutes, exclude_billing_id=None) -> int:
@@ -176,10 +176,12 @@ def test_endpoint():
 @router.post("/create")
 def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     """일일 기록 생성 및 청구 자동 계산"""
+    if actor.role not in ("caregiver", "center_manager"):
+        raise HTTPException(status_code=403, detail="방문 기록은 요양보호사나 센터장만 입력할 수 있습니다")
     caregiver_id = actor.id if actor.role == "caregiver" else request.caregiver_id
     try:
         resident = db.query(Resident).filter(Resident.id == request.resident_id).first()
-        if not resident:
+        if not resident or (actor.role == "caregiver" and (actor.center_id is None or resident.center_id != actor.center_id)):
             raise HTTPException(status_code=404, detail="Resident not found")
         if actor.role == "center_manager":
             # 센터장이 대신 입력할 때: 우리 센터의 이용자와 우리 센터 요양보호사만 허용 (센터장 본인이나 다른 센터 사람 이름으로 기록되지 않게)
@@ -1302,6 +1304,8 @@ async def create_voice_record(
     actor: User = Depends(get_current_user)
 ):
     """Create voice record + auto-generate billing"""
+    if actor.role != "caregiver":
+        raise HTTPException(status_code=403, detail="음성 기록은 요양보호사만 입력할 수 있습니다")
     caregiver_id = actor.id
     try:
         resident = db.query(Resident).filter(Resident.id == resident_id).first()
@@ -1368,6 +1372,8 @@ async def create_voice_record(
             "billing_record_id": billing_record.id,
             "amount": billing_amount
         }
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))

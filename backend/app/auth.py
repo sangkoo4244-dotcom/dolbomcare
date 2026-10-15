@@ -69,5 +69,5 @@ def assert_self_or_manager(actor: User, caregiver_id: int, db=None) -> None:
 
 def assert_my_center(actor: User, center_id) -> None:
     """내 센터의 자료가 아니면 '없음'으로 응답한다(다른 센터 번호를 넣어도 존재 여부를 알 수 없게)."""
-    if center_id is None or center_id != actor.center_id:
+    if center_id is None or actor.center_id is None or center_id != actor.center_id:
         raise HTTPException(status_code=404, detail="찾을 수 없습니다")

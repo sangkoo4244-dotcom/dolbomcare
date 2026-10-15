@@ -229,10 +229,10 @@ async def update_user(
     user_id: int,
     user_update: UserUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_manager)
+    actor: User = Depends(require_manager)
 ):
-    """사용자 정보 수정"""
-    user = db.query(User).filter(User.id == user_id).first()
+    """사용자 정보 수정 (내 센터 직원만)"""
+    user = db.query(User).filter(User.id == user_id, User.center_id == actor.center_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 

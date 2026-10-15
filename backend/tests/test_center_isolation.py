@@ -168,3 +168,39 @@ def test_record_detail_and_certificates_are_scoped(env):
     assert client.get("/api/v1/certificates/?center_id=1", headers=GUARD_B).status_code == 403
     mine = client.get("/api/v1/certificates/?center_id=1", headers=MGR_A).json()["certificates"]
     assert len(mine) == 1
+
+
+def test_other_centers_users_cannot_edit_staff_or_create_visit_records(env):
+    db, client = env
+    # 직원 정보 수정은 우리 센터 직원만
+    assert client.put("/api/v1/users/2", json={"full_name": "바꿈"}, headers=MGR_B).status_code == 404
+    assert client.put("/api/v1/users/2", json={"full_name": "새이름"}, headers=MGR_A).status_code == 200
+    db.expire_all()
+    assert db.query(models.User).filter_by(id=2).one().full_name == "새이름"
+    # 방문 기록 생성: 보호자는 불가, 다른 센터 요양보호사는 우리 이용자에게 못 쓴다
+    body = {"caregiver_id": 2, "resident_id": 1, "service_type": "basic_care", "notes": "방문", "duration_minutes": 60}
+    assert client.post("/api/v1/records/create", json=body, headers=GUARD_B).status_code == 403
+    assert client.post("/api/v1/records/create", json=body, headers=CG_B).status_code == 404
+    assert client.post("/api/v1/records/create", json=body, headers=MGR_B).status_code in (400, 404)
+    assert db.query(models.DailyRecord).filter_by(resident_id=1).count() == 1  # 처음 넣어 둔 한 건뿐
+    assert client.post("/api/v1/records/create", json=body, headers=CG_A).status_code == 200
+
+
+def test_guardians_cannot_read_schedules_or_record_arrival(env):
+    db, client = env
+    ym = f"{NOW:%Y-%m}"
+    assert client.get(f"/api/v1/schedule/caregiver-view?caregiver_id=2&year_month={ym}", headers=GUARD_B).status_code == 403
+    db.query(models.Schedule).filter_by(id=1).update({"status": "scheduled"})
+    db.commit()
+    assert client.post("/api/v1/schedule/1/arrive", headers=GUARD_B).status_code in (403, 404)
+    assert client.post("/api/v1/schedule/1/depart", headers=GUARD_B).status_code in (403, 404)
+    assert client.post("/api/v1/schedule/1/arrive", headers=CG_B).status_code in (403, 404)
+    db.expire_all()
+    assert db.query(models.Schedule).filter_by(id=1).one().arrived_at is None
+
+
+def test_voice_create_reports_a_missing_resident_as_404_not_500(env):
+    _, client = env
+    r = client.post("/api/v1/records/voice/create", params={"resident_id": 1}, headers=CG_B)
+    assert r.status_code == 404
+    assert client.post("/api/v1/records/voice/create", params={"resident_id": 1}, headers=GUARD_B).status_code == 403

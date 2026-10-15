@@ -224,10 +224,12 @@ def _codes(value):
 def _my_schedule(db, schedule_id, actor):
     """내 센터의 일정만 돌려준다(다른 센터 일정은 없는 것으로 본다)."""
     schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
-    return schedule if schedule and schedule.center_id == actor.center_id else None
+    return schedule if schedule and actor.center_id is not None and schedule.center_id == actor.center_id else None
 
 
 def _assert_owner(schedule, user_id, user_role):
+    if user_role not in ("caregiver", "center_manager"):
+        raise HTTPException(status_code=403, detail="요양보호사만 기록할 수 있습니다")
     if user_role == "caregiver" and schedule.caregiver_id != user_id:
         raise HTTPException(status_code=403, detail="본인의 일정만 기록할 수 있습니다")
 
@@ -252,6 +254,8 @@ def caregiver_schedule_view(
     actor: User = Depends(get_current_user)
 ):
     """요양사 방문 계획: 계획된 방문과 실제 기록·도착/퇴실 시각을 날짜·이용자 기준으로 맞춘 결과"""
+    if actor.role not in ("caregiver", "center_manager"):
+        raise HTTPException(status_code=403, detail="일정을 볼 수 있는 권한이 없습니다")
     if actor.role == "caregiver" and actor.id != caregiver_id:
         raise HTTPException(status_code=403, detail="본인의 일정만 조회할 수 있습니다")
     if actor.role == "center_manager":
