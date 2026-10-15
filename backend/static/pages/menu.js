@@ -48,7 +48,7 @@ async function showPlanPill() {
     planPillRequested = true;
     try {
         const r = await fetch('/api/v1/users/me');
-        if (!r.ok) return;
+        if (!r.ok || operatorChecked === true) return;  // 운영자 계정은 센터 체험 표시가 필요 없다
         const plan = (await r.json()).center_plan;
         if (!plan || !['trial', 'trial_expired', 'partner'].includes(plan.state)) return;
         const credit = document.getElementById('sideCredit');
@@ -317,13 +317,15 @@ async function showAdminConsoleLinkIfOperator() {
 
 // 운영자(이음로직)에게만: 사이드바 맨 아래에 '운영자 콘솔' 링크를 보여 준다. 일반 센터에는 아무것도 보이지 않는다.
 function addOperatorLinks() {
+    const pill = document.getElementById('planPill');
+    if (pill) pill.remove();  // 운영 센터에 붙은 체험 표시는 운영자에게 의미가 없다
     const credit = document.getElementById('sideCredit');
     if (credit && !document.getElementById('adminConsoleLink')) {
         const link = document.createElement('a');
         link.id = 'adminConsoleLink';
         link.href = './admin_alimtalk.html';
         link.textContent = '운영자 콘솔';
-        link.style.cssText = 'display:block; margin-top: 10px; color: #fbbf24; text-decoration: none; font-weight: 700;';
+        link.style.cssText = 'display:block; margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: rgba(251,191,36,0.14); color: #fbbf24; text-decoration: none; font-weight: 700; font-size: 13px; text-align: center;';
         credit.appendChild(link);
     }
 }
