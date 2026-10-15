@@ -19,6 +19,7 @@ CARE_ITEM_LABELS = {
     "mobility": "이동 보조", "medicine": "투약 확인", "vitals": "체온·혈압 측정", "symptom": "이상 증상 관찰",
     "emotional": "말벗·정서 지원", "cognitive": "인지활동", "cleaning": "청소·정돈", "laundry": "세탁",
     "shopping": "장보기·취사",
+    "wash_face": "세면 도움", "oral_care": "구강 청결", "position_change": "체위 변경", "outing": "외출 동행",
 }
 CONDITION_LABELS = {"good": "좋음", "normal": "보통", "poor": "나쁨"}
 

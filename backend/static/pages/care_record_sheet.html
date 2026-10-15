@@ -41,7 +41,7 @@
         <button type="button" id="nextWeek">다음 주 ▶</button>
         <button type="button" class="primary" onclick="window.print()">인쇄</button>
     </div>
-    <div class="note">공단 서식(장기요양급여 제공기록지 방문요양, 2025.12 개정)과 같은 모양으로 한 주(7일) 분량을 보여 줍니다. 돌봄케어에 기록하지 않는 칸(체위변경, 인지행동변화 관리, 개인활동지원, 영역별 제공시간)은 비워 두었으니 필요하면 인쇄 후 손으로 적어 주세요. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다.</div>
+    <div class="note">공단 서식(장기요양급여 제공기록지 방문요양, 2025.12 개정)과 같은 모양으로 한 주(7일) 분량을 보여 줍니다. 돌봄케어에 기록하지 않는 칸(일상생활 함께하기, 인지행동변화 관리)은 비워 두었으니 필요하면 인쇄 후 손으로 적어 주세요. 항목별 제공 시간을 적으면 영역별 제공시간도 자동으로 채워집니다. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다.</div>
     <div class="paper" id="paper"><div class="empty">이용자를 선택하세요.</div></div>
 
     <script>
@@ -49,10 +49,10 @@
         const DAY_NAME = ['일', '월', '화', '수', '목', '금', '토'];
         // 서식의 각 칸 ← 돌봄케어 제공 항목 코드 (없는 칸은 빈 배열: 손으로 적는 칸)
         const SERVICE_ROWS = [
-            ['신체활동<br>지원', '개인위생(옷 갈아입기, 세면 등)', ['dressing', 'bath']],
+            ['신체활동<br>지원', '개인위생(옷 갈아입기, 세면 등)', ['dressing', 'wash_face', 'oral_care']],
             ['', '몸 씻기 도움', ['bath']],
             ['', '식사 도움(영양관리 등)', ['meal_assist']],
-            ['', '체위변경', []],
+            ['', '체위변경', ['position_change']],
             ['', '이동 도움(보행, 보장구 사용 등)', ['mobility']],
             ['', '화장실 이용하기', ['toilet_assist']],
             ['인지활동<br>지원', '인지자극활동', ['cognitive']],
@@ -60,8 +60,8 @@
             ['인지관리<br>지원', '인지행동변화 관리 등', []],
             ['정서지원', '의사소통 도움', []],
             ['', '말벗, 격려', ['emotional']],
-            ['가사 및<br>일상생활<br>지원', '식사준비, 청소 및 주변정리 정돈, 세탁 등', ['cleaning', 'laundry', 'shopping']],
-            ['', '개인활동지원(외출시 동행 등)', []],
+            ['가사 및<br>일상생활<br>지원', '식사준비, 청소 및 주변정리 정돈, 세탁 등', ['cleaning', 'laundry']],
+            ['', '개인활동지원(외출시 동행, 장보기 등)', ['outing', 'shopping']],
         ];
         let sheet = null;
 
@@ -95,6 +95,11 @@
                 const lead = i === 0 ? `<th rowspan="${SERVICE_ROWS.length}" class="grp">서<br>비<br>스<br><br>제<br>공</th>` : '';
                 const sub = group ? `<th rowspan="${group.includes('가사') ? 2 : (group.startsWith('신체') ? 6 : (group.startsWith('인지활동') ? 2 : (group.startsWith('정서') ? 2 : 1)))}" class="sub">${group}</th>` : '';
                 rows.push(`<tr>${lead}${sub}<td class="item">${label}</td>${cells(d => codes.some(c => d.care_items.includes(c)) ? '<span class="mark">✓</span>' : '')}</tr>`);
+            });
+            const MINUTE_GROUPS = [['신체활동 지원', 0, 5], ['인지활동 지원', 6, 7], ['인지관리 지원', 8, 8], ['정서지원', 9, 10], ['가사 및 일상생활 지원', 11, 12]];
+            MINUTE_GROUPS.forEach(([name, from, to]) => {
+                const codes = SERVICE_ROWS.slice(from, to + 1).flatMap(r => r[2]);
+                rows.push(`<tr><th colspan="2">${name} 제공시간(분)</th>${cells(d => codes.reduce((sum, c) => sum + (d.item_minutes?.[c] || 0), 0) || '')}</tr>`);
             });
             const change = (field) => cells(d => CHANGE_LABEL[d[field]] || '');
             rows.push(`<tr><th rowspan="5" class="grp">변화<br>상태</th><th class="sub" colspan="2">신체기능</th>${change('physical_change')}</tr>`);

@@ -41,7 +41,14 @@ def _merge_day(records: list, schedules: dict, names: dict) -> dict:
             ends.append(sch.left_at)
 
     notes = " / ".join(r.notes.strip() for r in records if r.notes and r.notes.strip())
+    item_minutes = {}
+    for r in records:  # "meal_assist:30,bath:30" 형식을 항목별로 더한다 (공단 서식의 영역별 제공시간용)
+        for part in (r.item_minutes or "").split(","):
+            code, _, minutes = part.partition(":")
+            if code and minutes.isdigit():
+                item_minutes[code] = item_minutes.get(code, 0) + int(minutes)
     return {
+        "item_minutes": item_minutes,
         "care_items": items,
         "total_minutes": total("duration_minutes"),
         "start_time": min(starts).strftime("%H:%M") if starts else None,
