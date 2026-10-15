@@ -113,12 +113,14 @@ async def get_monthly_billing(
     actor: User = Depends(require_manager),
 ):
     """월간 청구 현황 조회 (자동 계산)"""
+    try:
+        month_start = datetime.strptime(f"{year_month}-01", "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="월은 2026-10 형식으로 입력해 주세요")
     records = db.query(BillingRecord).filter(
         BillingRecord.center_id == actor.center_id,
-        BillingRecord.recorded_date >= datetime.strptime(f"{year_month}-01", "%Y-%m-%d"),
-        BillingRecord.recorded_date < (
-            datetime.strptime(f"{year_month}-01", "%Y-%m-%d") + timedelta(days=32)
-        ).replace(day=1)
+        BillingRecord.recorded_date >= month_start,
+        BillingRecord.recorded_date < (month_start + timedelta(days=32)).replace(day=1)
     ).all()
 
     total_amount = sum(r.amount for r in records)
