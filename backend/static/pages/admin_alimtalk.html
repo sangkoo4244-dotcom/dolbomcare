@@ -114,6 +114,7 @@
             th:nth-child(2), td:nth-child(2) { display: none; }
         }
     </style>
+    <style id="adminGate">body { visibility: hidden; }</style>  <!-- 운영자 확인이 끝나기 전에는 화면을 숨긴다(일반 센터가 주소로 들어와도 틀이 보이지 않게) -->
 </head>
 <body>
     <div class="topbar">
@@ -350,15 +351,16 @@
             try {
                 const res = await fetch(`${API_URL}/admin/alimtalk-overview`, { headers: { Authorization: `Bearer ${token}` } });
                 if (res.status === 403) {
-                    body.innerHTML = '<div class="denied">이 계정은 운영자 권한이 없습니다.</div>';
-                    document.getElementById('createCenterSection').style.display = 'none';
+                    window.location.replace('./dashboard.html');  // 운영자가 아니면 이 화면은 보이지 않는다
                     return;
                 }
+                document.getElementById('adminGate')?.remove();
                 if (!res.ok) throw new Error('조회 실패');
                 rows = await res.json();
                 renderStats();
                 renderTable();
             } catch (e) {
+                document.getElementById('adminGate')?.remove();
                 body.innerHTML = '<div class="empty">불러오지 못했습니다</div>';
             }
         }

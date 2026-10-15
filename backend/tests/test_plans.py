@@ -179,3 +179,16 @@ def test_operator_sees_the_service_mix_and_resident_counts_of_partners(env):
     assert data["resident_limit"] == 30 and data["service_mix"] == {"방문요양": 1, "방문목욕": 1, "주야간보호": 1}
     by_name = {p["center_name"]: p for p in data["partners"]}
     assert by_name["주야간파트너"]["resident_count"] == 1 and by_name["파트너센터"]["services"] == ["방문요양", "방문목욕"]
+
+
+def test_partner_and_trial_centers_cannot_use_any_operator_console_api(env):
+    _, client = env
+    for headers in (PARTNER_MGR, TRIAL_MGR, EXPIRED_MGR, EXPIRED_CG):
+        assert client.get("/api/v1/admin/is-admin", headers=headers).status_code == 403
+        assert client.get("/api/v1/admin/partners", headers=headers).status_code == 403
+        assert client.get("/api/v1/admin/demo/status", headers=headers).status_code == 403
+        assert client.post("/api/v1/admin/demo/reset", headers=headers).status_code == 403
+        assert client.post("/api/v1/admin/centers/3/partner", json={}, headers=headers).status_code == 403
+        assert client.post("/api/v1/admin/centers/4/end-partner", json={}, headers=headers).status_code == 403
+        assert client.post("/api/v1/admin/centers/2/convert-to-paid", headers=headers).status_code == 403
+    assert client.get("/api/v1/admin/is-admin", headers=OPERATOR).status_code == 200
