@@ -192,3 +192,34 @@ def test_partner_and_trial_centers_cannot_use_any_operator_console_api(env):
         assert client.post("/api/v1/admin/centers/4/end-partner", json={}, headers=headers).status_code == 403
         assert client.post("/api/v1/admin/centers/2/convert-to-paid", headers=headers).status_code == 403
     assert client.get("/api/v1/admin/is-admin", headers=OPERATOR).status_code == 200
+
+
+def test_trial_ending_notices_are_sent_once_per_stage_to_the_manager_only(env):
+    db, client = env
+
+    def notices(user_id):
+        db.expire_all()
+        return sorted(n.kind for n in db.query(models.Notification).filter_by(user_id=user_id).all())
+
+    # 체험이 20일 남았으면 아직 안내하지 않는다
+    client.get("/api/v1/users/me", headers=TRIAL_MGR)
+    assert notices(3) == []
+    # 7일 이내가 되면 한 번만(화면을 몇 번 열어도 중복 없음)
+    db.query(models.Center).filter_by(id=3).update({"trial_ends_at": NOW + timedelta(days=5, hours=1)})
+    db.commit()
+    for _ in range(3):
+        client.get("/api/v1/users/me", headers=TRIAL_MGR)
+    assert notices(3) == ["trial_d7"]
+    # 하루 전, 그리고 끝난 뒤에는 각각 한 번씩
+    db.query(models.Center).filter_by(id=3).update({"trial_ends_at": NOW + timedelta(hours=10)})
+    db.commit()
+    client.get("/api/v1/users/me", headers=TRIAL_MGR)
+    client.get("/api/v1/users/me", headers=TRIAL_MGR)
+    assert notices(3) == ["trial_d1", "trial_d7"]
+    # 이미 끝난 센터: 센터장에게만 '끝났다'는 안내가 가고, 요양보호사에게는 가지 않는다
+    client.get("/api/v1/users/me", headers=EXPIRED_MGR)
+    client.get("/api/v1/users/me", headers=EXPIRED_CG)
+    assert notices(2) == ["trial_expired"] and notices(5) == []
+    # 파트너·정식 센터는 안내가 없다
+    client.get("/api/v1/users/me", headers=PARTNER_MGR)
+    assert notices(4) == []

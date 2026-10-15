@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이번 달 성과 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .wrap { max-width: 1100px; margin: 0 auto; }
+        .btn-solid { padding: 10px 18px; border-radius: 10px; font-size: 15px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-block; }
+        .card { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; }
+        .note-box { background: #EEF4FF; border: 1px solid #C7D8F5; color: #1E3A8A; border-radius: 10px; padding: 10px 12px; font-size: 14px; line-height: 1.7; margin-bottom: 14px; }
+        .cta { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; font-size: 14.5px; line-height: 1.7; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+        .toolbar input[type=month] { padding: 8px 10px; border: 1.5px solid var(--line2); border-radius: 8px; font-size: 15px; font-family: inherit; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+        .label { font-size: 13px; font-weight: 700; color: #64748B; }
+        .big { font-size: 30px; font-weight: 800; color: var(--navy); line-height: 1.3; margin: 4px 0; }
+        .big small { font-size: 15px; font-weight: 700; color: #475569; }
+        .sub { font-size: 13.5px; color: #64748B; line-height: 1.7; }
+        .row { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 4px 0; border-top: 1px solid #F1F5F9; }
+        .row:first-of-type { border-top: none; }
+        .good { color: #0F8B80; } .warn { color: #B45309; }
+        @media (max-width: 700px) { .big { font-size: 26px; } }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>이번 달 성과</h1>
+                <div class="breadcrumb">홈 › 청구·급여 › <b>이번 달 성과</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">사용자</div>
+                    <div class="user-role">센터장</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="wrap">
+                <div class="note-box">
+                    돌봄케어가 이 달에 센터를 위해 실제로 한 일을 <b>기록·청구·알림에서 그대로 센 숫자</b>입니다. 시간이 얼마나 절약됐는지 같은 추정치는 넣지 않았습니다.
+                </div>
+                <div id="cta" class="cta" style="display:none;"></div>
+
+                <div class="toolbar">
+                    <label for="month" style="font-weight:700;">월</label>
+                    <input type="month" id="month">
+                    <button type="button" class="btn-solid" onclick="load()">조회</button>
+                    <span id="msg" style="font-size:14px;"></span>
+                </div>
+
+                <div id="empty" class="card" style="display:none;text-align:center;color:#64748B;">이 달에는 방문 기록이 없습니다. 방문 기록이 쌓이면 여기에 성과가 나타납니다.</div>
+                <div id="cards" class="grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const won = n => '₩' + (n || 0).toLocaleString('ko-KR');
+        function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+        const $ = id => document.getElementById(id);
+
+        async function init() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            if (user.role !== 'center_manager') { window.location.href = './dashboard.html'; return; }
+            $('userName').textContent = user.full_name || '사용자';
+            if (typeof renderSidebar === 'function') renderSidebar();
+            const now = new Date();
+            $('month').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            showPlanCta();
+            load();
+        }
+        window.addEventListener('load', init);
+
+        // 체험 중이거나 체험이 끝난 센터에게는 이 성과를 계속 이어 가는 방법을 알려 준다
+        async function showPlanCta() {
+            try {
+                const r = await fetch('/api/v1/users/me');
+                const plan = r.ok ? (await r.json()).center_plan : null;
+                if (!plan || !['trial', 'trial_expired'].includes(plan.state)) return;
+                const box = $('cta');
+                box.style.display = '';
+                box.innerHTML = (plan.state === 'trial'
+                    ? `<span>무료 체험이 <b>${plan.days_left}일</b> 남았습니다. 체험이 끝나면 자료는 그대로 보이지만 새 기록과 청구는 쓸 수 없게 됩니다.</span>`
+                    : `<span>무료 체험이 끝나 지금은 <b>읽기 전용</b>입니다. 요금제를 시작하면 다시 기록·청구를 이어 갈 수 있습니다.</span>`)
+                    + '<a class="btn-solid" href="/pricing.html">요금제 보기</a>';
+            } catch (e) { /* 안내가 없어도 화면은 정상이다 */ }
+        }
+
+        async function load() {
+            const month = $('month').value;
+            const msg = $('msg');
+            if (!month) { msg.textContent = '월을 골라 주세요'; return; }
+            msg.style.color = '#475569'; msg.textContent = '불러오는 중...';
+            const r = await fetch(`/api/v1/value-report?year_month=${encodeURIComponent(month)}`);
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { msg.style.color = '#DC2626'; msg.textContent = typeof d.detail === 'string' ? d.detail : '불러오지 못했습니다'; return; }
+            msg.textContent = '';
+            render(d);
+        }
+
+        function render(d) {
+            const none = d.visits === 0;
+            $('empty').style.display = none ? '' : 'none';
+            $('cards').style.display = none ? 'none' : '';
+            if (none) return;
+            const x = d.calculated_extras, a = d.approval, rv = d.review;
+            const cards = [];
+            cards.push(`<div class="card"><div class="label">방문 기록 → 청구 자동 생성</div>
+                <div class="big">${d.auto_bills}<small>건의 청구</small></div>
+                <div class="sub">방문 기록 ${d.visits}건을 저장하면 급여 종류·시간에 맞는 공단 수가로 청구가 자동으로 만들어졌습니다. 공단 청구 예정액 <b>${won(d.claim_amount)}</b></div></div>`);
+            cards.push(`<div class="card"><div class="label">청구 전 점검</div>
+                <div class="big ${rv.flagged_visits ? 'warn' : 'good'}">${rv.flagged_visits}<small>건 확인 필요</small></div>
+                <div class="sub" style="margin-bottom:6px;">문제 없는 방문 ${rv.clean_visits}건. 공단에 올리기 전에 미리 확인할 건을 표시했습니다.</div>
+                ${rv.top_flags.length ? rv.top_flags.map(f => `<div class="row"><span>${esc(f.label.split(' - ')[0].split(' (')[0])}</span><b>${f.count}건</b></div>`).join('') : ''}
+                ${rv.flagged_visits ? '<div class="sub" style="margin-top:8px;"><a href="./claim_helper.html" style="color:var(--teal);font-weight:700;">청구 입력 도우미에서 보기 ›</a></div>' : ''}</div>`);
+            cards.push(`<div class="card"><div class="label">돌봄케어가 계산한 가산</div>
+                <div class="big">${won(x.total)}</div>
+                <div class="sub" style="margin-bottom:6px;">가산은 공단 화면에서 직접 선택하지 않으면 놓치기 쉬운 금액입니다.</div>
+                <div class="row"><span>야간·일요일·공휴일 가산</span><b>${won(x.time_surcharge)}</b></div>
+                <div class="row"><span>중증 가산(1·2등급)</span><b>${won(x.severe_bonus)}</b></div>
+                <div class="row"><span>주야간 이동서비스·목욕 가산</span><b>${won(x.day_night_extra)}</b></div></div>`);
+            cards.push(`<div class="card"><div class="label">도착·퇴실 기록률</div>
+                <div class="big ${d.arrival.rate >= 90 ? 'good' : 'warn'}">${d.arrival.rate}<small>%</small></div>
+                <div class="sub">방문 ${d.arrival.total}건 중 ${d.arrival.with_arrival}건에 도착·퇴실 기록이 있습니다. 공단 재가급여 평가의 전자관리(RFID) 활용 지표를 준비할 때 참고하세요. 기록이 비어 있으면 청구 입력 도우미에서 "도착·퇴실 없음"으로 표시됩니다.</div></div>`);
+            cards.push(`<div class="card"><div class="label">보호자에게 전한 방문 소식</div>
+                <div class="big">${d.guardian_updates}<small>건</small></div>
+                <div class="sub">방문 기록을 저장하면 연결된 보호자에게 방문 소식이 자동으로 전해졌습니다.</div></div>`);
+            cards.push(`<div class="card"><div class="label">청구 처리 현황</div>
+                <div class="row"><span>승인 이상</span><b class="good">${a.approved}건</b></div>
+                <div class="row"><span>승인 대기</span><b>${a.pending}건</b></div>
+                <div class="row"><span>요양보호사 작성 중</span><b>${a.draft}건</b></div>
+                <div class="row"><span>보완 요청</span><b class="${a.rejected ? 'warn' : ''}">${a.rejected}건</b></div></div>`);
+            $('cards').innerHTML = cards.join('');
+        }
+    </script>
+</body>
+</html>

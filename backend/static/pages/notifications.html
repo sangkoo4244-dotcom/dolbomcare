@@ -231,7 +231,7 @@
             guardian: ['#EDE9FE', '#6D28D9'], approval: ['#E6F3F1', '#0F8B80'], system: ['#F1F5F9', '#64748B'],
         };
         // 중요(처리 필요) 알림: 반려된 건은 요양사가 다시 조치해야 한다
-        const IMPORTANT_KINDS = ['claim_rejected', 'plan_rejected', 'change_rejected', 'claim_submitted', 'schedule_change_requested', 'schedule_change_rejected'];
+        const IMPORTANT_KINDS = ['trial_d7', 'trial_d1', 'trial_expired', 'claim_rejected', 'plan_rejected', 'change_rejected', 'claim_submitted', 'schedule_change_requested', 'schedule_change_rejected'];
         // 알림을 누르면 이동할 화면 (실제로 존재하는 화면만 연결한다)
         const ACTION_LINK = {
             statement_confirmed: ['급여 보기', './my_salary.html'],
@@ -247,6 +247,7 @@
             schedule_today: ['일정 보기', './my_schedule.html'],
             record_needed: ['기록 작성', './voice_record.html'],
             visit_completed: ['방문 기록 보기', './guardian_home.html'],
+            trial_d7: ['요금제 보기', '/pricing.html'], trial_d1: ['요금제 보기', '/pricing.html'], trial_expired: ['요금제 보기', '/pricing.html'],
         };
         const ROLE_LABEL = { caregiver: '요양보호사', center_manager: '센터장', guardian: '보호자' };
 
@@ -275,7 +276,7 @@
         const SIDE_GROUPS_CG = [
             ['메인', ['대시보드', '알림']],
             ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '주야간 이용 기록', '공단 태그 대조', '인수인계', '사고·응급 보고']],
-            ['청구·급여', ['나의 청구', '청구관리', '청구 입력 도우미', '본인부담금', '월별정산', '급여 확정', '수익분석', '나의 급여']],
+            ['청구·급여', ['나의 청구', '청구관리', '청구 입력 도우미', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과', '나의 급여']],
             ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
             ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
             ['센터·직원', ['직원관리', '센터 정보']],

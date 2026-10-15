@@ -127,6 +127,7 @@ const SIDEBAR_MENUS = {
         { href: 'monthly_settlement.html', icon: 'settlement', label: '월별정산' },
         { href: 'statement_confirm.html', icon: 'stamp', label: '급여 확정' },
         { href: 'profit_analysis.html', icon: 'profit', label: '수익분석' },
+        { href: 'value_report.html', icon: 'profit', label: '이번 달 성과' },
         { href: 'resident_management.html', icon: 'residents', label: '이용자관리' },
         { href: 'guardian_management.html', icon: 'guardian', label: '보호자 관리' },
         { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
@@ -145,7 +146,7 @@ const SIDEBAR_MENUS = {
 const SIDEBAR_GROUPS = [
     ['메인', ['대시보드', '알림']],
     ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '주야간 이용 기록', '공단 태그 대조', '인수인계', '사고·응급 보고']],
-    ['청구·급여', ['나의 청구', '청구관리', '청구 입력 도우미', '본인부담금', '월별정산', '급여 확정', '수익분석', '나의 급여']],
+    ['청구·급여', ['나의 청구', '청구관리', '청구 입력 도우미', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과', '나의 급여']],
     ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
     ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
     ['센터·직원', ['직원관리', '센터 정보']],
@@ -303,20 +304,28 @@ function renderSidebar() {
 
 // 이음로직 운영자 계정으로 로그인했을 때만 사이드바 하단에 운영자 콘솔 링크를 보여준다.
 // 일반 센터장/요양사 계정에는 평생 안 보인다 (요청이 403이면 그냥 조용히 넘어간다).
+let operatorChecked = null;  // null=아직 확인 안 함, true/false=운영자 여부 (메뉴가 다시 그려져도 다시 묻지 않는다)
 async function showAdminConsoleLinkIfOperator() {
-    if (document.getElementById('adminConsoleLink')) return;
-    try {
-        const res = await fetch('/api/v1/admin/is-admin');
-        if (!res.ok) return;
-        const credit = document.getElementById('sideCredit');
-        if (!credit) return;
+    if (operatorChecked === null) {
+        try {
+            const res = await fetch('/api/v1/admin/is-admin');
+            operatorChecked = res.ok;
+        } catch (e) { return; /* 네트워크 오류는 무시 - 없어도 메뉴는 정상 동작해야 한다 */ }
+    }
+    if (operatorChecked) addOperatorLinks();
+}
+
+// 운영자(이음로직)에게만: 사이드바 맨 아래에 '운영자 콘솔' 링크를 보여 준다. 일반 센터에는 아무것도 보이지 않는다.
+function addOperatorLinks() {
+    const credit = document.getElementById('sideCredit');
+    if (credit && !document.getElementById('adminConsoleLink')) {
         const link = document.createElement('a');
         link.id = 'adminConsoleLink';
         link.href = './admin_alimtalk.html';
         link.textContent = '운영자 콘솔';
         link.style.cssText = 'display:block; margin-top: 10px; color: #fbbf24; text-decoration: none; font-weight: 700;';
         credit.appendChild(link);
-    } catch (e) { /* 네트워크 오류는 무시 - 없어도 메뉴는 정상 동작해야 한다 */ }
+    }
 }
 
 // 휴대폰 하단 탭바. 메뉴가 5개 이하면 전부 탭으로, 많으면 자주 쓰는 4개 + 더보기(아래에서 올라오는 창)로 나눈다.
