@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.users import get_password_hash
 from app.auth import require_platform_admin
 from app.database import get_db
+from app.demo_seed import DEMO_CENTER_NAME, seed_demo
 from app.email_service import send_email
 from app.models import (
     AlimtalkUsage,
@@ -41,6 +42,30 @@ router = APIRouter()
 def check_is_admin(actor: User = Depends(require_platform_admin)):
     """프런트에서 운영자 콘솔 링크를 보여줄지 판단하기 위한 가벼운 확인용 (DB 조회 없음)."""
     return {"is_admin": True}
+
+
+@router.get("/demo/status")
+def demo_status(db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    """로그인 화면 '둘러보기' 버튼이 쓰는 데모 계정이 운영 DB에 있는지 읽기만 한다."""
+    from app.demo_seed import DEMO_CAREGIVER_EMAIL, DEMO_GUARDIAN_EMAIL, DEMO_MANAGER_EMAIL
+    center = db.query(Center).filter(Center.name == DEMO_CENTER_NAME).first()
+    accounts = [
+        {"email": email, "exists": db.query(User).filter(User.email == email).first() is not None}
+        for email in (DEMO_MANAGER_EMAIL, DEMO_CAREGIVER_EMAIL, DEMO_GUARDIAN_EMAIL)
+    ]
+    return {
+        "center_exists": center is not None,
+        "residents": db.query(Resident).filter(Resident.center_id == center.id).count() if center else 0,
+        "accounts": accounts,
+        "ready": center is not None and all(a["exists"] for a in accounts),
+    }
+
+
+@router.post("/demo/reset")
+def demo_reset(db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    """데모 체험 센터·계정·방문 데이터를 (다시) 만든다. 실제 센터 데이터는 건드리지 않고 데모 전용 데이터만 지우고 새로 만든다."""
+    result = seed_demo(db)
+    return {"status": "success", **result}
 
 
 @router.get("/users/lookup")
