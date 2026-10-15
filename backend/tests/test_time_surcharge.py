@@ -104,6 +104,64 @@ def test_surcharge_preview_endpoint_matches_the_billing_rule(env):
     night = c.get("/api/v1/benefits/visit-surcharge", params={"benefit_type": "home_care", "minutes": 120, "start": "2026-10-13T22:00:00"}, headers=CG_A).json()
     assert night["covered_minutes"] == 120 and night["amount"] == benefits.visit_surcharge(benefits.home_care_fee(120), datetime(2026, 10, 13, 22), 120)
     day = c.get("/api/v1/benefits/visit-surcharge", params={"benefit_type": "home_care", "minutes": 120, "start": "2026-10-13T10:00"}, headers=CG_A).json()
-    assert day == {"amount": 0, "covered_minutes": 0}
+    assert (day["amount"], day["covered_minutes"], day["holiday_table_missing"]) == (0, 0, False)
     assert c.get("/api/v1/benefits/visit-surcharge", params={"benefit_type": "home_bath", "minutes": 60, "start": "2026-10-13T23:00"}, headers=CG_A).json()["amount"] == 0
     assert c.get("/api/v1/benefits/visit-surcharge", params={"benefit_type": "home_care", "minutes": 60, "start": "abc"}, headers=CG_A).status_code == 400
+
+
+def test_paid_holiday_gets_50_percent_and_sunday_holiday_stays_30():
+    fee = benefits.home_care_fee(120)
+    half = lambda pct: int((fee * pct / 100 + 5) // 10) * 10
+    assert benefits.visit_surcharge(fee, datetime(2026, 5, 5, 10), 120) == half(50)       # 어린이날(화) 낮 방문
+    assert benefits.visit_surcharge(fee, datetime(2026, 5, 1, 10), 120) == half(50)       # 근로자의 날(금)
+    assert benefits.visit_surcharge(fee, datetime(2026, 3, 2, 10), 120) == half(50)       # 삼일절 대체공휴일(월)
+    assert benefits.visit_surcharge(fee, datetime(2026, 6, 6, 10), 120) == half(50)       # 토요일에 겹친 현충일도 유급휴일
+    assert benefits.visit_surcharge(fee, datetime(2026, 3, 1, 10), 120) == half(30)       # 일요일에 겹친 공휴일은 일요일(30%)
+    assert benefits.visit_surcharge(fee, datetime(2026, 5, 6, 10), 120) == 0              # 평범한 수요일
+    assert benefits.surcharge_percent(datetime(2026, 5, 5, 23)) == 50                     # 휴일은 야간보다 우선(중복 가산 없음)
+
+
+def test_spec_example_holiday_evening_then_midnight_into_a_normal_weekday_night():
+    """세부지침 예시2: 공휴일 18:00 시작 480분 → 18~24시는 50%, 24~02시(평일 야간)는 30%. 방문은 분 단위 평균으로 계산한다."""
+    start = datetime(2026, 5, 5, 18)  # 어린이날
+    assert [benefits.surcharge_percent(start + timedelta(hours=h)) for h in (0, 5, 6, 7)] == [50, 50, 30, 30]
+    fee = 100000
+    expected = (60 * 6 * 50 + 60 * 2 * 30) / (100 * 480) * fee
+    assert benefits.visit_surcharge(fee, start, 480) == int((expected + 5) // 10) * 10
+
+
+def test_unknown_year_and_unconfirmed_dates_are_not_billed_but_are_reported():
+    fee = benefits.home_care_fee(60)
+    assert benefits.holiday_table_missing(datetime(2028, 5, 5, 10)) is True and benefits.holiday_table_missing(datetime(2026, 5, 5, 10)) is False
+    assert benefits.visit_surcharge(fee, datetime(2028, 5, 5, 10), 60) == 0  # 2028 어린이날: 표가 없어 계산하지 않는다
+    assert benefits.visit_surcharge(fee, datetime(2026, 7, 17, 10), 60) == 0  # 제헌절: 근거 미확인이라 계산하지 않는다
+    assert benefits.possible_unconfirmed_holiday(datetime(2026, 7, 17, 10), 60) is True
+    assert benefits.possible_unconfirmed_holiday(datetime(2026, 7, 16, 10), 60) is False
+
+
+def test_claim_helper_flags_holiday_visits_and_unconfirmed_holidays(env):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from app.api import claim_helper
+    from app.database import get_db
+    from tests.test_visit_benefit_api import MANAGER
+
+    db, client = env
+    app = FastAPI()
+    app.include_router(claim_helper.router, prefix="/api/v1/claim-helper")
+    app.dependency_overrides[get_db] = client.app.dependency_overrides[get_db]
+    c = TestClient(app)
+
+    def flags_for(day):
+        db.query(models.BillingRecord).delete()
+        db.query(models.DailyRecord).delete()
+        db.commit()
+        assert client.post("/api/v1/records/create", json=payload(benefit_type="home_care", duration_minutes=60, recorded_date=day.isoformat()), headers=CG_A).status_code == 200
+        db.query(models.BillingRecord).update({"approval_status": "approved"})
+        db.commit()
+        data = c.get(f"/api/v1/claim-helper?year_month={day:%Y-%m}", headers=MANAGER).json()
+        return [f for r in data["residents"] for v in r["visits"] for f in v["flags"]]
+
+    assert "surcharge" in flags_for(datetime(2026, 5, 5, 10)) and "holiday_check" not in flags_for(datetime(2026, 5, 5, 10))  # 어린이날 가산
+    f = flags_for(datetime(2026, 7, 17, 10))  # 제헌절: 계산 안 하고 확인 요청
+    assert "holiday_check" in f and "surcharge" not in f

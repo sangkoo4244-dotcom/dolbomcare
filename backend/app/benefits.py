@@ -105,34 +105,77 @@ def severe_bonus(benefit_type: str | None, grade, minutes: int | None) -> int:
     return 0
 
 
-# 방문요양·방문간호 시간 가산(고시 제20조 + 공단 세부지침 제5조): 22시~06시 야간과 일요일은 급여비용의 30%를 가산한다.
-# 1회 방문 안에서 가산 시간대와 아닌 시간대가 섞이면 '가산 적용 시간 / 총 급여제공시간' 비율로 가산한다.
-#   가산금액 = 기본급여비용 × 0.3 × 가산적용시간(분) ÷ 총급여제공시간(분)  (가산 또는 감액 금액의 10원 미만은 반올림, 고시 제47조)
-# 야간과 일요일이 겹쳐도 중복 가산하지 않는다. 유급휴일·근로자의 날(50%)은 공휴일 달력이 필요해 아직 계산하지 않는다.
-SURCHARGE_RATE_PERCENT = 30
+# 방문요양·방문간호 시간 가산(고시 제20조 + 공단 세부지침 제5조)
+#   22시~06시 야간 30%, 일요일 30%, 유급휴일(공휴일·대체공휴일, 일요일 제외)과 근로자의 날 50%.
+#   겹치면 중복 가산하지 않고(일요일과 유급휴일이 겹치면 유급휴일 50%) 분 단위로 더 높은 쪽을 쓴다.
+#   1회 방문 안에서 시간대가 섞이면 '가산 적용 시간 비율'로 가산한다.
+#   가산금액 = 기본급여비용 × Σ(분별 가산율) ÷ 총급여제공시간(분)   (10원 미만은 반올림, 고시 제47조)
+#   세부지침 예시: 공휴일 18시 시작 480분 → 18~24시는 50%, 자정 이후 평일 야간(24~02시)은 30%.
 NIGHT_START_HOUR, NIGHT_END_HOUR = 22, 6
+NIGHT_SUNDAY_PERCENT, HOLIDAY_PERCENT = 30, 50
+
+from datetime import date as _date
+
+# 유급휴일 달력: 해마다 음력·대체공휴일·임시공휴일이 달라 공식 월력요항으로 확인한 해만 넣는다. 표에 없는 해는 공휴일 가산을 계산하지 않고 화면에서 알린다.
+# 출처: 관공서의 공휴일에 관한 규정, 근로자의 날 제정에 관한 법률, 공직선거법(선거일), 연도별 달력 자료(2차 자료와 음력 날짜 교차 확인).
+_HOLIDAYS = {
+    2026: ["01-01", "02-16", "02-17", "02-18", "03-01", "03-02", "05-01", "05-05", "05-24", "05-25", "06-03", "06-06",
+           "08-15", "08-17", "09-24", "09-25", "09-26", "10-03", "10-05", "10-09", "12-25"],
+    2027: ["01-01", "02-06", "02-07", "02-08", "02-09", "03-01", "05-01", "05-05", "05-13", "06-06", "08-15", "08-16",
+           "09-14", "09-15", "09-16", "10-03", "10-04", "10-09", "10-11", "12-25", "12-27"],
+}
+# 한 곳의 2차 자료에만 나와 법적 근거를 확인하지 못한 날: 가산은 계산하지 않고 청구 입력 도우미에서 '확인 필요'로만 알린다.
+_UNCERTAIN_HOLIDAYS = {2026: ["07-17"], 2027: ["05-03", "07-17", "07-19"]}
+HOLIDAY_TABLE_YEARS = tuple(_HOLIDAYS)
+PAID_HOLIDAYS = {_date(y, int(md[:2]), int(md[3:])) for y, days in _HOLIDAYS.items() for md in days}
+UNCERTAIN_HOLIDAYS = {_date(y, int(md[:2]), int(md[3:])) for y, days in _UNCERTAIN_HOLIDAYS.items() for md in days}
 
 
-def _is_surcharged(moment) -> bool:
-    return moment.weekday() == 6 or moment.hour >= NIGHT_START_HOUR or moment.hour < NIGHT_END_HOUR
+def surcharge_percent(moment) -> int:
+    """그 시각 1분에 적용되는 가산율(0·30·50)."""
+    day = moment.date()
+    if day in PAID_HOLIDAYS and day.weekday() != 6:  # 일요일에 겹친 공휴일은 일요일(30%)로 본다
+        return HOLIDAY_PERCENT
+    if day.weekday() == 6 or moment.hour >= NIGHT_START_HOUR or moment.hour < NIGHT_END_HOUR:
+        return NIGHT_SUNDAY_PERCENT
+    return 0
+
+
+def _surcharge_by_minute(start, minutes):
+    from datetime import timedelta
+    return [surcharge_percent(start + timedelta(minutes=m)) for m in range(minutes)]
 
 
 def surcharge_minutes(start, minutes: int | None) -> int:
-    """방문 안에서 야간(22~06시) 또는 일요일에 해당하는 분."""
+    """방문 안에서 가산(야간·일요일·유급휴일)이 붙는 분."""
     if not start or not minutes or minutes <= 0:
         return 0
-    from datetime import timedelta
-    return sum(1 for m in range(minutes) if _is_surcharged(start + timedelta(minutes=m)))
+    return sum(1 for pct in _surcharge_by_minute(start, minutes) if pct)
 
 
 def visit_surcharge(base_fee: int, start, minutes: int | None) -> int:
-    """방문요양·방문간호 1회의 야간·일요일 가산금액(원). 해당 없으면 0."""
-    covered = surcharge_minutes(start, minutes)
-    if not covered or not base_fee:
+    """방문요양·방문간호 1회의 시간 가산금액(원). 해당 없으면 0."""
+    if not start or not minutes or minutes <= 0 or not base_fee:
+        return 0
+    total_percent = sum(_surcharge_by_minute(start, minutes))
+    if not total_percent:
         return 0
     from fractions import Fraction
-    exact = Fraction(base_fee * SURCHARGE_RATE_PERCENT * covered, 100 * minutes)
+    exact = Fraction(base_fee * total_percent, 100 * minutes)
     return int((exact + 5) // 10) * 10  # 10원 단위 반올림
+
+
+def holiday_table_missing(start) -> bool:
+    """방문한 해의 공휴일표가 없어 공휴일 가산을 계산하지 못한 경우."""
+    return bool(start) and start.year not in HOLIDAY_TABLE_YEARS
+
+
+def possible_unconfirmed_holiday(start, minutes: int | None) -> bool:
+    """방문 시간대에 공휴일일 수 있지만 근거를 확인하지 못해 계산에 넣지 않은 날이 걸쳐 있는지."""
+    if not start or not minutes:
+        return False
+    from datetime import timedelta
+    return any((start + timedelta(minutes=m)).date() in UNCERTAIN_HOLIDAYS for m in (0, max(0, minutes - 1)))
 
 
 def home_bath_fee(mode: str, minutes: int | None = None, solo_exception: bool = False) -> int:
