@@ -182,3 +182,35 @@ def test_bath_and_nursing_rows_use_nhis_service_names_and_their_own_checks(ctx):
     # 방문요양 전용 확인(5등급·장시간)은 목욕·간호 방문에 붙지 않는다
     assert not {"grade5", "long_visit"} & set(nursing_ok["flags"])
     assert set(data["flag_counts"]) <= set(data["flag_labels"])
+
+
+def test_pair_visits_are_not_flagged_as_overlap_and_bath_time_and_weekly_rules_are_checked(ctx):
+    client, Session = ctx
+    db = Session()
+    # 방문요양 2인 동시 제공: 같은 이용자, 같은 시각, 요양보호사 둘 — 서로 이어진 기록이면 겹침으로 보지 않는다
+    for cg, other in ((2, 3), (3, 2)):
+        sch = models.Schedule(caregiver_id=cg, resident_id=2, center_id=1, scheduled_date=DAY + timedelta(hours=18), duration_minutes=60,
+                              status="scheduled", arrived_at=DAY + timedelta(hours=18), left_at=DAY + timedelta(hours=19))
+        db.add(sch)
+        db.flush()
+        rec = models.DailyRecord(resident_id=2, caregiver_id=cg, recorded_date=DAY + timedelta(hours=18), duration_minutes=60, schedule_id=sch.id,
+                                 care_items="bath", benefit_type="home_care", co_caregiver_id=other, special_note="보호자 동의, 와상 상태")
+        db.add(rec)
+        db.flush()
+        db.add(models.BillingRecord(daily_record_id=rec.id, caregiver_id=cg, resident_id=2, center_id=1, amount=21530, total_cost=25320,
+                                    approval_status="approved", recorded_date=rec.recorded_date, year_month=MONTH, benefit_type="home_care"))
+    db.flush()
+    first, second = db.query(models.DailyRecord).filter(models.DailyRecord.special_note.like("보호자 동의%")).order_by(models.DailyRecord.id).all()
+    first.pair_record_id, second.pair_record_id = second.id, first.id
+    db.commit()
+    # 방문목욕: 같은 주에 두 번(둘째는 사유 없음), 45분(80%), 30분(청구 불가 - 예전 기록)
+    add_benefit_visit(db, 3, 7, 45, benefit="home_bath", bath_mode="vehicle_in", co=3)
+    add_benefit_visit(db, 3, 9, 30, benefit="home_bath", bath_mode="vehicle_in", co=3)
+    db.close()
+    rows = by_name(get(client).json())
+    pair_rows = [v for v in rows["이이"]["visits"] if v["detail"].startswith("2인 동시 제공")]
+    assert len(pair_rows) == 2 and all("overlap_resident" not in v["flags"] for v in pair_rows)
+    assert "보호자 동의" in pair_rows[0]["detail"]
+    baths = sorted([v for v in rows["박삼"]["visits"] if v["benefit_type"] == "home_bath"], key=lambda v: v["start"])
+    assert "bath_reduced" in baths[0]["flags"] and "bath_weekly_over" not in baths[0]["flags"]
+    assert "bath_too_short" in baths[1]["flags"] and "bath_weekly_over" in baths[1]["flags"]

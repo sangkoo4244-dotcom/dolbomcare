@@ -81,6 +81,9 @@ ADDITIVE_COLUMNS = [
     ("daily_records", "co_caregiver_id", "INTEGER"),
     ("daily_records", "nursing_order_note", "VARCHAR"),
     ("billing_records", "benefit_type", "VARCHAR DEFAULT 'home_care'"),
+    ("daily_records", "special_note", "VARCHAR"),
+    ("daily_records", "bath_solo_exception", "BOOLEAN DEFAULT FALSE"),
+    ("daily_records", "pair_record_id", "INTEGER"),
 ]
 
 

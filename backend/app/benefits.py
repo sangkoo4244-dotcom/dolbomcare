@@ -34,6 +34,15 @@ HOME_CARE_FEES = [(30, 17450), (60, 25320), (90, 34120), (120, 43430), (150, 506
 HOME_BATH_FEES = {"vehicle_in": 88990, "vehicle_home": 80230, "no_vehicle": 50100}
 HOME_BATH_LABELS = {"vehicle_in": "방문목욕차량 이용(차량 내 목욕)", "vehicle_home": "방문목욕차량 이용(가정 내 목욕)", "no_vehicle": "방문목욕차량 미이용"}
 
+# 방문목욕 산정(고시 제26조): 2인 이상 요양보호사가 60분 이상이면 전액, 40분 이상 60분 미만이면 80%, 40분 미만은 청구할 수 없다.
+# 이동보조·몸 씻기 전 과정을 1인이 단독 제공하면 일체 불산정이다. 다만 차량 미이용 방문목욕에서 수치심 때문에 몸 씻기만 1인이 제공했다면
+# '나-3'(차량 미이용) 금액의 80%(60분 이상) 또는 70%(40분 이상 60분 미만)를 산정한다(사유를 급여제공기록지에 기재).
+HOME_BATH_FULL_MINUTES = 60
+HOME_BATH_MIN_MINUTES = 40
+HOME_BATH_REDUCED_PERCENT = 80
+HOME_BATH_SOLO_PERCENT = {"full": 80, "reduced": 70}
+HOME_BATH_SOLO_MODE = "no_vehicle"
+
 # 방문간호(방문당): (최소 분, 미만 분, 급여비용)
 HOME_NURSING_FEES = [(15, 30, 42880), (30, 60, 53770), (60, None, 64690)]
 
@@ -69,10 +78,22 @@ def home_care_fee(minutes: int) -> int:
     return [fee for threshold, fee in HOME_CARE_FEES if minutes >= threshold][-1]
 
 
-def home_bath_fee(mode: str) -> int:
+def home_bath_fee(mode: str, minutes: int | None = None, solo_exception: bool = False) -> int:
+    """방문목욕 1회 급여비용. minutes를 주면 제26조의 시간별 산정(60분 이상 전액, 40~60분 80%, 40분 미만 불가)을 적용한다.
+    solo_exception은 차량 미이용에서 수치심으로 몸 씻기만 1인이 제공한 예외(80% 또는 70%)다."""
     if mode not in HOME_BATH_FEES:
         raise ValueError(f"지원하지 않는 방문목욕 방식: {mode}")
-    return HOME_BATH_FEES[mode]
+    base = HOME_BATH_FEES[mode]
+    if minutes is None:
+        return base
+    if minutes < HOME_BATH_MIN_MINUTES:
+        raise ValueError(f"방문목욕은 {HOME_BATH_MIN_MINUTES}분 이상 제공해야 청구할 수 있습니다: {minutes}분")
+    reduced = minutes < HOME_BATH_FULL_MINUTES
+    if solo_exception:
+        if mode != HOME_BATH_SOLO_MODE:
+            raise ValueError("1인 몸 씻기 예외는 방문목욕차량을 쓰지 않은 방문목욕에만 해당합니다")
+        return base * HOME_BATH_SOLO_PERCENT["reduced" if reduced else "full"] // 100
+    return base * HOME_BATH_REDUCED_PERCENT // 100 if reduced else base
 
 
 def home_nursing_fee(minutes: int) -> int:
@@ -137,5 +158,7 @@ def visit_fee_tables() -> dict:
     return {
         "home_care": [{"min": m, "fee": f} for m, f in HOME_CARE_FEES],
         "home_bath": [{"mode": k, "label": HOME_BATH_LABELS[k], "fee": v} for k, v in HOME_BATH_FEES.items()],
+        "home_bath_rules": {"full_min": HOME_BATH_FULL_MINUTES, "min": HOME_BATH_MIN_MINUTES, "reduced_percent": HOME_BATH_REDUCED_PERCENT,
+                            "solo_percent": HOME_BATH_SOLO_PERCENT, "solo_mode": HOME_BATH_SOLO_MODE},
         "home_nursing": [{"min": lo, "max": hi, "fee": f} for lo, hi, f in HOME_NURSING_FEES],
     }

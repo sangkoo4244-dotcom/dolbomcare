@@ -12,7 +12,7 @@ from app.schemas import DailyRecordResponse
 from app.database import get_db
 from app.auth import get_current_user, require_manager, assert_self_or_manager
 from app.api.notifications import notify
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 import os
 
 router = APIRouter()
@@ -65,6 +65,8 @@ class CreateRecordRequest(BaseModel):
     bath_mode: Optional[Literal["vehicle_in", "vehicle_home", "no_vehicle"]] = None  # 방문목욕 방식
     co_caregiver_id: Optional[int] = None  # 방문목욕: 함께 간 요양보호사
     nursing_order_note: Optional[str] = Field(None, max_length=200)  # 방문간호지시서 확인 메모
+    special_note: Optional[str] = Field(None, max_length=300)  # 산정 사유: 방문요양 2인 동시 제공(수급자 동의·당시 상태), 방문목욕 1인 몸 씻기 예외·주 1회 초과
+    bath_solo_exception: bool = False  # 방문목욕에서 수치심 때문에 몸 씻기만 1인이 제공(차량 미이용만)
     recorded_date: Optional[datetime] = None  # 소급 기록용 (미지정 시 현재 시각)
     signature: Optional[str] = None  # 방문 확인 서명 (base64 PNG data URL)
     physical_change: Optional[ChangeStatus] = None  # 공단 제공기록지 변화상태
@@ -82,6 +84,7 @@ class UpdateRecordRequest(BaseModel):
     bath_mode: Optional[Literal["vehicle_in", "vehicle_home", "no_vehicle"]] = None
     co_caregiver_id: Optional[int] = None
     nursing_order_note: Optional[str] = Field(None, max_length=200)
+    special_note: Optional[str] = Field(None, max_length=300)
     care_items: Optional[str] = None
     item_minutes: Optional[str] = None
     condition: Optional[str] = None
@@ -111,6 +114,38 @@ def clean_item_minutes(value, care_items):
     return ",".join(pairs)
 
 
+EDITABLE_APPROVALS = ("draft", "rejected")  # 요양보호사가 고치거나 지울 수 있는 청구 상태
+
+
+def _week_bounds(when):
+    """방문목욕 '주 1회' 판단용: 그 날이 속한 월~일 한 주."""
+    monday = (when - timedelta(days=when.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    return monday, monday + timedelta(days=7)
+
+
+def _bath_visits_that_week(db, resident_id, when, exclude_id=None):
+    start, end = _week_bounds(when)
+    q = db.query(DailyRecord).filter(DailyRecord.resident_id == resident_id, DailyRecord.benefit_type == "home_bath",
+                                     DailyRecord.recorded_date >= start, DailyRecord.recorded_date < end)
+    if exclude_id:
+        q = q.filter(DailyRecord.id != exclude_id)
+    return q.count()
+
+
+def _pair_of(db, record):
+    """방문요양 2인 동시 제공으로 이어진 상대 기록과 그 청구 (없으면 (None, None))."""
+    if not record.pair_record_id:
+        return None, None
+    other = db.query(DailyRecord).filter(DailyRecord.id == record.pair_record_id).first()
+    if not other:
+        return None, None
+    return other, db.query(BillingRecord).filter(BillingRecord.daily_record_id == other.id).first()
+
+
+def _pair_is_locked(other_billing):
+    return bool(other_billing and other_billing.approval_status not in EDITABLE_APPROVALS)
+
+
 @router.post("/test")
 def test_endpoint():
     """테스트 엔드포인트"""
@@ -132,13 +167,18 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
 
         visit = normalize_visit_benefit(db, center_id=resident.center_id, caregiver_id=caregiver_id, benefit_type=request.benefit_type,
                                         bath_mode=request.bath_mode, co_caregiver_id=request.co_caregiver_id,
-                                        duration_minutes=request.duration_minutes, require_duration=True, strict_home_care_duration=True)
+                                        duration_minutes=request.duration_minutes, require_duration=True, strict_home_care_duration=True,
+                                        special_note=request.special_note, solo_exception=request.bath_solo_exception, for_record=True)
         try:
-            total_cost, _, amount = split_benefit(visit["benefit_type"], request.duration_minutes, resident.client_type, visit["bath_mode"])
+            total_cost, _, amount = split_benefit(visit["benefit_type"], request.duration_minutes, resident.client_type, visit["bath_mode"], visit["solo_exception"])
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
         now = request.recorded_date or datetime.now()  # 소급 기록 시 선택한 시각, 아니면 현재 시각(로컬)
+        special_note = (request.special_note or "").strip() or None
+        # 방문목욕은 주 1회까지 산정한다(고시 제26조 ③). 변실금·요실금 등 불가피한 경우에만 사유를 적고 초과한다.
+        if visit["benefit_type"] == "home_bath" and _bath_visits_that_week(db, request.resident_id, now) >= 1 and not special_note:
+            raise HTTPException(status_code=400, detail="방문목욕은 같은 주에 1회까지 청구할 수 있습니다. 변실금·요실금 등으로 불가피하면 산정 사유에 적어 주세요")
         linked_schedule = find_schedule(db, caregiver_id, request.resident_id, now)
         daily_record = DailyRecord(
             resident_id=request.resident_id,
@@ -165,6 +205,8 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
             bath_mode=visit["bath_mode"],
             co_caregiver_id=visit["co_caregiver_id"],
             nursing_order_note=(request.nursing_order_note or "").strip() or None,
+            special_note=special_note,
+            bath_solo_exception=visit["solo_exception"],
         )
         db.add(daily_record)
         db.flush()
@@ -190,6 +232,32 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
             approval_status="draft"
         )
         db.add(billing_record)
+        pair_record = pair_billing = None
+        if visit["benefit_type"] == "home_care" and visit["co_caregiver_id"]:
+            # 방문요양 2인 동시 제공(고시 제19조 ⑦): 요양보호사별로 각각 산정하므로 함께 제공한 요양보호사의 기록·청구를 따로 만들어 서로 잇는다
+            co_id = visit["co_caregiver_id"]
+            co_schedule = find_schedule(db, co_id, request.resident_id, now)
+            pair_record = DailyRecord(
+                resident_id=request.resident_id, caregiver_id=co_id, recorded_date=now,
+                morning_care=daily_record.morning_care, meal_intake=daily_record.meal_intake, medicine_given=daily_record.medicine_given,
+                notes=request.notes, care_items=daily_record.care_items, item_minutes=daily_record.item_minutes, condition=request.condition,
+                duration_minutes=request.duration_minutes, schedule_id=co_schedule.id if co_schedule else None, service_type=request.service_type,
+                signature=request.signature, physical_change=request.physical_change, meal_change=request.meal_change,
+                cognitive_change=request.cognitive_change, stool_accidents=request.stool_accidents, urine_accidents=request.urine_accidents,
+                benefit_type="home_care", co_caregiver_id=caregiver_id, special_note=special_note, bath_solo_exception=False,
+                pair_record_id=daily_record.id,
+            )
+            db.add(pair_record)
+            db.flush()
+            daily_record.pair_record_id = pair_record.id
+            pair_billing = BillingRecord(
+                daily_record_id=pair_record.id, caregiver_id=co_id, resident_id=request.resident_id, center_id=resident.center_id,
+                resident_name=resident.name, care_grade=resident.care_grade, client_type=resident.client_type, service_category="재가급여",
+                service_type=request.service_type, benefit_type="home_care", amount=amount, total_cost=total_cost, recorded_date=now,
+                year_month=get_year_month(now), status="draft", approval_status="draft",
+            )
+            db.add(pair_billing)
+            notify(db, co_id, "record_pair", f"{resident.name} 어르신 방문요양이 2인 동시 제공으로 기록되었습니다 (함께 제공: {actor.full_name or '동료'}). 나의 청구에서 확인해 주세요.")
         if resident.guardian_id:
             summary = guardian_visit_summary(
                 resident.name, request.service_type, request.duration_minutes, request.condition, request.notes,
@@ -212,6 +280,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
                 "billing_amount": amount,
                 "service_type": request.service_type,
                 "benefit_type": visit["benefit_type"],
+                "pair_record_id": pair_record.id if pair_record else None,
                 "recorded_at": daily_record.recorded_date.isoformat() if daily_record.recorded_date else None
             }
         }
@@ -243,6 +312,10 @@ def batch_delete_records(
             if not (is_manager or is_own_record):
                 continue
 
+            pair, pair_billing = _pair_of(db, record)
+            if pair and _pair_is_locked(pair_billing):
+                continue  # 함께 제공한 요양보호사의 청구가 이미 제출·승인됐으면 이 기록만 지울 수 없다
+
             billings = db.query(BillingRecord).filter(
                 BillingRecord.recorded_date == record.recorded_date,
                 BillingRecord.caregiver_id == record.caregiver_id,
@@ -251,6 +324,10 @@ def batch_delete_records(
 
             for billing in billings:
                 db.delete(billing)
+            if pair:
+                if pair_billing:
+                    db.delete(pair_billing)
+                db.delete(pair)
             db.delete(record)
             deleted += 1
 
@@ -826,10 +903,17 @@ async def update_record(
             raise HTTPException(status_code=400, detail="작성중 또는 보완 요청 상태의 청구만 수정할 수 있습니다")
 
         resident = db.query(Resident).filter(Resident.id == record.resident_id).first()
+        pair, pair_billing = _pair_of(db, record)
+        if pair and _pair_is_locked(pair_billing):
+            raise HTTPException(status_code=400, detail="함께 제공한 요양보호사의 청구가 이미 제출·승인되어 이 기록을 수정할 수 없습니다")
+        if (record.benefit_type or "home_care") == "home_care" and request.co_caregiver_id and request.co_caregiver_id != record.co_caregiver_id:
+            raise HTTPException(status_code=400, detail="2인 동시 제공은 기록을 새로 입력할 때만 지정할 수 있습니다")
+        new_note = request.special_note if request.special_note is not None else record.special_note
         visit = normalize_visit_benefit(
             db, center_id=resident.center_id if resident else None, caregiver_id=record.caregiver_id, benefit_type=record.benefit_type,
             bath_mode=request.bath_mode or record.bath_mode, co_caregiver_id=request.co_caregiver_id or record.co_caregiver_id,
-            duration_minutes=request.duration_minutes, strict_home_care_duration=True)
+            duration_minutes=request.duration_minutes, strict_home_care_duration=True,
+            special_note=new_note, solo_exception=bool(record.bath_solo_exception), for_record=True)
 
         if request.service_type:
             record.service_type = request.service_type
@@ -841,6 +925,8 @@ async def update_record(
         record.co_caregiver_id = visit["co_caregiver_id"]
         if request.nursing_order_note is not None:
             record.nursing_order_note = request.nursing_order_note.strip() or None
+        if request.special_note is not None:
+            record.special_note = request.special_note.strip() or None
         if request.care_items is not None:
             record.care_items = request.care_items or None
         if request.item_minutes is not None:
@@ -864,7 +950,7 @@ async def update_record(
                 billing.client_type = request.client_type
             try:
                 total_cost, _, insurance_amount = split_benefit(visit["benefit_type"], record.duration_minutes or (60 if visit["benefit_type"] == "home_care" else None),
-                                                                billing.client_type, visit["bath_mode"])
+                                                                billing.client_type, visit["bath_mode"], visit["solo_exception"])
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
             billing.total_cost = total_cost
@@ -874,6 +960,20 @@ async def update_record(
             billing.rejection_reason = None
             db.commit()
             db.refresh(billing)
+
+        if pair:
+            # 2인 동시 제공이면 함께 제공한 요양보호사의 기록·청구도 같은 내용으로 맞춘다(요양보호사별로 같은 금액을 각각 청구)
+            for field in ("service_type", "notes", "duration_minutes", "care_items", "item_minutes", "condition", "special_note",
+                          "physical_change", "meal_change", "cognitive_change", "stool_accidents", "urine_accidents"):
+                setattr(pair, field, getattr(record, field))
+            if pair_billing:
+                pair_billing.service_type = record.service_type
+                pair_billing.total_cost = billing.total_cost if billing else pair_billing.total_cost
+                pair_billing.amount = billing.amount if billing else pair_billing.amount
+                if pair_billing.approval_status == "rejected":
+                    pair_billing.approval_status = "draft"
+                pair_billing.rejection_reason = None
+            db.commit()
 
         return {
             "status": "success",
@@ -1098,6 +1198,10 @@ async def delete_record(
     if not (is_manager or is_own_record):
         raise HTTPException(status_code=403, detail="삭제 권한이 없습니다 (자신의 기록만 삭제 가능)")
 
+    pair, pair_billing = _pair_of(db, record)
+    if pair and _pair_is_locked(pair_billing):
+        raise HTTPException(status_code=400, detail="함께 제공한 요양보호사의 청구가 이미 제출·승인되어 이 기록을 삭제할 수 없습니다")
+
     # 관련 청구 기록도 함께 삭제 (이 DailyRecord와 연결된 청구만)
     billings = db.query(BillingRecord).filter(
         BillingRecord.daily_record_id == record.id
@@ -1107,6 +1211,10 @@ async def delete_record(
         # 청구 기록 삭제 (이 DailyRecord와 연결된 청구만)
         for billing in billings:
             db.delete(billing)
+        if pair:  # 2인 동시 제공은 함께 제공한 요양보호사의 기록·청구도 같이 지운다
+            if pair_billing:
+                db.delete(pair_billing)
+            db.delete(pair)
 
         # 일일 기록 삭제
         db.delete(record)

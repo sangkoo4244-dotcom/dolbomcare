@@ -97,6 +97,9 @@ class DailyRecord(Base):
     bath_mode = Column(String, nullable=True)  # 방문목욕 방식: vehicle_in/vehicle_home/no_vehicle
     co_caregiver_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # 방문목욕은 요양보호사 2인 이상이 제공 - 함께 간 요양보호사
     nursing_order_note = Column(String, nullable=True)  # 방문간호지시서 확인 메모(발급일·번호 등)
+    special_note = Column(String, nullable=True)  # 산정 사유: 방문요양 2인 동시 제공의 수급자 동의·상태, 방문목욕 1인 몸 씻기 예외·주 1회 초과 사유 (공단 기록지에 적는 내용)
+    bath_solo_exception = Column(Boolean, default=False)  # 방문목욕에서 수치심 등으로 몸 씻기만 1인이 제공한 예외(차량 미이용만)
+    pair_record_id = Column(Integer, nullable=True)  # 방문요양 2인 동시 제공: 함께 제공한 요양보호사의 기록(요양보호사별로 각각 청구한다)
     created_at = Column(DateTime, default=datetime.now)
 
 class HealthMetric(Base):

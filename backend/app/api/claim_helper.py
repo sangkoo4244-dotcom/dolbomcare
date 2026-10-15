@@ -32,6 +32,9 @@ FLAG_LABELS = {
     "recognition_expired": "방문일이 인정 유효기간 밖입니다 (공단에 수급자가 보이지 않을 수 있음)",
     "bath_no_partner": "방문목욕인데 함께 간 요양보호사 기록이 없습니다 (2인 이상 제공해야 청구할 수 있음)",
     "nursing_no_order": "방문간호지시서 확인 메모가 없습니다 (지시서가 있어야 청구할 수 있음)",
+    "bath_reduced": "방문목욕이 60분 미만(40분 이상)이라 급여비용의 80%만 청구됩니다 (1인 몸 씻기 예외는 70%)",
+    "bath_too_short": "방문목욕이 40분 미만이라 청구할 수 없습니다",
+    "bath_weekly_over": "같은 주에 방문목욕이 2회 이상입니다 (주 1회까지 산정, 불가피한 사유 기록이 없으면 초과분은 청구할 수 없음)",
 }
 
 
@@ -85,6 +88,10 @@ def claim_helper(year_month: str = Query(..., description="급여제공월 YYYY-
             detail = benefits.HOME_BATH_LABELS.get(r.bath_mode, "방식 미기록")
             if r.co_caregiver_id:
                 detail += f", 함께 간 요양보호사 {names.get(r.co_caregiver_id, '')}"
+            if r.bath_solo_exception:
+                detail += f", 1인 몸 씻기 예외: {r.special_note or ''}"
+        elif benefit == "home_care" and r.pair_record_id:
+            detail = f"2인 동시 제공 (함께 {names.get(r.co_caregiver_id, '')}) · 사유: {r.special_note or ''}"
         elif benefit == "home_nursing" and r.nursing_order_note:
             detail = f"지시서: {r.nursing_order_note}"
         visit = {
@@ -96,6 +103,7 @@ def claim_helper(year_month: str = Query(..., description="급여제공월 YYYY-
             "claim_amount": bill.amount if bill else None,
             "flags": [],
             "_resident_id": r.resident_id, "_staff_ids": {r.caregiver_id, r.co_caregiver_id} - {None}, "_start": start_at, "_end": end_at,
+            "_record_id": r.id, "_pair_id": r.pair_record_id, "_note": (r.special_note or "").strip(),
         }
         if not has_arrival:
             visit["flags"].append("no_arrival")
@@ -106,14 +114,28 @@ def claim_helper(year_month: str = Query(..., description="급여제공월 YYYY-
                 visit["flags"].append("long_visit")
             if resident.care_grade == 5:
                 visit["flags"].append("grade5")
-        if benefit == "home_bath" and not r.co_caregiver_id:
-            visit["flags"].append("bath_no_partner")
+        if benefit == "home_bath":
+            if not r.co_caregiver_id and not r.bath_solo_exception:
+                visit["flags"].append("bath_no_partner")
+            if minutes < benefits.HOME_BATH_MIN_MINUTES:
+                visit["flags"].append("bath_too_short")
+            elif minutes < benefits.HOME_BATH_FULL_MINUTES:
+                visit["flags"].append("bath_reduced")
         if benefit == "home_nursing" and not (r.nursing_order_note or "").strip():
             visit["flags"].append("nursing_no_order")
         rec_day = start_at.date()
         if (resident.recognition_start and rec_day < resident.recognition_start) or (resident.recognition_end and rec_day > resident.recognition_end):
             visit["flags"].append("recognition_expired")
         visits.append(visit)
+
+    # 방문목욕은 주 1회까지 산정한다(고시 제26조 ③): 같은 이용자의 같은 주 둘째 목욕부터 사유 기록이 없으면 표시한다
+    baths = {}
+    for v in sorted((v for v in visits if v["benefit_type"] == "home_bath"), key=lambda v: v["_start"]):
+        week = v["_start"].isocalendar()[:2]
+        seen = baths.setdefault((v["_resident_id"], week), [])
+        if seen and not v["_note"]:
+            v["flags"].append("bath_weekly_over")
+        seen.append(v)
 
     by_day = {}
     for v in visits:
@@ -123,7 +145,8 @@ def claim_helper(year_month: str = Query(..., description="급여제공월 YYYY-
             for b in day_visits[i + 1:]:
                 if not _overlaps(a, b):
                     continue
-                if a["_resident_id"] == b["_resident_id"]:
+                paired = a["_pair_id"] == b["_record_id"] or b["_pair_id"] == a["_record_id"]  # 2인 동시 제공은 겹치는 것이 정상이다
+                if a["_resident_id"] == b["_resident_id"] and not paired:
                     for v in (a, b):
                         if "overlap_resident" not in v["flags"]:
                             v["flags"].append("overlap_resident")

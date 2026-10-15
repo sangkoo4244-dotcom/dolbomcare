@@ -489,9 +489,10 @@
             } catch (e) { return; }
             const planned = prefillData.planned, last = prefillData.last;
             const lines = [];
-            if (planned && benefitUi && planned.benefit_type && planned.benefit_type !== 'home_care') {
+            if (planned && benefitUi && ((planned.benefit_type && planned.benefit_type !== 'home_care') || planned.co_caregiver_id)) {
                 benefitUi.set({ benefit_type: planned.benefit_type, bath_mode: planned.bath_mode, co_caregiver_id: planned.co_caregiver_id });
-                lines.push(`오늘 방문 계획은 ${BenefitFields.label(planned.benefit_type)}입니다.`);
+                lines.push(planned.benefit_type && planned.benefit_type !== 'home_care'
+                    ? `오늘 방문 계획은 ${BenefitFields.label(planned.benefit_type)}입니다.` : '오늘 방문 계획은 요양보호사 2인이 함께 제공하는 방문입니다.');
             }
             if (planned && planned.items.length) {
                 // 오늘 승인된 방문 계획이 있으면 그 제공 항목을 미리 선택한다 (이미 고른 항목이 없을 때만)
@@ -586,6 +587,7 @@
         }
 
         function calculateBillingDetails() {
+            if (benefitUi) benefitUi.updateHint();  // 방문목욕 시간별 감액·2인 동시 제공 안내
             const resId = document.getElementById('resident').value;
             const svcType = document.getElementById('serviceType').value;
 
@@ -607,9 +609,9 @@
             if (benefit === 'home_care') {
                 split = splitVisit(minutes, clientType);
             } else {
-                const mode = benefitUi.value().bath_mode;
-                const fee = BenefitFields.fee(benefit, minutes, mode);
-                if (fee === null) { resetBillingDisplay(); return; }  // 방문목욕은 방식을 골라야 금액이 정해진다
+                const v = benefitUi.value();
+                const fee = BenefitFields.fee(benefit, minutes, v.bath_mode, v.bath_solo_exception);
+                if (fee === null) { resetBillingDisplay(); return; }  // 방문목욕은 방식을 고르고 40분 이상이어야 금액이 정해진다
                 split = splitFromTotal(fee, clientType);
             }
             const { total, patient, insurance } = split;
