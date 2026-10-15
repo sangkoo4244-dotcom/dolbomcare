@@ -232,6 +232,29 @@ def convert_to_paid(center_id: int, db: Session = Depends(get_db), actor: User =
     return {"status": "success", "center_id": center.id}
 
 
+@router.get("/trial-requests")
+def list_trial_requests(db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    """로그인 화면으로 들어온 무료체험·파트너 신청 (새 신청이 위로)."""
+    from app.models import TrialRequest
+    rows = db.query(TrialRequest).order_by(TrialRequest.status.desc(), TrialRequest.created_at.desc()).limit(100).all()
+    return {"requests": [
+        {"id": r.id, "center_name": r.center_name, "manager_name": r.manager_name, "email": r.email, "phone": r.phone,
+         "partner_interest": bool(r.partner_interest), "status": r.status, "created_at": r.created_at.isoformat() if r.created_at else None}
+        for r in rows
+    ], "new_count": sum(1 for r in rows if r.status == "new")}
+
+
+@router.post("/trial-requests/{request_id}/handled")
+def mark_trial_request_handled(request_id: int, db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    from app.models import TrialRequest
+    row = db.query(TrialRequest).filter(TrialRequest.id == request_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="신청을 찾을 수 없습니다")
+    row.status = "handled"
+    db.commit()
+    return {"status": "success"}
+
+
 class PartnerRequest(BaseModel):
     note: str = ""
 

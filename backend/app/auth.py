@@ -63,6 +63,10 @@ def require_manager_or_caregiver(user: User = Depends(get_current_user)) -> User
     return user
 
 
+def platform_admin_emails() -> set:
+    return {e.strip().lower() for e in os.getenv("PLATFORM_ADMIN_EMAILS", "").split(",") if e.strip()}
+
+
 def require_platform_admin(user: User = Depends(get_current_user)) -> User:
     """플랫폼 운영진(이음로직) 전용 - 센터장 권한과 별개로, 환경변수 PLATFORM_ADMIN_EMAILS에
     등록된 이메일로 로그인한 계정만 통과한다. 별도의 admin 역할을 만들지 않고 이메일 허용목록으로

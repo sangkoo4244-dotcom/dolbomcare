@@ -630,6 +630,21 @@ class DayCareAttendance(Base):
     created_at = Column(DateTime, default=datetime.now)
 
 
+class TrialRequest(Base):
+    """로그인 화면의 '무료체험 신청'(파트너 이벤트 포함). 예전에는 메일 프로그램을 여는 방식이라 메일 앱이 없는 PC에서는 신청이 사라졌다.
+    서버에 저장해 두고 운영자가 콘솔에서 확인·처리한다."""
+    __tablename__ = "trial_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_name = Column(String, nullable=False)
+    manager_name = Column(String, nullable=False)
+    email = Column(String, nullable=False, index=True)
+    phone = Column(String, nullable=True)
+    partner_interest = Column(Boolean, default=False)  # 파트너 센터 이벤트에 함께 신청
+    status = Column(String, default="new")  # new / handled
+    created_at = Column(DateTime, default=datetime.now)
+
+
 class HandoverNote(Base):
     """업무 인계인수 - 담당 요양보호사가 바뀌거나 대체 방문할 때 이용자의 최근 상태·주의사항을 다음 담당자에게 남기는 메모."""
     __tablename__ = "handover_notes"

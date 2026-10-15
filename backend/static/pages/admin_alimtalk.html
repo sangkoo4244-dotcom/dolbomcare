@@ -176,6 +176,12 @@
             </div>
         </div>
 
+        <h2 class="section-title">무료체험 신청 (로그인 화면)</h2>
+        <div class="panel" style="margin-bottom: 40px;">
+            <div class="sub" style="margin-bottom:10px;">로그인 화면에서 들어온 신청입니다. 위의 "신규 센터 등록"으로 계정을 만들고 이메일로 안내한 뒤 "처리 완료"를 누르세요.</div>
+            <div id="trialRequests" style="font-size:14px;line-height:1.9;">불러오는 중...</div>
+        </div>
+
         <h2 class="section-title">파트너 센터 (무기한 무료 이벤트)</h2>
         <div class="panel" style="margin-bottom: 40px;">
             <div class="sub" style="margin-bottom:12px;">선착순으로 지정한 센터는 기간 제한 없이 무료로 쓸 수 있습니다. 센터별 현황 표의 "파트너" 버튼으로 지정하고, 해제하면 체험 기간으로 돌아갑니다.</div>
@@ -641,6 +647,25 @@
                 : '체험이 7일 안에 끝나는 센터가 없습니다.';
         }
 
+        async function loadTrialRequests() {
+            const box = document.getElementById('trialRequests');
+            try {
+                const res = await fetch(`${API_URL}/admin/trial-requests`, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+                const d = await res.json();
+                if (!res.ok) throw new Error(d.detail || '조회 실패');
+                box.innerHTML = d.requests.length ? d.requests.map(r => `<div style="border-top:1px solid #F1F5F9;padding:6px 0;${r.status === 'handled' ? 'opacity:.55;' : ''}">
+                    <b>${escapeHtml(r.center_name)}</b> · ${escapeHtml(r.manager_name)} · ${escapeHtml(r.email)}${r.phone ? ' · ' + escapeHtml(r.phone) : ''}
+                    ${r.partner_interest ? '<span style="color:#047857;font-weight:700;"> · 파트너 이벤트 신청</span>' : ''}
+                    <span style="color:#64748B;"> · ${escapeHtml((r.created_at || '').slice(0, 16).replace('T', ' '))}</span>
+                    ${r.status === 'new' ? `<button type="button" onclick="markHandled(${r.id})" style="margin-left:8px;">처리 완료</button>` : ' · 처리됨'}</div>`).join('') : '들어온 신청이 없습니다.';
+            } catch (e) { box.textContent = e.message; }
+        }
+
+        async function markHandled(id) {
+            await fetch(`${API_URL}/admin/trial-requests/${id}/handled`, { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            loadTrialRequests();
+        }
+
         async function loadPartners() {
             const box = document.getElementById('partnerSummary');
             try {
@@ -787,6 +812,7 @@
         load();
         loadDemoStatus();
         loadPartners();
+        loadTrialRequests();
     </script>
 </body>
 </html>
