@@ -468,6 +468,7 @@ def list_proposals(center_id: int, db: Session = Depends(get_db), actor: User = 
     """센터장 승인 대기·반려 계획 목록"""
     if actor.role != "center_manager":
         raise HTTPException(status_code=403, detail="센터장만 조회할 수 있습니다")
+    assert_my_center(actor, center_id)
     rows = db.query(Schedule).filter(
         Schedule.center_id == center_id,
         Schedule.status.in_(["proposed", "rejected"]),

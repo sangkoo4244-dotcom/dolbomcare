@@ -33,12 +33,13 @@ def to_dict(c: StaffCertificate) -> dict:
 def list_certificates(
     center_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    actor: User = Depends(get_current_user),
 ):
     """센터의 직원 자격증 목록"""
-    query = db.query(StaffCertificate)
-    if center_id:
-        query = query.join(User, User.id == StaffCertificate.user_id).filter(User.center_id == center_id)
+    if actor.role not in ("caregiver", "center_manager") or not actor.center_id:
+        raise HTTPException(status_code=403, detail="자격증 목록을 볼 수 있는 권한이 없습니다")
+    # 항상 내 센터 직원의 자격증만 (center_id를 다른 센터로 넣어도 소용없다)
+    query = db.query(StaffCertificate).join(User, User.id == StaffCertificate.user_id).filter(User.center_id == actor.center_id)
     return {"certificates": [to_dict(c) for c in query.order_by(StaffCertificate.id).all()]}
 
 

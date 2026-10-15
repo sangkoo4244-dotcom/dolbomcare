@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app import models
-from app.api import records, residents, salary, schedule, users
+from app.api import certificates, records, residents, salary, schedule, users
 from app.api.users import create_access_token
 from app.database import Base, get_db
 
@@ -47,7 +47,7 @@ def env(tmp_path):
     db.add(models.DailyRecord(id=1, resident_id=1, caregiver_id=2, recorded_date=NOW, duration_minutes=60, notes="비밀 기록"))
     db.commit()
     app = FastAPI()
-    for name, mod in (("residents", residents), ("users", users), ("schedule", schedule), ("salary", salary), ("records", records)):
+    for name, mod in (("residents", residents), ("users", users), ("schedule", schedule), ("salary", salary), ("records", records), ("certificates", certificates)):
         app.include_router(mod.router, prefix=f"/api/v1/{name}")
 
     def override():
@@ -143,3 +143,28 @@ def test_manager_of_another_center_cannot_delete_visit_records(env):
     assert client.post("/api/v1/records/batch-delete", json={"record_ids": [1], "user_id": 11, "user_role": "center_manager"}, headers=MGR_B).json()["deleted_count"] == 0
     assert db.query(models.DailyRecord).filter_by(id=1).count() == 1
     assert client.delete("/api/v1/records/daily/1", headers=MGR_A).status_code == 200
+
+
+def test_center_wide_lists_and_statistics_reject_another_centers_id(env):
+    _, client = env
+    ym = f"{NOW:%Y-%m}"
+    for path in ("/api/v1/records/all/center?center_id=1", "/api/v1/records/today/center?center_id=1",
+                 f"/api/v1/records/monthly-summary?center_id=1&year_month={ym}", f"/api/v1/records/monthly-statistics?center_id=1&year={NOW.year}&month={NOW.month}",
+                 "/api/v1/schedule/proposals?center_id=1"):
+        assert client.get(path, headers=MGR_B).status_code in (403, 404), path
+        assert client.get(path, headers=GUARD_B).status_code in (403, 404), path
+    assert client.get(f"/api/v1/records/monthly-statistics?center_id=1&year={NOW.year}&month={NOW.month}", headers=MGR_A).status_code == 200
+    assert client.get("/api/v1/records/all/center?center_id=1", headers=MGR_A).status_code == 200
+
+
+def test_record_detail_and_certificates_are_scoped(env):
+    db, client = env
+    db.add(models.StaffCertificate(user_id=2, name="요양보호사 자격증")) if hasattr(models, "StaffCertificate") else None
+    db.commit()
+    assert client.get("/api/v1/records/daily/1", headers=MGR_B).status_code == 404
+    assert client.get("/api/v1/records/daily/1", headers=MGR_A).status_code == 200
+    other = client.get("/api/v1/certificates/?center_id=1", headers=MGR_B).json()["certificates"]
+    assert other == []
+    assert client.get("/api/v1/certificates/?center_id=1", headers=GUARD_B).status_code == 403
+    mine = client.get("/api/v1/certificates/?center_id=1", headers=MGR_A).json()["certificates"]
+    assert len(mine) == 1
