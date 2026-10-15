@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.api.users import get_password_hash
 from app.auth import get_current_user, require_manager, require_manager_or_caregiver
 from app.database import get_db
-from app.models import DailyRecord, GuardianInvite, Resident, User
+from app.models import DailyRecord, GuardianInvite, GuardianViewLog, Resident, User
 
 router = APIRouter()
 
@@ -216,4 +216,21 @@ def resident_visits(resident_id: int, days: int = 14, db: Session = Depends(get_
             "notes": r.notes,
             "has_signature": bool(r.signature),
         })
+    try:
+        db.add(GuardianViewLog(guardian_id=guardian.id, resident_id=resident.id, center_id=resident.center_id, kind="visits"))
+        db.commit()
+    except Exception:
+        db.rollback()  # 열람 기록을 못 남겨도 보호자 화면은 보여 준다
     return {"resident_name": resident.name, "visits": visits}
+
+
+@router.get("/view-logs")
+def view_logs(resident_id: int, limit: int = 50, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """센터장이 이용자 기록을 보호자가 언제 열어 봤는지 확인한다(우리 센터 이용자만)."""
+    resident = db.query(Resident).filter(Resident.id == resident_id, Resident.center_id == actor.center_id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    logs = db.query(GuardianViewLog).filter(GuardianViewLog.resident_id == resident.id).order_by(GuardianViewLog.viewed_at.desc()).limit(min(limit, 200)).all()
+    names = {u.id: u.full_name for u in db.query(User).filter(User.id.in_({l.guardian_id for l in logs})).all()} if logs else {}
+    return {"resident_name": resident.name, "logs": [
+        {"guardian_name": names.get(l.guardian_id, ""), "kind": l.kind, "viewed_at": l.viewed_at.strftime("%Y-%m-%d %H:%M")} for l in logs]}

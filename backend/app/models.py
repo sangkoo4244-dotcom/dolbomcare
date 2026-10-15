@@ -284,6 +284,17 @@ class GuardianInvite(Base):
     expires_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.now)
 
+class GuardianViewLog(Base):
+    """보호자가 방문 기록을 열어 본 기록. 공단 다빈도 Q&A(Q57): 기록지를 전자로 열람하게 한 경우 증빙으로 쓴다."""
+    __tablename__ = "guardian_view_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    guardian_id = Column(Integer, ForeignKey("users.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    kind = Column(String, default="visits")  # visits: 방문 기록 목록
+    viewed_at = Column(DateTime, default=datetime.now)
+
 class ResidentMessage(Base):
     __tablename__ = "resident_messages"
 

@@ -42,6 +42,7 @@
         <button type="button" class="primary" onclick="window.print()">인쇄</button>
     </div>
     <div class="note">공단 서식(장기요양급여 제공기록지 방문요양, 2025.12 개정)과 같은 모양으로 한 주(7일) 분량을 보여 줍니다. 돌봄케어에 기록하지 않는 칸(일상생활 함께하기, 인지행동변화 관리)은 비워 두었으니 필요하면 인쇄 후 손으로 적어 주세요. 항목별 제공 시간을 적으면 영역별 제공시간도 자동으로 채워집니다. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다.</div>
+    <div id="viewLogBox" class="note" style="margin-top:8px;"></div>
     <div class="paper" id="paper"><div class="empty">이용자를 선택하세요.</div></div>
 
     <script>
@@ -134,6 +135,18 @@
             if (!r.ok) { document.getElementById('paper').innerHTML = '<div class="empty">기록지를 불러오지 못했습니다.</div>'; return; }
             sheet = await r.json();
             render();
+            loadViewLog(rid);
+        }
+
+        // 보호자가 이 이용자의 방문 기록을 언제 열어 봤는지 (공단 Q&A Q57: 전자 열람은 기록지 제공의 증빙)
+        async function loadViewLog(rid) {
+            const box = document.getElementById('viewLogBox');
+            const r = await fetch(`/api/v1/guardian/view-logs?resident_id=${rid}&limit=5`);
+            if (!r.ok) { box.textContent = ''; return; }
+            const data = await r.json();
+            box.textContent = data.logs.length
+                ? '보호자 최근 열람: ' + data.logs.map(l => `${l.viewed_at} ${l.guardian_name}`).join(' · ')
+                : '보호자 열람 기록 없음';
         }
 
         async function init() {
