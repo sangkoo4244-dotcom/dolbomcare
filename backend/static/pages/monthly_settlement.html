@@ -545,7 +545,7 @@
                         <td style="text-align:left;"><span class="staff-avatar">${initial}</span>${esc(r.caregiver_name || '-')}</td>
                         <td>${esc(r.year_month)}</td>
                         <td>${esc(r.resident_name || '-')}</td>
-                        <td class="ms-muted">-</td>
+                        <td class="${r.duration_minutes ? '' : 'ms-muted'}">${r.duration_minutes ? r.duration_minutes + '분' : '-'}</td>
                         <td>${visitCount(r)}회</td>
                         <td class="ms-num2">${won(r.amount)}</td>
                         <td><span class="status-pill2 ${cls}">${label}</span></td>

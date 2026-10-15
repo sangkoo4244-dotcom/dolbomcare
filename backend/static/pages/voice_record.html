@@ -606,6 +606,8 @@
             document.getElementById('overageWarning').classList.add('hidden');
         }
 
+        // 야간(22~06시)·일요일 가산: 서버 계산값을 받아 와서 금액 안내에 더한다 (방문 시각·제공 시간이 바뀔 때만 다시 묻는다)
+        let surchargeKey = '', surchargePending = '', surchargeExtra = 0;
         function calculateBillingDetails() {
             if (benefitUi) benefitUi.updateHint();  // 방문목욕 시간별 감액·2인 동시 제공 안내
             const resId = document.getElementById('resident').value;
@@ -634,6 +636,17 @@
                 if (fee === null) { resetBillingDisplay(); return; }  // 방문목욕은 방식을 고르고 40분 이상이어야 금액이 정해진다
                 split = splitFromTotal(fee, clientType);
             }
+            const visitDay = document.getElementById('visitDate').value, visitClock = document.getElementById('visitTime').value;
+            const sKey = (benefit === 'home_care' || benefit === 'home_nursing') && visitDay && visitClock ? `${benefit}|${minutes}|${visitDay}T${visitClock}` : '';
+            if (sKey && sKey !== surchargeKey && sKey !== surchargePending) {
+                surchargePending = sKey;
+                fetch(`${API_URL}/benefits/visit-surcharge?benefit_type=${benefit}&minutes=${minutes}&start=${encodeURIComponent(`${visitDay}T${visitClock}`)}`)
+                    .then(r => r.ok ? r.json() : { amount: 0 })
+                    .then(d => { surchargeKey = sKey; surchargeExtra = d.amount || 0; calculateBillingDetails(); })
+                    .catch(() => { surchargePending = ''; });
+            }
+            const surchargeNow = sKey && sKey === surchargeKey ? surchargeExtra : 0;
+            if (surchargeNow > 0) split = splitFromTotal(split.total + surchargeNow, clientType);
             const { total, patient, insurance } = split;
             const patientRate = PATIENT_PAY_RATE[clientType] ?? PATIENT_PAY_RATE["일반"];
             const insuranceRate = 1 - patientRate;
@@ -648,6 +661,14 @@
             const usagePercent = Math.round((newCumulative / monthlyLimit) * 100);
 
             document.getElementById('baseAmount').textContent = `₩${total.toLocaleString()}`;
+            let surchargeNote = document.getElementById('surchargeNote');
+            if (!surchargeNote) {
+                surchargeNote = document.createElement('div');
+                surchargeNote.id = 'surchargeNote';
+                surchargeNote.style.cssText = 'font-size:12px;color:#B45309;margin-top:4px;';
+                document.getElementById('baseAmount').insertAdjacentElement('afterend', surchargeNote);
+            }
+            surchargeNote.textContent = surchargeNow > 0 ? `야간(22~06시)·일요일 가산 +₩${surchargeNow.toLocaleString()} 포함 · 가산이 필요한 사유를 기록 내용에 적어 주세요` : '';
             document.getElementById('careGradeDisplay').textContent = grade ? `${grade}등급` : '인지지원등급';
             document.getElementById('clientTypeDisplay').textContent = clientType;
             document.getElementById('patientRateDisplay').textContent = `${Math.round(patientRate * 100)}%`;
@@ -1230,6 +1251,7 @@
             });
             loadResidents();
             loadCaregiverPick();
+            ['visitDate', 'visitTime'].forEach(id => document.getElementById(id).addEventListener('change', calculateBillingDetails));  // 야간·일요일 가산은 방문 시각에 따라 달라진다
             loadRecords();
             loadSidePanels();
             return true;

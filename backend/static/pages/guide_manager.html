@@ -327,6 +327,7 @@
             if (!['center_manager', 'caregiver'].includes(user.role)) { window.location.href = './dashboard.html'; return; }
             document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
             if (typeof renderSidebar === 'function') renderSidebar();
+            try { localStorage.setItem('guideManagerSeen', '1'); } catch (e) { /* 저장이 막혀도 안내는 그대로 보인다 */ }
         }
         window.addEventListener('load', init);
     </script>
