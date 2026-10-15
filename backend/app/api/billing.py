@@ -291,6 +291,7 @@ async def list_billing_records(
             "total_amount": r.amount,
             "total_cost": r.total_cost,
             "extra_amount": r.extra_amount or 0,
+            "benefit_type": r.benefit_type,
             "duration_minutes": dailies[r.daily_record_id].duration_minutes if r.daily_record_id in dailies else None,
             "status": r.status,
             "approval_status": r.approval_status,

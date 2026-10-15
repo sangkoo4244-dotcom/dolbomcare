@@ -57,3 +57,35 @@ def test_bath_bonus_and_pair_caregivers_each_get_their_own_bonus(env):
     assert r.status_code == 200, r.text
     rows = db.query(models.BillingRecord).filter(models.BillingRecord.benefit_type == "home_care").all()
     assert sorted((b.caregiver_id, b.extra_amount) for b in rows) == [(2, 6000), (3, 6000)]
+
+
+def test_extra_amount_reaches_settlement_statistics_and_salary_status(env):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from app.api import records, statements
+    from app.database import get_db
+    from tests.test_visit_benefit_api import MANAGER
+
+    db, client = env
+    db.query(models.Resident).filter_by(id=1).update({"care_grade": 1})
+    db.commit()
+    assert client.post("/api/v1/records/create", json=at(9, benefit_type="home_care", duration_minutes=180), headers=CG_A).status_code == 200
+    bill = db.query(models.BillingRecord).one()
+    bill.approval_status = "approved"
+    db.commit()
+    app = FastAPI()
+    app.include_router(records.router, prefix="/api/v1/records")
+    app.include_router(statements.router, prefix="/api/v1/statements")
+    app.dependency_overrides[get_db] = client.app.dependency_overrides[get_db]
+    c = TestClient(app)
+
+    ym = bill.year_month
+    year, month = map(int, ym.split("-"))
+    stats = c.get(f"/api/v1/records/monthly-statistics?center_id=1&year={year}&month={month}", headers=MANAGER).json()
+    row = stats["records"][0]
+    assert row["amount"] == bill.amount and row["extra_amount"] == 6000
+    assert stats["by_caregiver"][0]["total_amount"] == bill.amount + 6000  # 정산 대상은 공단이 따로 지급하는 가산까지
+
+    status = c.get(f"/api/v1/statements/status?year_month={ym}", headers=MANAGER).json()
+    mine = next(r for r in status["caregivers"] if r["caregiver_id"] == 2)
+    assert mine["severe_bonus"] == 6000 and mine["billing_total"] == bill.amount  # 급여 계산 기준 금액은 그대로

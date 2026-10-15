@@ -433,7 +433,7 @@
             const active = allRecords.filter(r => !['rejected', 'draft'].includes(r.approval_status));
             const reimbursed = allRecords.filter(r => tabOf(r) === 'reimbursed');
             const pending = allRecords.filter(r => tabOf(r) === 'pending');
-            const sum = list => list.reduce((s, r) => s + (r.amount || 0), 0);
+            const sum = list => list.reduce((s, r) => s + (r.amount || 0) + (r.extra_amount || 0), 0);  // 공단이 따로 지급하는 가산(중증·이동·목욕)도 정산 대상이다
 
             document.getElementById('cardTargetCount').textContent = `${active.length}건`;
             document.getElementById('cardTargetNote').textContent = prevCount != null
@@ -453,7 +453,7 @@
         function renderMonthStatusPanel(active, reimbursed, pending) {
             const processing = allRecords.filter(r => tabOf(r) === 'processing');
             const rejected = allRecords.filter(r => tabOf(r) === 'rejected');
-            const sum = list => list.reduce((s, r) => s + (r.amount || 0), 0);
+            const sum = list => list.reduce((s, r) => s + (r.amount || 0) + (r.extra_amount || 0), 0);  // 공단이 따로 지급하는 가산(중증·이동·목욕)도 정산 대상이다
             const total = sum(active) || 1;
             const rows = [
                 ['정산 완료', reimbursed.length, sum(reimbursed), '#15803D'],
@@ -547,7 +547,7 @@
                         <td>${esc(r.resident_name || '-')}</td>
                         <td class="${r.duration_minutes ? '' : 'ms-muted'}">${r.duration_minutes ? r.duration_minutes + '분' : '-'}</td>
                         <td>${visitCount(r)}회</td>
-                        <td class="ms-num2">${won(r.amount)}</td>
+                        <td class="ms-num2">${won((r.amount || 0) + (r.extra_amount || 0))}${r.extra_amount ? `<div class="ms-muted" style="font-size:11.5px;">가산 ${won(r.extra_amount)} 포함</div>` : ''}</td>
                         <td><span class="status-pill2 ${cls}">${label}</span></td>
                         <td>${actionButtons(tabOf(r))}</td>
                     </tr>`;
@@ -560,7 +560,7 @@
             const header = ['번호', '직원명', '정산년월', '이용자명', '방문횟수', '서비스', '청구금액', '정산상태'];
             const lines = rows.map((r, i) => [
                 i + 1, r.caregiver_name || '', r.year_month, r.resident_name || '', visitCount(r),
-                serviceNameMap[r.service_type] || r.service_type, r.amount || 0, STATUS_META[tabOf(r)][0]
+                serviceNameMap[r.service_type] || r.service_type, (r.amount || 0) + (r.extra_amount || 0), STATUS_META[tabOf(r)][0]
             ]);
             const csv = [header, ...lines].map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
             const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });

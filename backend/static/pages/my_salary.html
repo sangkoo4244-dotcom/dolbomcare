@@ -475,6 +475,18 @@
 
         // 이번 달 근무 요약 + 예상/확정 급여를 계산해 채운다
         function updatePreview(ym) {
+            // 중증 가산(1·2등급 수급자 방문)은 공단이 해당 요양보호사에게 지급하도록 한 금액이라, 급여와 별개로 알려 준다
+            const severe = allBillings.filter(b => SALARY_APPROVED.includes(b.approval_status) && (b.recorded_date || '').slice(0, 7) === ym && ['home_care', 'home_bath', null, undefined, ''].includes(b.benefit_type))
+                .reduce((s, b) => s + (b.extra_amount || 0), 0);
+            let severeNote = document.getElementById('severeNote');
+            if (!severeNote) {
+                severeNote = document.createElement('div');
+                severeNote.id = 'severeNote';
+                severeNote.style.cssText = 'margin:10px 0;padding:10px 14px;border-radius:10px;background:#FDF1E3;color:#92400E;font-size:14px;';
+                document.getElementById('statusBanner').insertAdjacentElement('afterend', severeNote);
+            }
+            severeNote.style.display = severe > 0 ? '' : 'none';
+            severeNote.textContent = severe > 0 ? `${ymLabel(ym)} 중증 가산 ₩${severe.toLocaleString()}은 위 급여와 별도로 지급받을 수 있는 금액입니다. 지급 방법은 센터에 확인해 주세요.` : '';
             const confirmed = confirmedStatements.find(s => s.year_month === ym);
             const monthRecords = allDailyRecords.filter(r => (r.recorded_date || '').slice(0, 7) === ym);
 

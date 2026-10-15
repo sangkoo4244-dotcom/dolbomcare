@@ -283,6 +283,7 @@
                     <ul class="notice-list2">
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>모든 금액은 반려를 제외한 청구 내역 기준입니다.</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>"공단 청구액"·"본인부담금"은 청구 기준 산정액이며, 실제 입금액과 차이가 있을 수 있습니다.</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>중증 가산·주야간 이동서비스·목욕 가산처럼 공단이 따로 지급하는 금액은 "공단 청구액"과 "총 청구액"에 포함되고 본인부담은 없습니다.</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>"정산 완료"는 공단 환급까지 확인된 건만을 의미합니다.</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>급여·운영비 등 비용 데이터가 없어 순이익은 계산하지 않습니다 (청구액 ≠ 순이익).</li>
                     </ul>
@@ -440,7 +441,7 @@
                 const [y, m] = r.recorded_date.slice(0, 7).split('-').map(Number);
                 if (y !== year) return;
                 const cell = months[m - 1];
-                const amount = r.amount || 0;
+                const amount = (r.amount || 0) + (r.extra_amount || 0);  // 공단이 따로 지급하는 가산(중증 가산·주야간 이동서비스·목욕 가산)은 공단 청구액에 포함, 본인부담은 없다
                 const pat = patientAmount(r);
                 const total = amount + pat;
                 if (r.approval_status === 'rejected') { cell.suspended += total; return; }
@@ -619,9 +620,9 @@
                 const id = r.resident_id;
                 if (!byResident[id]) byResident[id] = { id, name: r.resident_name, visits: 0, insurance: 0, patient: 0, total: 0 };
                 byResident[id].visits += 1;
-                byResident[id].insurance += r.amount || 0;
+                byResident[id].insurance += (r.amount || 0) + (r.extra_amount || 0);
                 byResident[id].patient += patientAmount(r);
-                byResident[id].total += (r.amount || 0) + patientAmount(r);
+                byResident[id].total += (r.amount || 0) + (r.extra_amount || 0) + patientAmount(r);
             });
             residentRows = Object.values(byResident).sort((a, b) => b.total - a.total);
             const grand = residentRows.reduce((s, r) => s + r.total, 0) || 1;

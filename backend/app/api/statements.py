@@ -103,9 +103,19 @@ def month_status(year_month: str, db: Session = Depends(get_db), manager: User =
             ).all()
         )
         wage_ratio = c.wage_ratio if c.wage_ratio is not None else DEFAULT_WAGE_RATIO
+        # 중증 가산(고시 제19조의2·제26조의2)은 수급자 부담 없이 공단이 '해당 요양보호사에게 지급'하도록 한 금액이라 급여 비율과 별개로 알려 준다
+        severe_bonus = sum(
+            b.extra_amount or 0 for b in db.query(BillingRecord).filter(
+                BillingRecord.caregiver_id == c.id,
+                BillingRecord.year_month == year_month,
+                BillingRecord.approval_status.in_(SALARY_STATUSES),
+                BillingRecord.benefit_type.in_(("home_care", "home_bath")),
+            ).all()
+        )
         rows.append({
             "caregiver_id": c.id,
             "caregiver_name": c.full_name,
+            "severe_bonus": severe_bonus,
             "billing_total": total,
             "wage_ratio": wage_ratio,
             "wage_base": calc_wage_base(total, wage_ratio),

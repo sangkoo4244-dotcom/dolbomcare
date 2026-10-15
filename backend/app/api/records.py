@@ -10,7 +10,7 @@ from sqlalchemy import func, or_
 from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary, Notification, DayCareAttendance
 from app.schemas import DailyRecordResponse
 from app.database import get_db
-from app.auth import get_current_user, require_manager, assert_self_or_manager
+from app.auth import get_current_user, require_manager, assert_self_or_manager, assert_my_center
 from app.api.notifications import notify
 from datetime import datetime, time, timedelta
 import os
@@ -374,12 +374,19 @@ async def upload_audio(
     caregiver_id: int,
     resident_id: int,
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     음성 파일 업로드
     실제 Whisper API 연동 시 텍스트 변환
     """
+    if actor.role not in ("caregiver", "center_manager"):
+        raise HTTPException(status_code=403, detail="권한이 없습니다")
+    assert_self_or_manager(actor, caregiver_id, db)
+    upload_target = db.query(Resident).filter(Resident.id == resident_id).first()
+    if not upload_target or upload_target.center_id != actor.center_id:
+        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
     try:
         # 파일 저장
         filename = f"{caregiver_id}_{resident_id}_{datetime.utcnow().timestamp()}.wav"
@@ -701,12 +708,13 @@ async def get_today_records(
 async def get_all_center_records(
     center_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_manager)
+    actor: User = Depends(require_manager)
 ):
     """
     센터 전체의 모든 기록 조회 (센터장용)
     해당 센터 요양관리사의 모든 기록 조회
     """
+    assert_my_center(actor, center_id)
     records = db.query(DailyRecord).join(
         Resident, DailyRecord.resident_id == Resident.id
     ).filter(
@@ -757,12 +765,13 @@ async def get_all_center_records(
 async def get_today_center_records(
     center_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_manager)
+    actor: User = Depends(require_manager)
 ):
     """
     센터 전체의 오늘 기록 조회 (센터장용)
     해당 센터 요양관리사의 오늘 기록만 조회
     """
+    assert_my_center(actor, center_id)
     today = datetime.now().date()  # 로컬 시간 사용
     today_start = datetime.combine(today, time.min)
     today_end = datetime.combine(today, time.max)
@@ -880,6 +889,8 @@ async def get_record(
     is_manager = actor.role == "center_manager"
     if not (is_manager or record.caregiver_id == actor.id):
         raise HTTPException(status_code=403, detail="조회 권한이 없습니다 (자신의 기록만 조회 가능)")
+    if is_manager and record.caregiver_id != actor.id and not _record_in_my_center(db, record, actor):
+        raise HTTPException(status_code=404, detail="Record not found")
 
     # 관련 청구 기록 조회
     billings = db.query(BillingRecord).filter(
@@ -1039,14 +1050,18 @@ def get_monthly_summary(
     center_id: int,
     year_month: Optional[str] = None,
     caregiver_id: Optional[int] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     월별 정산 요약 조회
-    - center_id: 필수 (센터 ID)
+    - center_id: 필수 (센터 ID, 내 센터만)
     - year_month: 선택 (YYYY-MM 형식, 미지정시 현재월)
     - caregiver_id: 선택 (특정 요양사만, 미지정시 전체)
     """
+    if actor.role not in ("caregiver", "center_manager"):
+        raise HTTPException(status_code=403, detail="권한이 없습니다")
+    assert_my_center(actor, center_id)
     if not year_month:
         year_month = datetime.now().strftime("%Y-%m")
 
@@ -1109,13 +1124,17 @@ def get_monthly_statistics(
     center_id: int,
     year: Optional[int] = None,
     month: Optional[int] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user)
 ):
     """
     월별 통계 조회
-    - center_id: 필수
+    - center_id: 필수 (내 센터만)
     - year, month: 선택 (미지정시 현재월)
     """
+    if actor.role not in ("caregiver", "center_manager"):
+        raise HTTPException(status_code=403, detail="권한이 없습니다")
+    assert_my_center(actor, center_id)
     if not year:
         year = datetime.now().year
     if not month:
@@ -1133,6 +1152,8 @@ def get_monthly_statistics(
     residents = {x.id: x.name for x in db.query(Resident).all()}
     user_names = {u.id: u.full_name for u in db.query(User).all()}
     status_amounts = {"target": 0, "completed": 0, "pending": 0, "suspended": 0}
+    daily_ids = [r.daily_record_id for r in all_records if r.daily_record_id]
+    minutes_by_daily = {d.id: d.duration_minutes for d in db.query(DailyRecord).filter(DailyRecord.id.in_(daily_ids)).all()} if daily_ids else {}
     record_rows = []
     for r in all_records:
         amount = r.amount or 0
@@ -1149,6 +1170,8 @@ def get_monthly_statistics(
             "caregiver_name": user_names.get(r.caregiver_id),
             "service_type": r.service_type,
             "amount": amount,
+            "duration_minutes": minutes_by_daily.get(r.daily_record_id),
+            "extra_amount": r.extra_amount or 0,  # 수급자 부담 없이 공단이 따로 지급하는 가산(중증 가산·주야간 이동서비스·목욕 가산)
             "approval_status": r.approval_status,
             "year_month": r.year_month
         })
@@ -1170,7 +1193,7 @@ def get_monthly_statistics(
 
         caregiver_stats[caregiver_id]["total_records"] += 1
         if record.approval_status in REVENUE_STATUSES:
-            caregiver_stats[caregiver_id]["total_amount"] += record.amount
+            caregiver_stats[caregiver_id]["total_amount"] += (record.amount or 0) + (record.extra_amount or 0)
             caregiver_stats[caregiver_id]["approved_count"] += 1
         elif record.approval_status == "pending":
             caregiver_stats[caregiver_id]["pending_count"] += 1
@@ -1188,7 +1211,7 @@ def get_monthly_statistics(
 
         service_stats[service_type]["total_records"] += 1
         if record.approval_status in REVENUE_STATUSES:
-            service_stats[service_type]["total_amount"] += record.amount
+            service_stats[service_type]["total_amount"] += (record.amount or 0) + (record.extra_amount or 0)
 
     return {
         "status": "success",
@@ -1282,7 +1305,7 @@ async def create_voice_record(
     caregiver_id = actor.id
     try:
         resident = db.query(Resident).filter(Resident.id == resident_id).first()
-        if not resident:
+        if not resident or resident.center_id != actor.center_id:
             raise HTTPException(status_code=404, detail="Resident not found")
         
         if service_type not in ("basic_care", "meal_service", "medical_care", "emergency"):
