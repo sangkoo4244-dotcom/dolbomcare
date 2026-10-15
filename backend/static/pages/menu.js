@@ -58,6 +58,7 @@ const SIDEBAR_MENUS = {
         { href: 'notifications.html', icon: 'notify', label: '알림' },
         { href: 'my_schedule.html', icon: 'schedule', label: '나의 일정' },
         { href: 'voice_record.html', icon: 'voice', label: '음성 기록' },
+        { href: 'day_care.html', icon: 'schedule_check', label: '주야간 이용 기록', benefit: 'day_night' },
         { href: 'caregiver_billing.html', icon: 'billing', label: '나의 청구' },
         { href: 'handover.html', icon: 'messages', label: '인수인계' },
         { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
@@ -77,6 +78,7 @@ const SIDEBAR_MENUS = {
         { href: 'dashboard.html', icon: 'dashboard', label: '대시보드' },
         { href: 'schedule_approval.html', icon: 'schedule_check', label: '방문계획 승인' },
         { href: 'voice_record.html', icon: 'voice', label: '방문 기록 현황' },
+        { href: 'day_care.html', icon: 'schedule_check', label: '주야간 이용 기록', benefit: 'day_night' },
         { href: 'rfid_compare.html', icon: 'schedule_check', label: '공단 태그 대조' },
         { href: 'handover.html', icon: 'messages', label: '인수인계' },
         { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
@@ -103,7 +105,7 @@ const SIDEBAR_MENUS = {
 // 사이드바 묶음: 모든 페이지가 같은 그룹으로 보이도록 여기서 한 번에 정한다 (페이지마다 따로 그룹을 정하던 방식은 새 페이지에서 빠뜨리기 쉽다)
 const SIDEBAR_GROUPS = [
     ['메인', ['대시보드', '알림']],
-    ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '공단 태그 대조', '인수인계', '사고·응급 보고']],
+    ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '주야간 이용 기록', '공단 태그 대조', '인수인계', '사고·응급 보고']],
     ['청구·급여', ['나의 청구', '청구관리', '청구 입력 도우미', '본인부담금', '월별정산', '급여 확정', '수익분석', '나의 급여']],
     ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
     ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
@@ -172,6 +174,28 @@ const SIDEBAR_STYLE = `
 }
 `;
 
+function benefitsCacheKey() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return `benefits_enabled:${user.id || ''}`;
+}
+function cachedBenefits() {
+    try { return JSON.parse(localStorage.getItem(benefitsCacheKey()) || '[]'); } catch (e) { return []; }
+}
+let benefitsRefreshed = false;
+async function refreshBenefitsMenu() {
+    if (benefitsRefreshed) return;
+    benefitsRefreshed = true;
+    try {
+        const r = await fetch('/api/v1/benefits');
+        if (!r.ok) return;
+        const enabled = (await r.json()).enabled || [];
+        if (JSON.stringify(enabled) !== JSON.stringify(cachedBenefits())) {
+            localStorage.setItem(benefitsCacheKey(), JSON.stringify(enabled));
+            renderSidebar();
+        }
+    } catch (e) { /* 급여 정보를 못 받으면 저장해 둔 메뉴 그대로 둔다 */ }
+}
+
 function renderSidebar() {
     if (!document.getElementById('sideMenuStyle')) {
         const style = document.createElement('style');
@@ -182,7 +206,9 @@ function renderSidebar() {
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const roleMenu = { caregiver: 'caregiver', guardian: 'guardian' }[user.role] || 'center_manager';
-    const items = SIDEBAR_MENUS[roleMenu];
+    // 센터가 고른 급여에 맞는 메뉴만 보인다 (주야간보호를 안 쓰는 센터는 화면이 그대로). 처음에는 저장해 둔 값으로 그리고, 서버 값이 다르면 다시 그린다
+    const enabledBenefits = cachedBenefits();
+    const items = SIDEBAR_MENUS[roleMenu].filter(i => !i.benefit || enabledBenefits.includes(i.benefit));
     const current = window.location.pathname.split('/').pop();
     const nav = document.querySelector('#navContent, .sidebar-nav');
     // 일부 화면은 사이드바 틀이 flex가 아니라 메뉴가 화면 높이를 넘어 그대로 잘렸다: 틀을 세로 flex로 맞춰 메뉴 영역 안에서 스크롤되게 한다
@@ -217,6 +243,7 @@ function renderSidebar() {
     }
     renderMobileTabbar(items, current, roleMenu);
     showUnreadMessageBadge();
+    refreshBenefitsMenu();
 
     // groupSidebar()가 #navContent 안쪽을 통째로 다시 그리므로, 거기 휩쓸리지 않게 nav 바깥(aside)에 따로 붙인다
     if (!document.getElementById('sideCredit') && nav.parentElement) {

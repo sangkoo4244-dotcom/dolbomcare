@@ -19,7 +19,7 @@ BENEFITS = [
     {"code": "home_care", "label": "방문요양", "program": "visit", "monthly_limited": True, "implemented": True},
     {"code": "home_bath", "label": "방문목욕", "program": "visit", "monthly_limited": True, "implemented": True},
     {"code": "home_nursing", "label": "방문간호", "program": "visit", "monthly_limited": True, "implemented": True},
-    {"code": "day_night", "label": "주야간보호", "program": "day", "monthly_limited": True, "implemented": False},
+    {"code": "day_night", "label": "주야간보호", "program": "day", "monthly_limited": True, "implemented": True},
     {"code": "short_stay", "label": "단기보호", "program": "day", "monthly_limited": True, "implemented": False},
     {"code": "nursing_home", "label": "노인요양시설", "program": "facility", "monthly_limited": False, "implemented": False},
     {"code": "group_home", "label": "노인요양공동생활가정", "program": "facility", "monthly_limited": False, "implemented": False},
@@ -54,6 +54,13 @@ DAY_NIGHT_FEES = [
     (600, 780, {1: 76820, 2: 71160, 3: 65750, 4: 64090, 5: 62460, None: 56360}),
     (781, None, {1: 82370, 2: 76310, 3: 70500, 4: 68860, 5: 67240, None: 56360}),
 ]
+
+# 주·야간보호 이동서비스비용(고시 제34조): 기관에서 수급자 실거주지까지 최단거리(편도)별 1일 금액. 이용 횟수와 무관하게 1일 1회만 산정하고
+# 편도만 이용하면 50%. 수급자 부담이 없고 월 한도에 포함되지 않는다. (분류, 이상 km, 미만 km, 금액)
+DAY_NIGHT_TRANSPORT_FEES = [("러-1", 0, 5, 830), ("러-2", 5, 10, 2630), ("러-3", 10, 20, 5230), ("러-4", 20, None, 8630)]
+# 주·야간보호 목욕서비스 가산(제35조): 수급자당 주 1회, 몸 씻기는 반드시 요양보호사가 제공. 수급자 부담 없음.
+DAY_NIGHT_BATH_BONUS = 3000
+DAY_NIGHT_STANDARD_HOURS = (8, 22)  # 표준급여제공시간 08~22시(제30조 ②). 24시 이후 보호하거나 24시간 이상 보호하면 일체 불산정(제32조 ①)
 
 # 단기보호(1일당)
 SHORT_STAY_FEES = {1: 74060, 2: 68580, 3: 63350, 4: 61680, 5: 60000}
@@ -117,6 +124,20 @@ def day_night_fee(minutes: int, grade) -> int:
     raise ValueError(f"지원하지 않는 이용 시간: {minutes}분")
 
 
+def day_night_transport_fee(distance_km, direction: str) -> tuple[str, int]:
+    """주·야간보호 이동서비스비용 (분류, 금액). direction: both(왕복 전액) / in·out(편도 50%) / none(0)."""
+    if direction == "none":
+        return "", 0
+    if direction not in ("both", "in", "out"):
+        raise ValueError(f"지원하지 않는 이동서비스 방향: {direction}")
+    if distance_km is None or distance_km < 0:
+        raise ValueError("이동서비스는 기관에서 수급자 실거주지까지의 최단거리(편도, km)를 입력해야 합니다")
+    for code, low, high, fee in DAY_NIGHT_TRANSPORT_FEES:
+        if distance_km >= low and (high is None or distance_km < high):
+            return code, fee if direction == "both" else fee // 2
+    raise ValueError(f"지원하지 않는 거리: {distance_km}")
+
+
 def short_stay_fee(grade) -> int:
     _check_grade(grade, allow_cognitive=False)
     return SHORT_STAY_FEES[grade]
@@ -161,4 +182,5 @@ def visit_fee_tables() -> dict:
         "home_bath_rules": {"full_min": HOME_BATH_FULL_MINUTES, "min": HOME_BATH_MIN_MINUTES, "reduced_percent": HOME_BATH_REDUCED_PERCENT,
                             "solo_percent": HOME_BATH_SOLO_PERCENT, "solo_mode": HOME_BATH_SOLO_MODE},
         "home_nursing": [{"min": lo, "max": hi, "fee": f} for lo, hi, f in HOME_NURSING_FEES],
+        "day_night_transport": [{"code": c, "min_km": lo, "max_km": hi, "fee": f} for c, lo, hi, f in DAY_NIGHT_TRANSPORT_FEES],
     }

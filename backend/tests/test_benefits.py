@@ -63,7 +63,7 @@ def test_catalog_groups_benefits_like_carefor_programs_and_tracks_what_is_implem
     assert cat["enabled"] == ["home_care", "home_bath", "day_night"]  # 모르는 이름은 무시, 선택 순서 유지
     assert flat["home_care"]["enabled"] and flat["home_care"]["implemented"]
     assert flat["home_bath"]["enabled"] and flat["home_bath"]["implemented"] and flat["home_nursing"]["implemented"]  # 방문 3종은 기능이 있다
-    assert flat["day_night"]["enabled"] and not flat["day_night"]["implemented"]  # 선택은 했지만 아직 기능은 없다
+    assert flat["day_night"]["enabled"] and flat["day_night"]["implemented"]  # 주야간보호도 기록·청구가 구현됨
     assert not flat["nursing_home"]["enabled"]
     assert benefits.catalog(None)["enabled"] == [] and benefits.enabled_codes("") == []
     # 시설은 재가급여 월 한도 대상이 아니다

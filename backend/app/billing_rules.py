@@ -27,6 +27,11 @@ def split_visit(duration_minutes: int, client_type: str | None) -> tuple[int, in
     return _split(VISIT_FEES[duration_minutes], client_type)
 
 
+def split_day_night(minutes: int, grade, client_type: str | None) -> tuple[int, int, int]:
+    """주·야간보호 1일의 (급여비용 총액, 본인부담금, 공단부담금). 이동서비스비용·목욕 가산은 수급자 부담이 없고 월 한도 밖이라 여기에 넣지 않는다."""
+    return _split(benefits.day_night_fee(minutes, grade), client_type)
+
+
 def split_benefit(benefit_type: str | None, duration_minutes: int | None, client_type: str | None, bath_mode: str | None = None,
                   solo_exception: bool = False) -> tuple[int, int, int]:
     """방문요양·방문목욕·방문간호 1회의 (급여비용 총액, 본인부담금, 공단부담금). 급여비용은 benefits.py의 공단 수가표를 따른다.

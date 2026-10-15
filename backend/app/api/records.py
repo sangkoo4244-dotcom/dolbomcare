@@ -7,7 +7,7 @@ from app import benefits as benefit_catalog
 from app.review import find_schedule
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary, Notification
+from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary, Notification, DayCareAttendance
 from app.schemas import DailyRecordResponse
 from app.database import get_db
 from app.auth import get_current_user, require_manager, assert_self_or_manager
@@ -176,6 +176,10 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
 
         now = request.recorded_date or datetime.now()  # 소급 기록 시 선택한 시각, 아니면 현재 시각(로컬)
         special_note = (request.special_note or "").strip() or None
+        # 같은 날 같은 수급자에게 주·야간보호를 제공했다면 방문목욕은 청구하지 않는다(고시 제32조 ②: 한 종류만 산정)
+        if visit["benefit_type"] == "home_bath" and db.query(DayCareAttendance).filter(
+                DayCareAttendance.resident_id == request.resident_id, DayCareAttendance.attendance_date == now.date()).first():
+            raise HTTPException(status_code=400, detail="같은 날 주·야간보호를 이용해 방문목욕은 청구할 수 없습니다. 주·야간보호와 방문목욕은 같은 날 한 종류만 산정합니다(고시 제32조 ②)")
         # 방문목욕은 주 1회까지 산정한다(고시 제26조 ③). 변실금·요실금 등 불가피한 경우에만 사유를 적고 초과한다.
         if visit["benefit_type"] == "home_bath" and _bath_visits_that_week(db, request.resident_id, now) >= 1 and not special_note:
             raise HTTPException(status_code=400, detail="방문목욕은 같은 주에 1회까지 청구할 수 있습니다. 변실금·요실금 등으로 불가피하면 산정 사유에 적어 주세요")

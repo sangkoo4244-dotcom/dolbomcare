@@ -37,6 +37,8 @@ def review_flags(db, billing, record=None):
     if schedule is None:
         schedule = find_schedule(db, billing.caregiver_id, billing.resident_id, billing.recorded_date)
 
+    if getattr(billing, "benefit_type", None) == "day_night":
+        return []  # 주·야간보호는 방문 계획·도착 기록으로 확인하는 급여가 아니다
     if schedule is None:
         return ["계획 외"]
 

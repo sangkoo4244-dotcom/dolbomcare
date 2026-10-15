@@ -164,6 +164,7 @@ class BillingRecord(Base):
     total_cost = Column(Integer, nullable=True)  # 급여비용 총액 (본인부담 포함, 월한도 기준)
     review_note = Column(String, nullable=True)  # 확인 플래그가 있는 청구의 센터장 확인 사유
     benefit_type = Column(String, default="home_care")  # 급여 종류 (DailyRecord와 같은 값). NULL=방문요양
+    extra_amount = Column(Integer, default=0)  # 월 한도·본인부담과 별개로 공단이 지급하는 금액: 주·야간보호 이동서비스비용·목욕서비스 가산 (수급자 부담 없음)
     status = Column(String, default="draft")  # 'draft', 'submitted', 'paid'
     approval_status = Column(String, default="pending")  # 'pending', 'approved', 'rejected'
     approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # 승인자 ID
@@ -599,6 +600,30 @@ class IncidentReport(Base):
     action_taken = Column(Text)
     guardian_notified_date = Column(Date, nullable=True)
     prevention = Column(Text, nullable=True)  # 재발방지 대책
+    created_at = Column(DateTime, default=datetime.now)
+
+
+class DayCareAttendance(Base):
+    """주·야간보호 하루 이용 기록 - 이용 시각(시간 구간별 수가), 이동서비스(송영), 목욕서비스 가산을 남기고 청구 한 건을 만든다.
+    방문과 달리 청구 단위가 '방문 1회'가 아니라 '수급자 1일'이다(고시 제30~35조)."""
+    __tablename__ = "day_care_attendances"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    caregiver_id = Column(Integer, ForeignKey("users.id"), index=True)  # 기록한(담당) 요양보호사
+    attendance_date = Column(Date, index=True)
+    arrived_at = Column(DateTime)
+    left_at = Column(DateTime)
+    minutes = Column(Integer)  # 급여제공시간(분)
+    transport = Column(String, default="none")  # none/in(등원만)/out(하원만)/both(왕복)
+    distance_km = Column(Float, nullable=True)  # 기관에서 실거주지까지 최단거리(편도)
+    transport_amount = Column(Integer, default=0)  # 이동서비스비용(왕복 전액, 편도만이면 50%)
+    bath_given = Column(Boolean, default=False)
+    bath_bonus = Column(Integer, default=0)  # 목욕서비스 가산(주 1회 3,000원)
+    special_note = Column(String, nullable=True)
+    notes = Column(String, nullable=True)
+    billing_record_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
 
 

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주야간 이용 기록 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .wrap { max-width: 1100px; margin: 0 auto; }
+        .btn-solid { padding: 10px 18px; border-radius: 10px; font-size: 15px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-solid:disabled { opacity: .5; cursor: default; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 14px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .card { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
+        .card h2 { margin: 0 0 8px; font-size: 18px; color: var(--navy); }
+        .note-box { background: #EEF4FF; border: 1px solid #C7D8F5; color: #1E3A8A; border-radius: 10px; padding: 10px 12px; font-size: 14px; line-height: 1.7; margin-bottom: 14px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+        .field label { display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 4px; }
+        .field input, .field select { width: 100%; box-sizing: border-box; padding: 9px 10px; border: 1.5px solid var(--line2); border-radius: 8px; font-size: 15px; font-family: inherit; background: #fff; }
+        .check { display: flex; gap: 8px; align-items: center; font-size: 15px; padding-top: 22px; }
+        .calc { background: #F0FAF8; border: 1px solid #BFE3DE; border-radius: 10px; padding: 12px 14px; margin-top: 12px; font-size: 15px; line-height: 1.8; }
+        .calc.bad { background: #FDF1E3; border-color: #F3D2A8; color: #92400E; }
+        .calc b { color: var(--navy); }
+        .calc .sub { font-size: 13px; color: #64748B; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .toolbar input[type=month] { padding: 8px 10px; border: 1.5px solid var(--line2); border-radius: 8px; font-size: 15px; font-family: inherit; }
+        .tbl-wrap { overflow-x: auto; }
+        table.list { width: 100%; border-collapse: collapse; font-size: 14px; }
+        table.list th, table.list td { text-align: left; padding: 8px 9px; border-bottom: 1px solid #F1F5F9; vertical-align: top; }
+        table.list th { background: #F8FAFC; color: #64748B; font-size: 12.5px; white-space: nowrap; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; white-space: nowrap; background: #F1F5F9; color: #64748B; }
+        .badge.ok { background: #E6F3F1; color: #0F8B80; }
+        @media (max-width: 700px) {
+            table.list thead { display: none; }
+            table.list, table.list tbody, table.list tr, table.list td { display: block; width: 100%; }
+            table.list tr { border: 1px solid #E8ECF1; border-radius: 12px; padding: 8px 10px; margin-bottom: 10px; }
+            table.list td { border: none; padding: 3px 0; }
+            table.list td::before { content: attr(data-l) ' '; color: #94A3B8; font-size: 12px; font-weight: 700; }
+        }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>주야간 이용 기록</h1>
+                <div class="breadcrumb">홈 › 방문 운영 › <b>주야간 이용 기록</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName">사용자</div>
+                    <div class="user-role" id="userRole"></div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="wrap">
+                <div class="note-box">
+                    주·야간보호는 방문과 달리 <b>이용자 1일 단위</b>로 급여비용이 정해집니다(이용 시간 구간별 · 장기요양등급별). 도착·퇴실 시각만 넣으면 급여비용과 본인부담금이 계산되고,
+                    이동서비스(송영)와 목욕서비스는 <b>본인부담이 없는 별도 금액</b>으로 따로 보여 줍니다.
+                    저장하면 청구 한 건이 <b>작성 중</b> 상태로 만들어집니다. 공단 청구서 전송은 센터가 공단 화면에서 직접 합니다.
+                </div>
+
+                <div class="card">
+                    <h2>이용 기록하기</h2>
+                    <div class="grid">
+                        <div class="field"><label for="resident">이용자</label><select id="resident"></select></div>
+                        <div class="field" id="caregiverBox" style="display:none;"><label for="caregiver">기록할 요양보호사</label><select id="caregiver"></select></div>
+                        <div class="field"><label for="day">이용 날짜</label><input type="date" id="day"></div>
+                        <div class="field"><label for="arrive">도착 시각</label><input type="time" id="arrive" value="09:00"></div>
+                        <div class="field"><label for="leave">퇴실 시각</label><input type="time" id="leave" value="17:00"></div>
+                        <div class="field"><label for="transport">이동서비스(송영)</label>
+                            <select id="transport"><option value="none">이용 안 함</option><option value="both">왕복</option><option value="in">등원만</option><option value="out">하원만</option></select></div>
+                        <div class="field" id="distBox" style="display:none;"><label for="dist">최단거리 (편도, km)</label><input type="number" id="dist" min="0" step="0.1" inputmode="decimal"></div>
+                        <label class="check"><input type="checkbox" id="bath"> 목욕서비스 제공 (요양보호사가 몸 씻기)</label>
+                    </div>
+                    <div class="grid" style="margin-top:12px;">
+                        <div class="field"><label for="special">특이사항 (선택)</label><input type="text" id="special" maxlength="200"></div>
+                        <div class="field"><label for="notes">보호자에게 전할 내용 (선택)</label><input type="text" id="notes" maxlength="200"></div>
+                    </div>
+                    <div class="calc" id="calc">시각을 입력하면 급여비용이 여기에 계산됩니다.</div>
+                    <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                        <button type="button" class="btn-solid" id="saveBtn" onclick="save()" disabled>이용 기록 저장</button>
+                        <span id="saveMsg" style="font-size:14px;"></span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="toolbar">
+                        <h2 style="margin:0;">월별 이용 기록</h2>
+                        <input type="month" id="month">
+                        <button type="button" class="btn-outline" onclick="loadList()">조회</button>
+                        <span id="listMsg" style="font-size:14px;"></span>
+                    </div>
+                    <div id="totals" style="margin:12px 0;font-size:14.5px;line-height:1.8;"></div>
+                    <div class="tbl-wrap"><table class="list"><thead><tr>
+                        <th>날짜</th><th>이용자</th><th>시간</th><th>급여비용</th><th>공단부담</th><th>이동·목욕(별도)</th><th>청구</th><th>기록자</th><th></th>
+                    </tr></thead><tbody id="rows"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const won = n => (n || 0).toLocaleString('ko-KR') + '원';
+        function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+        const APPROVAL = { draft: '작성 중', pending: '승인 대기', approved: '승인됨', submitted_to_nhis: '공단 제출', reimbursed: '지급 완료', rejected: '반려' };
+        const TRANSPORT = { none: '', both: '왕복', in: '등원', out: '하원' };
+        const $ = id => document.getElementById(id);
+        let user = null, previewTimer = null;
+
+        function today() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+
+        async function init() {
+            user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            if (!['center_manager', 'caregiver'].includes(user.role)) { window.location.href = './dashboard.html'; return; }
+            $('userName').textContent = user.full_name || '사용자';
+            $('userRole').textContent = user.role === 'center_manager' ? '센터장' : '요양보호사';
+            if (typeof renderSidebar === 'function') renderSidebar();
+            $('day').value = today();
+            $('month').value = today().slice(0, 7);
+            ['resident', 'caregiver', 'day', 'arrive', 'leave', 'transport', 'dist', 'bath'].forEach(id => $(id).addEventListener('input', schedulePreview));
+            $('transport').addEventListener('input', () => { $('distBox').style.display = $('transport').value === 'none' ? 'none' : ''; });
+            await loadChoices();
+            await loadList();
+            schedulePreview();
+        }
+        window.addEventListener('load', init);
+
+        async function loadChoices() {
+            const rr = await fetch('/api/v1/residents/');
+            const rd = await rr.json().catch(() => ({}));
+            const residents = Array.isArray(rd) ? rd : (rd.residents || []);
+            $('resident').innerHTML = residents.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('') || '<option value="">이용자가 없습니다</option>';
+            if (user.role === 'center_manager') {
+                $('caregiverBox').style.display = '';
+                const ur = await fetch(`/api/v1/users/?role=caregiver&center_id=${user.center_id}`);
+                const ud = await ur.json().catch(() => ({}));
+                $('caregiver').innerHTML = (ud.users || []).map(u => `<option value="${u.id}">${esc(u.full_name)}</option>`).join('');
+            }
+        }
+
+        function payload() {
+            const p = {
+                resident_id: parseInt($('resident').value, 10), attendance_date: $('day').value, arrive_time: $('arrive').value, leave_time: $('leave').value,
+                transport: $('transport').value, distance_km: $('dist').value === '' ? null : parseFloat($('dist').value), bath_given: $('bath').checked,
+                special_note: $('special').value.trim() || null, notes: $('notes').value.trim() || null,
+            };
+            if (user.role === 'center_manager') p.caregiver_id = parseInt($('caregiver').value, 10) || null;
+            return p;
+        }
+
+        function schedulePreview() { clearTimeout(previewTimer); previewTimer = setTimeout(preview, 250); }
+
+        async function preview() {
+            const calc = $('calc');
+            $('saveBtn').disabled = true;
+            const p = payload();
+            if (!p.resident_id || !p.attendance_date || !p.arrive_time || !p.leave_time) { calc.className = 'calc'; calc.textContent = '이용자와 날짜, 도착·퇴실 시각을 입력하세요.'; return; }
+            const r = await fetch('/api/v1/day-care/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { calc.className = 'calc bad'; calc.textContent = typeof d.detail === 'string' ? d.detail : '계산하지 못했습니다'; return; }
+            if (!d.ok) { calc.className = 'calc bad'; calc.textContent = d.message; return; }
+            calc.className = 'calc';
+            const h = Math.floor(d.minutes / 60), m = d.minutes % 60;
+            const extra = d.extra_amount > 0
+                ? `<div>이동서비스 ${d.transport_amount ? `<b>${esc(d.transport_code)} ${won(d.transport_amount)}</b>` : '없음'} · 목욕 가산 <b>${won(d.bath_bonus)}</b> → 별도 지급 <b>${won(d.extra_amount)}</b> <span class="sub">(수급자 부담 없음)</span></div>` : '';
+            calc.innerHTML = `<div>이용 시간 <b>${h}시간${m ? ` ${m}분` : ''}</b> · 급여비용 <b>${won(d.fee_total)}</b> = 본인부담 <b>${won(d.patient)}</b> + 공단부담 <b>${won(d.insurer)}</b></div>` + extra +
+                d.notes.map(n => `<div class="sub">※ ${esc(n)}</div>`).join('');
+            $('saveBtn').disabled = false;
+        }
+
+        async function save() {
+            const msg = $('saveMsg');
+            $('saveBtn').disabled = true;
+            const r = await fetch('/api/v1/day-care', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload()) });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { msg.style.color = '#DC2626'; msg.textContent = typeof d.detail === 'string' ? d.detail : '저장하지 못했습니다'; schedulePreview(); return; }
+            msg.style.color = '#0F8B80'; msg.textContent = '저장했습니다. 청구에 작성 중으로 올라갔습니다.';
+            $('special').value = ''; $('notes').value = '';
+            await loadList(); schedulePreview();
+        }
+
+        async function loadList() {
+            const month = $('month').value;
+            const msg = $('listMsg');
+            if (!month) { msg.textContent = '월을 골라 주세요'; return; }
+            const r = await fetch(`/api/v1/day-care?year_month=${encodeURIComponent(month)}`);
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { msg.style.color = '#DC2626'; msg.textContent = typeof d.detail === 'string' ? d.detail : '불러오지 못했습니다'; return; }
+            msg.textContent = '';
+            const t = d.totals;
+            $('totals').innerHTML = d.items.length
+                ? `이용 <b>${t.days}일</b> · 급여비용 <b>${won(t.fee_total)}</b> · 공단부담 <b>${won(t.insurer)}</b> · 이동·목욕 별도 <b>${won(t.extra)}</b>`
+                : '이 달에 기록이 없습니다.';
+            $('rows').innerHTML = d.items.map(i => {
+                const extra = [i.transport !== 'none' ? `이동 ${TRANSPORT[i.transport]} ${won(i.transport_amount)}` : '', i.bath_bonus ? `목욕 ${won(i.bath_bonus)}` : ''].filter(Boolean).join(' · ') || '-';
+                const del = i.approval_status === 'draft' ? `<button type="button" class="btn-outline" onclick="removeItem(${i.id})">삭제</button>` : '';
+                return `<tr><td data-l="날짜">${esc(i.date)}</td><td data-l="이용자">${esc(i.resident)}</td><td data-l="시간">${esc(i.arrive)}~${esc(i.leave)} (${i.minutes}분)</td>` +
+                    `<td data-l="급여비용">${won(i.fee_total)}</td><td data-l="공단부담">${won(i.insurer)}</td><td data-l="이동·목욕">${esc(extra)}</td>` +
+                    `<td data-l="청구"><span class="badge ${i.approval_status === 'draft' ? '' : 'ok'}">${esc(APPROVAL[i.approval_status] || i.approval_status || '-')}</span></td>` +
+                    `<td data-l="기록자">${esc(i.caregiver)}</td><td>${del}</td></tr>`;
+            }).join('');
+        }
+
+        async function removeItem(id) {
+            if (!confirm('이 이용 기록과 작성 중인 청구를 삭제할까요?')) return;
+            const r = await fetch(`/api/v1/day-care/${id}`, { method: 'DELETE' });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { alert(typeof d.detail === 'string' ? d.detail : '삭제하지 못했습니다'); return; }
+            await loadList(); schedulePreview();
+        }
+    </script>
+</body>
+</html>
