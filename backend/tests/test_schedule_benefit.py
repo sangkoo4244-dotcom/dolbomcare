@@ -113,7 +113,7 @@ def test_partner_caregiver_sees_the_bath_visit_but_it_is_not_counted_twice(ctx):
     assert partner[0]["benefit_type"] == "home_bath" and partner[0]["bath_mode"] == "vehicle_home"
     # 센터 전체 현황에는 방문이 한 번만 나온다(동행 건은 뺀다)
     overview = client.get("/api/v1/inbox/visits-overview", headers=MGR).json()
-    assert sum(1 for r in overview["today"] + overview["missing"] if r["resident"] == "김일") <= 1
+    assert sum(1 for r in overview["today"] if r["resident"] == "김일") <= 1  # 일정 시각이 지나면 '누락' 목록에도 같이 나오므로 시각과 무관하게 오늘 목록으로만 센다
     assert overview["month"]["total"] == 1
 
 

@@ -101,6 +101,7 @@ def claim_helper(year_month: str = Query(..., description="급여제공월 YYYY-
             "status": bill.approval_status if bill else None,
             "total_cost": bill.total_cost if bill and bill.total_cost is not None else (bill.amount if bill else None),
             "claim_amount": bill.amount if bill else None,
+            "extra_amount": (bill.extra_amount or 0) if bill else 0,
             "flags": [],
             "_resident_id": r.resident_id, "_staff_ids": {r.caregiver_id, r.co_caregiver_id} - {None}, "_start": start_at, "_end": end_at,
             "_record_id": r.id, "_pair_id": r.pair_record_id, "_note": (r.special_note or "").strip(),

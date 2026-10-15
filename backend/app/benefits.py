@@ -85,6 +85,26 @@ def home_care_fee(minutes: int) -> int:
     return [fee for threshold, fee in HOME_CARE_FEES if minutes >= threshold][-1]
 
 
+# 중증 가산(1·2등급 수급자): 수급자 부담 없이 공단이 해당 요양보호사에게 따로 지급, 1인 1일 한도 6,000원, 가족 요양보호사는 제외
+# 방문요양(고시 제19조의2): 1회 60분 이상 120분 미만 2,000원 / 120분 이상 180분 미만 4,000원 / 180분 이상 6,000원
+# 방문목욕(제26조의2): 1회 60분 이상 요양보호사 1인당 3,000원
+SEVERE_GRADES = (1, 2)
+SEVERE_DAILY_CAP = 6000
+HOME_CARE_SEVERE_BONUS = [(180, 6000), (120, 4000), (60, 2000)]
+HOME_BATH_SEVERE_BONUS = 3000
+
+
+def severe_bonus(benefit_type: str | None, grade, minutes: int | None) -> int:
+    """방문요양·방문목욕 1회의 중증 가산 금액(1일 한도 적용 전). 해당 없으면 0."""
+    if grade not in SEVERE_GRADES or not minutes:
+        return 0
+    if benefit_type in (None, "", "home_care"):
+        return next((fee for lo, fee in HOME_CARE_SEVERE_BONUS if minutes >= lo), 0)
+    if benefit_type == "home_bath":
+        return HOME_BATH_SEVERE_BONUS if minutes >= HOME_BATH_FULL_MINUTES else 0
+    return 0
+
+
 def home_bath_fee(mode: str, minutes: int | None = None, solo_exception: bool = False) -> int:
     """방문목욕 1회 급여비용. minutes를 주면 제26조의 시간별 산정(60분 이상 전액, 40~60분 80%, 40분 미만 불가)을 적용한다.
     solo_exception은 차량 미이용에서 수치심으로 몸 씻기만 1인이 제공한 예외(80% 또는 70%)다."""

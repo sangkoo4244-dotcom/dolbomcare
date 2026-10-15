@@ -278,6 +278,7 @@ async def list_billing_records(
             "amount": r.amount,
             "total_amount": r.amount,
             "total_cost": r.total_cost,
+            "extra_amount": r.extra_amount or 0,
             "status": r.status,
             "approval_status": r.approval_status,
             "rejection_reason": r.rejection_reason,

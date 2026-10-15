@@ -213,7 +213,7 @@
                 const [label, cls] = STATUS[v.status] || ['청구 없음', 'badge-gray'];
                 const flags = v.flags.map(f => `<span class="flag ${BAD_FLAGS.includes(f) ? 'bad' : ''}" title="${esc(data.flag_labels[f])}">${esc(shortLabel(f))}</span>`).join('');
                 const stay = v.stay_minutes != null && v.stay_minutes !== v.minutes ? ` <span style="color:#94A3B8;">(머문 ${v.stay_minutes}분)</span>` : '';
-                const money = v.total_cost != null ? `<div style="font-size:12.5px;color:#64748B;">총액 ${won(v.total_cost)} / 청구 ${won(v.claim_amount)}</div>` : '';
+                const money = v.total_cost != null ? `<div style="font-size:12.5px;color:#64748B;">총액 ${won(v.total_cost)} / 청구 ${won(v.claim_amount)}${v.extra_amount ? ` · 중증 가산 ${won(v.extra_amount)}` : ''}</div>` : '';
                 return `<tr><td>${esc(v.date)}</td><td>${esc(v.caregiver)}</td><td>${esc(v.start)}${v.flags.includes('no_arrival') ? '<div style="font-size:11.5px;color:#B45309;">계획 시각</div>' : ''}</td><td>${esc(v.end)}</td>` +
                     `<td>${v.minutes}분${stay}</td><td>${esc(v.service)}</td><td>${esc(v.items.join(', '))}</td><td><span class="badge ${cls}">${label}</span>${money}</td><td>${flags}</td></tr>`;
             }).join('');
