@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, date
 from jose import jwt
 from typing import Optional
 from pydantic import BaseModel
+import re
 import secrets
 
 from app.visit_benefit import JOB_TYPES
@@ -78,6 +79,65 @@ async def register(user_create: UserCreate, db: Session = Depends(get_db), manag
     db.commit()
     db.refresh(db_user)
     return db_user
+
+class StaffImportRows(BaseModel):
+    rows: list[dict]
+    dry_run: bool = True
+
+
+def _check_staff_row(raw: dict):
+    get = lambda k: str(raw.get(k, "") or "").strip()
+    name, email = get("이름"), get("이메일").lower()
+    if not name:
+        return None, "이름이 없습니다"
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
+        return None, "이메일 형식을 확인해 주세요. (예: name@naver.com)"
+    job = get("직종") or "요양보호사"
+    if job not in JOB_TYPES:
+        return None, "직종은 " + ", ".join(JOB_TYPES) + " 중 하나로 적어 주세요"
+    hire = get("입사일").replace(".", "-").replace("/", "-")
+    hire_date = None
+    if hire:
+        try:
+            hire_date = date.fromisoformat(hire)
+        except ValueError:
+            return None, "입사일은 2026-01-31 형식으로 적어 주세요"
+    return {"full_name": name, "email": email, "phone": get("연락처") or None, "job_type": None if job == "요양보호사" else job, "hire_date": hire_date}, None
+
+
+@router.post("/import")
+def import_staff(body: StaffImportRows, db: Session = Depends(get_db), manager: User = Depends(require_manager)):
+    """요양사 계정을 한꺼번에 만든다 (센터장). 문제가 하나도 없을 때만 저장하고, 저장하면 줄마다 임시 비밀번호를
+    한 번만 돌려준다(화면에서 안내문으로 내려받아 나눠 주고, 직원은 로그인 뒤 바꾼다)."""
+    if not body.rows:
+        raise HTTPException(status_code=400, detail="올릴 직원이 없습니다")
+    if len(body.rows) > 200:
+        raise HTTPException(status_code=400, detail="한 번에 200명까지 올릴 수 있습니다")
+    taken = {e.lower() for (e,) in db.query(User.email).all()}
+    seen, ok, errors = set(), [], []
+    for i, raw in enumerate(body.rows, start=2):
+        data, error = _check_staff_row(raw)
+        if not error:
+            if data["email"] in taken:
+                error = "이미 등록된 이메일입니다"
+            elif data["email"] in seen:
+                error = "파일 안에 같은 이메일이 두 번 있습니다"
+            seen.add(data["email"])
+        if error:
+            errors.append({"row": i, "name": str(raw.get("이름", "") or ""), "message": error})
+        else:
+            ok.append(data)
+    if errors or body.dry_run:
+        return {"status": "checked" if not errors else "has_errors", "ok_count": len(ok), "errors": errors, "saved": False, "accounts": []}
+    accounts = []
+    for data in ok:
+        temp_password = secrets.token_urlsafe(8)
+        db.add(User(email=data["email"], hashed_password=get_password_hash(temp_password), full_name=data["full_name"], role="caregiver",
+                    center_id=manager.center_id, is_active=True, phone=data["phone"], job_type=data["job_type"], hire_date=data["hire_date"]))
+        accounts.append({"name": data["full_name"], "email": data["email"], "temp_password": temp_password})
+    db.commit()
+    return {"status": "saved", "ok_count": len(ok), "errors": [], "saved": True, "accounts": accounts}
+
 
 @router.post("/login")
 async def login(request: LoginRequest, db: Session = Depends(get_db)):
