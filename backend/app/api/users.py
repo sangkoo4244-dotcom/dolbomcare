@@ -13,6 +13,8 @@ from typing import Optional
 from pydantic import BaseModel
 import secrets
 
+from app.visit_benefit import JOB_TYPES
+
 router = APIRouter()
 
 class UserUpdate(BaseModel):
@@ -24,6 +26,7 @@ class UserUpdate(BaseModel):
     emergency_contact: Optional[str] = None
     employment_status: Optional[str] = None
     wage_ratio: Optional[int] = None  # 급여 비율(%) - 요양사가 받는 급여 = 청구액 × 이 비율
+    job_type: Optional[str] = None  # 직종: 요양보호사/간호사/간호조무사/치과위생사. 빈 문자열이면 요양보호사로 되돌린다
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
@@ -212,6 +215,7 @@ async def list_users(
                 "emergency_contact": u.emergency_contact,
                 "employment_status": u.employment_status,
                 "wage_ratio": u.wage_ratio,
+                "job_type": u.job_type or "요양보호사",
                 "role": u.role,
                 "center_id": u.center_id,
                 "is_active": u.is_active,
@@ -251,6 +255,10 @@ async def update_user(
         if not (0 <= user_update.wage_ratio <= 100):
             raise HTTPException(status_code=400, detail="급여 비율은 0~100 사이여야 합니다")
         user.wage_ratio = user_update.wage_ratio
+    if user_update.job_type is not None:
+        if user_update.job_type and user_update.job_type not in JOB_TYPES:
+            raise HTTPException(status_code=400, detail=f"직종은 {', '.join(JOB_TYPES)} 중에서 골라 주세요")
+        user.job_type = user_update.job_type or None
 
     db.commit()
     db.refresh(user)
@@ -265,6 +273,7 @@ async def update_user(
         "emergency_contact": user.emergency_contact,
         "employment_status": user.employment_status,
         "wage_ratio": user.wage_ratio,
+        "job_type": user.job_type or "요양보호사",
         "role": user.role,
         "center_id": user.center_id,
         "is_active": user.is_active
@@ -309,6 +318,7 @@ async def get_my_profile(actor: User = Depends(get_current_user)):
         "role": actor.role,
         "profile_image": actor.profile_image,
         "wage_ratio": actor.wage_ratio,
+        "job_type": actor.job_type or "요양보호사",
     }
 
 

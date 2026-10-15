@@ -247,6 +247,7 @@
 
     <script src="menu.js"></script>
     <script src="art.js"></script>
+    <script src="benefit_fields.js"></script>
     <div class="rc-back" id="rcBack">
         <div class="rc-modal">
             <h3>반복 방문 등록</h3>
@@ -268,6 +269,7 @@
                 <div><label for="rcTime">방문 시작 시간</label><input type="time" id="rcTime" value="09:00"></div>
                 <div><label for="rcDuration">1회 시간(분)</label><input type="number" id="rcDuration" value="180" min="30" step="10"></div>
             </div>
+            <div id="rcBenefit" style="display:none;margin-top:10px;"></div>
             <div id="rcErr" style="color:#DC2626;font-size:13px;margin-top:10px;display:none;"></div>
             <div class="rc-actions">
                 <button type="button" class="btn-outline" onclick="closeRecurring()">취소</button>
@@ -394,13 +396,15 @@
                     schedule_id: p.schedule_id, status: p.status, caregiver_id: p.caregiver_id, caregiver_name: p.caregiver_name,
                     resident_id: p.resident_id, resident_name: p.resident_name, date: parseScheduleDate(p.scheduled_date),
                     duration_minutes: p.duration_minutes, planned_items: p.planned_items || [], review_note: p.review_note,
-                    service_type: p.service_type, arrived_at: null, left_at: null
+                    service_type: p.service_type, arrived_at: null, left_at: null,
+                    benefit_type: p.benefit_type, bath_mode: p.bath_mode, co_caregiver_name: p.co_caregiver_name
                 }));
                 const scheduled = ((await scheduledResp.json()).schedules || []).map(s => ({
                     schedule_id: s.id, status: s.status, caregiver_id: s.caregiver_id, caregiver_name: s.caregiver_name,
                     resident_id: s.resident_id, resident_name: s.resident_name, date: parseScheduleDate(s.scheduled_date),
                     duration_minutes: s.duration_minutes, planned_items: s.planned_items || [], review_note: s.review_note,
-                    service_type: s.service_type, arrived_at: s.arrived_at, left_at: s.left_at
+                    service_type: s.service_type, arrived_at: s.arrived_at, left_at: s.left_at,
+                    benefit_type: s.benefit_type, bath_mode: s.bath_mode, co_caregiver_name: s.co_caregiver_name
                 }));
                 allPlans = [...proposals, ...scheduled];
                 computeMetrics();
@@ -558,6 +562,15 @@
             return { line1: `${r.name} (${r.age ?? '-'}세)`, line2: `${genderLabel} / 노인장기요양 ${r.care_grade ?? '-'}등급` };
         }
 
+        // 방문목욕·방문간호는 급여 종류와 함께 가는 요양보호사를 서비스 칸에 덧붙인다 (방문요양은 예전 그대로)
+        function benefitLine(p) {
+            if (!p.benefit_type || p.benefit_type === 'home_care') return '';
+            const parts = [BenefitFields.label(p.benefit_type)];
+            if (p.bath_mode && BenefitFields.BATH_LABELS[p.bath_mode]) parts.push(BenefitFields.BATH_LABELS[p.bath_mode]);
+            if (p.co_caregiver_name) parts.push(`동행 ${p.co_caregiver_name}`);
+            return `<div style="font-size:11.5px;font-weight:700;color:#0F8B80;margin-top:3px;">${parts.join(' · ')}</div>`;
+        }
+
         function renderTable() {
             const rows = visiblePlans();
             const tabLabelMap = { proposed: '승인 대기 계획', scheduled: '승인 완료 계획', rejected: '반려된 계획', all: '전체 계획' };
@@ -592,7 +605,7 @@
                         <td><div style="font-weight:700;">${dateLine1}</div><div style="font-size:12px;color:#94A3B8;">${dateLine2}</div></td>
                         <td><div style="font-weight:700;">${info.line1}</div><div style="font-size:12px;color:#94A3B8;">${info.line2}</div></td>
                         <td>${p.caregiver_name || '-'} 요양사</td>
-                        <td><span class="svc-badge">${SERVICE_TYPE_LABELS[p.service_type] || p.service_type || '-'}</span></td>
+                        <td><span class="svc-badge">${SERVICE_TYPE_LABELS[p.service_type] || p.service_type || '-'}</span>${benefitLine(p)}</td>
                         <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${itemsText}">${itemsText}</td>
                         <td><span class="status-pill ${cls}">${label}</span></td>
                         <td>${actions}</td>
@@ -634,7 +647,24 @@
             document.getElementById('rcStartDate').value = fmt(today);
             document.getElementById('rcEndDate').value = fmt(end);
             document.getElementById('rcErr').style.display = 'none';
+            mountRecurringBenefit();
             document.getElementById('rcBack').classList.add('open');
+        }
+
+        // 방문목욕·방문간호를 제공하는 센터에만 급여 종류 칸이 나온다. 고르면 1회 시간 기본값을 그 급여에 맞춘다.
+        let rcBenefit = null, rcBenefitLast = 'home_care';
+        async function mountRecurringBenefit() {
+            await BenefitFields.load(currentUser.center_id);
+            const duration = document.getElementById('rcDuration');
+            rcBenefitLast = 'home_care';
+            rcBenefit = BenefitFields.mount(document.getElementById('rcBenefit'), {
+                selfId: Number(document.getElementById('rcCaregiver').value) || null,
+                onChange: (b) => {
+                    duration.min = b === 'home_nursing' ? 15 : 30;
+                    if (b !== rcBenefitLast) { duration.value = b === 'home_nursing' ? 30 : (b === 'home_bath' ? 60 : 180); rcBenefitLast = b; }
+                }
+            });
+            document.getElementById('rcCaregiver').onchange = (e) => { if (rcBenefit) rcBenefit.setSelf(e.target.value); };
         }
 
         function closeRecurring() { document.getElementById('rcBack').classList.remove('open'); }
@@ -647,7 +677,8 @@
                 body: JSON.stringify({
                     caregiver_id: Number(document.getElementById('rcCaregiver').value), resident_id: Number(document.getElementById('rcResident').value),
                     weekdays, start_date: document.getElementById('rcStartDate').value, end_date: document.getElementById('rcEndDate').value,
-                    start_time: document.getElementById('rcTime').value, duration_minutes: Number(document.getElementById('rcDuration').value) || null
+                    start_time: document.getElementById('rcTime').value, duration_minutes: Number(document.getElementById('rcDuration').value) || null,
+                    ...(rcBenefit ? rcBenefit.value() : {})
                 })
             });
             const d = await res.json();

@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app import benefits
 from app.api.guardian import CARE_ITEM_LABELS
 from app.auth import require_manager
 from app.billing_rules import REVENUE_STATUSES
@@ -29,6 +30,8 @@ FLAG_LABELS = {
     "long_visit": "연속 제공 시간이 깁니다 (공단 특정내역 '270분 이상 연속 제공사유', 3-4등급은 210분 이상)",
     "grade5": "5등급 이용자입니다 (인지활동형이 아닌 일반 방문요양이면 공단 특정내역 '5등급 일반요양제공사유' 입력)",
     "recognition_expired": "방문일이 인정 유효기간 밖입니다 (공단에 수급자가 보이지 않을 수 있음)",
+    "bath_no_partner": "방문목욕인데 함께 간 요양보호사 기록이 없습니다 (2인 이상 제공해야 청구할 수 있음)",
+    "nursing_no_order": "방문간호지시서 확인 메모가 없습니다 (지시서가 있어야 청구할 수 있음)",
 }
 
 
@@ -75,25 +78,38 @@ def claim_helper(year_month: str = Query(..., description="급여제공월 YYYY-
         end_at = left_at or start_at + timedelta(minutes=minutes)
         stay = int((left_at - start_at).total_seconds() // 60) if has_arrival and left_at else None
         bill = billings.get(r.id)
+        benefit = r.benefit_type or "home_care"
         items = [CARE_ITEM_LABELS.get(c, c) for c in (r.care_items or "").split(",") if c]
+        detail = ""
+        if benefit == "home_bath":
+            detail = benefits.HOME_BATH_LABELS.get(r.bath_mode, "방식 미기록")
+            if r.co_caregiver_id:
+                detail += f", 함께 간 요양보호사 {names.get(r.co_caregiver_id, '')}"
+        elif benefit == "home_nursing" and r.nursing_order_note:
+            detail = f"지시서: {r.nursing_order_note}"
         visit = {
             "date": start_at.strftime("%Y-%m-%d"), "caregiver": names.get(r.caregiver_id, ""),
             "start": start_at.strftime("%H:%M"), "end": end_at.strftime("%H:%M"), "minutes": minutes,
-            "stay_minutes": stay, "service": "방문요양", "items": items,
+            "stay_minutes": stay, "service": benefits.BY_CODE[benefit]["label"], "benefit_type": benefit, "detail": detail, "items": items,
             "status": bill.approval_status if bill else None,
             "total_cost": bill.total_cost if bill and bill.total_cost is not None else (bill.amount if bill else None),
             "claim_amount": bill.amount if bill else None,
             "flags": [],
-            "_resident_id": r.resident_id, "_caregiver_id": r.caregiver_id, "_start": start_at, "_end": end_at,
+            "_resident_id": r.resident_id, "_staff_ids": {r.caregiver_id, r.co_caregiver_id} - {None}, "_start": start_at, "_end": end_at,
         }
         if not has_arrival:
             visit["flags"].append("no_arrival")
         if stay is not None and minutes and abs(stay - minutes) >= TIME_GAP_MINUTES:
             visit["flags"].append("time_gap")
-        if minutes >= LONG_VISIT_MINUTES.get(resident.care_grade, LONG_VISIT_DEFAULT):
-            visit["flags"].append("long_visit")
-        if resident.care_grade == 5:
-            visit["flags"].append("grade5")
+        if benefit == "home_care":  # 연속 제공 시간과 5등급 일반요양 사유는 방문요양 기준이다
+            if minutes >= LONG_VISIT_MINUTES.get(resident.care_grade, LONG_VISIT_DEFAULT):
+                visit["flags"].append("long_visit")
+            if resident.care_grade == 5:
+                visit["flags"].append("grade5")
+        if benefit == "home_bath" and not r.co_caregiver_id:
+            visit["flags"].append("bath_no_partner")
+        if benefit == "home_nursing" and not (r.nursing_order_note or "").strip():
+            visit["flags"].append("nursing_no_order")
         rec_day = start_at.date()
         if (resident.recognition_start and rec_day < resident.recognition_start) or (resident.recognition_end and rec_day > resident.recognition_end):
             visit["flags"].append("recognition_expired")
@@ -111,7 +127,7 @@ def claim_helper(year_month: str = Query(..., description="급여제공월 YYYY-
                     for v in (a, b):
                         if "overlap_resident" not in v["flags"]:
                             v["flags"].append("overlap_resident")
-                if a["_caregiver_id"] == b["_caregiver_id"] and a["_resident_id"] != b["_resident_id"]:
+                if a["_staff_ids"] & b["_staff_ids"] and a["_resident_id"] != b["_resident_id"]:
                     for v in (a, b):
                         if "overlap_caregiver" not in v["flags"]:
                             v["flags"].append("overlap_caregiver")

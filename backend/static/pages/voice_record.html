@@ -177,6 +177,7 @@
                                     <option value="">서비스를 선택하세요</option><option value="basic_care">기본 돌봄</option><option value="meal_service">식사 서빙</option><option value="medical_care">의료 관리</option><option value="emergency">응급</option>
                                 </select>
                             </div>
+                            <div id="benefitWrap" class="col-span-full" style="display:none;"></div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">제공 시간 *</label>
                                 <select id="durationMinutes" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-500 outline-none transition" required onchange="calculateBillingDetails()">
@@ -358,9 +359,11 @@
 
     <script src="menu.js"></script>
     <script src="art.js"></script>
+    <script src="benefit_fields.js"></script>
     <script>
         const API_URL = '/api/v1';
         let currentUser = null;
+        let benefitUi = null;  // 방문목욕·방문간호를 제공하는 센터에만 급여 종류 입력칸이 나타난다 (benefit_fields.js)
         let residents = [];
         let records = [];
 
@@ -383,6 +386,13 @@
             "일반": 0.15, "차상위계층": 0.06, "기초생활보장": 0.00, "의료급여": 0.00
         };
 
+        // 방문목욕·방문간호는 수가표 총액에서 같은 본인부담률로 나눈다
+        function splitFromTotal(total, clientType) {
+            const rate = PATIENT_PAY_RATE[clientType] ?? PATIENT_PAY_RATE["일반"];
+            const patient = Math.floor(total * rate / 10) * 10;
+            return { total, patient, insurance: total - patient };
+        }
+
         function splitVisit(minutes, clientType) {
             const total = VISIT_FEES[minutes];
             const rate = PATIENT_PAY_RATE[clientType] ?? PATIENT_PAY_RATE["일반"];
@@ -394,6 +404,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('notes').addEventListener('input', renderItemSuggest);
             document.getElementById('caregiverPick').addEventListener('change', loadPrefill);
+            document.getElementById('caregiverPick').addEventListener('change', (e) => { if (benefitUi) benefitUi.setSelf(e.target.value); });
         });
 
         // 센터장이 대신 입력할 때 기록 주인이 센터장으로 잡히지 않도록 요양보호사를 직접 고르게 한다
@@ -478,6 +489,10 @@
             } catch (e) { return; }
             const planned = prefillData.planned, last = prefillData.last;
             const lines = [];
+            if (planned && benefitUi && planned.benefit_type && planned.benefit_type !== 'home_care') {
+                benefitUi.set({ benefit_type: planned.benefit_type, bath_mode: planned.bath_mode, co_caregiver_id: planned.co_caregiver_id });
+                lines.push(`오늘 방문 계획은 ${BenefitFields.label(planned.benefit_type)}입니다.`);
+            }
             if (planned && planned.items.length) {
                 // 오늘 승인된 방문 계획이 있으면 그 제공 항목을 미리 선택한다 (이미 고른 항목이 없을 때만)
                 if (!document.querySelector('input[name="careItem"]:checked')) {
@@ -587,7 +602,17 @@
             const grade = res.care_grade || null; // null = 인지지원등급 (1등급으로 둔갑시키지 않는다)
             const clientType = res.client_type || '일반';
             const minutes = parseInt(document.getElementById('durationMinutes').value);
-            const { total, patient, insurance } = splitVisit(minutes, clientType);
+            const benefit = benefitUi ? benefitUi.benefit() : 'home_care';
+            let split;
+            if (benefit === 'home_care') {
+                split = splitVisit(minutes, clientType);
+            } else {
+                const mode = benefitUi.value().bath_mode;
+                const fee = BenefitFields.fee(benefit, minutes, mode);
+                if (fee === null) { resetBillingDisplay(); return; }  // 방문목욕은 방식을 골라야 금액이 정해진다
+                split = splitFromTotal(fee, clientType);
+            }
+            const { total, patient, insurance } = split;
             const patientRate = PATIENT_PAY_RATE[clientType] ?? PATIENT_PAY_RATE["일반"];
             const insuranceRate = 1 - patientRate;
             const monthlyLimit = grade ? MONTHLY_LIMITS[grade] : COGNITIVE_SUPPORT_LIMIT;
@@ -775,7 +800,7 @@
                     <td>${i + 1}</td>
                     <td>${dt.toLocaleDateString('ko-KR')} ${dt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</td>
                     <td style="font-weight:700;">${r.resident_name || '-'}</td>
-                    <td>${SERVICE_TYPE_LABELS[r.service_type] || r.service_type}</td>
+                    <td>${SERVICE_TYPE_LABELS[r.service_type] || r.service_type}${r.benefit_type && r.benefit_type !== 'home_care' ? `<div style="font-size:12px;font-weight:700;color:#0F8B80;">${BenefitFields.label(r.benefit_type)}</div>` : ''}</td>
                     <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${notesText}">${notesText}</td>
                     <td><span class="status-pill ${cls}">${label}</span></td>
                     <td>${r.caregiver_name || '-'}</td>
@@ -938,6 +963,7 @@
                         stool_accidents: (() => { const v = document.getElementById('stoolAccidents').value; return v === '' ? null : parseInt(v); })(),
                         urine_accidents: (() => { const v = document.getElementById('urineAccidents').value; return v === '' ? null : parseInt(v); })(),
                         duration_minutes: parseInt(document.getElementById('durationMinutes').value),
+                        ...(benefitUi ? benefitUi.value() : {}),
                         recorded_date: `${visitDate}T${visitTime}:00`,
                         signature: getSignatureDataURL()
                     })
@@ -959,6 +985,7 @@
         });
 
         function onFormReset() {
+            if (benefitUi) benefitUi.set({});
             resetBillingDisplay();
             renderItemMinutes();
             const gov = document.getElementById('govSummary'); if (gov) gov.style.display = 'none';
@@ -1171,6 +1198,12 @@
             }
             renderSidebar();
             groupSidebar();
+            BenefitFields.load(user.center_id).then(() => {
+                benefitUi = BenefitFields.mount(document.getElementById('benefitWrap'), {
+                    selfId: user.role === 'caregiver' ? user.id : null, withNote: true,
+                    durationEl: document.getElementById('durationMinutes'), onChange: () => calculateBillingDetails()
+                });
+            });
             loadResidents();
             loadCaregiverPick();
             loadRecords();

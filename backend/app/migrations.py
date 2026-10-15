@@ -72,6 +72,15 @@ ADDITIVE_COLUMNS = [
     ("care_plans", "shared_at", "TIMESTAMP"),
     ("care_plans", "guardian_signature", "TEXT"),
     ("care_plans", "signed_via", "VARCHAR"),
+    ("users", "job_type", "VARCHAR"),
+    ("schedules", "benefit_type", "VARCHAR DEFAULT 'home_care'"),
+    ("schedules", "bath_mode", "VARCHAR"),
+    ("schedules", "co_caregiver_id", "INTEGER"),
+    ("daily_records", "benefit_type", "VARCHAR DEFAULT 'home_care'"),
+    ("daily_records", "bath_mode", "VARCHAR"),
+    ("daily_records", "co_caregiver_id", "INTEGER"),
+    ("daily_records", "nursing_order_note", "VARCHAR"),
+    ("billing_records", "benefit_type", "VARCHAR DEFAULT 'home_care'"),
 ]
 
 

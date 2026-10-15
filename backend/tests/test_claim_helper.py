@@ -138,3 +138,47 @@ def test_guards_empty_month_bad_month_other_center_and_role(ctx):
     assert get(client, month="abc").status_code == 400
     assert get(client, headers=OTHER_MGR).json()["residents"] == []  # 다른 센터 자료는 보이지 않는다
     assert get(client, headers=CG).status_code == 403
+
+
+def add_benefit_visit(db, rid, hour, minutes, *, caregiver=2, benefit="home_bath", bath_mode=None, co=None, note=None):
+    """방문목욕·방문간호 기록 한 건(일정·청구 포함)을 만든다."""
+    sch = models.Schedule(caregiver_id=caregiver, resident_id=rid, center_id=1, scheduled_date=DAY + timedelta(hours=hour), duration_minutes=minutes,
+                          status="scheduled", arrived_at=DAY + timedelta(hours=hour), left_at=DAY + timedelta(hours=hour, minutes=minutes),
+                          benefit_type=benefit, bath_mode=bath_mode, co_caregiver_id=co)
+    db.add(sch)
+    db.flush()
+    rec = models.DailyRecord(resident_id=rid, caregiver_id=caregiver, recorded_date=DAY + timedelta(hours=hour), duration_minutes=minutes, schedule_id=sch.id,
+                             care_items="bath", benefit_type=benefit, bath_mode=bath_mode, co_caregiver_id=co, nursing_order_note=note)
+    db.add(rec)
+    db.flush()
+    db.add(models.BillingRecord(daily_record_id=rec.id, caregiver_id=caregiver, resident_id=rid, center_id=1, amount=75650, total_cost=88990,
+                                approval_status="approved", recorded_date=rec.recorded_date, year_month=MONTH, benefit_type=benefit))
+    db.commit()
+
+
+def test_bath_and_nursing_rows_use_nhis_service_names_and_their_own_checks(ctx):
+    client, Session = ctx
+    db = Session()
+    db.add(models.User(id=7, email="n@e.com", hashed_password="x", full_name="간호사", role="caregiver", center_id=1, job_type="간호사"))
+    db.commit()
+    add_benefit_visit(db, 1, 7, 60, benefit="home_bath", bath_mode="vehicle_in", co=3)            # 정상 2인 목욕
+    add_benefit_visit(db, 2, 20, 60, benefit="home_bath", bath_mode="no_vehicle", co=None)         # 동행자 기록 없음
+    add_benefit_visit(db, 3, 21, 30, caregiver=7, benefit="home_nursing", note="지시서 2026-10-01")
+    add_benefit_visit(db, 4, 22, 30, caregiver=7, benefit="home_nursing", note=None)               # 지시서 메모 없음
+    # 함께 간 요양보호사(3)가 같은 시각에 다른 이용자를 방문했다면 겹침으로 본다
+    visit(db, 2, 7, 60, caregiver=3)
+    db.close()
+    data = get(client).json()
+    rows = by_name(data)
+    kim = [v for v in rows["김일"]["visits"] if v["benefit_type"] == "home_bath"][0]
+    assert kim["service"] == "방문목욕" and "차량 이용(차량 내 목욕)" in kim["detail"] and "함께 간 요양보호사 이요양" in kim["detail"]
+    assert "overlap_caregiver" in kim["flags"]  # 동행자가 같은 시각 다른 방문
+    two = rows["이이"]["visits"]
+    solo = [v for v in two if v["benefit_type"] == "home_bath" and "bath_no_partner" in v["flags"]]
+    assert len(solo) == 1 and "차량 미이용" in solo[0]["detail"]
+    nursing_ok = [v for v in rows["박삼"]["visits"] if v["benefit_type"] == "home_nursing"][0]
+    assert nursing_ok["service"] == "방문간호" and nursing_ok["detail"] == "지시서: 지시서 2026-10-01" and "nursing_no_order" not in nursing_ok["flags"]
+    assert "nursing_no_order" in [v for v in rows["최사"]["visits"] if v["benefit_type"] == "home_nursing"][0]["flags"]
+    # 방문요양 전용 확인(5등급·장시간)은 목욕·간호 방문에 붙지 않는다
+    assert not {"grade5", "long_visit"} & set(nursing_ok["flags"])
+    assert set(data["flag_counts"]) <= set(data["flag_labels"])

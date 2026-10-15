@@ -17,8 +17,8 @@ PROGRAMS = {
 # code, 센터가 고르는 이름(Center.service_types에 저장되는 값), 프로그램 묶음, 재가급여 월 한도에 포함되는지, 돌봄케어에 구현됐는지
 BENEFITS = [
     {"code": "home_care", "label": "방문요양", "program": "visit", "monthly_limited": True, "implemented": True},
-    {"code": "home_bath", "label": "방문목욕", "program": "visit", "monthly_limited": True, "implemented": False},
-    {"code": "home_nursing", "label": "방문간호", "program": "visit", "monthly_limited": True, "implemented": False},
+    {"code": "home_bath", "label": "방문목욕", "program": "visit", "monthly_limited": True, "implemented": True},
+    {"code": "home_nursing", "label": "방문간호", "program": "visit", "monthly_limited": True, "implemented": True},
     {"code": "day_night", "label": "주야간보호", "program": "day", "monthly_limited": True, "implemented": False},
     {"code": "short_stay", "label": "단기보호", "program": "day", "monthly_limited": True, "implemented": False},
     {"code": "nursing_home", "label": "노인요양시설", "program": "facility", "monthly_limited": False, "implemented": False},
@@ -129,4 +129,13 @@ def catalog(service_types: str | None) -> dict:
             "benefits": [{"code": b["code"], "label": b["label"], "enabled": b["code"] in enabled, "implemented": b["implemented"]}
                          for b in BENEFITS if b["program"] == code],
         })
-    return {"programs": programs, "enabled": [c for c in enabled_codes(service_types)]}
+    return {"programs": programs, "enabled": [c for c in enabled_codes(service_types)], "visit_fees": visit_fee_tables()}
+
+
+def visit_fee_tables() -> dict:
+    """방문 급여(요양·목욕·간호) 수가표를 화면 미리보기용으로 내려준다. 화면에 숫자를 따로 복사해 두지 않기 위해서다."""
+    return {
+        "home_care": [{"min": m, "fee": f} for m, f in HOME_CARE_FEES],
+        "home_bath": [{"mode": k, "label": HOME_BATH_LABELS[k], "fee": v} for k, v in HOME_BATH_FEES.items()],
+        "home_nursing": [{"min": lo, "max": hi, "fee": f} for lo, hi, f in HOME_NURSING_FEES],
+    }

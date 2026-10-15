@@ -629,7 +629,9 @@
         }
 
         // 직종(직급)과 근무 상태: 저장된 값이 없으면 기존 역할과 활성 여부로 보여 준다
-        const JOB_OPTIONS = ['요양사', '간호(조무)사', '관리직'];
+        // 간호직을 고르면 방문간호를 제공할 수 있는 직원으로 저장된다(서버 job_type). 방문목욕·방문요양은 요양보호사가 한다.
+        const JOB_OPTIONS = ['요양사', '간호사', '간호조무사', '치과위생사', '관리직'];
+        const NURSING_JOBS = ['간호사', '간호조무사', '치과위생사'];
         const STATUS_LABEL = { active: '근무 중', leave: '휴직', inactive: '비활성' };
         let editingId = null;
 
@@ -656,7 +658,7 @@
                     <label>이메일<input id="eEmail" type="email" value="${escapeAttr(s.email)}"></label>
                     <label>연락처<input id="ePhone" value="${escapeAttr(s.phone)}"></label>
                     <label>입사일<input id="eHire" type="date" value="${escapeAttr(s.hire_date)}"></label>
-                    <label>직종<select id="eJob">${JOB_OPTIONS.map(j => `<option ${jobOf(s) === j ? 'selected' : ''}>${j}</option>`).join('')}</select></label>
+                    <label>직종<select id="eJob">${(JOB_OPTIONS.includes(jobOf(s)) ? JOB_OPTIONS : [...JOB_OPTIONS, jobOf(s)]).map(j => `<option ${jobOf(s) === j ? 'selected' : ''}>${j}</option>`).join('')}</select></label>
                     <label>근무 상태<select id="eStatus">${Object.entries(STATUS_LABEL).map(([k, v]) => `<option value="${k}" ${statusOf(s) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
                     ${s.role === 'caregiver' ? `
                     <label>급여 비율(%)<input id="eWageRatio" type="number" min="0" max="100" placeholder="100 (미입력 시 기본값)" value="${s.wage_ratio ?? ''}"></label>
@@ -676,6 +678,7 @@
                 phone: document.getElementById('ePhone').value.trim(),
                 hire_date: document.getElementById('eHire').value || null,
                 position: document.getElementById('eJob').value,
+                job_type: NURSING_JOBS.includes(document.getElementById('eJob').value) ? document.getElementById('eJob').value : '',
                 employment_status: document.getElementById('eStatus').value
             };
             const wageInput = document.getElementById('eWageRatio');

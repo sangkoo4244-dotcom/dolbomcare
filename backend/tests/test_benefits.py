@@ -62,8 +62,16 @@ def test_catalog_groups_benefits_like_carefor_programs_and_tracks_what_is_implem
     flat = {b["code"]: b for p in cat["programs"] for b in p["benefits"]}
     assert cat["enabled"] == ["home_care", "home_bath", "day_night"]  # 모르는 이름은 무시, 선택 순서 유지
     assert flat["home_care"]["enabled"] and flat["home_care"]["implemented"]
-    assert flat["home_bath"]["enabled"] and not flat["home_bath"]["implemented"]  # 선택은 했지만 아직 기능은 없다
+    assert flat["home_bath"]["enabled"] and flat["home_bath"]["implemented"] and flat["home_nursing"]["implemented"]  # 방문 3종은 기능이 있다
+    assert flat["day_night"]["enabled"] and not flat["day_night"]["implemented"]  # 선택은 했지만 아직 기능은 없다
     assert not flat["nursing_home"]["enabled"]
     assert benefits.catalog(None)["enabled"] == [] and benefits.enabled_codes("") == []
     # 시설은 재가급여 월 한도 대상이 아니다
     assert not benefits.BY_CODE["nursing_home"]["monthly_limited"] and benefits.BY_CODE["day_night"]["monthly_limited"]
+
+
+def test_catalog_serves_the_visit_fee_tables_for_screen_previews():
+    fees = benefits.catalog(None)["visit_fees"]
+    assert {f["min"]: f["fee"] for f in fees["home_care"]}[60] == 25320
+    assert {f["mode"]: f["fee"] for f in fees["home_bath"]} == {"vehicle_in": 88990, "vehicle_home": 80230, "no_vehicle": 50100}
+    assert [(f["min"], f["max"], f["fee"]) for f in fees["home_nursing"]] == [(15, 30, 42880), (30, 60, 53770), (60, None, 64690)]

@@ -17,6 +17,7 @@ class User(Base):
     position = Column(String, nullable=True)  # 직급: '요양사', '팀장', '관리사' 등
     emergency_contact = Column(String, nullable=True)  # 긴급 연락처
     employment_status = Column(String, default="active")  # 'active', 'inactive', 'leave'
+    job_type = Column(String, nullable=True)  # 직종: '요양보호사'(NULL=요양보호사), '간호사', '간호조무사'. 방문간호는 간호직만 제공할 수 있다
     wage_ratio = Column(Integer, nullable=True)  # 요양사가 받는 급여 = 청구액(공단부담+본인부담) 중 이 비율(%). NULL=100(기존 동작과 동일)
     is_active = Column(Boolean, default=True)
     alimtalk_opt_in = Column(Boolean, default=True)  # 카카오 알림톡 수신 여부 (끄면 인앱 알림만 받음)
@@ -92,6 +93,10 @@ class DailyRecord(Base):
     cognitive_change = Column(String, nullable=True)  # 인지기능 변화
     stool_accidents = Column(Integer, nullable=True)  # 대변 실수 횟수
     urine_accidents = Column(Integer, nullable=True)  # 소변 실수 횟수
+    benefit_type = Column(String, default="home_care")  # 급여 종류: home_care(방문요양)/home_bath(방문목욕)/home_nursing(방문간호). NULL=방문요양
+    bath_mode = Column(String, nullable=True)  # 방문목욕 방식: vehicle_in/vehicle_home/no_vehicle
+    co_caregiver_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # 방문목욕은 요양보호사 2인 이상이 제공 - 함께 간 요양보호사
+    nursing_order_note = Column(String, nullable=True)  # 방문간호지시서 확인 메모(발급일·번호 등)
     created_at = Column(DateTime, default=datetime.now)
 
 class HealthMetric(Base):
@@ -155,6 +160,7 @@ class BillingRecord(Base):
     amount = Column(Integer)  # 청구액 (원)
     total_cost = Column(Integer, nullable=True)  # 급여비용 총액 (본인부담 포함, 월한도 기준)
     review_note = Column(String, nullable=True)  # 확인 플래그가 있는 청구의 센터장 확인 사유
+    benefit_type = Column(String, default="home_care")  # 급여 종류 (DailyRecord와 같은 값). NULL=방문요양
     status = Column(String, default="draft")  # 'draft', 'submitted', 'paid'
     approval_status = Column(String, default="pending")  # 'pending', 'approved', 'rejected'
     approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # 승인자 ID
@@ -210,6 +216,9 @@ class Schedule(Base):
     change_reason = Column(String, nullable=True)
     change_service_type = Column(String, nullable=True)
     change_planned_items = Column(String, nullable=True)
+    benefit_type = Column(String, default="home_care")  # 급여 종류: home_care/home_bath/home_nursing. NULL=방문요양
+    bath_mode = Column(String, nullable=True)  # 방문목욕 방식: vehicle_in/vehicle_home/no_vehicle
+    co_caregiver_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # 방문목욕: 함께 가는 요양보호사
 
     status = Column(String, default="scheduled")  # 'scheduled', 'completed', 'cancelled'
     notes = Column(Text, nullable=True)  # 특이사항

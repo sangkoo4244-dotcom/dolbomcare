@@ -154,7 +154,7 @@ def test_service_options_include_facility_benefits_and_benefits_api_follows_cent
     body = client.get("/api/v1/benefits", headers=MANAGER).json()
     assert body["enabled"] == ["home_care", "day_night", "nursing_home"]  # 급여가 아닌 '가사활동 지원'은 급여 목록에서 빠진다
     flat = {b["code"]: b for p in body["programs"] for b in p["benefits"]}
-    assert flat["nursing_home"]["enabled"] and not flat["nursing_home"]["implemented"] and flat["home_care"]["implemented"]
+    assert flat["nursing_home"]["enabled"] and not flat["nursing_home"]["implemented"] and flat["home_care"]["implemented"] and flat["home_bath"]["implemented"]
     # 요양보호사도 같은 센터의 급여를 본다. 다른 센터의 선택은 보이지 않는다.
     assert client.get("/api/v1/benefits", headers=CAREGIVER).json()["enabled"] == body["enabled"]
 

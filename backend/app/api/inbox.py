@@ -114,8 +114,8 @@ def visits_overview(db: Session = Depends(get_db), actor: User = Depends(require
     today_rows, missing, month = [], [], {"total": 0, "done": 0, "missing": 0}
     for u in caregivers:
         for it in caregiver_schedule_view(caregiver_id=u.id, year_month=ym, db=db, actor=actor).get("items", []):
-            if not it.get("planned") or it.get("state") not in VISIT_STATES:
-                continue
+            if not it.get("planned") or it.get("state") not in VISIT_STATES or it.get("companion"):
+                continue  # 함께 가는 요양보호사(companion)의 일정은 주 담당자의 일정과 같은 방문이라 센터 현황에서 한 번만 센다
             row = {"date": it["date"], "time": it["time"], "resident": it.get("resident_name"), "caregiver": u.full_name, "state": it["state"],
                    "arrived_at": it.get("arrived_at"), "left_at": it.get("left_at")}
             if it["state"] == "미기록" and it["date"] == today:

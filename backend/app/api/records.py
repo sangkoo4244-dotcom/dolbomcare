@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, Body
 from pydantic import BaseModel, Field
 from typing import Literal, Optional
-from app.billing_rules import split_visit, VALID_DURATIONS, REVENUE_STATUSES
+from app.billing_rules import split_visit, split_benefit, VALID_DURATIONS, REVENUE_STATUSES
+from app.visit_benefit import normalize_visit_benefit
+from app import benefits as benefit_catalog
 from app.review import find_schedule
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -33,9 +35,12 @@ def guardian_visit_summary(
     duration_minutes: Optional[int] = None,
     condition: Optional[str] = None,
     note: Optional[str] = None,
+    benefit_type: Optional[str] = None,
 ) -> str:
     """요양사가 따로 작성하지 않아도, 기록된 항목만으로 보호자에게 보낼 요약을 만든다."""
     service_label = SERVICE_TYPE_LABELS.get(service_type, service_type)
+    if benefit_type in ("home_bath", "home_nursing"):
+        service_label = benefit_catalog.BY_CODE[benefit_type]["label"]
     headline = f"{resident_name}님 오늘 {service_label} 서비스를 받으셨습니다"
     if duration_minutes:
         headline += f" (약 {duration_minutes}분)"
@@ -55,7 +60,11 @@ class CreateRecordRequest(BaseModel):
     care_items: str = ""
     item_minutes: Optional[str] = None  # "meal_assist:30,bath:30" 항목별 분 (선택, 공단 앱 입력용)
     condition: Optional[str] = None
-    duration_minutes: Literal[30, 60, 90, 120, 180, 240] = 60
+    duration_minutes: int = Field(60, ge=1, le=240)  # 방문요양은 30·60·90·120·180·240분, 방문간호는 15분 이상 (급여 종류별 검사는 normalize_visit_benefit)
+    benefit_type: Optional[Literal["home_care", "home_bath", "home_nursing"]] = None  # 비우면 방문요양
+    bath_mode: Optional[Literal["vehicle_in", "vehicle_home", "no_vehicle"]] = None  # 방문목욕 방식
+    co_caregiver_id: Optional[int] = None  # 방문목욕: 함께 간 요양보호사
+    nursing_order_note: Optional[str] = Field(None, max_length=200)  # 방문간호지시서 확인 메모
     recorded_date: Optional[datetime] = None  # 소급 기록용 (미지정 시 현재 시각)
     signature: Optional[str] = None  # 방문 확인 서명 (base64 PNG data URL)
     physical_change: Optional[ChangeStatus] = None  # 공단 제공기록지 변화상태
@@ -69,7 +78,10 @@ class UpdateRecordRequest(BaseModel):
     notes: Optional[str] = None
     care_grade: Optional[int] = None  # 요양등급 (스냅샷 수정)
     client_type: Optional[str] = None  # 소득분류 (스냅샷 수정)
-    duration_minutes: Optional[Literal[30, 60, 90, 120, 180, 240]] = None
+    duration_minutes: Optional[int] = Field(None, ge=1, le=240)
+    bath_mode: Optional[Literal["vehicle_in", "vehicle_home", "no_vehicle"]] = None
+    co_caregiver_id: Optional[int] = None
+    nursing_order_note: Optional[str] = Field(None, max_length=200)
     care_items: Optional[str] = None
     item_minutes: Optional[str] = None
     condition: Optional[str] = None
@@ -118,7 +130,13 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
             if resident.center_id != actor.center_id or not target or target.role != "caregiver" or target.center_id != actor.center_id:
                 raise HTTPException(status_code=400, detail="우리 센터의 요양보호사와 이용자만 선택할 수 있습니다")
 
-        total_cost, _, amount = split_visit(request.duration_minutes, resident.client_type)
+        visit = normalize_visit_benefit(db, center_id=resident.center_id, caregiver_id=caregiver_id, benefit_type=request.benefit_type,
+                                        bath_mode=request.bath_mode, co_caregiver_id=request.co_caregiver_id,
+                                        duration_minutes=request.duration_minutes, require_duration=True, strict_home_care_duration=True)
+        try:
+            total_cost, _, amount = split_benefit(visit["benefit_type"], request.duration_minutes, resident.client_type, visit["bath_mode"])
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
         now = request.recorded_date or datetime.now()  # 소급 기록 시 선택한 시각, 아니면 현재 시각(로컬)
         linked_schedule = find_schedule(db, caregiver_id, request.resident_id, now)
@@ -143,6 +161,10 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
             cognitive_change=request.cognitive_change,
             stool_accidents=request.stool_accidents,
             urine_accidents=request.urine_accidents,
+            benefit_type=visit["benefit_type"],
+            bath_mode=visit["bath_mode"],
+            co_caregiver_id=visit["co_caregiver_id"],
+            nursing_order_note=(request.nursing_order_note or "").strip() or None,
         )
         db.add(daily_record)
         db.flush()
@@ -159,6 +181,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
             client_type=resident.client_type,
             service_category="재가급여",
             service_type=request.service_type,
+            benefit_type=visit["benefit_type"],
             amount=amount,
             total_cost=total_cost,
             recorded_date=now,
@@ -169,7 +192,8 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
         db.add(billing_record)
         if resident.guardian_id:
             summary = guardian_visit_summary(
-                resident.name, request.service_type, request.duration_minutes, request.condition, request.notes
+                resident.name, request.service_type, request.duration_minutes, request.condition, request.notes,
+                benefit_type=visit["benefit_type"],
             )
             notify(db, resident.guardian_id, "visit_completed", summary)
         # 이 이용자의 '방문 기록을 작성해 주세요' 알림은 기록을 썼으니 읽음으로 바꾼다
@@ -187,6 +211,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
                 "billing_id": billing_record.id,
                 "billing_amount": amount,
                 "service_type": request.service_type,
+                "benefit_type": visit["benefit_type"],
                 "recorded_at": daily_record.recorded_date.isoformat() if daily_record.recorded_date else None
             }
         }
@@ -347,6 +372,7 @@ async def get_recent_records(
                 billing_map[b.daily_record_id] = {
                     "amount": b.amount,
                     "service_type": b.service_type,
+                    "benefit_type": getattr(b, "benefit_type", None) or "home_care",
                     "approval_status": b.approval_status
                 }
 
@@ -367,6 +393,7 @@ async def get_recent_records(
                 "caregiver_id": r.caregiver_id,
                 "resident_id": r.resident_id,
                 "service_type": r.service_type or "basic_care",
+                "benefit_type": getattr(r, "benefit_type", None) or "home_care",
                 "morning_care": r.morning_care,
                 "meal_intake": r.meal_intake,
                 "medicine_given": r.medicine_given,
@@ -424,6 +451,7 @@ async def get_all_records(
                     "amount": b.amount,
                     "total_cost": b.total_cost,
                     "service_type": b.service_type,
+                    "benefit_type": getattr(b, "benefit_type", None) or "home_care",
                     "approval_status": b.approval_status
                 }
 
@@ -444,6 +472,7 @@ async def get_all_records(
                 "resident_id": r.resident_id,
                 "resident_name": resident_names.get(r.resident_id),
                 "service_type": r.service_type or "basic_care",
+                "benefit_type": getattr(r, "benefit_type", None) or "home_care",
                 "morning_care": r.morning_care,
                 "meal_intake": r.meal_intake,
                 "medicine_given": r.medicine_given,
@@ -515,6 +544,7 @@ async def get_today_records(
                 billing_map[b.daily_record_id] = {
                     "amount": b.amount,
                     "service_type": b.service_type,
+                    "benefit_type": getattr(b, "benefit_type", None) or "home_care",
                     "approval_status": b.approval_status
                 }
 
@@ -535,6 +565,7 @@ async def get_today_records(
                 "caregiver_id": r.caregiver_id,
                 "resident_id": r.resident_id,
                 "service_type": r.service_type or "basic_care",
+                "benefit_type": getattr(r, "benefit_type", None) or "home_care",
                 "morning_care": r.morning_care,
                 "meal_intake": r.meal_intake,
                 "medicine_given": r.medicine_given,
@@ -601,6 +632,7 @@ async def get_all_center_records(
                 "resident_id": r.resident_id,
                 "resident_name": resident_names.get(r.resident_id, "-"),
                 "service_type": r.service_type or "basic_care",
+                "benefit_type": getattr(r, "benefit_type", None) or "home_care",
                 "notes": r.notes,
                 "care_items": r.care_items,
                 "item_minutes": r.item_minutes,
@@ -661,6 +693,7 @@ async def get_today_center_records(
                 "caregiver_id": r.caregiver_id,
                 "resident_id": r.resident_id,
                 "service_type": r.service_type or "basic_care",
+                "benefit_type": getattr(r, "benefit_type", None) or "home_care",
                 "notes": r.notes,
                 "recorded_at": r.recorded_date.isoformat() if r.recorded_date else None,
                 "billing_amount": billing_map.get(r.id, 0)
@@ -692,6 +725,9 @@ def prefill_record(
             "items": [c for c in (schedule.planned_items or "").split(",") if c],
             "duration_minutes": schedule.duration_minutes,
             "service_type": schedule.service_type,
+            "benefit_type": schedule.benefit_type or "home_care",
+            "bath_mode": schedule.bath_mode,
+            "co_caregiver_id": schedule.co_caregiver_id,
             "time": schedule.scheduled_date.strftime("%H:%M"),
             "arrived_at": schedule.arrived_at.strftime("%Y-%m-%dT%H:%M") if schedule.arrived_at else None,
             "left_at": schedule.left_at.strftime("%Y-%m-%dT%H:%M") if schedule.left_at else None,
@@ -757,6 +793,7 @@ async def get_record(
             {
                 "id": b.id,
                 "service_type": b.service_type,
+                "benefit_type": getattr(b, "benefit_type", None) or "home_care",
                 "amount": b.amount,
                 "status": b.status
             }
@@ -788,12 +825,22 @@ async def update_record(
         if billing and billing.approval_status not in ("draft", "rejected"):
             raise HTTPException(status_code=400, detail="작성중 또는 보완 요청 상태의 청구만 수정할 수 있습니다")
 
+        resident = db.query(Resident).filter(Resident.id == record.resident_id).first()
+        visit = normalize_visit_benefit(
+            db, center_id=resident.center_id if resident else None, caregiver_id=record.caregiver_id, benefit_type=record.benefit_type,
+            bath_mode=request.bath_mode or record.bath_mode, co_caregiver_id=request.co_caregiver_id or record.co_caregiver_id,
+            duration_minutes=request.duration_minutes, strict_home_care_duration=True)
+
         if request.service_type:
             record.service_type = request.service_type
         if request.notes is not None:
             record.notes = request.notes
         if request.duration_minutes is not None:
             record.duration_minutes = request.duration_minutes
+        record.bath_mode = visit["bath_mode"]
+        record.co_caregiver_id = visit["co_caregiver_id"]
+        if request.nursing_order_note is not None:
+            record.nursing_order_note = request.nursing_order_note.strip() or None
         if request.care_items is not None:
             record.care_items = request.care_items or None
         if request.item_minutes is not None:
@@ -815,7 +862,11 @@ async def update_record(
                 billing.care_grade = request.care_grade
             if request.client_type:
                 billing.client_type = request.client_type
-            total_cost, _, insurance_amount = split_visit(record.duration_minutes or 60, billing.client_type)
+            try:
+                total_cost, _, insurance_amount = split_benefit(visit["benefit_type"], record.duration_minutes or (60 if visit["benefit_type"] == "home_care" else None),
+                                                                billing.client_type, visit["bath_mode"])
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
             billing.total_cost = total_cost
             billing.amount = insurance_amount
             if billing.approval_status == "rejected":

@@ -1,9 +1,12 @@
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.models import Schedule, User, Resident, Center, DailyRecord, Notification
 from app.api.notifications import notify
 from app.review import record_fits_schedule
+from app.visit_benefit import normalize_visit_benefit
+from sqlalchemy import or_
 from app.database import get_db
 from app.auth import get_current_user, require_manager, assert_self_or_manager
 from datetime import datetime, timedelta
@@ -17,6 +20,9 @@ class ScheduleCreate(BaseModel):
     notes: str = None
     duration_minutes: int = None
     planned_items: str = None
+    benefit_type: Optional[str] = None  # home_care(기본)/home_bath/home_nursing
+    bath_mode: Optional[str] = None
+    co_caregiver_id: Optional[int] = None
 
 class ScheduleUpdate(BaseModel):
     scheduled_date: str = None
@@ -25,6 +31,9 @@ class ScheduleUpdate(BaseModel):
     notes: str = None
     duration_minutes: int = None
     planned_items: str = None
+    benefit_type: Optional[str] = None
+    bath_mode: Optional[str] = None
+    co_caregiver_id: Optional[int] = None
 
 class ScheduleStatusUpdate(BaseModel):
     status: str  # 'scheduled', 'completed', 'cancelled'
@@ -72,6 +81,10 @@ async def get_schedules(
                 "left_at": s.left_at.isoformat() if s.left_at else None,
                 "review_note": s.review_note,
                 "service_type": s.service_type,
+                "benefit_type": s.benefit_type or "home_care",
+                "bath_mode": s.bath_mode,
+                "co_caregiver_id": s.co_caregiver_id,
+                "co_caregiver_name": caregivers.get(s.co_caregiver_id),
                 "status": s.status,
                 "notes": s.notes,
                 "created_at": s.created_at.isoformat(),
@@ -102,6 +115,10 @@ async def create_schedule(
         if not center:
             raise HTTPException(status_code=404, detail="센터를 찾을 수 없습니다")
 
+        visit = normalize_visit_benefit(db, center_id=schedule_data.center_id, caregiver_id=schedule_data.caregiver_id,
+                                        benefit_type=schedule_data.benefit_type, bath_mode=schedule_data.bath_mode,
+                                        co_caregiver_id=schedule_data.co_caregiver_id, duration_minutes=schedule_data.duration_minutes)
+
         # 스케줄 생성
         scheduled_datetime = datetime.fromisoformat(schedule_data.scheduled_date)
 
@@ -114,6 +131,7 @@ async def create_schedule(
             notes=schedule_data.notes,
             duration_minutes=schedule_data.duration_minutes,
             planned_items=schedule_data.planned_items or None,
+            benefit_type=visit["benefit_type"], bath_mode=visit["bath_mode"], co_caregiver_id=visit["co_caregiver_id"],
             status="scheduled"
         )
 
@@ -150,6 +168,9 @@ class RecurringCreate(BaseModel):
     duration_minutes: int = None
     service_type: str = "basic_care"
     planned_items: str = None
+    benefit_type: Optional[str] = None
+    bath_mode: Optional[str] = None
+    co_caregiver_id: Optional[int] = None
 
 MAX_RECURRING_DAYS = 92
 
@@ -166,6 +187,8 @@ def create_recurring_schedule(req: RecurringCreate, db: Session = Depends(get_db
         hour, minute = (int(x) for x in req.start_time.split(":"))
     except ValueError:
         raise HTTPException(status_code=400, detail="날짜 또는 시간 형식이 올바르지 않습니다")
+    visit = normalize_visit_benefit(db, center_id=actor.center_id, caregiver_id=caregiver.id, benefit_type=req.benefit_type,
+                                    bath_mode=req.bath_mode, co_caregiver_id=req.co_caregiver_id, duration_minutes=req.duration_minutes)
     weekdays = {int(d) for d in req.weekdays if str(d).isdigit() and 0 <= int(d) <= 6}
     if not weekdays:
         raise HTTPException(status_code=400, detail="방문 요일을 하나 이상 선택해 주세요")
@@ -186,7 +209,8 @@ def create_recurring_schedule(req: RecurringCreate, db: Session = Depends(get_db
                 db.add(Schedule(caregiver_id=caregiver.id, resident_id=resident.id, center_id=actor.center_id,
                                 scheduled_date=datetime(day.year, day.month, day.day, hour, minute),
                                 duration_minutes=req.duration_minutes, service_type=req.service_type or "basic_care",
-                                planned_items=req.planned_items or None, status="scheduled"))
+                                planned_items=req.planned_items or None, status="scheduled",
+                                benefit_type=visit["benefit_type"], bath_mode=visit["bath_mode"], co_caregiver_id=visit["co_caregiver_id"]))
                 created += 1
         day += timedelta(days=1)
     if created:
@@ -228,8 +252,9 @@ def caregiver_schedule_view(
     end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
     now = datetime.now()
 
+    # 방문목욕처럼 2인이 함께 가는 방문은 함께 가는 요양보호사의 일정에도 보인다(companion). 기록은 주 담당자가 쓴다.
     schedules = db.query(Schedule).filter(
-        Schedule.caregiver_id == caregiver_id,
+        or_(Schedule.caregiver_id == caregiver_id, Schedule.co_caregiver_id == caregiver_id),
         Schedule.scheduled_date >= start,
         Schedule.scheduled_date < end,
         Schedule.status != "cancelled",
@@ -239,7 +264,15 @@ def caregiver_schedule_view(
         DailyRecord.recorded_date >= start,
         DailyRecord.recorded_date < end,
     ).all()
+    primary_ids = {s.caregiver_id for s in schedules if s.caregiver_id != caregiver_id}
+    primary_records = db.query(DailyRecord).filter(
+        DailyRecord.caregiver_id.in_(primary_ids),
+        DailyRecord.recorded_date >= start,
+        DailyRecord.recorded_date < end,
+    ).all() if primary_ids else []
     residents = {x.id: x for x in db.query(Resident).all()}
+    staff_ids = {s.co_caregiver_id for s in schedules if s.co_caregiver_id} | primary_ids
+    staff_names = {x.id: x.full_name for x in db.query(User).filter(User.id.in_(staff_ids)).all()} if staff_ids else {}
 
     used = set()
     items = []
@@ -247,9 +280,11 @@ def caregiver_schedule_view(
         planned = _codes(s.planned_items)
         day = s.scheduled_date.date()
         match = None
+        companion = s.caregiver_id != caregiver_id
+        pool = [r for r in primary_records if r.caregiver_id == s.caregiver_id] if companion else records
         if s.status == "scheduled":
             match = next(
-                (r for r in records if r.id not in used and r.resident_id == s.resident_id and record_fits_schedule(s, r.recorded_date)),
+                (r for r in pool if r.id not in used and r.resident_id == s.resident_id and record_fits_schedule(s, r.recorded_date)),
                 None,
             )
         if match:
@@ -266,6 +301,12 @@ def caregiver_schedule_view(
             "care_notes": resident.care_notes if resident else None,
             "duration_minutes": s.duration_minutes or (match.duration_minutes if match else None),
             "service_type": s.service_type,
+            "benefit_type": s.benefit_type or "home_care",
+            "bath_mode": s.bath_mode,
+            "co_caregiver_id": s.co_caregiver_id,
+            "co_caregiver_name": staff_names.get(s.co_caregiver_id),
+            "companion": companion,
+            "primary_caregiver_name": staff_names.get(s.caregiver_id) if companion else None,
             "planned_items": planned,
             "done_items": [c for c in _codes(match.care_items) if c in planned] if match else [],
             "state": state,
@@ -368,6 +409,9 @@ class ProposalRequest(BaseModel):
     planned_items: str = None
     service_type: str = "basic_care"
     notes: str = None
+    benefit_type: Optional[str] = None
+    bath_mode: Optional[str] = None
+    co_caregiver_id: Optional[int] = None
 
 class ReviewRequest(BaseModel):
     user_id: int
@@ -381,6 +425,8 @@ class ResubmitRequest(BaseModel):
     duration_minutes: int = None
     planned_items: str = None
     service_type: str = None
+    bath_mode: Optional[str] = None
+    co_caregiver_id: Optional[int] = None
 
 @router.post("/propose")
 def propose_schedule(req: ProposalRequest, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
@@ -390,6 +436,8 @@ def propose_schedule(req: ProposalRequest, db: Session = Depends(get_db), actor:
     resident = db.query(Resident).filter(Resident.id == req.resident_id).first()
     if not resident:
         raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    visit = normalize_visit_benefit(db, center_id=resident.center_id, caregiver_id=req.caregiver_id, benefit_type=req.benefit_type,
+                                    bath_mode=req.bath_mode, co_caregiver_id=req.co_caregiver_id, duration_minutes=req.duration_minutes)
     schedule = Schedule(
         caregiver_id=req.caregiver_id,
         resident_id=req.resident_id,
@@ -398,6 +446,7 @@ def propose_schedule(req: ProposalRequest, db: Session = Depends(get_db), actor:
         duration_minutes=req.duration_minutes,
         planned_items=req.planned_items or None,
         service_type=req.service_type or "basic_care",
+        benefit_type=visit["benefit_type"], bath_mode=visit["bath_mode"], co_caregiver_id=visit["co_caregiver_id"],
         notes=req.notes,
         status="proposed",
     )
@@ -431,6 +480,10 @@ def list_proposals(center_id: int, db: Session = Depends(get_db), actor: User = 
                 "planned_items": _codes(s.planned_items),
                 "review_note": s.review_note,
                 "service_type": s.service_type,
+                "benefit_type": s.benefit_type or "home_care",
+                "bath_mode": s.bath_mode,
+                "co_caregiver_id": s.co_caregiver_id,
+                "co_caregiver_name": caregivers.get(s.co_caregiver_id),
             }
             for s in rows
         ]
@@ -490,6 +543,10 @@ def resubmit_schedule(schedule_id: int, req: ResubmitRequest, db: Session = Depe
         schedule.planned_items = req.planned_items or None
     if req.service_type:
         schedule.service_type = req.service_type
+    visit = normalize_visit_benefit(db, center_id=schedule.center_id, caregiver_id=schedule.caregiver_id, benefit_type=schedule.benefit_type,
+                                    bath_mode=req.bath_mode or schedule.bath_mode, co_caregiver_id=req.co_caregiver_id or schedule.co_caregiver_id,
+                                    duration_minutes=schedule.duration_minutes)
+    schedule.bath_mode, schedule.co_caregiver_id = visit["bath_mode"], visit["co_caregiver_id"]
     schedule.status = "proposed"
     schedule.review_note = None
     db.commit()
@@ -649,6 +706,12 @@ async def update_schedule(
         raise HTTPException(status_code=404, detail="스케줄을 찾을 수 없습니다")
 
     try:
+        new_duration = update_data.duration_minutes if update_data.duration_minutes is not None else schedule.duration_minutes
+        visit = normalize_visit_benefit(db, center_id=schedule.center_id, caregiver_id=schedule.caregiver_id,
+                                        benefit_type=update_data.benefit_type or schedule.benefit_type,
+                                        bath_mode=update_data.bath_mode or schedule.bath_mode,
+                                        co_caregiver_id=update_data.co_caregiver_id or schedule.co_caregiver_id, duration_minutes=new_duration)
+        schedule.benefit_type, schedule.bath_mode, schedule.co_caregiver_id = visit["benefit_type"], visit["bath_mode"], visit["co_caregiver_id"]
         if update_data.scheduled_date:
             schedule.scheduled_date = datetime.fromisoformat(update_data.scheduled_date)
         if update_data.service_type:
@@ -672,10 +735,14 @@ async def update_schedule(
                 "id": schedule.id,
                 "scheduled_date": schedule.scheduled_date.isoformat(),
                 "service_type": schedule.service_type,
+                "benefit_type": schedule.benefit_type or "home_care",
                 "status": schedule.status,
                 "notes": schedule.notes
             }
         }
+    except HTTPException:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"스케줄 수정 중 오류: {str(e)}")
