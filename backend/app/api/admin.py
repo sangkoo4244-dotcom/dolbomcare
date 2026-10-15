@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.users import get_password_hash
 from app.auth import require_platform_admin
 from app.database import get_db
-from app.plans import PARTNER_SLOT_LIMIT, PLAN_PAID, PLAN_PARTNER, PLAN_TRIAL, TRIAL_DAYS, center_plan_info
+from app.plans import PARTNER_RESIDENT_LIMIT, PARTNER_SLOT_LIMIT, PLAN_PAID, PLAN_PARTNER, PLAN_TRIAL, TRIAL_DAYS, center_plan_info
 from app.demo_seed import DEMO_CENTER_NAME, seed_demo
 from app.email_service import send_email
 from app.models import (
@@ -245,10 +245,17 @@ def _partner_slots(db: Session) -> dict:
 def list_partners(db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
     """파트너(무기한 무료 이벤트) 센터와 남은 자리 (운영자 전용)."""
     partners = db.query(Center).filter(Center.plan == PLAN_PARTNER).order_by(Center.partner_since).all()
+    mix = {}
+    for c in partners:
+        for service in [s for s in (c.service_types or "").split(",") if s] or ["(미선택)"]:
+            mix[service] = mix.get(service, 0) + 1
     return {
         **_partner_slots(db),
+        "resident_limit": PARTNER_RESIDENT_LIMIT,
+        "service_mix": mix,
         "partners": [{"center_id": c.id, "center_name": c.name, "partner_since": c.partner_since.isoformat() if c.partner_since else None,
-                      "note": c.partner_note} for c in partners],
+                      "note": c.partner_note, "services": [s for s in (c.service_types or "").split(",") if s],
+                      "resident_count": db.query(Resident).filter(Resident.center_id == c.id).count()} for c in partners],
     }
 
 

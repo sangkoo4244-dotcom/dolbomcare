@@ -5,6 +5,7 @@ from typing import Optional
 from app.models import Resident, Center, User
 from app.schemas import ResidentCreate
 from app.database import get_db
+from app.plans import assert_resident_capacity
 from app.auth import get_current_user, require_manager, assert_self_or_manager, assert_my_center
 from datetime import datetime, date
 
@@ -318,6 +319,7 @@ def import_residents(body: ImportRows, db: Session = Depends(get_db), manager: U
             ok.append(data)
     if errors or body.dry_run:
         return {"status": "checked" if not errors else "has_errors", "ok_count": len(ok), "errors": errors, "saved": False}
+    assert_resident_capacity(db, db.query(Center).filter(Center.id == manager.center_id).first(), len(ok))
     for data in ok:
         db.add(Resident(center_id=manager.center_id, admission_date=datetime.now(), health_status="stable", **data))
     db.commit()
@@ -341,6 +343,7 @@ async def create_resident(
     center = db.query(Center).filter(Center.id == resident_data.center_id).first()
     if not center:
         raise HTTPException(status_code=404, detail="센터를 찾을 수 없습니다")
+    assert_resident_capacity(db, center)
 
     # 같은 센터 안에서 동일 이름/생년월일 중복 확인 (다른 센터의 같은 이름과는 무관하다)
     existing = db.query(Resident).filter(

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.schemas import LoginRequest, LoginResponse, UserCreate, UserResponse
 from app.models import User, Center, PasswordResetToken
 from app.database import get_db
-from app.plans import center_plan_info
+from app.plans import plan_info_with_usage
 from app.auth import SECRET_KEY, get_current_user, require_manager
 from app.email_service import send_email
 from passlib.context import CryptContext
@@ -92,7 +92,7 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
     if user.center_id:
         try:
             center = db.query(Center).filter(Center.id == user.center_id).first()
-            plan_info = center_plan_info(center) if center else None
+            plan_info = plan_info_with_usage(db, center) if center else None
         except Exception as e:
             # 이용 상태 조회가 실패해도 로그인 자체를 막아서는 안 된다 (체험이 끝나도 로그인은 되고 읽기 전용이 된다).
             # PostgreSQL은 에러난 트랜잭션을 롤백하지 않으면 같은 커넥션의 다음 쿼리까지 막히므로 롤백한다.
@@ -309,7 +309,7 @@ async def get_my_profile(actor: User = Depends(get_current_user), db: Session = 
     if actor.center_id:
         try:
             center = db.query(Center).filter(Center.id == actor.center_id).first()
-            plan_info = center_plan_info(center) if center else None
+            plan_info = plan_info_with_usage(db, center) if center else None
         except Exception:
             db.rollback()
     return {

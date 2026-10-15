@@ -42,8 +42,10 @@ function showPlanNotice(message) {
 }
 
 // 사이드바 아래에 센터의 이용 상태(체험 남은 일수 / 체험 종료·읽기 전용 / 파트너 센터)를 작게 보여 준다. 정식 센터와 보호자에게는 아무것도 보이지 않는다.
+let planPillRequested = false;
 async function showPlanPill() {
-    if (document.getElementById('planPill')) return;
+    if (planPillRequested || document.getElementById('planPill')) return;  // 메뉴가 다시 그려져도 한 번만 요청한다
+    planPillRequested = true;
     try {
         const r = await fetch('/api/v1/users/me');
         if (!r.ok) return;
@@ -54,7 +56,7 @@ async function showPlanPill() {
         const look = {
             trial: ['체험 중 · ' + plan.days_left + '일 남음', '#FEF3C7', '#92400E'],
             trial_expired: ['체험 종료 · 읽기 전용', '#FEE2E2', '#991B1B'],
-            partner: ['파트너 센터 · 무기한 무료', '#D1FAE5', '#065F46'],
+            partner: ['파트너 센터 · 무기한 무료' + (plan.resident_limit ? ` · 이용자 ${plan.resident_count}/${plan.resident_limit}명` : ''), '#D1FAE5', '#065F46'],
         }[plan.state];
         const pill = document.createElement('div');
         pill.id = 'planPill';

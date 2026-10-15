@@ -621,8 +621,10 @@
                 const res = await fetch(`${API_URL}/admin/partners`, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
                 const d = await res.json();
                 if (!res.ok) throw new Error(d.detail || '조회 실패');
-                box.innerHTML = `<b>${d.used} / ${d.limit}곳</b> 지정 · 남은 자리 <b>${d.remaining}곳</b>`
-                    + (d.partners.length ? '<br>' + d.partners.map(p => `${escapeHtml(p.center_name)}${p.note ? ' (' + escapeHtml(p.note) + ')' : ''}`).join(' · ') : '<br>아직 지정한 센터가 없습니다.');
+                const mix = Object.entries(d.service_mix || {}).map(([k, v]) => `${escapeHtml(k)} ${v}곳`).join(' · ');
+                box.innerHTML = `<b>${d.used} / ${d.limit}곳</b> 지정 · 남은 자리 <b>${d.remaining}곳</b> · 센터당 이용자 ${d.resident_limit}명까지 무료`
+                    + (mix ? `<br>업종 구성: ${mix}` : '')
+                    + (d.partners.length ? '<br>' + d.partners.map(p => `${escapeHtml(p.center_name)} (이용자 ${p.resident_count}/${d.resident_limit}${p.resident_count >= d.resident_limit ? ' · 상한 도달' : ''})${p.note ? ' · ' + escapeHtml(p.note) : ''}`).join('<br>') : '<br>아직 지정한 센터가 없습니다.');
             } catch (e) {
                 box.textContent = '확인하지 못했습니다: ' + e.message;
             }

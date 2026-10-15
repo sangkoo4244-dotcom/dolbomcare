@@ -144,3 +144,38 @@ def test_convert_to_paid_ends_the_trial_and_new_centers_get_a_30_day_trial(env):
     db.expire_all()
     new = db.query(models.Center).filter_by(name="새센터").one()
     assert new.plan == "trial" and 29 <= (new.trial_ends_at - NOW).days <= 30
+
+
+def test_partner_centers_can_register_up_to_30_residents_only(env):
+    db, client = env
+    # 파트너 센터(id=4)에 이용자 29명을 미리 넣고, 30번째까지만 허용
+    for i in range(29):
+        db.add(models.Resident(center_id=4, name=f"이용자{i}", care_grade=3, client_type="일반"))
+    db.commit()
+    body = {"center_id": 4, "name": "서른번째", "birth_date": "1940-01-01", "age": 85, "care_grade": 3, "client_type": "일반", "health_status": "stable", "gender": "여"}
+    assert client.post("/api/v1/residents/", json=body, headers=PARTNER_MGR).status_code == 200
+    r = client.post("/api/v1/residents/", json={**body, "name": "서른한번째", "birth_date": "1941-01-01"}, headers=PARTNER_MGR)
+    assert r.status_code == 400 and "30명" in r.json()["detail"]
+    assert db.query(models.Resident).filter_by(center_id=4).count() == 30
+    # 엑셀 일괄 등록도 상한 안에서만 (검사만 하는 dry_run은 통과해도 저장은 거절)
+    rows = [{"이름": "일괄1", "성별": "여", "생년월일": "1942-02-02", "요양등급": "3", "소득분류": ""}]
+    saved = client.post("/api/v1/residents/import", json={"rows": rows, "dry_run": False}, headers=PARTNER_MGR)
+    assert saved.status_code == 400 and db.query(models.Resident).filter_by(center_id=4).count() == 30
+    # 파트너가 아닌 센터는 상한이 없다
+    assert plans.resident_limit(db.query(models.Center).filter_by(id=3).one()) is None
+    # 상태 응답에 사용량이 담긴다(사이드바 표시용)
+    plan = client.get("/api/v1/users/me", headers=PARTNER_MGR).json()["center_plan"]
+    assert (plan["state"], plan["resident_limit"], plan["resident_count"]) == ("partner", 30, 30)
+    assert "resident_limit" not in client.get("/api/v1/users/me", headers=TRIAL_MGR).json()["center_plan"]
+
+
+def test_operator_sees_the_service_mix_and_resident_counts_of_partners(env):
+    db, client = env
+    db.query(models.Center).filter_by(id=4).update({"service_types": "방문요양,방문목욕"})
+    db.add(models.Center(id=7, name="주야간파트너", plan="partner", partner_since=NOW, service_types="주야간보호"))
+    db.add(models.Resident(center_id=7, name="가", care_grade=3, client_type="일반"))
+    db.commit()
+    data = client.get("/api/v1/admin/partners", headers=OPERATOR).json()
+    assert data["resident_limit"] == 30 and data["service_mix"] == {"방문요양": 1, "방문목욕": 1, "주야간보호": 1}
+    by_name = {p["center_name"]: p for p in data["partners"]}
+    assert by_name["주야간파트너"]["resident_count"] == 1 and by_name["파트너센터"]["services"] == ["방문요양", "방문목욕"]

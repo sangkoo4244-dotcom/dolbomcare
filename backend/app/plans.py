@@ -10,6 +10,7 @@ from typing import Optional
 
 TRIAL_DAYS = 30
 PARTNER_SLOT_LIMIT = 30
+PARTNER_RESIDENT_LIMIT = 30  # 파트너 센터가 무료로 등록할 수 있는 이용자 수 (넘으면 요금제를 시작해야 한다)
 
 PLAN_TRIAL = "trial"
 PLAN_PARTNER = "partner"
@@ -43,6 +44,37 @@ def center_plan_info(center, now: Optional[datetime] = None) -> dict:
         else:
             info.update(state="trial_expired", days_left=0, read_only=True)
     return info
+
+
+def resident_limit(center) -> Optional[int]:
+    """센터가 등록할 수 있는 이용자 수 상한. 파트너만 상한이 있고, 나머지는 제한 없음(None)."""
+    return PARTNER_RESIDENT_LIMIT if getattr(center, "plan", None) == PLAN_PARTNER else None
+
+
+def plan_info_with_usage(db, center) -> dict:
+    """center_plan_info에 파트너의 이용자 수 사용량(resident_count/resident_limit)을 더한다."""
+    info = center_plan_info(center)
+    limit = resident_limit(center)
+    if limit is not None:
+        from app.models import Resident
+        info["resident_limit"] = limit
+        info["resident_count"] = db.query(Resident).filter(Resident.center_id == center.id).count()
+    return info
+
+
+def assert_resident_capacity(db, center, adding: int = 1) -> None:
+    """파트너 센터가 상한을 넘겨 이용자를 등록하려 하면 거절한다."""
+    limit = resident_limit(center)
+    if limit is None or not center:
+        return
+    from fastapi import HTTPException
+    from app.models import Resident
+    count = db.query(Resident).filter(Resident.center_id == center.id).count()
+    if count + adding > limit:
+        raise HTTPException(
+            status_code=400,
+            detail=f"파트너 센터는 이용자 {limit}명까지 무료입니다 (현재 {count}명). 더 등록하려면 요금제를 시작해 주세요 - 이음로직에 문의해 주세요.",
+        )
 
 
 def is_write_blocked(center, method: str, path: str, now: Optional[datetime] = None) -> bool:
