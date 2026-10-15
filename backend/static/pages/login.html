@@ -200,8 +200,8 @@
 
                 <div class="trial-cta-box">
                     <div class="demo-title">아직 계정이 없는 센터장이신가요?</div>
-                    <p class="trial-cta-desc">우리 센터로 15일 무료체험을 신청하면, 확인 후 로그인 정보를 보내드립니다.</p>
-                    <button type="button" class="trial-cta-button" onclick="openTrialRequestModal()">15일 무료체험 신청하기</button>
+                    <p class="trial-cta-desc">우리 센터로 1개월 무료체험을 신청하면, 확인 후 로그인 정보를 보내드립니다.</p>
+                    <button type="button" class="trial-cta-button" onclick="openTrialRequestModal()">1개월 무료체험 신청하기</button>
                 </div>
 
                 <div class="demo-box">
@@ -216,8 +216,8 @@
                     </div>
                     <div id="demoExpiredBox" style="display:none;">
                         <div class="demo-title">둘러보기 체험 기간(3일)이 끝났습니다</div>
-                        <p class="demo-desc">더 보시려면 우리 센터로 실제 15일 무료체험을 신청해 주세요. 샘플이 아닌 우리 센터만의 데이터로 바로 시작할 수 있습니다.</p>
-                        <button type="button" class="trial-cta-button" onclick="openTrialRequestModal()">15일 무료체험 신청하기</button>
+                        <p class="demo-desc">더 보시려면 우리 센터로 실제 1개월 무료체험을 신청해 주세요. 샘플이 아닌 우리 센터만의 데이터로 바로 시작할 수 있습니다.</p>
+                        <button type="button" class="trial-cta-button" onclick="openTrialRequestModal()">1개월 무료체험 신청하기</button>
                     </div>
                 </div>
 
@@ -241,7 +241,7 @@
 
     <div class="trial-modal-backdrop" id="trialRequestBackdrop">
         <div class="trial-modal">
-            <h3>15일 무료체험 신청</h3>
+            <h3>1개월 무료체험 신청</h3>
             <p class="trial-modal-sub">아래 정보를 보내주시면 확인 후 센터 계정과 로그인 정보를 이메일로 보내드립니다.</p>
             <form id="trialRequestForm" novalidate>
                 <div class="field">
@@ -260,6 +260,10 @@
                     <label for="trPhone">연락처 (선택)</label>
                     <input id="trPhone" type="tel" autocomplete="tel">
                 </div>
+                <label class="field" style="display:flex;gap:10px;align-items:flex-start;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:10px;padding:10px 12px;cursor:pointer;">
+                    <input id="trPartner" type="checkbox" style="margin-top:3px;width:18px;height:18px;padding:0;flex:0 0 18px;">
+                    <span style="flex:1;min-width:0;font-size:13.5px;line-height:1.5;color:#065F46;"><b>파트너 센터 이벤트에 함께 신청</b> (선착순 30곳, 기간 제한 없이 무료)<br><span id="trPartnerSlots" style="font-size:12.5px;color:#047857;"></span></span>
+                </label>
                 <div class="trial-modal-actions">
                     <button type="button" class="trial-modal-cancel" onclick="closeTrialRequestModal()">취소</button>
                     <button type="submit" class="trial-modal-submit">이메일로 신청하기</button>
@@ -334,9 +338,21 @@
         // 체험 신청: 자동 가입이 아직 없어서, 메일 앱으로 문의를 접수하고 운영자가
         // 운영자 콘솔에서 직접 센터를 만들어 로그인 정보를 보내준다
         function openTrialRequestModal() {
+            showPartnerSlots();
             document.getElementById('trialRequestBackdrop').classList.add('open');
             document.getElementById('trCenterName').focus();
         }
+
+        // 파트너 이벤트의 남은 자리를 보여 주고, 요금제 화면에서 넘어온 경우(#partner) 체크해 둔다
+        async function showPartnerSlots() {
+            try {
+                const r = await fetch('/api/v1/centers/partner-slots');
+                if (!r.ok) return;
+                const d = await r.json();
+                document.getElementById('trPartnerSlots').textContent = d.remaining > 0 ? `남은 자리 ${d.remaining}곳` : '자리가 모두 찼습니다. 신청은 대기로 접수됩니다.';
+            } catch (e) { /* 자리 안내가 없어도 신청은 된다 */ }
+        }
+        if (location.hash === '#partner') window.addEventListener('load', () => { openTrialRequestModal(); document.getElementById('trPartner').checked = true; });
 
         function closeTrialRequestModal() {
             document.getElementById('trialRequestBackdrop').classList.remove('open');
@@ -350,12 +366,13 @@
             e.preventDefault();
             if (!e.currentTarget.reportValidity()) return;
             const v = (id) => document.getElementById(id).value.trim();
-            const subject = '[돌봄케어 무료체험 신청] ' + v('trCenterName');
+            const subject = (document.getElementById('trPartner').checked ? '[파트너 이벤트] ' : '') + '[돌봄케어 무료체험 신청] ' + v('trCenterName');
             const body = [
                 '센터명: ' + v('trCenterName'),
                 '담당자명: ' + v('trManagerName'),
                 '이메일: ' + v('trEmail'),
                 '연락처: ' + (v('trPhone') || '(미입력)'),
+                '파트너 센터 이벤트 신청: ' + (document.getElementById('trPartner').checked ? '예' : '아니오'),
             ].join('\n');
             location.href = 'mailto:contact@eeum-logic.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
         });

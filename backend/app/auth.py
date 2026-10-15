@@ -1,13 +1,14 @@
 import os
 import secrets
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User
+from app.models import Center, User
+from app.plans import READ_ONLY_MESSAGE, is_write_blocked
 
 SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_urlsafe(32)
 ALGORITHM = "HS256"
@@ -16,6 +17,7 @@ bearer = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     db: Session = Depends(get_db),
 ) -> User:
@@ -30,7 +32,23 @@ def get_current_user(
     user = db.query(User).filter(User.id == user_id).first()
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="로그인이 만료되었거나 올바르지 않습니다")
+    _block_writes_after_trial(request, user, db)
     return user
+
+
+def _block_writes_after_trial(request: Request, user: User, db: Session) -> None:
+    """무료 체험이 끝난 센터는 읽기 전용이다. 이 확인이 실패(DB 오류 등)해도 일하는 사람을 막지 않는다."""
+    if request.method in ("GET", "HEAD", "OPTIONS") or not user.center_id:
+        return
+    try:
+        center = db.query(Center).filter(Center.id == user.center_id).first()
+        blocked = bool(center) and is_write_blocked(center, request.method, request.url.path)
+    except Exception as e:
+        db.rollback()
+        print(f"⚠️ 체험 기간 확인 실패 (요청은 계속 진행): {e}")
+        return
+    if blocked:
+        raise HTTPException(status_code=402, detail=READ_ONLY_MESSAGE)
 
 
 def require_manager(user: User = Depends(get_current_user)) -> User:

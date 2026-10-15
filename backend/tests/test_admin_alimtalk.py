@@ -397,7 +397,7 @@ def test_force_delete_keeps_guardian_shared_with_other_center(client):
     session.close()
 
 
-def test_create_center_sets_15_day_trial(client):
+def test_create_center_sets_30_day_trial(client):
     headers = auth(1, "center_manager", "owner@eeumlogic.com")
     created = client.post("/api/v1/admin/centers", headers=headers, json={
         "center_name": "체험센터1", "manager_name": "체험센터장",
@@ -409,7 +409,7 @@ def test_create_center_sets_15_day_trial(client):
     assert row["trial_ends_at"] is not None
     ends_at = datetime.fromisoformat(row["trial_ends_at"])
     delta = ends_at - datetime.utcnow()
-    assert timedelta(days=14, hours=23) < delta < timedelta(days=15, hours=1)
+    assert timedelta(days=29, hours=23) < delta < timedelta(days=30, hours=1)
 
 
 def test_non_admin_cannot_manage_trial(client):
@@ -478,7 +478,7 @@ def _make_login_user(client, email, password, center_id):
     session.close()
 
 
-def test_login_blocked_when_trial_expired(client):
+def test_login_still_works_when_trial_expired_but_the_center_becomes_read_only(client):
     session = client.Session()
     center = models.Center(name="만료로그인센터", trial_ends_at=datetime.utcnow() - timedelta(days=1))
     session.add(center)
@@ -488,8 +488,10 @@ def test_login_blocked_when_trial_expired(client):
     _make_login_user(client, "expired-login@test.com", "password123", center_id)
 
     res = client.post("/api/v1/users/login", json={"email": "expired-login@test.com", "password": "password123"})
-    assert res.status_code == 403
-    assert "체험 기간" in res.json()["detail"]
+    # 체험이 끝나도 로그인은 되고(자료는 볼 수 있다), 읽기 전용이라는 상태가 함께 내려온다
+    assert res.status_code == 200
+    plan = res.json()["center_plan"]
+    assert (plan["state"], plan["read_only"]) == ("trial_expired", True)
 
 
 def test_login_allowed_when_trial_not_expired(client):

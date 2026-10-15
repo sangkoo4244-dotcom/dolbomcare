@@ -18,6 +18,15 @@ def get_kakao_js_key():
     return {"key": KAKAO_JS_KEY}
 
 
+@router.get("/partner-slots")
+def partner_slots(db: Session = Depends(get_db)):
+    """파트너 센터 이벤트의 남은 자리 (로그인 없이 볼 수 있다: 요금제·로그인 화면 안내용). 센터 이름은 내려주지 않는다."""
+    from app.models import Center as _Center
+    from app.plans import PARTNER_SLOT_LIMIT, PLAN_PARTNER
+    used = db.query(_Center).filter(_Center.plan == PLAN_PARTNER).count()
+    return {"limit": PARTNER_SLOT_LIMIT, "used": used, "remaining": max(0, PARTNER_SLOT_LIMIT - used)}
+
+
 @router.get("/directory")
 def list_public_centers(q: Optional[str] = None, db: Session = Depends(get_db)):
     """센터를 못 정한 예비 보호자용 공개 디렉토리 (로그인 불필요, find_center.html이 쓴다).

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.schemas import LoginRequest, LoginResponse, UserCreate, UserResponse
 from app.models import User, Center, PasswordResetToken
 from app.database import get_db
+from app.plans import center_plan_info
 from app.auth import SECRET_KEY, get_current_user, require_manager
 from app.email_service import send_email
 from passlib.context import CryptContext
@@ -87,22 +88,16 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
     if not verify_password(request.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    plan_info = None
     if user.center_id:
         try:
             center = db.query(Center).filter(Center.id == user.center_id).first()
-            if center and center.trial_ends_at and center.trial_ends_at < datetime.utcnow():
-                raise HTTPException(
-                    status_code=403,
-                    detail="무료 체험 기간(15일)이 종료되었습니다. 정식 이용을 원하시면 이음로직에 문의해 주세요.",
-                )
-        except HTTPException:
-            raise
+            plan_info = center_plan_info(center) if center else None
         except Exception as e:
-            # trial_ends_at 컬럼 마이그레이션이 아직 반영 안 됐거나 DB 조회가 실패해도
-            # 로그인 자체를 막아서는 안 된다 - 체험 기간 확인은 그냥 건너뛴다.
+            # 이용 상태 조회가 실패해도 로그인 자체를 막아서는 안 된다 (체험이 끝나도 로그인은 되고 읽기 전용이 된다).
             # PostgreSQL은 에러난 트랜잭션을 롤백하지 않으면 같은 커넥션의 다음 쿼리까지 막히므로 롤백한다.
             db.rollback()
-            print(f"⚠️ 체험 기간 확인 실패 (로그인은 계속 진행): {e}")
+            print(f"⚠️ 이용 상태 확인 실패 (로그인은 계속 진행): {e}")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
@@ -120,7 +115,8 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
             "center_id": user.center_id,
             "is_active": user.is_active,
             "created_at": user.created_at.isoformat() if user.created_at else None
-        }
+        },
+        "center_plan": plan_info,
     }
 
 
@@ -307,9 +303,17 @@ class ProfileUpdate(BaseModel):
 
 
 @router.get("/me")
-async def get_my_profile(actor: User = Depends(get_current_user)):
+async def get_my_profile(actor: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """본인 프로필 조회 (역할 공통 - 요양사·센터장·보호자 모두)."""
+    plan_info = None
+    if actor.center_id:
+        try:
+            center = db.query(Center).filter(Center.id == actor.center_id).first()
+            plan_info = center_plan_info(center) if center else None
+        except Exception:
+            db.rollback()
     return {
+        "center_plan": plan_info,
         "id": actor.id,
         "email": actor.email,
         "full_name": actor.full_name,

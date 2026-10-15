@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>요금제 - 돌봄케어 | 이음로직</title>
-    <meta name="description" content="돌봄케어 요금제. 이용자(수급자) 수에 비례한 단순한 요금제 하나로, 음성 기록·자동 청구·급여 계산·보호자 공유까지 기본 포함합니다. 15일 무료체험.">
+    <meta name="description" content="돌봄케어 요금제. 이용자(수급자) 수에 비례한 단순한 요금제 하나로, 음성 기록·자동 청구·급여 계산·보호자 공유까지 기본 포함합니다. 1개월 무료체험.">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -187,7 +187,11 @@
             <p>기능으로 등급을 나누지 않습니다. 이용자 수 구간에 맞는 요금 하나만 내면, 음성 기록부터 급여 계산까지 전부 기본 포함입니다.</p>
             <div class="trial-badge">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
-                15일 무료체험 · 신용카드 등록 불필요 · 셋팅비 없음
+                1개월 무료체험 · 신용카드 등록 불필요 · 셋팅비 없음
+            </div>
+            <div id="partnerBanner" style="display:none;margin:18px auto 0;max-width:720px;padding:14px 18px;border-radius:14px;background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46;font-size:15px;line-height:1.7;text-align:center;">
+                <b>오픈 기념 파트너 센터 이벤트</b> · 선착순 30곳은 <b>기간 제한 없이 무료</b>로 쓸 수 있습니다 (방문요양·방문목욕·방문간호·주야간보호 센터).<br>
+                남은 자리 <b id="partnerRemaining" style="font-size:18px;">-</b>곳 · <a href="/pages/login.html#partner" style="color:#047857;font-weight:800;">파트너 센터 신청하기 ›</a>
             </div>
         </div>
     </section>
@@ -207,7 +211,7 @@
                         <li>직원·일정 관리</li>
                         <li>공단평가 준비 자료</li>
                     </ul>
-                    <button class="btn-block secondary" onclick="selectPlan('starter')">15일 무료체험 시작</button>
+                    <button class="btn-block secondary" onclick="selectPlan('starter')">1개월 무료체험 시작</button>
                 </div>
 
                 <div class="price-card featured">
@@ -220,7 +224,7 @@
                         <li>이용자 수 제한 없음</li>
                         <li>우선 이메일 지원</li>
                     </ul>
-                    <button class="btn-block primary" onclick="selectPlan('standard')">15일 무료체험 시작</button>
+                    <button class="btn-block primary" onclick="selectPlan('standard')">1개월 무료체험 시작</button>
                 </div>
 
                 <div class="price-card">
@@ -263,7 +267,7 @@
                     <div class="compare-type">돌봄케어</div>
                     <h4>음성 기록 + 자동 청구·급여 + 보호자 공유</h4>
                     <div class="compare-price">이용자 15명까지 월 19,000원부터</div>
-                    <p class="desc">비슷한 가격대에서, 방문 중 말로 남기는 음성 기록과 보호자용 모바일 화면을 기본으로 포함합니다. 15일 무료체험, 셋팅비 없음.</p>
+                    <p class="desc">비슷한 가격대에서, 방문 중 말로 남기는 음성 기록과 보호자용 모바일 화면을 기본으로 포함합니다. 1개월 무료체험, 셋팅비 없음.</p>
                 </div>
             </div>
             <p class="compare-note">※ 위 가격대는 각 프로그램의 공개된 요금 안내를 참고한 일반적인 수준이며, 실제 비용은 기관 규모와 계약 조건에 따라 달라질 수 있습니다.</p>
@@ -279,7 +283,7 @@
             <div class="faq-grid">
                 <div class="faq-item">
                     <h3>무료 체험은 있나요?</h3>
-                    <p>네. 신용카드 등록 없이 15일 무료체험을 제공합니다. 체험 기간에는 언제든 취소할 수 있고, 유료 전환 전 별도 동의 절차를 거칩니다.</p>
+                    <p>네. 신용카드 등록 없이 1개월 무료체험을 제공합니다. 체험이 끝나도 자료는 그대로 두고 보기·내려받기만 가능한 상태가 되며, 요금제를 시작하면 다시 쓸 수 있습니다. 체험 기간에는 언제든 취소할 수 있고, 유료 전환 전 별도 동의 절차를 거칩니다.</p>
                 </div>
                 <div class="faq-item">
                     <h3>이용자 수가 늘어나 구간이 바뀌면 어떻게 되나요?</h3>
@@ -345,6 +349,12 @@
             mobileMenu.classList.remove('open');
             navToggle.setAttribute('aria-expanded', 'false');
         }));
+
+        fetch('/api/v1/centers/partner-slots').then(r => r.ok ? r.json() : null).then(d => {
+            if (!d || d.remaining <= 0) return;
+            document.getElementById('partnerRemaining').textContent = d.remaining;
+            document.getElementById('partnerBanner').style.display = '';
+        }).catch(() => {});
 
         function selectPlan(plan) {
             if (plan === 'enterprise') {

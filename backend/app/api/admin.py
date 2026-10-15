@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.users import get_password_hash
 from app.auth import require_platform_admin
 from app.database import get_db
+from app.plans import PARTNER_SLOT_LIMIT, PLAN_PAID, PLAN_PARTNER, PLAN_TRIAL, TRIAL_DAYS, center_plan_info
 from app.demo_seed import DEMO_CENTER_NAME, seed_demo
 from app.email_service import send_email
 from app.models import (
@@ -117,7 +118,6 @@ class CenterCreateRequest(BaseModel):
     manager_password: str
 
 
-TRIAL_DAYS = 15
 
 
 @router.post("/centers")
@@ -126,7 +126,7 @@ def create_center(
 ):
     """새 센터와 센터장 계정을 만든다 (운영자 전용). 지금은 가입 페이지가 실제 계정을 만들지
     않기 때문에, 파일럿 센터를 쓰게 하려면 운영자가 이 화면에서 직접 만들어 전달해야 한다.
-    15일 무료 체험이 자동으로 시작되고, 기간이 지나면 로그인이 막힌다 (users.py 로그인 참고)."""
+    무료 체험(TRIAL_DAYS일)이 자동으로 시작되고, 기간이 지나면 읽기 전용이 된다 (plans.py 참고)."""
     if not body.center_name.strip():
         raise HTTPException(status_code=400, detail="센터명을 입력해 주세요")
     if len(body.manager_password) < 8:
@@ -134,7 +134,7 @@ def create_center(
     if db.query(User).filter(User.email == body.manager_email).first():
         raise HTTPException(status_code=400, detail="이미 사용 중인 이메일입니다")
 
-    center = Center(name=body.center_name.strip(), trial_ends_at=datetime.utcnow() + timedelta(days=TRIAL_DAYS))
+    center = Center(name=body.center_name.strip(), plan=PLAN_TRIAL, trial_ends_at=datetime.utcnow() + timedelta(days=TRIAL_DAYS))
     db.add(center)
     db.flush()
     manager = User(
@@ -150,10 +150,10 @@ def create_center(
 
     email_sent = send_email(
         to=manager.email,
-        subject=f"[돌봄케어] {center.name} 15일 무료체험 계정이 만들어졌습니다",
+        subject=f"[돌봄케어] {center.name} {TRIAL_DAYS}일 무료체험 계정이 만들어졌습니다",
         body=(
             f"{body.manager_name}님, 안녕하세요.\n\n"
-            f"신청하신 돌봄케어 15일 무료체험 계정이 만들어졌습니다.\n\n"
+            f"신청하신 돌봄케어 {TRIAL_DAYS}일 무료체험 계정이 만들어졌습니다.\n\n"
             f"센터명: {center.name}\n"
             f"로그인 이메일: {manager.email}\n"
             f"비밀번호: {body.manager_password}\n\n"
@@ -189,6 +189,10 @@ def list_alimtalk_overview(db: Session = Depends(get_db), actor: User = Depends(
             "resident_count": db.query(Resident).filter(Resident.center_id == c.id).count(),
             "staff_count": db.query(User).filter(User.center_id == c.id).count(),
             "trial_ends_at": c.trial_ends_at.isoformat() if c.trial_ends_at else None,
+            "plan": center_plan_info(c)["plan"],
+            "plan_state": center_plan_info(c)["state"],
+            "partner_since": c.partner_since.isoformat() if c.partner_since else None,
+            "partner_note": c.partner_note,
         }
         for c in centers
     ]
@@ -223,8 +227,65 @@ def convert_to_paid(center_id: int, db: Session = Depends(get_db), actor: User =
     if not center:
         raise HTTPException(status_code=404, detail="센터를 찾을 수 없습니다")
     center.trial_ends_at = None
+    center.plan = PLAN_PAID
     db.commit()
     return {"status": "success", "center_id": center.id}
+
+
+class PartnerRequest(BaseModel):
+    note: str = ""
+
+
+def _partner_slots(db: Session) -> dict:
+    used = db.query(Center).filter(Center.plan == PLAN_PARTNER).count()
+    return {"limit": PARTNER_SLOT_LIMIT, "used": used, "remaining": max(0, PARTNER_SLOT_LIMIT - used)}
+
+
+@router.get("/partners")
+def list_partners(db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    """파트너(무기한 무료 이벤트) 센터와 남은 자리 (운영자 전용)."""
+    partners = db.query(Center).filter(Center.plan == PLAN_PARTNER).order_by(Center.partner_since).all()
+    return {
+        **_partner_slots(db),
+        "partners": [{"center_id": c.id, "center_name": c.name, "partner_since": c.partner_since.isoformat() if c.partner_since else None,
+                      "note": c.partner_note} for c in partners],
+    }
+
+
+@router.post("/centers/{center_id}/partner")
+def make_partner(center_id: int, body: PartnerRequest, db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    """센터를 파트너로 지정한다: 기간 제한 없이 무료. 자리가 남아 있을 때만 지정할 수 있다."""
+    center = db.query(Center).filter(Center.id == center_id).first()
+    if not center:
+        raise HTTPException(status_code=404, detail="센터를 찾을 수 없습니다")
+    if center.plan == PLAN_PARTNER:
+        raise HTTPException(status_code=400, detail="이미 파트너 센터입니다")
+    if _partner_slots(db)["remaining"] <= 0:
+        raise HTTPException(status_code=400, detail=f"파트너 자리 {PARTNER_SLOT_LIMIT}곳이 모두 찼습니다")
+    center.plan = PLAN_PARTNER
+    center.trial_ends_at = None
+    center.partner_since = datetime.utcnow()
+    center.partner_note = (body.note or "").strip() or None
+    db.commit()
+    return {"status": "success", "center_id": center.id, **_partner_slots(db)}
+
+
+class EndPartnerRequest(BaseModel):
+    days: int = TRIAL_DAYS
+
+
+@router.post("/centers/{center_id}/end-partner")
+def end_partner(center_id: int, body: EndPartnerRequest, db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    """파트너를 해제한다. 갑자기 막히지 않도록 days일 동안의 체험 기간으로 돌려보낸다(기본 30일, 0이면 바로 읽기 전용)."""
+    center = db.query(Center).filter(Center.id == center_id).first()
+    if not center or center.plan != PLAN_PARTNER:
+        raise HTTPException(status_code=404, detail="파트너 센터를 찾을 수 없습니다")
+    if body.days < 0:
+        raise HTTPException(status_code=400, detail="일수는 0 이상이어야 합니다")
+    center.plan = PLAN_TRIAL
+    center.trial_ends_at = datetime.utcnow() + timedelta(days=body.days)
+    db.commit()
+    return {"status": "success", "center_id": center.id, "trial_ends_at": center.trial_ends_at.isoformat(), **_partner_slots(db)}
 
 
 def _cascade_delete_center(db: Session, center: Center) -> None:

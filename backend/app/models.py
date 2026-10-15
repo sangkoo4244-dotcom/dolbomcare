@@ -39,6 +39,9 @@ class Center(Base):
     longitude = Column(Float, nullable=True)
     service_types = Column(String, nullable=True)  # 센터가 직접 선택한 제공 서비스 종류, 쉼표로 구분 (예: "방문요양,방문목욕")
     alimtalk_balance = Column(Integer, default=0)  # 알림톡 월 무료 한도를 넘긴 뒤 건당 차감되는 충전 잔액(원)
+    plan = Column(String, nullable=True)  # trial / partner / paid. NULL이면 trial_ends_at으로 판단(기존 센터는 정식)
+    partner_since = Column(DateTime, nullable=True)  # 파트너(무기한 무료 이벤트) 지정 시각
+    partner_note = Column(String, nullable=True)  # 파트너 지정 사유·조건 메모(운영자용)
     trial_ends_at = Column(DateTime, nullable=True)  # 무료 체험 종료 시각. NULL이면 체험 제한 없음(정식 전환 또는 기존 센터)
     manager_id = Column(Integer, ForeignKey("users.id"))
     residents_count = Column(Integer)

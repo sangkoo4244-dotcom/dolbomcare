@@ -18,6 +18,9 @@
                 localStorage.removeItem('user');
                 window.location.href = './login.html';
             }
+            if (response.status === 402) {  // 무료 체험이 끝나 읽기 전용인 센터가 저장·수정을 시도했다
+                response.clone().json().then(d => showPlanNotice(d && d.detail)).catch(() => showPlanNotice());
+            }
             return response;
         });
     };
@@ -27,6 +30,40 @@
 // "오늘 날짜"는 항상 이걸로 구한다. new Date().toISOString().slice(0,10)은 UTC 기준이라
 // 한국 시간 자정~오전 9시 사이에는 실제로는 오늘인데 어제 날짜를 돌려준다 (실제 버그였음 - 2026-10-12
 // 아침에 음성기록 기본 방문일시가 전날로 잡히고, "오늘 방문 예정" 패널이 비어보이는 문제로 발견됨).
+function showPlanNotice(message) {
+    if (document.getElementById('planNotice')) return;
+    const box = document.createElement('div');
+    box.id = 'planNotice';
+    box.setAttribute('role', 'alert');
+    box.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9999;max-width:min(560px,92vw);background:#7F1D1D;color:#fff;padding:14px 18px;border-radius:12px;font-size:14px;line-height:1.6;box-shadow:0 8px 24px rgba(0,0,0,.25);';
+    box.textContent = message || '무료 체험 기간이 끝나 지금은 자료를 보기만 할 수 있습니다. 계속 쓰시려면 이음로직에 문의해 주세요.';
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), 8000);
+}
+
+// 사이드바 아래에 센터의 이용 상태(체험 남은 일수 / 체험 종료·읽기 전용 / 파트너 센터)를 작게 보여 준다. 정식 센터와 보호자에게는 아무것도 보이지 않는다.
+async function showPlanPill() {
+    if (document.getElementById('planPill')) return;
+    try {
+        const r = await fetch('/api/v1/users/me');
+        if (!r.ok) return;
+        const plan = (await r.json()).center_plan;
+        if (!plan || !['trial', 'trial_expired', 'partner'].includes(plan.state)) return;
+        const credit = document.getElementById('sideCredit');
+        if (!credit) return;
+        const look = {
+            trial: ['체험 중 · ' + plan.days_left + '일 남음', '#FEF3C7', '#92400E'],
+            trial_expired: ['체험 종료 · 읽기 전용', '#FEE2E2', '#991B1B'],
+            partner: ['파트너 센터 · 무기한 무료', '#D1FAE5', '#065F46'],
+        }[plan.state];
+        const pill = document.createElement('div');
+        pill.id = 'planPill';
+        pill.textContent = look[0];
+        pill.style.cssText = `margin-bottom:10px;padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700;background:${look[1]};color:${look[2]};text-align:center;`;
+        credit.insertBefore(pill, credit.firstChild);
+    } catch (e) { /* 상태 표시는 없어도 화면은 정상 동작해야 한다 */ }
+}
+
 function todayLocal(d = new Date()) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
@@ -258,6 +295,7 @@ function renderSidebar() {
     }
 
     showAdminConsoleLinkIfOperator();
+    showPlanPill();
     initProfileMenu();
 }
 
