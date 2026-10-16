@@ -240,7 +240,8 @@ def list_trial_requests(db: Session = Depends(get_db), actor: User = Depends(req
     return {"requests": [
         {"id": r.id, "center_name": r.center_name, "manager_name": r.manager_name, "email": r.email, "phone": r.phone,
          "partner_interest": bool(r.partner_interest), "status": r.status, "created_at": r.created_at.isoformat() if r.created_at else None,
-         "institution_code": r.institution_code, "institution_verified": bool(r.institution_verified)}
+         "institution_code": r.institution_code, "institution_verified": bool(r.institution_verified),
+         "cert_name": r.cert_name, "has_cert": bool(r.cert_data)}
         for r in rows
     ], "new_count": sum(1 for r in rows if r.status == "new")}
 
@@ -262,6 +263,16 @@ async def import_facilities(file: UploadFile = File(...), db: Session = Depends(
     except FacilityImportError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return {"status": "success", "data": result}
+
+
+@router.get("/trial-requests/{request_id}/certificate")
+def get_trial_certificate(request_id: int, db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    """체험 신청에 올라온 지정서 사본. 운영자만 연다."""
+    from app.models import TrialRequest
+    row = db.query(TrialRequest).filter(TrialRequest.id == request_id).first()
+    if not row or not row.cert_data:
+        raise HTTPException(status_code=404, detail="지정서 사본이 없습니다")
+    return {"status": "success", "data": {"file_name": row.cert_name, "file_type": row.cert_type, "file_data": row.cert_data}}
 
 
 @router.post("/trial-requests/{request_id}/handled")

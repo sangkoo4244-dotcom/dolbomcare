@@ -749,6 +749,9 @@ class TrialRequest(Base):
     partner_interest = Column(Boolean, default=False)  # 파트너 센터 이벤트에 함께 신청
     institution_code = Column(String, nullable=True)  # 장기요양기관기호(11자리), 공단 기관 목록과 대조해 통과한 값
     institution_verified = Column(Boolean, default=False)
+    cert_name = Column(String, nullable=True)  # 장기요양기관 지정서(재가는 설치신고증명서) 사본 파일 이름
+    cert_type = Column(String, nullable=True)  # application/pdf, image/png, image/jpeg
+    cert_data = Column(Text, nullable=True)  # base64, 3MB 이하
     status = Column(String, default="new")  # new / handled
     created_at = Column(DateTime, default=datetime.now)
 

@@ -248,6 +248,11 @@
                     <div style="font-size:12px;color:#64748B;margin-top:4px;">공단에 등록된 기관만 신청할 수 있습니다.</div>
                 </div>
                 <div class="field">
+                    <label for="trCertificate">장기요양기관 지정서 사본 (재가는 설치신고증명서) *</label>
+                    <input id="trCertificate" type="file" required accept="application/pdf,image/png,image/jpeg">
+                    <div style="font-size:12px;color:#64748B;margin-top:4px;">PDF·PNG·JPG, 3MB 이하. 운영자가 확인한 뒤 승인합니다.</div>
+                </div>
+                <div class="field">
                     <label for="trManagerName">담당자명(센터장) *</label>
                     <input id="trManagerName" required maxlength="50" autocomplete="name">
                 </div>
@@ -372,11 +377,21 @@
             button.disabled = true;
             result.className = 'notice'; result.textContent = '';
             try {
+                const certFile = document.getElementById('trCertificate').files[0];
+                if (!certFile) throw new Error('지정서 사본을 올려 주세요');
+                if (certFile.size > 3 * 1024 * 1024) throw new Error('지정서 사본은 3MB 이하로 올려 주세요');
+                const certData = await new Promise((resolve, reject) => {
+                    const fr = new FileReader();
+                    fr.onload = () => resolve(String(fr.result).split(',')[1]);
+                    fr.onerror = reject;
+                    fr.readAsDataURL(certFile);
+                });
                 const res = await fetch('/api/v1/centers/trial-requests', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         center_name: v('trCenterName'), institution_code: v('trInstitutionCode'), manager_name: v('trManagerName'), email: v('trEmail'),
+                        certificate_name: certFile.name, certificate_type: certFile.type, certificate_data: certData,
                         phone: v('trPhone') || null, partner_interest: document.getElementById('trPartner').checked,
                         website: document.getElementById('trWebsite').value,
                     }),

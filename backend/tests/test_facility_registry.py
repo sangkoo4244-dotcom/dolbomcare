@@ -1,4 +1,5 @@
 """공단 기관 목록 가져오기와 체험 신청의 기관기호 대조: 목록에 있고 기관명이 같은 곳만 신청을 받는다."""
+import base64
 import io
 import zipfile
 from datetime import timedelta
@@ -110,7 +111,9 @@ def test_check_institution_accepts_only_a_listed_code_with_the_same_name(env):
 def test_trial_request_needs_a_listed_facility_and_stores_the_verified_code(env):
     db, client = env
     import_workbook(db, make_xlsx({"일반현황": GENERAL, "입소인원": TYPES}), "a.xlsx")
-    base = {"center_name": "청운노인요양원", "manager_name": "홍길동", "email": "boss@example.com"}
+    base = {"center_name": "청운노인요양원", "manager_name": "홍길동", "email": "boss@example.com",
+            "certificate_name": "지정서.pdf", "certificate_type": "application/pdf",
+            "certificate_data": base64.b64encode(b"%PDF-1.4 test").decode()}
     refused = client.post("/api/v1/centers/trial-requests", json={**base, "institution_code": "99999999999"})
     assert refused.status_code == 400 and "찾지 못했습니다" in refused.json()["detail"]
     assert db.query(models.TrialRequest).count() == 0

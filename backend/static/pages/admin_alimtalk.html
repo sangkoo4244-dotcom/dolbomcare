@@ -665,7 +665,7 @@
                 const d = await res.json();
                 if (!res.ok) throw new Error(d.detail || '조회 실패');
                 box.innerHTML = d.requests.length ? d.requests.map(r => `<div style="border-top:1px solid #F1F5F9;padding:6px 0;${r.status === 'handled' ? 'opacity:.55;' : ''}">
-                    <b>${escapeHtml(r.center_name)}</b>${r.institution_code ? ` · 기관기호 ${escapeHtml(r.institution_code)}${r.institution_verified ? ' <span style="color:#047857;font-weight:700;">(공단 확인)</span>' : ''}` : ' · <span style="color:#B91C1C;">기관기호 없음</span>'} · ${escapeHtml(r.manager_name)} · ${escapeHtml(r.email)}${r.phone ? ' · ' + escapeHtml(r.phone) : ''}
+                    <b>${escapeHtml(r.center_name)}</b>${r.institution_code ? ` · 기관기호 ${escapeHtml(r.institution_code)}${r.institution_verified ? ' <span style="color:#047857;font-weight:700;">(공단 확인)</span>' : ''}` : ' · <span style="color:#B91C1C;">기관기호 없음</span>'} · ${r.has_cert ? ` · <a href="#" onclick="openCertificate(${r.id}); return false;">지정서 보기</a>` : ' · <span style="color:#B91C1C;">지정서 없음</span>'} · ${escapeHtml(r.manager_name)} · ${escapeHtml(r.email)}${r.phone ? ' · ' + escapeHtml(r.phone) : ''}
                     ${r.partner_interest ? '<span style="color:#047857;font-weight:700;"> · 파트너 이벤트 신청</span>' : ''}
                     <span style="color:#64748B;"> · ${escapeHtml((r.created_at || '').slice(0, 16).replace('T', ' '))}</span>
                     ${r.status === 'new' ? `<button type="button" onclick="markHandled(${r.id})" style="margin-left:8px;">처리 완료</button>` : ' · 처리됨'}</div>`).join('') : '들어온 신청이 없습니다.';
@@ -696,6 +696,16 @@
             const d = await res.json().catch(() => ({}));
             msg.textContent = res.ok ? `완료: ${d.data.count.toLocaleString()}개 기관` : (d.detail || '올리지 못했습니다');
             loadFacilityStatus();
+        }
+
+        async function openCertificate(id) {
+            const res = await fetch(`${API_URL}/admin/trial-requests/${id}/certificate`, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok) { alert(d.detail || '지정서를 열지 못했습니다'); return; }
+            const a = document.createElement('a');
+            a.href = `data:${d.data.file_type};base64,${d.data.file_data}`;
+            a.download = d.data.file_name || 'certificate';
+            document.body.appendChild(a); a.click(); a.remove();
         }
 
         async function markHandled(id) {

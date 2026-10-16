@@ -1,3 +1,4 @@
+import base64
 from datetime import timedelta
 
 import pytest
@@ -19,7 +20,8 @@ def auth(uid, email):
 
 OPERATOR = auth(1, "ops@eeum.kr")
 OTHER = auth(2, "real@center.kr")
-FORM = {"center_name": "행복센터", "institution_code": "11111000006", "manager_name": "김센터", "email": "Kim@Center.kr", "phone": "010-1111-2222", "partner_interest": True}
+CERT = {"certificate_name": "지정서.pdf", "certificate_type": "application/pdf", "certificate_data": base64.b64encode(b"%PDF-1.4 test").decode()}
+FORM = {"center_name": "행복센터", "institution_code": "11111000006", "manager_name": "김센터", "email": "Kim@Center.kr", "phone": "010-1111-2222", "partner_interest": True, **CERT}
 FACILITY = {"code": "11111000006", "name": "행복센터", "address": "서울", "designated_date": "20080625", "type_codes": "A03", "source": "test", "imported_at": None}
 
 
@@ -89,3 +91,20 @@ def test_only_operator_can_list_or_handle(env):
     assert client.post("/api/v1/admin/trial-requests/1/handled", headers=OPERATOR).status_code == 200
     assert client.get("/api/v1/admin/trial-requests", headers=OPERATOR).json()["new_count"] == 0
     assert client.post("/api/v1/admin/trial-requests/99/handled", headers=OPERATOR).status_code == 404
+
+
+def test_certificate_is_required_checked_and_only_the_operator_can_open_it(env):
+    db, client = env
+    no_cert = {k: v for k, v in FORM.items() if not k.startswith("certificate")}
+    assert client.post("/api/v1/centers/trial-requests", json=no_cert).status_code == 422
+    bad_type = {**FORM, "certificate_type": "text/plain"}
+    assert client.post("/api/v1/centers/trial-requests", json=bad_type).status_code == 400
+    big = base64.b64encode(b"x" * (3 * 1024 * 1024 + 1)).decode()
+    assert client.post("/api/v1/centers/trial-requests", json={**FORM, "certificate_data": big}).status_code == 400
+    assert client.post("/api/v1/centers/trial-requests", json=FORM).status_code == 200
+    row = client.get("/api/v1/admin/trial-requests", headers=OPERATOR).json()["requests"][0]
+    assert row["has_cert"] is True and row["cert_name"] == "지정서.pdf"
+    rid = db.query(models.TrialRequest).one().id
+    got = client.get(f"/api/v1/admin/trial-requests/{rid}/certificate", headers=OPERATOR).json()["data"]
+    assert base64.b64decode(got["file_data"]) == b"%PDF-1.4 test"
+    assert client.get(f"/api/v1/admin/trial-requests/{rid}/certificate", headers=OTHER).status_code == 403
