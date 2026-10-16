@@ -243,6 +243,18 @@
                     <input id="trCenterName" required maxlength="100" autocomplete="organization">
                 </div>
                 <div class="field">
+                    <label for="trSido">기관이 있는 시도 *</label>
+                    <select id="trSido" required style="width:100%;">
+                        <option value="">시도를 고르세요</option>
+                        <option value="11">서울특별시</option><option value="26">부산광역시</option><option value="27">대구광역시</option>
+                        <option value="28">인천광역시</option><option value="29">광주광역시</option><option value="30">대전광역시</option>
+                        <option value="31">울산광역시</option><option value="36">세종특별자치시</option><option value="41">경기도</option>
+                        <option value="51">강원특별자치도</option><option value="43">충청북도</option><option value="44">충청남도</option>
+                        <option value="52">전북특별자치도</option><option value="46">전라남도</option><option value="47">경상북도</option>
+                        <option value="48">경상남도</option><option value="50">제주특별자치도</option>
+                    </select>
+                </div>
+                <div class="field">
                     <label for="trInstitutionCode">장기요양기관기호 (11자리) *</label>
                     <input id="trInstitutionCode" required inputmode="numeric" maxlength="11" placeholder="장기요양기관지정서에 적힌 11자리 숫자">
                     <div style="font-size:12px;color:#64748B;margin-top:4px;">공단에 등록된 기관만 신청할 수 있습니다.</div>
@@ -390,7 +402,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        center_name: v('trCenterName'), institution_code: v('trInstitutionCode'), manager_name: v('trManagerName'), email: v('trEmail'),
+                        center_name: v('trCenterName'), institution_code: v('trInstitutionCode'), sido_code: v('trSido'), manager_name: v('trManagerName'), email: v('trEmail'),
                         certificate_name: certFile.name, certificate_type: certFile.type, certificate_data: certData,
                         phone: v('trPhone') || null, partner_interest: document.getElementById('trPartner').checked,
                         website: document.getElementById('trWebsite').value,

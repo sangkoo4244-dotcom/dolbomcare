@@ -14,6 +14,7 @@ from app import models
 from app.api import admin, center_directory
 from app.api.users import create_access_token
 from app.database import Base, get_db
+from app import facility_registry
 from app.facility_registry import check_institution, import_workbook
 
 OPERATOR = {"Authorization": "Bearer " + create_access_token({"sub": "ops@eeum.kr", "uid": 1, "role": "center_manager"}, timedelta(hours=1))}
@@ -63,6 +64,7 @@ TYPES = [
 @pytest.fixture
 def env(tmp_path, monkeypatch):
     monkeypatch.setenv("PLATFORM_ADMIN_EMAILS", "ops@eeum.kr")
+    monkeypatch.setattr(facility_registry, "search_api", lambda *a: None)  # 테스트는 실제 공단 API를 부르지 않는다
     engine = create_engine(f"sqlite:///{tmp_path / 'fac.db'}")
     Base.metadata.create_all(bind=engine)
     Session = sessionmaker(bind=engine)
@@ -111,7 +113,7 @@ def test_check_institution_accepts_only_a_listed_code_with_the_same_name(env):
 def test_trial_request_needs_a_listed_facility_and_stores_the_verified_code(env):
     db, client = env
     import_workbook(db, make_xlsx({"일반현황": GENERAL, "입소인원": TYPES}), "a.xlsx")
-    base = {"center_name": "청운노인요양원", "manager_name": "홍길동", "email": "boss@example.com",
+    base = {"center_name": "청운노인요양원", "sido_code": "11", "manager_name": "홍길동", "email": "boss@example.com",
             "certificate_name": "지정서.pdf", "certificate_type": "application/pdf",
             "certificate_data": base64.b64encode(b"%PDF-1.4 test").decode()}
     refused = client.post("/api/v1/centers/trial-requests", json={**base, "institution_code": "99999999999"})
@@ -129,3 +131,24 @@ def test_only_the_operator_can_import_and_non_operators_are_refused(env):
     ok = client.post("/api/v1/admin/facilities/import", files=files, headers=OPERATOR)
     assert ok.status_code == 200 and ok.json()["data"]["count"] == 2
     assert client.get("/api/v1/admin/facilities/status", headers=OPERATOR).json()["data"]["count"] == 2
+
+
+def test_search_api_match_is_used_when_available(env, monkeypatch):
+    db, _ = env
+    monkeypatch.setattr(facility_registry, "search_api", lambda sido, name: [(CODE, "청운노인요양원")])
+    assert check_institution(db, CODE, "청운노인요양원", "11") == {"ok": True, "reason": "match", "name": "청운노인요양원", "code": CODE,
+                                                                 "message": "공단 장기요양기관 검색에서 확인되었습니다"}
+    monkeypatch.setattr(facility_registry, "search_api", lambda sido, name: [(CODE, "다른기관")])
+    assert check_institution(db, CODE, "청운노인요양원", "11")["reason"] == "name_mismatch"
+
+
+def test_falls_back_to_the_file_when_the_api_is_unavailable(env, monkeypatch):
+    db, _ = env
+    import_workbook(db, make_xlsx({"일반현황": GENERAL, "입소인원": TYPES}), "a.xlsx")
+    monkeypatch.setattr(facility_registry, "search_api", lambda sido, name: None)
+    assert check_institution(db, CODE, "청운노인요양원", "11")["reason"] == "match"
+
+
+def test_unknown_sido_is_refused(env):
+    db, _ = env
+    assert check_institution(db, CODE, "청운노인요양원", "99")["reason"] == "invalid_sido"

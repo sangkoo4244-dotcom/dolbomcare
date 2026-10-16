@@ -96,6 +96,7 @@ ADDITIVE_COLUMNS = [
     ("billing_records", "extra_amount", "INTEGER DEFAULT 0"),
     ("trial_requests", "institution_code", "VARCHAR"),
     ("trial_requests", "institution_verified", "BOOLEAN DEFAULT FALSE"),
+    ("facility_registry", "sido_code", "VARCHAR"),
     ("trial_requests", "cert_name", "VARCHAR"),
     ("trial_requests", "cert_type", "VARCHAR"),
     ("trial_requests", "cert_data", "TEXT"),

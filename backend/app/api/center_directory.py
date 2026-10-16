@@ -28,6 +28,7 @@ def get_kakao_js_key():
 class TrialRequestIn(BaseModel):
     center_name: str
     institution_code: str  # 장기요양기관기호(11자리). 공단 기관 목록에 있는 기관만 신청할 수 있다
+    sido_code: str  # 기관이 있는 시도 (공단 시도 코드 2자리)
     certificate_name: str  # 장기요양기관 지정서(재가는 설치신고증명서) 사본
     certificate_type: str
     certificate_data: str  # base64
@@ -55,7 +56,7 @@ def submit_trial_request(body: TrialRequestIn, request: Request, db: Session = D
     if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email) or len(email) > 120:
         raise HTTPException(status_code=400, detail="이메일 형식을 확인해 주세요. (예: name@example.com)")
     phone = (body.phone or "").strip()[:30] or None
-    check = check_institution(db, body.institution_code, name)
+    check = check_institution(db, body.institution_code, name, body.sido_code.strip())
     if not check["ok"]:
         raise HTTPException(status_code=400, detail=check["message"])
     cert_name = (body.certificate_name or "").strip()[:120] or "지정서"

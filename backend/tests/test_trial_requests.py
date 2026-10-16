@@ -11,6 +11,7 @@ from app import models
 from app.api import admin, center_directory
 from app.api.users import create_access_token
 from app.database import Base, get_db
+from app import facility_registry
 
 
 def auth(uid, email):
@@ -21,13 +22,14 @@ def auth(uid, email):
 OPERATOR = auth(1, "ops@eeum.kr")
 OTHER = auth(2, "real@center.kr")
 CERT = {"certificate_name": "지정서.pdf", "certificate_type": "application/pdf", "certificate_data": base64.b64encode(b"%PDF-1.4 test").decode()}
-FORM = {"center_name": "행복센터", "institution_code": "11111000006", "manager_name": "김센터", "email": "Kim@Center.kr", "phone": "010-1111-2222", "partner_interest": True, **CERT}
+FORM = {"center_name": "행복센터", "institution_code": "11111000006", "sido_code": "11", "manager_name": "김센터", "email": "Kim@Center.kr", "phone": "010-1111-2222", "partner_interest": True, **CERT}
 FACILITY = {"code": "11111000006", "name": "행복센터", "address": "서울", "designated_date": "20080625", "type_codes": "A03", "source": "test", "imported_at": None}
 
 
 @pytest.fixture
 def env(tmp_path, monkeypatch):
     monkeypatch.setenv("PLATFORM_ADMIN_EMAILS", "ops@eeum.kr")
+    monkeypatch.setattr(facility_registry, "search_api", lambda *a: None)  # 테스트는 실제 공단 API를 부르지 않는다
     center_directory._recent_requests.clear()
     engine = create_engine(f"sqlite:///{tmp_path / 't.db'}")
     Base.metadata.create_all(bind=engine)

@@ -765,6 +765,7 @@ class FacilityRegistry(Base):
     name = Column(String, nullable=False)
     address = Column(String, nullable=True)
     designated_date = Column(String, nullable=True)  # 지정일자 YYYYMMDD
+    sido_code = Column(String, nullable=True)  # 시도 법정동 코드 (2자리, 예: 11 서울) - 공단 검색 API의 siDoCd
     type_codes = Column(String, nullable=True)  # 기관유형코드(쉼표 구분): A01 노인요양시설, B01 방문요양 등
     source = Column(String, nullable=True)  # 가져온 파일 이름
     imported_at = Column(DateTime, default=datetime.now)
