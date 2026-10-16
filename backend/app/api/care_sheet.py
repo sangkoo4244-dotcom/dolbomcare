@@ -72,7 +72,7 @@ def care_sheet(
     actor: User = Depends(get_current_user),
 ):
     """센터장은 센터 이용자 전체, 요양보호사는 본인이 작성한 기록만 서식에 넣는다."""
-    if actor.role not in ("center_manager", "caregiver"):
+    if actor.role not in ("center_manager", "caregiver", "social_worker"):
         raise HTTPException(status_code=403, detail="권한이 없습니다")
     resident = db.query(Resident).filter(Resident.id == resident_id, Resident.center_id == actor.center_id).first()
     if not resident:

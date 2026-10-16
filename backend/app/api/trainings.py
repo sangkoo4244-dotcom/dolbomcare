@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.auth import require_manager
+from app.auth import get_current_user, require_manager
 from app.database import get_db
 from app.models import Resident, ResidentNotice, TrainingSession, User
 
@@ -121,6 +121,23 @@ def create_session(body: SessionBody, db: Session = Depends(get_db), actor: User
     db.refresh(row)
     names = {u.id: u.full_name for u in db.query(User).filter(User.center_id == actor.center_id).all()}
     return {"status": "success", "data": _session_dict(row, names)}
+
+
+@router.get("/sessions/mine")
+def my_sessions(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    """요양보호사 본인이 참석한 교육 이력 (참석 여부와 서명 여부 포함)."""
+    if actor.role not in ("caregiver", "social_worker") or not actor.center_id:
+        raise HTTPException(status_code=403, detail="직원만 볼 수 있습니다")
+    rows = db.query(TrainingSession).filter(TrainingSession.center_id == actor.center_id).order_by(
+        TrainingSession.session_date.desc(), TrainingSession.id.desc()).all()
+    names = {u.id: u.full_name for u in db.query(User).filter(User.center_id == actor.center_id).all()}
+    mine = []
+    for s in rows:
+        if actor.id in json.loads(s.attendee_ids or "[]"):
+            d = _session_dict(s, names)
+            d["signed"] = actor.id in set(json.loads(s.signed_ids or "[]"))
+            mine.append(d)
+    return {"sessions": mine}
 
 
 @router.get("/sessions")

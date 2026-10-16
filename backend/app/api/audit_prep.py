@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user, require_manager
+from app.auth import get_current_user, require_manager, require_social_or_manager
 from app.database import get_db
 from app.models import (CarePlan, CaseConference, Counseling, CopayInvoice, DailyRecord, IncidentReport, NeedsAssessment, Resident,
                         ResidentNotice, RiskAssessment, ServiceEvaluation, TrainingSession, User)
@@ -29,7 +29,7 @@ def get_resident_audit_packet(
     start: str,
     end: str,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_manager),
+    actor: User = Depends(require_social_or_manager),
 ):
     """한 이용자의 기간 내 평가 준비 자료 (방문기록·기초평가·위험도평가·본인부담금)를 한 번에 모은다."""
     resident = db.query(Resident).filter(Resident.id == resident_id).first()
@@ -138,7 +138,7 @@ def get_resident_audit_packet(
 
 
 @router.get("/center")
-def get_center_audit_packet(start: str, end: str, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def get_center_audit_packet(start: str, end: str, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     """센터 공통 증빙(직원 교육·직원 상담·사례관리 회의)을 기간별로 모은다."""
     try:
         s_date = datetime.fromisoformat(start).date()
