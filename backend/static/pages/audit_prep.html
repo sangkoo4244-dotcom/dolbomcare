@@ -119,8 +119,8 @@
         function loadUserInfo() {
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user) { window.location.href = './login.html'; return; }
-            if (user.role !== 'center_manager') {
-                alert('센터장만 접근 가능합니다');
+            if (user.role !== 'center_manager' && user.role !== 'social_worker') {
+                alert('센터장 또는 사회복지사만 접근 가능합니다');
                 window.location.href = './dashboard.html';
                 return;
             }

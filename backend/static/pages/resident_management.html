@@ -620,7 +620,7 @@
                         <button type="button" class="btn-ghost" onclick="resetFilters()">초기화</button>
                         <button type="button" class="btn-ghost" onclick="exportResidentsCsv()">⬇ 엑셀 다운로드</button>
                         <button type="button" class="btn-ghost" id="importBtn" style="display:none;" onclick="openImport()">⬆ 엑셀로 일괄 등록</button>
-                        <button type="button" class="btn-teal" onclick="showAddModal()">+ 이용자 등록</button>
+                        <button type="button" class="btn-teal social-hidden" onclick="showAddModal()">+ 이용자 등록</button>
                     </div>
                     <div id="residentsTable" class="empty-state">
                         <div class="empty-state-icon"></div>
@@ -945,9 +945,10 @@
             currentUser = user;
             if (user.role === 'center_manager') document.getElementById('importBtn').style.display = '';
             document.getElementById('userName').textContent = user.full_name || '사용자';
-            document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';
+            document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : (user.role === 'social_worker' ? '사회복지사' : '센터장');
+            if (user.role === 'social_worker') document.querySelectorAll('.social-hidden').forEach(el => el.style.display = 'none');  // 이용자 등록은 센터장·요양사만
             document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
-            document.getElementById(user.role === 'caregiver' ? 'cardMyRequest' : 'cardApproval').style.display = 'flex';
+            document.getElementById(user.role === 'caregiver' ? 'cardMyRequest' : 'cardApproval').style.display = (user.role === 'caregiver' || user.role === 'center_manager') ? 'flex' : 'none';
 
             // 메뉴 필터링은 menu.js의 renderSidebar() 함수에서 처리
             renderSidebar();

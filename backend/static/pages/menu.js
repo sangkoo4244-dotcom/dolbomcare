@@ -256,6 +256,14 @@ async function refreshBenefitsMenu() {
 }
 
 function renderSidebar() {
+    // 사회복지사가 센터장 표시로 보이지 않게 상단 역할 이름을 바로잡는다 (화면마다 '센터장'이 고정되어 있음)
+    const fixRoleLabels = () => {
+        const u = JSON.parse(localStorage.getItem('user') || '{}');
+        if (u.role !== 'social_worker') return;
+        document.querySelectorAll('.user-role').forEach(el => { if (/센터장|관리자/.test(el.textContent)) el.textContent = '사회복지사'; });
+    };
+    fixRoleLabels();
+    setTimeout(fixRoleLabels, 300);
     if (!document.getElementById('sideMenuStyle')) {
         const style = document.createElement('style');
         style.id = 'sideMenuStyle';

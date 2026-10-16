@@ -211,6 +211,10 @@
                 window.location.href = './login.html';
                 return;
             }
+            if (user.role === 'social_worker') {  // 사회복지사는 청구·승인 현황이 없는 자기 대시보드로
+                window.location.href = './social_dashboard.html';
+                return;
+            }
             currentUser = user;
             document.getElementById('userName').textContent = user.full_name || '사용자';
             document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양사' : '센터장';

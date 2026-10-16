@@ -186,7 +186,7 @@
         function init() {
             const user = JSON.parse(localStorage.getItem('user') || 'null');
             if (!user) { window.location.href = './login.html'; return; }
-            if (user.role !== 'center_manager') { window.location.href = './dashboard.html'; return; }
+            if (user.role !== 'center_manager' && user.role !== 'social_worker') { window.location.href = './dashboard.html'; return; }
             currentUser = user;
             document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
             if (typeof renderSidebar === 'function') renderSidebar();

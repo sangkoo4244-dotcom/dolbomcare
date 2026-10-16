@@ -152,11 +152,12 @@
         async function init() {
             const user = JSON.parse(localStorage.getItem('user') || 'null');
             if (!user) { window.location.href = './login.html'; return; }
-            if (!['center_manager', 'caregiver'].includes(user.role)) { window.location.href = './dashboard.html'; return; }
+            if (!['center_manager', 'caregiver', 'social_worker'].includes(user.role)) { window.location.href = './dashboard.html'; return; }
             const params = new URLSearchParams(location.search);
-            const opts = await fetch('/api/v1/handovers/options').then(r => r.json());
+            const rd = await fetch('/api/v1/residents/').then(r => r.json()).catch(() => ({}));  // 세 역할 모두 열린 이용자 목록
+            const list = Array.isArray(rd) ? rd : (rd.residents || []);
             const sel = document.getElementById('resident');
-            sel.innerHTML = opts.residents.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
+            sel.innerHTML = list.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
             if (params.get('resident_id')) sel.value = params.get('resident_id');
             document.getElementById('weekStart').value = ymd(mondayOf(params.get('week_start') ? new Date(params.get('week_start') + 'T00:00:00') : new Date()));
             sel.addEventListener('change', load);
