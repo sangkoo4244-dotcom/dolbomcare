@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.auth import require_manager
+from app.auth import require_manager, require_social_or_manager
 from app.database import get_db
 from app.models import Counseling, Resident, Schedule, User
 
@@ -103,7 +103,7 @@ def _month_range(month: str):
 
 
 @router.post("")
-def create_counseling(body: CounselingBody, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def create_counseling(body: CounselingBody, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     if body.kind not in KINDS:
         raise HTTPException(status_code=400, detail="상담 종류가 올바르지 않습니다")
     if body.method not in METHODS:
@@ -151,7 +151,7 @@ def list_counselings(
     month: Optional[str] = None,
     resident_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_manager),
+    actor: User = Depends(require_social_or_manager),
 ):
     q = db.query(Counseling).filter(Counseling.center_id == actor.center_id)
     if kind:
@@ -167,7 +167,7 @@ def list_counselings(
 
 
 @router.put("/{counseling_id}/action")
-def record_action(counseling_id: int, body: ActionBody, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def record_action(counseling_id: int, body: ActionBody, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     """조치가 필요했던 상담에 조치 내용과 반영일을 남긴다 (직원 상담결과는 반기별 1회 이상 기관운영 등에 반영해야 함)."""
     row = db.query(Counseling).filter(Counseling.id == counseling_id, Counseling.center_id == actor.center_id).first()
     if not row:
@@ -222,7 +222,7 @@ def monthly_status(db: Session, center_id: int, month: str) -> dict:
 
 
 @router.get("/status")
-def get_status(month: Optional[str] = None, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def get_status(month: Optional[str] = None, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     return monthly_status(db, actor.center_id, month or date.today().strftime("%Y-%m"))
 
 
@@ -276,7 +276,7 @@ def detect_caregiver_changes(db: Session, center_id: int, today: date, lookback_
 
 
 @router.get("/caregiver-changes")
-def get_caregiver_changes(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def get_caregiver_changes(db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     changes = detect_caregiver_changes(db, actor.center_id, date.today())
     return {"changes": changes, "overdue": sum(1 for c in changes if c["status"] == "overdue"),
             "pending": sum(1 for c in changes if c["status"] == "pending")}

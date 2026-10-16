@@ -143,6 +143,16 @@ const SIDEBAR_MENUS = {
 };
 
 // 사이드바 묶음: 모든 페이지가 같은 그룹으로 보이도록 여기서 한 번에 정한다 (페이지마다 따로 그룹을 정하던 방식은 새 페이지에서 빠뜨리기 쉽다)
+// 사회복지사: 상담·사례관리·급여제공계획·보호자 소통 중심 (청구·급여·직원 관리 메뉴는 없음)
+SIDEBAR_MENUS.social_worker = [
+    { href: 'notifications.html', icon: 'notify', label: '알림' },
+    { href: 'resident_management.html', icon: 'residents', label: '이용자관리' },
+    { href: 'care_plan.html', icon: 'schedule_check', label: '급여제공계획' },
+    { href: 'counseling.html', icon: 'messages', label: '상담 기록' },
+    { href: 'service_review.html', icon: 'profit', label: '결과평가·사례관리' },
+    { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
+];
+
 const SIDEBAR_GROUPS = [
     ['메인', ['대시보드', '알림']],
     ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '주야간 이용 기록', '공단 태그 대조', '인수인계', '사고·응급 보고']],
@@ -245,7 +255,7 @@ function renderSidebar() {
     }
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const roleMenu = { caregiver: 'caregiver', guardian: 'guardian' }[user.role] || 'center_manager';
+    const roleMenu = { caregiver: 'caregiver', guardian: 'guardian', social_worker: 'social_worker' }[user.role] || 'center_manager';
     // 센터가 고른 급여에 맞는 메뉴만 보인다 (주야간보호를 안 쓰는 센터는 화면이 그대로). 처음에는 저장해 둔 값으로 그리고, 서버 값이 다르면 다시 그린다
     const enabledBenefits = cachedBenefits();
     const items = SIDEBAR_MENUS[roleMenu].filter(i => !i.benefit || enabledBenefits.includes(i.benefit));

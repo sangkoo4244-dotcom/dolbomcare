@@ -57,8 +57,8 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
 @router.post("/register", response_model=UserResponse)
 async def register(user_create: UserCreate, db: Session = Depends(get_db), manager: User = Depends(require_manager)):
     """센터장이 같은 센터에 직원 계정을 만든다"""
-    if user_create.role not in ("caregiver", "center_manager"):
-        raise HTTPException(status_code=400, detail="역할은 요양사 또는 센터장만 가능합니다")
+    if user_create.role not in ("caregiver", "center_manager", "social_worker"):
+        raise HTTPException(status_code=400, detail="역할은 요양사, 센터장 또는 사회복지사만 가능합니다")
     if len(user_create.password) < 8:
         raise HTTPException(status_code=400, detail="비밀번호는 8자 이상이어야 합니다")
     # 대소문자만 다른 이메일(Kim@x.com / kim@x.com)도 같은 계정으로 보고 중복 처리한다
@@ -73,7 +73,8 @@ async def register(user_create: UserCreate, db: Session = Depends(get_db), manag
         full_name=user_create.full_name,
         role=user_create.role,
         center_id=manager.center_id,
-        is_active=True
+        is_active=True,
+        care_bonus_registered=bool(user_create.care_bonus_registered) if user_create.role == "social_worker" else False,
     )
     db.add(db_user)
     db.commit()
@@ -251,7 +252,7 @@ async def list_users(
     actor: User = Depends(get_current_user)
 ):
     """사용자 목록 조회 (선택적으로 역할로 필터링). 항상 로그인한 사람의 센터 직원만 보인다 (이메일·연락처가 있어 다른 센터에는 보이면 안 된다)."""
-    if actor.role not in ("caregiver", "center_manager") or not actor.center_id:
+    if actor.role not in ("caregiver", "center_manager", "social_worker") or not actor.center_id:
         raise HTTPException(status_code=403, detail="직원 목록을 볼 수 있는 권한이 없습니다")
     query = db.query(User).filter(User.center_id == actor.center_id)
 

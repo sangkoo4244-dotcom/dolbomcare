@@ -117,7 +117,7 @@ def create_assessment(
     actor: User = Depends(get_current_user),
 ):
     """기초평가(욕구조사) 작성 (요양사·센터장). 매 방문이 아니라 주기 평가용이라 이력으로 계속 쌓인다."""
-    if actor.role not in ("caregiver", "center_manager"):
+    if actor.role not in ("caregiver", "center_manager", "social_worker"):
         raise HTTPException(status_code=403, detail="요양사 또는 센터장만 작성할 수 있습니다")
 
     resident = db.query(Resident).filter(Resident.id == body.resident_id).first()

@@ -122,7 +122,7 @@ def create_risk_assessment(
     actor: User = Depends(get_current_user),
 ):
     """낙상위험도·욕창위험도·인지기능평가 기록 (요양사·센터장). 반기마다 쌓이는 이력이다."""
-    if actor.role not in ("caregiver", "center_manager"):
+    if actor.role not in ("caregiver", "center_manager", "social_worker"):
         raise HTTPException(status_code=403, detail="요양사 또는 센터장만 작성할 수 있습니다")
     if body.assessment_type not in ASSESSMENT_TYPES:
         raise HTTPException(status_code=400, detail="평가 종류가 올바르지 않습니다")

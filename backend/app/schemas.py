@@ -9,6 +9,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    care_bonus_registered: bool = False  # 사회복지사 가산 인력 등록 여부 (센터가 체크)
 
 class UserResponse(UserBase):
     id: int

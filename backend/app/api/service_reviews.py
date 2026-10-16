@@ -21,7 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.auth import require_manager
+from app.auth import require_manager, require_social_or_manager
 from app.database import get_db
 from app.models import CarePlan, CaseConference, Resident, ServiceEvaluation, User
 
@@ -98,7 +98,7 @@ def _names(db: Session, center_id: int) -> dict:
 
 
 @router.post("/evaluations")
-def create_evaluation(body: EvaluationBody, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def create_evaluation(body: EvaluationBody, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     resident = db.query(Resident).filter(Resident.id == body.resident_id).first()
     if not resident or resident.center_id != actor.center_id:
         raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
@@ -117,7 +117,7 @@ def create_evaluation(body: EvaluationBody, db: Session = Depends(get_db), actor
 
 
 @router.get("/evaluations")
-def list_evaluations(resident_id: Optional[int] = None, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def list_evaluations(resident_id: Optional[int] = None, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     q = db.query(ServiceEvaluation).filter(ServiceEvaluation.center_id == actor.center_id)
     if resident_id:
         q = q.filter(ServiceEvaluation.resident_id == resident_id)
@@ -158,7 +158,7 @@ def evaluation_status(db: Session, center_id: int, today: date) -> dict:
 
 
 @router.get("/evaluations/status")
-def get_evaluation_status(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def get_evaluation_status(db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     return evaluation_status(db, actor.center_id, date.today())
 
 
@@ -231,7 +231,7 @@ def _conf_dict(c: CaseConference, names: dict, today: date) -> dict:
 
 
 @router.post("/conferences")
-def create_conference(body: ConferenceBody, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def create_conference(body: ConferenceBody, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     resident = db.query(Resident).filter(Resident.id == body.resident_id).first()
     if not resident or resident.center_id != actor.center_id:
         raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
@@ -251,7 +251,7 @@ def create_conference(body: ConferenceBody, db: Session = Depends(get_db), actor
 
 
 @router.get("/conferences")
-def list_conferences(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def list_conferences(db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     rows = db.query(CaseConference).filter(CaseConference.center_id == actor.center_id).order_by(
         CaseConference.conference_date.desc(), CaseConference.id.desc()).limit(100).all()
     names = _names(db, actor.center_id)
@@ -259,7 +259,7 @@ def list_conferences(db: Session = Depends(get_db), actor: User = Depends(requir
 
 
 @router.put("/conferences/{conf_id}/follow-up")
-def update_follow_up(conf_id: int, body: ConferenceFollowUp, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def update_follow_up(conf_id: int, body: ConferenceFollowUp, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     c = db.query(CaseConference).filter(CaseConference.id == conf_id, CaseConference.center_id == actor.center_id).first()
     if not c:
         raise HTTPException(status_code=404, detail="회의 기록을 찾을 수 없습니다")
@@ -301,5 +301,5 @@ def conference_status(db: Session, center_id: int, today: date) -> dict:
 
 
 @router.get("/conferences/status")
-def get_conference_status(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def get_conference_status(db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     return conference_status(db, actor.center_id, date.today())

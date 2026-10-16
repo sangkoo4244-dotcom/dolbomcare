@@ -57,6 +57,13 @@ def require_manager(user: User = Depends(get_current_user)) -> User:
     return user
 
 
+def require_social_or_manager(user: User = Depends(get_current_user)) -> User:
+    """상담·사례관리·급여제공계획처럼 사회복지사도 맡는 업무용. 청구·급여·직원 관리에는 쓰지 않는다."""
+    if user.role not in ("center_manager", "social_worker"):
+        raise HTTPException(status_code=403, detail="센터장 또는 사회복지사만 할 수 있는 작업입니다")
+    return user
+
+
 def require_manager_or_caregiver(user: User = Depends(get_current_user)) -> User:
     if user.role not in ("center_manager", "caregiver"):
         raise HTTPException(status_code=403, detail="센터장 또는 요양사만 할 수 있는 작업입니다")

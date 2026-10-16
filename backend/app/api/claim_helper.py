@@ -14,7 +14,7 @@ from app.api.guardian import CARE_ITEM_LABELS
 from app.auth import require_manager
 from app.billing_rules import REVENUE_STATUSES
 from app.database import get_db
-from app.models import BillingRecord, DailyRecord, Resident, Schedule, User
+from app.models import NursingOrder, BillingRecord, DailyRecord, Resident, Schedule, User
 
 router = APIRouter()
 
@@ -32,6 +32,7 @@ FLAG_LABELS = {
     "recognition_expired": "방문일이 인정 유효기간 밖입니다 (공단에 수급자가 보이지 않을 수 있음)",
     "bath_no_partner": "방문목욕인데 함께 간 요양보호사 기록이 없습니다 (2인 이상 제공해야 청구할 수 있음)",
     "nursing_no_order": "방문간호지시서 확인 메모가 없습니다 (지시서가 있어야 청구할 수 있음)",
+    "nursing_order_not_filed": "방문간호지시서 사본이 보관함에 없습니다 (지시서 보관 메뉴에 올려 두세요)",
     "bath_reduced": "방문목욕이 60분 미만(40분 이상)이라 급여비용의 80%만 청구됩니다 (1인 몸 씻기 예외는 70%)",
     "bath_too_short": "방문목욕이 40분 미만이라 청구할 수 없습니다",
     "surcharge": "야간(22~06시)·일요일 가산 30% 또는 공휴일·근로자의 날 가산 50%가 포함된 방문입니다 (공단 [서비스내용 입력]에서 가산을 선택하고, 급여제공기록지·계획서에 가산이 필요한 사유를 적었는지 확인)",
@@ -69,6 +70,7 @@ def claim_helper(year_month: str = Query(..., description="급여제공월 YYYY-
     names = {u.id: u.full_name for u in db.query(User).filter(User.center_id == center).all()}
     schedule_ids = {r.schedule_id for r in records if r.schedule_id}
     schedules = {s.id: s for s in db.query(Schedule).filter(Schedule.id.in_(schedule_ids)).all()} if schedule_ids else {}
+    filed_orders = {o.resident_id for o in db.query(NursingOrder).filter(NursingOrder.center_id == center).all()}
     billings = {}
     for b in db.query(BillingRecord).filter(BillingRecord.daily_record_id.in_({r.id for r in records}), BillingRecord.is_archived == False).all():  # noqa: E712
         billings[b.daily_record_id] = b
@@ -127,6 +129,8 @@ def claim_helper(year_month: str = Query(..., description="급여제공월 YYYY-
                 visit["flags"].append("bath_reduced")
         if benefit == "home_nursing" and not (r.nursing_order_note or "").strip():
             visit["flags"].append("nursing_no_order")
+        if benefit == "home_nursing" and r.resident_id not in filed_orders:
+            visit["flags"].append("nursing_order_not_filed")
         if benefit in ("home_care", "home_nursing"):
             if benefits.surcharge_minutes(start_at, minutes):
                 visit["flags"].append("surcharge")

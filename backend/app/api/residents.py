@@ -77,7 +77,7 @@ async def get_residents(
 ):
     """이용자 목록 조회 (caregiver_id로 필터링 가능). 항상 로그인한 사람의 센터 이용자만 보인다.
     caregiver_id는 담당 요양보호사(primary_caregiver_id)로 지정된 이용자만 걸러낸다."""
-    if actor.role not in ("caregiver", "center_manager") or not actor.center_id:
+    if actor.role not in ("caregiver", "center_manager", "social_worker") or not actor.center_id:
         raise HTTPException(status_code=403, detail="이용자 목록을 볼 수 있는 권한이 없습니다")
     query = db.query(Resident).filter(Resident.center_id == actor.center_id)
 
@@ -122,7 +122,7 @@ async def get_residents_by_center(
     actor: User = Depends(get_current_user)
 ):
     """센터 내 모든 이용자 조회 (내 센터만)"""
-    if actor.role not in ("caregiver", "center_manager"):
+    if actor.role not in ("caregiver", "center_manager", "social_worker"):
         raise HTTPException(status_code=403, detail="이용자 목록을 볼 수 있는 권한이 없습니다")
     assert_my_center(actor, center_id)
     residents = db.query(Resident).filter(Resident.center_id == center_id).all()

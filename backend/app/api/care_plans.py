@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.notifications import notify
-from app.auth import get_current_user, require_manager
+from app.auth import get_current_user, require_manager, require_social_or_manager
 from app.database import get_db
 from app.care_plan_entry import entry_sheet
 from app.models import CarePlan, CarePlanAck, NeedsAssessment, Resident, RiskAssessment, User
@@ -128,7 +128,7 @@ def _ack_info(plan: CarePlan, db: Session) -> Optional[dict]:
 
 
 @router.post("")
-def create_plan(body: PlanBody, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def create_plan(body: PlanBody, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     if body.plan_type not in PLAN_TYPES:
         raise HTTPException(status_code=400, detail="계획서 종류가 올바르지 않습니다")
     resident = db.query(Resident).filter(Resident.id == body.resident_id).first()
@@ -165,7 +165,7 @@ def create_plan(body: PlanBody, db: Session = Depends(get_db), actor: User = Dep
 
 
 @router.get("")
-def list_plans(resident_id: int, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def list_plans(resident_id: int, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     resident = db.query(Resident).filter(Resident.id == resident_id).first()
     if not resident or resident.center_id != actor.center_id:
         raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
@@ -175,7 +175,7 @@ def list_plans(resident_id: int, db: Session = Depends(get_db), actor: User = De
 
 
 @router.put("/{plan_id}/progress")
-def update_progress(plan_id: int, body: ProgressBody, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def update_progress(plan_id: int, body: ProgressBody, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     """보호자 설명·확인서명일과 공단 통보일을 기록한다."""
     plan = db.query(CarePlan).filter(CarePlan.id == plan_id, CarePlan.center_id == actor.center_id).first()
     if not plan:
@@ -190,7 +190,7 @@ def update_progress(plan_id: int, body: ProgressBody, db: Session = Depends(get_
 
 
 @router.get("/{plan_id}/entry-sheet")
-def plan_entry_sheet(plan_id: int, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def plan_entry_sheet(plan_id: int, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     """공단 급여제공계획서 전산 등록 화면 순서대로 옮겨 적을 내용 (엑셀 업로드 대신 쓰는 입력 보조, 시스템에 전송하지 않음)."""
     plan = db.query(CarePlan).filter(CarePlan.id == plan_id, CarePlan.center_id == actor.center_id).first()
     if not plan:
@@ -240,7 +240,7 @@ def center_plan_status(db: Session, center_id: int, today: date) -> dict:
 
 
 @router.get("/status")
-def get_status(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def get_status(db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     return center_plan_status(db, actor.center_id, date.today())
 
 
@@ -269,7 +269,7 @@ def _guardian_view(plan: CarePlan, resident: Resident) -> dict:
 
 
 @router.post("/{plan_id}/share")
-def share_with_guardian(plan_id: int, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def share_with_guardian(plan_id: int, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     """계획서를 설명한 뒤 보호자에게 확인·서명을 요청한다 (이때부터 보호자 화면에 보인다)."""
     plan = db.query(CarePlan).filter(CarePlan.id == plan_id, CarePlan.center_id == actor.center_id).first()
     if not plan:
@@ -355,7 +355,7 @@ def caregiver_ack(plan_id: int, db: Session = Depends(get_db), actor: User = Dep
 
 
 @router.get("/{plan_id}/signature")
-def plan_signature(plan_id: int, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+def plan_signature(plan_id: int, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     """평가 준비·인쇄용: 보호자가 전자서명한 이미지를 센터장만 열람한다."""
     plan = db.query(CarePlan).filter(CarePlan.id == plan_id, CarePlan.center_id == actor.center_id).first()
     if not plan or not plan.guardian_signature:

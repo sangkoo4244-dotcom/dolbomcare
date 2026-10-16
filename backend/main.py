@@ -34,7 +34,7 @@ from app.api import certificates
 from app.api import needs_assessments
 from app.api import copay
 from app.api import risk_assessments
-from app.api import audit_prep, visit_precheck, counseling, care_plans, service_reviews, trainings, incidents, handovers, care_sheet, inbox
+from app.api import audit_prep, visit_precheck, counseling, care_plans, service_reviews, trainings, incidents, handovers, care_sheet, inbox, nursing_orders
 from app.api import staff_records
 from app.api import resident_media
 from app.api import centers
@@ -92,6 +92,7 @@ app.include_router(service_reviews.router, prefix="/api/v1/service-reviews", tag
 app.include_router(care_plans.router, prefix="/api/v1/care-plans", tags=["care_plans"], dependencies=[Depends(get_current_user)])
 app.include_router(handovers.router, prefix="/api/v1/handovers", tags=["handovers"], dependencies=[Depends(get_current_user)])
 app.include_router(care_sheet.router, prefix="/api/v1/care-sheet", tags=["care-sheet"], dependencies=[Depends(get_current_user)])
+app.include_router(nursing_orders.router, prefix="/api/v1/nursing-orders", tags=["nursing-orders"], dependencies=[Depends(get_current_user)])
 app.include_router(inbox.router, prefix="/api/v1/inbox", tags=["inbox"], dependencies=[Depends(get_current_user)])
 app.include_router(incidents.router, prefix="/api/v1/incidents", tags=["incidents"], dependencies=[Depends(get_current_user)])
 app.include_router(counseling.router, prefix="/api/v1/counseling", tags=["counseling"], dependencies=[Depends(get_current_user)])

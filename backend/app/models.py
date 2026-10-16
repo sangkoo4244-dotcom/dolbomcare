@@ -10,7 +10,8 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     full_name = Column(String)
-    role = Column(String)  # 'center_manager', 'caregiver', 'guardian'
+    role = Column(String)  # 'center_manager', 'caregiver', 'guardian', 'social_worker'
+    care_bonus_registered = Column(Boolean, default=False)  # 사회복지사: 시군구 가산 인력으로 등록되어 상담·욕구사정·계획을 인정받는 직원 (센터가 직접 체크)
     center_id = Column(Integer, ForeignKey("centers.id"), nullable=True)
     phone = Column(String, nullable=True)
     hire_date = Column(Date, nullable=True)  # 고용 시작일
@@ -283,6 +284,23 @@ class GuardianInvite(Base):
     guardian_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     expires_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.now)
+
+class NursingOrder(Base):
+    """방문간호지시서 보관본. 공단 서식 목록에 있는 지시서를 파일로 보관한다(유효기간 판단은 센터가 발급일을 보고 한다)."""
+    __tablename__ = "nursing_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    issued_date = Column(Date)  # 지시서 발급일
+    order_no = Column(String, nullable=True)  # 지시서 번호
+    physician = Column(String, nullable=True)  # 지시 의사·의료기관
+    file_name = Column(String, nullable=True)
+    file_type = Column(String, nullable=True)  # 예: application/pdf, image/png
+    file_data = Column(Text, nullable=True)  # base64 (3MB 이하)
+    uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+
 
 class GuardianViewLog(Base):
     """보호자가 방문 기록을 열어 본 기록. 공단 다빈도 Q&A(Q57): 기록지를 전자로 열람하게 한 경우 증빙으로 쓴다."""

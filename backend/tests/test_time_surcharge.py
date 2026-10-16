@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from app import benefits
 from app import models
 from app.billing_rules import split_benefit
+from app.database import get_db
 from tests.test_visit_benefit_api import CG_A, env, payload  # noqa: F401  (env 픽스처 재사용)
 
 MON = datetime(2026, 10, 12)   # 월요일
@@ -100,6 +101,7 @@ def test_surcharge_preview_endpoint_matches_the_billing_rule(env):
     _, client = env
     app = FastAPI()
     app.include_router(benefits_api.router, prefix="/api/v1/benefits")
+    app.dependency_overrides[get_db] = client.app.dependency_overrides[get_db]  # 임시 DB를 쓰도록 (개발 DB 파일에 접속하지 않게)
     c = TestClient(app)
     night = c.get("/api/v1/benefits/visit-surcharge", params={"benefit_type": "home_care", "minutes": 120, "start": "2026-10-13T22:00:00"}, headers=CG_A).json()
     assert night["covered_minutes"] == 120 and night["amount"] == benefits.visit_surcharge(benefits.home_care_fee(120), datetime(2026, 10, 13, 22), 120)
