@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기초평가 현황 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+        .panel h2 { margin: 0 0 10px; font-size: 16px; }
+        .note { background: #FFF7EB; border: 1px solid #FCE2B5; color: #8A4A07; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+        .field { padding: 9px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; }
+        .field:focus { border-color: var(--teal); outline: none; }
+        .btn-solid { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .check-row { display: grid; grid-template-columns: 1fr 150px; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
+        .check-row select { width: 100%; }
+        .rec { border: 1px solid var(--line2); border-radius: 10px; padding: 12px; margin-bottom: 10px; font-size: 13px; }
+        .rec .head { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 6px; }
+        .empty-note { color: #94A3B8; font-size: 13px; }
+        .tag-due { background:#FEE2E2; color:#991B1B; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:700; }
+        .tag-ok { background:#DCFCE7; color:#166534; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:700; }
+        .row { display:grid; grid-template-columns: 1fr 140px 120px 120px; gap:8px; align-items:center; padding:10px 0; border-bottom:1px solid #F1F5F9; font-size:14px; }
+        @media (max-width: 768px) { .row { grid-template-columns: 1fr 1fr; } }
+        .fail { color: #DC2626; font-weight: 700; }
+    </style>
+    <script src="menu.js"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>기초평가 현황</h1>
+                <div class="breadcrumb">홈 › 서비스 계획·평가 › <b>기초평가 현황</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-role" id="userRole"></div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="note" id="policyNote"></div>
+            <div class="panel">
+                <h2>수급자별 마지막 기초평가</h2>
+                <div id="summary" style="font-size:14px;margin-bottom:8px;"></div>
+                <div id="rows"><div class="empty-note">불러오는 중…</div></div>
+                <div style="font-size:12px;color:#94A3B8;margin-top:10px;">평가를 새로 적으려면 수급자 관리에서 해당 수급자의 "욕구사정" 버튼을 누르세요.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html';
+            }
+        }
+
+        async function load() {
+            const r = await fetch('/api/v1/needs-assessments/status', { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { document.getElementById('rows').innerHTML = `<div class="empty-note">${esc(d.detail || '불러오지 못했습니다')}</div>`; return; }
+            const v = d.data;
+            document.getElementById('policyNote').textContent = `확인 기준: 마지막 기초평가로부터 ${v.review_days}일이 지났거나 기록이 없으면 '확인 필요'로 표시합니다. 이 기준은 시스템 기본값이며, 공단 매뉴얼의 주기와 다르면 운영자가 확인해야 합니다.`;
+            document.getElementById('summary').textContent = `확인 필요 ${v.due_count}명 / 전체 ${v.items.length}명`;
+            document.getElementById('rows').innerHTML = v.items.length ? v.items.map(i => `<div class="row">
+                <div><b>${esc(i.name)}</b></div>
+                <div>${i.last_date ? esc(i.last_date) : '<span style="color:#B91C1C;">기록 없음</span>'}</div>
+                <div>${i.days_since != null ? i.days_since + '일 경과' : '-'}</div>
+                <div>${i.due ? '<span class="tag-due">확인 필요</span>' : '<span class="tag-ok">최신</span>'}</div></div>`).join('')
+                : '<div class="empty-note">수급자가 없습니다.</div>';
+        }
+
+        (async function init() {
+            if (typeof renderSidebar === 'function') renderSidebar();
+            document.getElementById('userName').textContent = user.full_name || '';
+            document.getElementById('userRole').textContent = user.role === 'social_worker' ? '사회복지사' : '센터장';
+            load();
+        })();
+    </script>
+</body>
+</html>

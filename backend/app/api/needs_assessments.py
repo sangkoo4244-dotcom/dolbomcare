@@ -6,11 +6,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user
+from app.auth import get_current_user, require_social_or_manager
 from app.database import get_db
 from app.models import NeedsAssessment, Resident, User
 
 router = APIRouter()
+# 기초평가(욕구조사) 재작성 주기 확인 기준(일). 모델 설명의 "보통 월 1회"를 따른 값이며, 공단 매뉴얼로 확정되면 여기만 바꾼다.
+REVIEW_DAYS = 30
 
 # 공단 표준 욕구사정 서식 기준 (케어포 데모 화면 구조 참고)
 DISEASE_LABELS = {
@@ -153,6 +155,25 @@ def create_assessment(
     db.commit()
     db.refresh(assessment)
     return {"status": "success", "message": "기초평가가 저장되었습니다", "data": _to_dict(assessment, actor.full_name)}
+
+
+@router.get("/status")
+def assessment_status(db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
+    """이용자별 마지막 기초평가 날짜와 경과일. 기록이 없거나 주기(REVIEW_DAYS)를 넘기면 확인 필요로 표시한다."""
+    now = datetime.now()
+    residents = db.query(Resident).filter(Resident.center_id == actor.center_id).order_by(Resident.name).all()
+    last = {}
+    for row in db.query(NeedsAssessment).filter(NeedsAssessment.resident_id.in_([r.id for r in residents])).all() if residents else []:
+        if row.assessed_date and (row.resident_id not in last or row.assessed_date > last[row.resident_id]):
+            last[row.resident_id] = row.assessed_date
+    items = []
+    for r in residents:
+        when = last.get(r.id)
+        days = (now - when).days if when else None
+        items.append({"resident_id": r.id, "name": r.name, "last_date": when.date().isoformat() if when else None,
+                      "days_since": days, "due": when is None or days > REVIEW_DAYS})
+    return {"status": "success", "data": {"review_days": REVIEW_DAYS, "items": items,
+                                          "due_count": sum(1 for i in items if i["due"])}}
 
 
 @router.get("/resident/{resident_id}")
