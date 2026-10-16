@@ -664,6 +664,7 @@
                     <label>이메일<input id="eEmail" type="email" value="${escapeAttr(s.email)}"></label>
                     <label>연락처<input id="ePhone" value="${escapeAttr(s.phone)}"></label>
                     <label>입사일<input id="eHire" type="date" value="${escapeAttr(s.hire_date)}"></label>
+                    <label>생년월일 (보수교육 대상 연도)<input id="eBirth" type="date" value="${escapeAttr(s.birth_date)}"></label>
                     <label>직종<select id="eJob">${(JOB_OPTIONS.includes(jobOf(s)) ? JOB_OPTIONS : [...JOB_OPTIONS, jobOf(s)]).map(j => `<option ${jobOf(s) === j ? 'selected' : ''}>${j}</option>`).join('')}</select></label>
                     <label>근무 상태<select id="eStatus">${Object.entries(STATUS_LABEL).map(([k, v]) => `<option value="${k}" ${statusOf(s) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
                     ${s.role === 'caregiver' ? `
@@ -683,6 +684,7 @@
                 email: document.getElementById('eEmail').value.trim(),
                 phone: document.getElementById('ePhone').value.trim(),
                 hire_date: document.getElementById('eHire').value || null,
+                birth_date: document.getElementById('eBirth').value || null,
                 position: document.getElementById('eJob').value,
                 job_type: NURSING_JOBS.includes(document.getElementById('eJob').value) ? document.getElementById('eJob').value : '',
                 employment_status: document.getElementById('eStatus').value

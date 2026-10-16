@@ -107,6 +107,7 @@ const SIDEBAR_MENUS = {
         { href: 'my_care_plan.html', icon: 'schedule_check', label: '급여제공계획 확인' },
         { href: 'care_record_sheet.html', icon: 'voice', label: '제공기록지' },
         { href: 'my_training.html', icon: 'staff', label: '교육 이력' },
+        { href: 'my_staff.html', icon: 'staff', label: '나의 기록' },
         { href: 'guide_caregiver.html', icon: 'stamp', label: '사용 안내' }
     ],
     guardian: [
@@ -141,6 +142,7 @@ const SIDEBAR_MENUS = {
         { href: 'training.html', icon: 'staff', label: '교육·안내 기록' },
         { href: 'audit_prep.html', icon: 'billing', label: '평가 준비 자료' },
         { href: 'staff_management.html', icon: 'staff', label: '직원관리' },
+        { href: 'staff_compliance.html', icon: 'stamp', label: '직원 규정준수' },
         { href: 'center_settings.html', icon: 'center', label: '센터 정보' },
         { href: 'guide_manager.html', icon: 'stamp', label: '센터장 안내' }
     ]
@@ -159,6 +161,7 @@ SIDEBAR_MENUS.social_worker = [
     { href: 'care_record_sheet.html', icon: 'voice', label: '제공기록지' },
     { href: 'audit_prep.html', icon: 'billing', label: '평가 준비 자료' },
     { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
+    { href: 'my_staff.html', icon: 'staff', label: '나의 기록' },
     { href: 'social_guide.html', icon: 'stamp', label: '사용 안내' },
 ];
 
@@ -168,7 +171,7 @@ const SIDEBAR_GROUPS = [
     ['청구·급여', ['나의 청구', '청구관리', '청구 입력 도우미', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과', '나의 급여']],
     ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
     ['서비스 품질·평가', ['급여제공계획', '상담 기록', '업무수행일지', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
-    ['센터·직원', ['직원관리', '교육 이력', '센터 정보']],
+    ['센터·직원', ['직원관리', '직원 규정준수', '교육 이력', '나의 기록', '센터 정보']],
     ['도움말', ['사용 안내', '센터장 안내']],
 ];
 

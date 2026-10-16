@@ -11,6 +11,7 @@ class User(Base):
     hashed_password = Column(String)
     full_name = Column(String)
     role = Column(String)  # 'center_manager', 'caregiver', 'guardian', 'social_worker'
+    birth_date = Column(Date, nullable=True)  # 직원 생년월일: 보수교육 대상 연도(출생연도 홀수·짝수) 계산에 쓴다
     care_bonus_registered = Column(Boolean, default=False)  # 사회복지사: 시군구 가산 인력으로 등록되어 상담·욕구사정·계획을 인정받는 직원 (센터가 직접 체크)
     center_id = Column(Integer, ForeignKey("centers.id"), nullable=True)
     phone = Column(String, nullable=True)
