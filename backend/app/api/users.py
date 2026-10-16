@@ -145,6 +145,13 @@ def import_staff(body: StaffImportRows, db: Session = Depends(get_db), manager: 
 
 @router.post("/login")
 async def login(request: LoginRequest, db: Session = Depends(get_db)):
+    from app.demo_seed import DEMO_LOGIN_EMAILS, refresh_demo_if_stale
+    if request.email in DEMO_LOGIN_EMAILS:
+        try:
+            refresh_demo_if_stale(db)  # 체험 계정 로그인이 데모 초기화에 실패해도 로그인은 막지 않는다
+        except Exception as e:
+            db.rollback()
+            print(f"⚠️ 데모 초기화 실패 (로그인은 계속 진행): {e}")
     user = db.query(User).filter(User.email == request.email).first()
 
     if not user:

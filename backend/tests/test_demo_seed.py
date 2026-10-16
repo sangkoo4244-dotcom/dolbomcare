@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 from app import models
-from app.api import admin
+from app.api import admin, users
 from app.api.users import create_access_token
 from app.database import Base, get_db
 from app.demo_seed import DEMO_CAREGIVER_EMAIL, DEMO_CENTER_NAME, DEMO_GUARDIAN_EMAIL, DEMO_MANAGER_EMAIL, DEMO_SOCIAL_EMAIL
@@ -44,6 +44,7 @@ def env(tmp_path, monkeypatch):
     db.commit()
     app = FastAPI()
     app.include_router(admin.router, prefix="/api/v1/admin")
+    app.include_router(users.router, prefix="/api/v1/users")
 
     def override():
         s = Session()
@@ -125,3 +126,21 @@ def test_reset_still_works_after_demo_accounts_were_used(env):
     response = client.post("/api/v1/admin/demo/reset", headers=OPERATOR)
     assert response.status_code == 200, response.text
     assert response.json()["reset"] is True
+
+
+def test_demo_login_resets_a_stale_demo_only_once_a_day_and_keeps_the_trial_end(env):
+    db, client = env
+    client.post("/api/v1/admin/demo/reset", headers=OPERATOR)
+    trial_end = datetime.utcnow() + timedelta(days=3)
+    center = db.query(models.Center).filter_by(name=DEMO_CENTER_NAME).one()
+    center.created_at = datetime.now() - timedelta(days=1)  # 어제 만든 데모
+    center.trial_ends_at = trial_end
+    db.commit()
+    assert client.post("/api/v1/users/login", json={"email": DEMO_CAREGIVER_EMAIL, "password": "demo1234!"}).status_code == 200
+    db.expire_all()
+    refreshed = db.query(models.Center).filter_by(name=DEMO_CENTER_NAME).one()
+    assert refreshed.created_at.date() == datetime.now().date()  # 어제 자료가 오늘 새로 만들어졌다
+    assert refreshed.trial_ends_at == trial_end  # 체험 종료일은 이어진다
+    assert client.post("/api/v1/users/login", json={"email": DEMO_MANAGER_EMAIL, "password": "demo1234!"}).status_code == 200
+    db.expire_all()
+    assert db.query(models.Center).filter_by(name=DEMO_CENTER_NAME).one().id == refreshed.id  # 같은 날 두 번째 로그인은 다시 만들지 않는다

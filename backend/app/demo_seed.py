@@ -61,12 +61,13 @@ def _clear_old_demo(db: Session) -> bool:
     return True
 
 
-def seed_demo(db: Session) -> dict:
-    """데모 데이터를 (다시) 만들고 만든 내용을 요약해 돌려준다."""
+def seed_demo(db: Session, trial_ends_at: datetime | None = None) -> dict:
+    """데모 데이터를 (다시) 만들고 만든 내용을 요약해 돌려준다.
+    trial_ends_at을 주면 그 체험 종료일을 이어 쓰고, 주지 않으면 지금부터 DEMO_TRIAL_DAYS일이다."""
     reset = _clear_old_demo(db)
 
     center = Center(name=DEMO_CENTER_NAME, address="서울시 데모구 체험로 1", phone="02-0000-0000",
-                    plan=PLAN_TRIAL, trial_ends_at=datetime.utcnow() + timedelta(days=DEMO_TRIAL_DAYS))
+                    plan=PLAN_TRIAL, trial_ends_at=trial_ends_at or datetime.utcnow() + timedelta(days=DEMO_TRIAL_DAYS))
     db.add(center)
     db.flush()
     manager = User(email=DEMO_MANAGER_EMAIL, hashed_password=get_password_hash(DEMO_PASSWORD), full_name="데모 센터장",
@@ -145,3 +146,17 @@ def seed_demo(db: Session) -> dict:
         "reset": reset, "center_id": center.id, "residents": len(residents), "bills": bill_count, "schedules": schedule_count,
         "accounts": [DEMO_MANAGER_EMAIL, DEMO_CAREGIVER_EMAIL, DEMO_SOCIAL_EMAIL, DEMO_GUARDIAN_EMAIL],
     }
+
+
+DEMO_LOGIN_EMAILS = (DEMO_MANAGER_EMAIL, DEMO_CAREGIVER_EMAIL, DEMO_SOCIAL_EMAIL, DEMO_GUARDIAN_EMAIL)
+
+
+def refresh_demo_if_stale(db: Session) -> bool:
+    """데모 센터가 오늘 만들어진 것이 아니면 데모를 초기화한다 (하루에 한 번, 첫 체험 로그인 때).
+    체험 종료일은 이어 쓴다. 그래야 초기화할 때마다 15일이 새로 붙지 않는다. 초기화했으면 True."""
+    center = db.query(Center).filter(Center.name == DEMO_CENTER_NAME).first()
+    if center and center.created_at and center.created_at.date() == datetime.now().date():
+        return False
+    keep_end = center.trial_ends_at if center and center.plan == PLAN_TRIAL else None
+    seed_demo(db, trial_ends_at=keep_end)
+    return True
