@@ -129,6 +129,7 @@ const SIDEBAR_MENUS = {
         { href: 'nursing_orders.html', icon: 'stamp', label: '방문간호 지시서' },
         { href: 'visit_sheet.html', icon: 'voice', label: '목욕·간호 기록지' },
         { href: 'inspection_log.html', icon: 'schedule_check', label: '점검 기록' },
+        { href: 'contract_notice.html', icon: 'stamp', label: '계약통보서 초안' },
         { href: 'day_care.html', icon: 'schedule_check', label: '주야간 이용 기록', benefit: 'day_night' },
         { href: 'rfid_compare.html', icon: 'schedule_check', label: '공단 태그 대조' },
         { href: 'handover.html', icon: 'messages', label: '인수인계' },
