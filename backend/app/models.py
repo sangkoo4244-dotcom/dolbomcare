@@ -33,6 +33,7 @@ class Center(Base):
     __tablename__ = "centers"
 
     id = Column(Integer, primary_key=True, index=True)
+    verified = Column(Boolean, nullable=True)  # False: 셀프 가입 후 지정서 확인 대기(읽기 전용). NULL·True: 정상
     name = Column(String, index=True)
     address = Column(String)
     phone = Column(String)

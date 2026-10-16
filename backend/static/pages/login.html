@@ -197,8 +197,8 @@
 
                 <div class="trial-cta-box">
                     <div class="demo-title">아직 계정이 없는 센터장이신가요?</div>
-                    <p class="trial-cta-desc">우리 센터로 1개월 무료체험을 신청하면, 확인 후 로그인 정보를 보내드립니다.</p>
-                    <button type="button" class="trial-cta-button" onclick="openTrialRequestModal()">1개월 무료체험 신청하기</button>
+                    <p class="trial-cta-desc">공단에 등록된 센터라면 바로 회원가입하고 1개월 무료체험을 시작할 수 있습니다. 지정서를 운영자가 확인하면 자료 입력이 열립니다.</p>
+                    <button type="button" class="trial-cta-button" onclick="openTrialRequestModal()">센터장 회원가입 (1개월 무료체험)</button>
                 </div>
 
                 <div class="demo-box">
@@ -235,8 +235,8 @@
 
     <div class="trial-modal-backdrop" id="trialRequestBackdrop">
         <div class="trial-modal">
-            <h3>1개월 무료체험 신청</h3>
-            <p class="trial-modal-sub">아래 정보를 보내주시면 확인 후 센터 계정과 로그인 정보를 이메일로 보내드립니다.</p>
+            <h3>센터장 회원가입</h3>
+            <p class="trial-modal-sub">공단 기관기호와 지정서 사본을 확인한 뒤 계정이 바로 만들어집니다. 운영자가 지정서를 확인하면 자료 입력이 열립니다.</p>
             <form id="trialRequestForm" novalidate>
                 <div class="field">
                     <label for="trCenterName">센터명 (공단 기관명과 같게) *</label>
@@ -269,8 +269,12 @@
                     <input id="trManagerName" required maxlength="50" autocomplete="name">
                 </div>
                 <div class="field">
-                    <label for="trEmail">이메일 *</label>
+                    <label for="trEmail">이메일 (로그인 ID) *</label>
                     <input id="trEmail" type="email" required autocomplete="email">
+                </div>
+                <div class="field">
+                    <label for="trPassword">비밀번호 (8자 이상) *</label>
+                    <input id="trPassword" type="password" required minlength="8" autocomplete="new-password">
                 </div>
                 <div class="field">
                     <label for="trPhone">연락처 (선택)</label>
@@ -398,11 +402,13 @@
                     fr.onerror = reject;
                     fr.readAsDataURL(certFile);
                 });
-                const res = await fetch('/api/v1/centers/trial-requests', {
+                const password = document.getElementById('trPassword').value;
+                if (password.length < 8) throw new Error('비밀번호는 8자 이상으로 정해 주세요');
+                const res = await fetch('/api/v1/centers/signup', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        center_name: v('trCenterName'), institution_code: v('trInstitutionCode'), sido_code: v('trSido'), manager_name: v('trManagerName'), email: v('trEmail'),
+                        center_name: v('trCenterName'), institution_code: v('trInstitutionCode'), sido_code: v('trSido'), manager_name: v('trManagerName'), email: v('trEmail'), password,
                         certificate_name: certFile.name, certificate_type: certFile.type, certificate_data: certData,
                         phone: v('trPhone') || null, partner_interest: document.getElementById('trPartner').checked,
                         website: document.getElementById('trWebsite').value,
@@ -411,8 +417,8 @@
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : '신청을 보내지 못했습니다. 잠시 후 다시 시도하거나 contact@eeum-logic.com 으로 문의해 주세요.');
                 result.className = 'notice ok show';
-                result.textContent = '신청이 접수되었습니다. 확인 후 입력하신 이메일로 로그인 정보를 보내드립니다.';
-                button.textContent = '접수 완료';
+                result.textContent = data.message || '가입이 접수되었습니다. 이메일과 비밀번호로 로그인해 주세요.';
+                button.textContent = '가입 완료';
             } catch (err) {
                 result.className = 'notice error show';
                 result.textContent = err.message;

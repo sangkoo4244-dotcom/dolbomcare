@@ -282,6 +282,11 @@ def mark_trial_request_handled(request_id: int, db: Session = Depends(get_db), a
     if not row:
         raise HTTPException(status_code=404, detail="신청을 찾을 수 없습니다")
     row.status = "handled"
+    if row.institution_code:  # 셀프 가입 센터면 지정서 확인이 끝난 것이므로 쓰기 제한을 푼다
+        from app.models import Center
+        center = db.query(Center).filter(Center.institution_code == row.institution_code, Center.verified == False).first()  # noqa: E712
+        if center:
+            center.verified = True
     db.commit()
     return {"status": "success"}
 

@@ -6,6 +6,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.centers import _to_directory_dict
@@ -93,6 +94,81 @@ def submit_trial_request(body: TrialRequestIn, request: Request, db: Session = D
         notify(db, admin.id, "trial_request", f"새 무료체험 신청이 들어왔습니다: {name} ({manager})" + (" · 파트너 이벤트 신청" if body.partner_interest else ""))
     db.commit()
     return {"status": "received"}
+
+
+class SignupIn(BaseModel):
+    center_name: str
+    sido_code: str
+    institution_code: str
+    manager_name: str
+    email: str
+    password: str
+    phone: Optional[str] = None
+    partner_interest: bool = False
+    certificate_name: str
+    certificate_type: str
+    certificate_data: str
+    website: Optional[str] = None  # 사람은 비워 두는 숨은 칸
+
+
+@router.post("/signup")
+def signup_center(body: SignupIn, request: Request, db: Session = Depends(get_db)):
+    """센터장 셀프 가입. 공단 기관 확인과 지정서 사본이 맞아야 계정이 만들어지고, 운영자가 지정서를 확인할 때까지는 읽기 전용이다."""
+    from app.api.users import get_password_hash
+    from app.plans import PLAN_TRIAL, TRIAL_DAYS
+    from app.models import User as _User
+    if body.website:  # 숨은 칸이 채워졌으면 자동 가입이므로 성공한 척 넘긴다
+        return {"status": "received"}
+    name, manager, email = body.center_name.strip(), body.manager_name.strip(), body.email.strip().lower()
+    if not name or len(name) > 100 or not manager or len(manager) > 50:
+        raise HTTPException(status_code=400, detail="센터명과 담당자명을 입력해 주세요")
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email) or len(email) > 120:
+        raise HTTPException(status_code=400, detail="이메일 형식을 확인해 주세요. (예: name@example.com)")
+    if len(body.password) < 8 or len(body.password.encode("utf-8")) > 72:
+        raise HTTPException(status_code=400, detail="비밀번호는 8자 이상 72바이트 이하로 정해 주세요")
+    phone = (body.phone or "").strip()[:30] or None
+    code = body.institution_code.strip()
+    check = check_institution(db, code, name, body.sido_code.strip())
+    if not check["ok"]:
+        raise HTTPException(status_code=400, detail=check["message"])
+    if db.query(_User).filter(func.lower(_User.email) == email).first():
+        raise HTTPException(status_code=400, detail="이미 가입된 이메일입니다. 로그인하거나 비밀번호를 재설정해 주세요")
+    if db.query(Center).filter(Center.institution_code == code).first():
+        raise HTTPException(status_code=400, detail="이 기관기호로 이미 가입된 센터가 있습니다. 운영자에게 문의해 주세요")
+    cert_name = (body.certificate_name or "").strip()[:120] or "지정서"
+    if body.certificate_type not in CERT_TYPES:
+        raise HTTPException(status_code=400, detail="지정서 사본은 PDF 또는 PNG·JPG 사진으로 올려 주세요")
+    try:
+        cert_size = len(base64.b64decode(body.certificate_data, validate=True))
+    except Exception:
+        raise HTTPException(status_code=400, detail="지정서 사본을 읽지 못했습니다. 다시 올려 주세요")
+    if cert_size > CERT_MAX_BYTES:
+        raise HTTPException(status_code=400, detail="지정서 사본은 3MB 이하로 올려 주세요")
+
+    client_ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "?"))
+    now = time.time()
+    recent = [t for t in _recent_requests.get(client_ip, []) if now - t < 3600]
+    if len(recent) >= REQUEST_LIMIT_PER_HOUR:
+        raise HTTPException(status_code=429, detail="신청이 너무 많습니다. 잠시 후 다시 시도해 주세요.")
+    _recent_requests[client_ip] = recent + [now]
+
+    center = Center(name=name, phone=phone, institution_code=code, plan=PLAN_TRIAL,
+                    trial_ends_at=datetime.utcnow() + timedelta(days=TRIAL_DAYS), verified=False)
+    db.add(center)
+    db.flush()
+    user = _User(email=email, hashed_password=get_password_hash(body.password), full_name=manager, role="center_manager",
+                 center_id=center.id, phone=phone, position="센터장", is_active=True)
+    db.add(user)
+    db.flush()
+    center.manager_id = user.id
+    db.add(TrialRequest(center_name=name, manager_name=manager, email=email, phone=phone, partner_interest=body.partner_interest,
+                        institution_code=code, institution_verified=True, cert_name=cert_name, cert_type=body.certificate_type,
+                        cert_data=body.certificate_data))
+    from app.auth import platform_admin_emails
+    for admin in db.query(User).filter(User.email.in_(list(platform_admin_emails()))).all():
+        notify(db, admin.id, "trial_request", f"새 센터 가입 신청: {name} ({manager}) · 지정서 확인 필요")
+    db.commit()
+    return {"status": "created", "message": "가입이 접수되었습니다. 운영자가 지정서를 확인하면 자료를 입력할 수 있습니다. 지금 바로 로그인하면 보기만 가능합니다."}
 
 
 @router.get("/partner-slots")

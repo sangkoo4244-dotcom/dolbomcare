@@ -48,7 +48,8 @@ def _block_writes_after_trial(request: Request, user: User, db: Session) -> None
         print(f"⚠️ 체험 기간 확인 실패 (요청은 계속 진행): {e}")
         return
     if blocked:
-        raise HTTPException(status_code=402, detail=READ_ONLY_MESSAGE)
+        from app.plans import write_block_message
+        raise HTTPException(status_code=402, detail=write_block_message(center))
 
 
 def require_manager(user: User = Depends(get_current_user)) -> User:

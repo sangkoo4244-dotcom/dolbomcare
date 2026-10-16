@@ -78,12 +78,24 @@ def assert_resident_capacity(db, center, adding: int = 1) -> None:
 
 
 def is_write_blocked(center, method: str, path: str, now: Optional[datetime] = None) -> bool:
-    """체험이 끝난 센터의 쓰기 요청인지 (읽기·허용 목록은 통과)."""
+    """쓰기를 막아야 하는 센터인지: 체험이 끝났거나, 셀프 가입 후 지정서 확인을 기다리는 중 (읽기·허용 목록은 통과)."""
     if method in ("GET", "HEAD", "OPTIONS"):
         return False
     if any(path.startswith(p) for p in READ_ONLY_ALLOWED_WRITES):
         return False
-    return center_plan_info(center, now)["read_only"]
+    return is_pending_verification(center) or center_plan_info(center, now)["read_only"]
+
+
+def is_pending_verification(center) -> bool:
+    """셀프 가입 센터는 운영자가 지정서를 확인해 verified를 True로 바꾸기 전까지 읽기 전용이다. 예전 센터는 NULL이라 해당 없음."""
+    return getattr(center, "verified", None) is False
+
+
+PENDING_VERIFY_MESSAGE = "가입 신청은 접수되었고, 운영자가 지정서를 확인하면 자료를 입력할 수 있습니다. 지금은 보기만 가능합니다."
+
+
+def write_block_message(center) -> str:
+    return PENDING_VERIFY_MESSAGE if is_pending_verification(center) else READ_ONLY_MESSAGE
 
 
 READ_ONLY_MESSAGE = "무료 체험 기간이 끝나 지금은 자료를 보고 내려받기만 할 수 있습니다. 계속 쓰시려면 이음로직에 문의해 주세요."
