@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.api.notifications import notify
 from app.auth import get_current_user, require_manager
 from app.database import get_db
+from app.care_plan_entry import entry_sheet
 from app.models import CarePlan, CarePlanAck, NeedsAssessment, Resident, RiskAssessment, User
 
 router = APIRouter()
@@ -186,6 +187,16 @@ def update_progress(plan_id: int, body: ProgressBody, db: Session = Depends(get_
         plan.nhis_notified_date = body.nhis_notified_date
     db.commit()
     return {"status": "success", "data": _to_dict(plan, db)}
+
+
+@router.get("/{plan_id}/entry-sheet")
+def plan_entry_sheet(plan_id: int, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """공단 급여제공계획서 전산 등록 화면 순서대로 옮겨 적을 내용 (엑셀 업로드 대신 쓰는 입력 보조, 시스템에 전송하지 않음)."""
+    plan = db.query(CarePlan).filter(CarePlan.id == plan_id, CarePlan.center_id == actor.center_id).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="계획서를 찾을 수 없습니다")
+    resident = db.query(Resident).filter(Resident.id == plan.resident_id).first()
+    return {"status": "success", "data": {"resident_name": resident.name if resident else "", **entry_sheet(plan, resident)}}
 
 
 @router.delete("/{plan_id}")

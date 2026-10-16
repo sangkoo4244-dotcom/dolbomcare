@@ -200,6 +200,7 @@
                     ${p.signed_via === 'app' ? `<span class="badge ok">보호자 전자서명 완료</span>` : (p.shared_at ? '<span class="badge wait">보호자 서명 대기 중</span>' : '')}
                     ${p.caregiver_ack ? (p.caregiver_ack.acknowledged_at ? `<span class="badge ok">${esc(p.caregiver_ack.caregiver_name || '요양보호사')} 확인함</span>` : `<span class="badge wait">${esc(p.caregiver_ack.caregiver_name || '요양보호사')} 미확인</span>`) : ''}
                     ${p.has_signature ? `<button type="button" class="btn-outline" onclick="viewSignature(${p.id})">서명 이미지 보기</button>` : ''}
+                    <button type="button" class="btn-outline" onclick="openEntrySheet(${p.id})">공단 입력 시트</button>
                     ${p.signed_via !== 'app' && !p.guardian_signed_date ? `<button type="button" class="btn-outline" onclick="sharePlan(${p.id}, ${p.resident_id})">${p.shared_at ? '보호자에게 다시 알리기' : '보호자에게 확인·서명 요청'}</button>` : ''}
                 </div>
                 <div class="prog">
@@ -243,6 +244,42 @@
             if (!w) { alert('팝업이 차단되었습니다. 허용 후 다시 눌러 주세요.'); return; }
             w.document.write(`<title>전자서명</title><body style="font-family:sans-serif;padding:24px"><p>${esc(d.signer)} · ${esc(d.signed_date)} 서명</p><img src="${d.signature}" style="border:1px solid #ccc;max-width:100%"></body>`);
             w.document.close();
+        }
+
+        // 공단 전산 등록 화면 순서대로 값을 보여 주고 복사한다 (시스템에 보내거나 자동 입력하지 않음)
+        async function openEntrySheet(pid) {
+            const res = await fetch(`${API_URL}/${pid}/entry-sheet`);
+            const d = await res.json();
+            if (!res.ok) { alert(d.detail || '입력 시트를 불러오지 못했습니다'); return; }
+            const data = d.data;
+            const old = document.getElementById('entrySheetPanel');
+            if (old) old.remove();
+            window.copyEntryField = (i) => navigator.clipboard && navigator.clipboard.writeText(values[i] || '');
+            const values = [];
+            const tabs = data.tabs.map(t => `
+                <h4 style="margin:14px 0 6px;font-weight:700;">${esc(t.tab)}</h4>
+                ${t.fields.map(f => `
+                    <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;">
+                        <div style="flex:0 0 42%;font-size:13px;color:#4B5563;">${esc(f.label)}</div>
+                        <div style="flex:1;white-space:pre-wrap;font-size:13px;padding:6px 8px;background:#F9FAFB;border-radius:6px;min-height:28px;">${esc(f.value) || '<span style="color:#9CA3AF">공단 화면에서 입력</span>'}</div>
+                        <button type="button" class="btn-outline" style="font-size:12px;" onclick="copyEntryField(${values.push(f.value) - 1})">복사</button>
+                    </div>`).join('')}`).join('');
+            const warn = data.warnings.length
+                ? `<ul class="issues">${data.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul>`
+                : '<span class="badge ok">빠진 값 없음</span>';
+            const panel = document.createElement('div');
+            panel.id = 'entrySheetPanel';
+            panel.style = 'position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;justify-content:center;align-items:flex-start;z-index:50;overflow:auto;padding:24px;';
+            panel.innerHTML = `<div style="background:#fff;border-radius:12px;max-width:760px;width:100%;padding:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <h3 style="font-weight:800;">공단 입력 시트 · ${esc(data.resident_name)}</h3>
+                  <button type="button" class="btn-outline" onclick="document.getElementById('entrySheetPanel').remove()">닫기</button>
+                </div>
+                <p style="font-size:12px;color:#6B7280;margin-top:6px;">${esc(data.guide)}. ${esc(data.note)}</p>
+                <div style="margin-top:10px;">${warn}</div>
+                ${tabs}
+            </div>`;
+            document.body.appendChild(panel);
         }
 
         async function sharePlan(pid, rid) {
