@@ -5,7 +5,7 @@ from app.models import (
     RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken,
     Counseling, CarePlan, ServiceEvaluation, CaseConference,
     TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest,
-    GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog,
+    GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog, FacilityRegistry,
 )
 from sqlalchemy import text
 
@@ -94,6 +94,8 @@ ADDITIVE_COLUMNS = [
     ("daily_records", "pair_record_id", "INTEGER"),
     ("daily_records", "bath_companion", "BOOLEAN DEFAULT FALSE"),
     ("billing_records", "extra_amount", "INTEGER DEFAULT 0"),
+    ("trial_requests", "institution_code", "VARCHAR"),
+    ("trial_requests", "institution_verified", "BOOLEAN DEFAULT FALSE"),
 ]
 
 
@@ -106,7 +108,7 @@ def run_migrations():
     """
     for table_cls in (StaffCertificate, SalaryStatement, GuardianInvite, Notification,
                        ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
-                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, ServiceEvaluation, CaseConference, TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest, GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog):
+                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, ServiceEvaluation, CaseConference, TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest, GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog, FacilityRegistry):
         try:
             table_cls.__table__.create(bind=engine, checkfirst=True)
         except Exception as e:

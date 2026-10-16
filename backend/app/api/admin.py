@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -239,9 +239,29 @@ def list_trial_requests(db: Session = Depends(get_db), actor: User = Depends(req
     rows = db.query(TrialRequest).order_by(TrialRequest.status.desc(), TrialRequest.created_at.desc()).limit(100).all()
     return {"requests": [
         {"id": r.id, "center_name": r.center_name, "manager_name": r.manager_name, "email": r.email, "phone": r.phone,
-         "partner_interest": bool(r.partner_interest), "status": r.status, "created_at": r.created_at.isoformat() if r.created_at else None}
+         "partner_interest": bool(r.partner_interest), "status": r.status, "created_at": r.created_at.isoformat() if r.created_at else None,
+         "institution_code": r.institution_code, "institution_verified": bool(r.institution_verified)}
         for r in rows
     ], "new_count": sum(1 for r in rows if r.status == "new")}
+
+
+@router.get("/facilities/status")
+def facilities_status(db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    """공단 장기요양기관 목록이 마지막으로 언제 가져와졌는지 (체험 신청의 기관기호 대조에 쓴다)."""
+    from app.facility_registry import registry_status
+    return {"status": "success", "data": registry_status(db)}
+
+
+@router.post("/facilities/import")
+async def import_facilities(file: UploadFile = File(...), db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
+    """공단 '장기요양기관 시설별 현황' 엑셀을 올려 기관 목록을 새로 바꾼다."""
+    from app.facility_registry import FacilityImportError, import_workbook
+    data = await file.read()
+    try:
+        result = import_workbook(db, data, file.filename or "facility.xlsx")
+    except FacilityImportError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"status": "success", "data": result}
 
 
 @router.post("/trial-requests/{request_id}/handled")

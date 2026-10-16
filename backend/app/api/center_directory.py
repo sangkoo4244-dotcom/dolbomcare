@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.centers import _to_directory_dict
+from app.facility_registry import check_institution
 from app.database import get_db
 from app.kakao_local import KAKAO_JS_KEY, search_nearby_facilities
 from app.api.notifications import notify
@@ -25,6 +26,7 @@ def get_kakao_js_key():
 
 class TrialRequestIn(BaseModel):
     center_name: str
+    institution_code: str  # 장기요양기관기호(11자리). 공단 기관 목록에 있는 기관만 신청할 수 있다
     manager_name: str
     email: str
     phone: Optional[str] = None
@@ -47,6 +49,9 @@ def submit_trial_request(body: TrialRequestIn, request: Request, db: Session = D
     if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email) or len(email) > 120:
         raise HTTPException(status_code=400, detail="이메일 형식을 확인해 주세요. (예: name@example.com)")
     phone = (body.phone or "").strip()[:30] or None
+    check = check_institution(db, body.institution_code, name)
+    if not check["ok"]:
+        raise HTTPException(status_code=400, detail=check["message"])
 
     client_ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "?"))
     now = time.time()
@@ -59,10 +64,12 @@ def submit_trial_request(body: TrialRequestIn, request: Request, db: Session = D
     existing = db.query(TrialRequest).filter(TrialRequest.email == email, TrialRequest.created_at >= datetime.now() - timedelta(days=1)).first()
     if existing:
         existing.center_name, existing.manager_name, existing.phone = name, manager, phone
+        existing.institution_code, existing.institution_verified = check["code"], True
         existing.partner_interest = bool(existing.partner_interest or body.partner_interest)
         db.commit()
         return {"status": "received"}
-    db.add(TrialRequest(center_name=name, manager_name=manager, email=email, phone=phone, partner_interest=body.partner_interest))
+    db.add(TrialRequest(center_name=name, manager_name=manager, email=email, phone=phone, partner_interest=body.partner_interest,
+                        institution_code=check["code"], institution_verified=True))
     from app.auth import platform_admin_emails
     for admin in db.query(User).filter(User.email.in_(list(platform_admin_emails()))).all():
         notify(db, admin.id, "trial_request", f"새 무료체험 신청이 들어왔습니다: {name} ({manager})" + (" · 파트너 이벤트 신청" if body.partner_interest else ""))

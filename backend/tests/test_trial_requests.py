@@ -19,7 +19,8 @@ def auth(uid, email):
 
 OPERATOR = auth(1, "ops@eeum.kr")
 OTHER = auth(2, "real@center.kr")
-FORM = {"center_name": "행복센터", "manager_name": "김센터", "email": "Kim@Center.kr", "phone": "010-1111-2222", "partner_interest": True}
+FORM = {"center_name": "행복센터", "institution_code": "11111000006", "manager_name": "김센터", "email": "Kim@Center.kr", "phone": "010-1111-2222", "partner_interest": True}
+FACILITY = {"code": "11111000006", "name": "행복센터", "address": "서울", "designated_date": "20080625", "type_codes": "A03", "source": "test", "imported_at": None}
 
 
 @pytest.fixture
@@ -31,6 +32,7 @@ def env(tmp_path, monkeypatch):
     Session = sessionmaker(bind=engine)
     db = Session()
     db.add_all([
+        models.FacilityRegistry(**FACILITY),
         models.Center(id=1, name="운영센터"),
         models.User(id=1, email="ops@eeum.kr", full_name="운영자", role="center_manager", center_id=1),
         models.User(id=2, email="real@center.kr", full_name="실센터장", role="center_manager", center_id=1),
@@ -63,9 +65,9 @@ def test_submit_is_saved_and_operator_is_notified(env):
 def test_same_email_within_a_day_is_not_duplicated(env):
     _, client = env
     client.post("/api/v1/centers/trial-requests", json=FORM)
-    client.post("/api/v1/centers/trial-requests", json={**FORM, "center_name": "행복센터2"})
+    client.post("/api/v1/centers/trial-requests", json={**FORM, "manager_name": "박담당"})
     rows = client.get("/api/v1/admin/trial-requests", headers=OPERATOR).json()["requests"]
-    assert len(rows) == 1 and rows[0]["center_name"] == "행복센터2"
+    assert len(rows) == 1 and rows[0]["manager_name"] == "박담당"
 
 
 def test_bad_input_honeypot_and_rate_limit(env):

@@ -194,6 +194,17 @@
             <div id="trialSoon" style="font-size:14px;line-height:1.9;">불러오는 중...</div>
         </div>
 
+        <h2 class="section-title">공단 장기요양기관 목록</h2>
+        <div class="note-box" style="font-size:14px;line-height:1.8;">
+            체험 신청은 여기 올라온 공단 목록에 있는 기관기호와 기관명이 맞아야 접수됩니다. 공단 <b>'장기요양기관 시설별 현황'</b> 엑셀(.xlsx)을 올리면 목록이 통째로 바뀝니다.
+            <div id="facilityStatus" style="margin-top:6px;">불러오는 중...</div>
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input type="file" id="facilityFile" accept=".xlsx">
+                <button class="btn-create" style="padding:9px 16px;" onclick="importFacilities()">목록 올리기</button>
+            </div>
+            <div id="facilityMsg" style="margin-top:6px;"></div>
+        </div>
+
         <h2 class="section-title">데모 체험 계정</h2>
         <div class="panel" style="margin-bottom: 40px;">
             <div class="sub" style="margin-bottom:12px;">로그인 화면의 "둘러보기" 버튼이 쓰는 샘플 센터입니다. 실제 센터 데이터는 건드리지 않으며, 다시 만들면 샘플 데이터가 처음 상태로 돌아갑니다.</div>
@@ -654,11 +665,37 @@
                 const d = await res.json();
                 if (!res.ok) throw new Error(d.detail || '조회 실패');
                 box.innerHTML = d.requests.length ? d.requests.map(r => `<div style="border-top:1px solid #F1F5F9;padding:6px 0;${r.status === 'handled' ? 'opacity:.55;' : ''}">
-                    <b>${escapeHtml(r.center_name)}</b> · ${escapeHtml(r.manager_name)} · ${escapeHtml(r.email)}${r.phone ? ' · ' + escapeHtml(r.phone) : ''}
+                    <b>${escapeHtml(r.center_name)}</b>${r.institution_code ? ` · 기관기호 ${escapeHtml(r.institution_code)}${r.institution_verified ? ' <span style="color:#047857;font-weight:700;">(공단 확인)</span>' : ''}` : ' · <span style="color:#B91C1C;">기관기호 없음</span>'} · ${escapeHtml(r.manager_name)} · ${escapeHtml(r.email)}${r.phone ? ' · ' + escapeHtml(r.phone) : ''}
                     ${r.partner_interest ? '<span style="color:#047857;font-weight:700;"> · 파트너 이벤트 신청</span>' : ''}
                     <span style="color:#64748B;"> · ${escapeHtml((r.created_at || '').slice(0, 16).replace('T', ' '))}</span>
                     ${r.status === 'new' ? `<button type="button" onclick="markHandled(${r.id})" style="margin-left:8px;">처리 완료</button>` : ' · 처리됨'}</div>`).join('') : '들어온 신청이 없습니다.';
             } catch (e) { box.textContent = e.message; }
+        }
+
+        async function loadFacilityStatus() {
+            const box = document.getElementById('facilityStatus');
+            try {
+                const res = await fetch(`${API_URL}/admin/facilities/status`, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+                const d = await res.json();
+                if (!res.ok) throw new Error(d.detail || '조회 실패');
+                box.textContent = d.data.count
+                    ? `현재 목록: ${d.data.count.toLocaleString()}개 기관 · 파일 ${d.data.source || ''} · 가져온 시각 ${(d.data.imported_at || '').slice(0, 16).replace('T', ' ')}`
+                    : '아직 올라온 목록이 없습니다. 목록을 올리기 전에는 체험 신청이 모두 거절됩니다.';
+            } catch (e) { box.textContent = e.message; }
+        }
+
+        async function importFacilities() {
+            const msg = document.getElementById('facilityMsg');
+            const file = document.getElementById('facilityFile').files[0];
+            if (!file) { msg.textContent = '엑셀 파일을 골라 주세요'; return; }
+            if (!confirm('기관 목록을 이 파일로 바꿉니다. 진행할까요?')) return;
+            msg.textContent = '올리는 중...';
+            const form = new FormData();
+            form.append('file', file);
+            const res = await fetch(`${API_URL}/admin/facilities/import`, { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }, body: form });
+            const d = await res.json().catch(() => ({}));
+            msg.textContent = res.ok ? `완료: ${d.data.count.toLocaleString()}개 기관` : (d.detail || '올리지 못했습니다');
+            loadFacilityStatus();
         }
 
         async function markHandled(id) {
@@ -813,6 +850,7 @@
         loadDemoStatus();
         loadPartners();
         loadTrialRequests();
+        loadFacilityStatus();
     </script>
 </body>
 </html>

@@ -747,8 +747,24 @@ class TrialRequest(Base):
     email = Column(String, nullable=False, index=True)
     phone = Column(String, nullable=True)
     partner_interest = Column(Boolean, default=False)  # 파트너 센터 이벤트에 함께 신청
+    institution_code = Column(String, nullable=True)  # 장기요양기관기호(11자리), 공단 기관 목록과 대조해 통과한 값
+    institution_verified = Column(Boolean, default=False)
     status = Column(String, default="new")  # new / handled
     created_at = Column(DateTime, default=datetime.now)
+
+
+class FacilityRegistry(Base):
+    """공단 장기요양기관 목록(공공데이터 '시설별 현황' 파일). 체험 신청 때 기관기호와 기관명을 대조하는 데 쓴다.
+    파일을 올릴 때마다 통째로 바꾼다."""
+    __tablename__ = "facility_registry"
+
+    code = Column(String, primary_key=True)  # 장기요양기관코드 (11자리)
+    name = Column(String, nullable=False)
+    address = Column(String, nullable=True)
+    designated_date = Column(String, nullable=True)  # 지정일자 YYYYMMDD
+    type_codes = Column(String, nullable=True)  # 기관유형코드(쉼표 구분): A01 노인요양시설, B01 방문요양 등
+    source = Column(String, nullable=True)  # 가져온 파일 이름
+    imported_at = Column(DateTime, default=datetime.now)
 
 
 class HandoverNote(Base):
