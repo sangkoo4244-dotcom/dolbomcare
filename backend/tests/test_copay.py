@@ -205,3 +205,20 @@ def test_copay_still_counts_visits_already_reimbursed_and_archived(client):
     session.commit()
     data = client.get("/api/v1/copay/summary?year_month=2026-10", headers=MANAGER).json()
     assert data["invoices"][0]["total_amount"] == 7770
+
+
+def test_remind_sends_the_unpaid_balance_to_the_guardian_only_until_paid(client, tmp_path):
+    test_client = client
+    Session = sessionmaker(bind=create_engine(f"sqlite:///{tmp_path / 'test.db'}"))
+    manager = auth(1, "center_manager", "manager@test.com")
+    caregiver = auth(2, "caregiver", "caregiver1@test.com")
+    assert test_client.post("/api/v1/copay/remind", params={"year_month": "2026-10"}, headers=caregiver).status_code == 403
+    first = test_client.post("/api/v1/copay/remind", params={"year_month": "2026-10"}, headers=manager).json()["data"]
+    assert first["sent"] == 1 and first["no_guardian"] == []
+    db = Session()
+    note = db.query(models.Notification).filter(models.Notification.kind == "copay_reminder").one()
+    assert note.user_id == 3 and "7,770원" in note.message
+    db.close()
+    test_client.post("/api/v1/copay/1/pay", json={"year_month": "2026-10", "amount": 7770, "payment_method": "계좌이체"}, headers=manager)
+    after = test_client.post("/api/v1/copay/remind", params={"year_month": "2026-10"}, headers=manager).json()["data"]
+    assert after["sent"] == 0  # 전액 수납되면 더 보내지 않는다

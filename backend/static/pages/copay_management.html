@@ -139,6 +139,8 @@
             <div class="filter-bar">
                 <input type="month" id="fMonth" class="filter-input">
                 <button type="button" class="btn-solid" onclick="loadSummary()">조회</button>
+                <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="fUnpaidOnly" onchange="applyFilter()"> 미수납만 보기</label>
+                <button type="button" class="btn-outline" onclick="sendReminders()">미납 안내 보내기</button>
                 <span style="color:#94A3B8;font-size:12px;">본인부담금 = 승인된 청구 건의 (급여비용 총액 − 청구액). 수납 여부만 이 화면에서 따로 관리합니다.</span>
             </div>
 
@@ -237,6 +239,25 @@
             if (typeof renderSidebar === 'function') renderSidebar();
         }
 
+        let lastInvoices = [];
+
+        function applyFilter() {
+            const unpaidOnly = document.getElementById('fUnpaidOnly').checked;
+            renderTable(unpaidOnly ? lastInvoices.filter(inv => inv.status !== 'paid') : lastInvoices);
+        }
+
+        async function sendReminders() {
+            const yearMonth = document.getElementById('fMonth').value;
+            if (!yearMonth) { alert('월을 고른 뒤 조회해 주세요'); return; }
+            if (!confirm(`${yearMonth} 미수납 이용자의 보호자에게 잔액 안내를 보냅니다. 진행할까요?`)) return;
+            const res = await fetch(`${API_URL}/copay/remind?year_month=${yearMonth}`, { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok) { alert(typeof d.detail === 'string' ? d.detail : '안내를 보내지 못했습니다'); return; }
+            const none = d.data.no_guardian.length ? `
+보호자가 연결되지 않아 직접 연락할 이용자: ${d.data.no_guardian.join(', ')}` : '';
+            alert(`보호자 ${d.data.sent}명에게 안내를 보냈습니다.${none}`);
+        }
+
         function statusLabel(s) { return { unpaid: '미수납', partial: '부분수납', paid: '수납완료' }[s] || s; }
 
         function renderTable(invoices) {
@@ -273,7 +294,8 @@
                 document.getElementById('sumTotal').textContent = `₩${data.summary.total_amount.toLocaleString()}`;
                 document.getElementById('sumPaid').textContent = `₩${data.summary.paid_amount.toLocaleString()}`;
                 document.getElementById('sumUnpaid').textContent = `${data.summary.unpaid_count}명`;
-                renderTable(data.invoices);
+                lastInvoices = data.invoices;
+                applyFilter();
             } catch (e) {
                 document.getElementById('copayTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--danger);">조회 중 오류가 발생했습니다</td></tr>';
             }

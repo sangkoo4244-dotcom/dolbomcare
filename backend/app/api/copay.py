@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user, require_manager
 from app.billing_rules import REVENUE_STATUSES
+from app.api.notifications import notify
 from app.database import get_db
 from app.models import BillingRecord, Center, CopayInvoice, Resident, User
 
@@ -105,6 +106,31 @@ def get_copay_summary(
             "unpaid_count": sum(1 for r in results if r["status"] != "paid"),
         },
     }
+
+
+@router.post("/remind")
+def remind_unpaid_copay(
+    year_month: str,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_manager),
+):
+    """해당 월 미수납·부분수납 이용자의 보호자에게 잔액을 인앱 알림으로 안내한다.
+    보호자가 연결되지 않은 이용자는 보내지 않고 이름만 돌려준다 (센터가 직접 연락)."""
+    residents = db.query(Resident).filter(Resident.center_id == actor.center_id).all()
+    sent, no_guardian = 0, []
+    for resident in residents:
+        invoice = _get_or_sync_invoice(db, resident, year_month)
+        balance = invoice.total_amount - invoice.paid_amount
+        if invoice.total_amount <= 0 or balance <= 0 or invoice.status == "paid":
+            continue
+        if not resident.guardian_id:
+            no_guardian.append(resident.name)
+            continue
+        notify(db, resident.guardian_id, "copay_reminder",
+               f"{resident.name}님 {year_month} 본인부담금 미납 잔액은 {balance:,}원입니다. 센터에 문의해 주세요.")
+        sent += 1
+    db.commit()
+    return {"status": "success", "data": {"sent": sent, "no_guardian": no_guardian}}
 
 
 class CopayPaymentRequest(BaseModel):
