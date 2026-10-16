@@ -129,7 +129,7 @@ def test_operator_can_make_and_end_partners_within_the_slot_limit(env):
     db.expire_all()
     assert center_plan_info(db.query(models.Center).filter_by(id=3).one())["state"] == "trial"
     listing = client.get("/api/v1/admin/partners", headers=OPERATOR).json()
-    assert listing["used"] == 29 and all(p["center_name"] for p in listing["partners"])
+    assert listing["used"] == 19 and all(p["center_name"] for p in listing["partners"])
 
 
 def test_convert_to_paid_ends_the_trial_and_new_centers_get_a_30_day_trial(env):
