@@ -6,12 +6,14 @@
 """
 from datetime import datetime, timedelta
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.api.notifications import notify
 from app.api.records import get_year_month, guardian_visit_summary
 from app.api.users import get_password_hash
 from app.billing_rules import split_visit
+from app.database import Base
 from app.models import BillingRecord, Center, DailyRecord, Notification, Resident, ResidentMessage, Schedule, User
 
 DEMO_PASSWORD = "demo1234!"
@@ -23,26 +25,36 @@ DEMO_SOCIAL_EMAIL = "demo_social_worker@dolbomcare.app"
 
 
 def _clear_old_demo(db: Session) -> bool:
-    old_center = db.query(Center).filter(Center.name == DEMO_CENTER_NAME).first()
-    old_users = db.query(User).filter(User.email.like("demo_%@dolbomcare.app")).all()
-    if not old_center and not old_users:
+    """데모 센터·데모 계정·데모 이용자를 참조하는 행을 모두 지운다.
+    체험 계정으로 근태·점검·보호자 열람 기록이 생기면 참조가 늘어나므로, 표를 하나씩 고르지 않고 외래키로 찾는다.
+    운영 PostgreSQL은 외래키를 강제하므로 참조가 남아 있으면 삭제가 실패한다. 실제 센터 자료는 참조하지 않으므로 건드리지 않는다."""
+    old_center_ids = [c.id for c in db.query(Center).filter(Center.name == DEMO_CENTER_NAME).all()]
+    old_user_ids = [u.id for u in db.query(User).filter(User.email.like("demo_%@dolbomcare.app")).all()]
+    if not old_center_ids and not old_user_ids:
         return False
-    old_user_ids = [u.id for u in old_users]
-    if old_center:
-        old_residents = db.query(Resident).filter(Resident.center_id == old_center.id).all()
-        old_resident_ids = [r.id for r in old_residents]
-        db.query(ResidentMessage).filter(ResidentMessage.center_id == old_center.id).delete(synchronize_session=False)
-        db.query(Schedule).filter(Schedule.center_id == old_center.id).delete(synchronize_session=False)
-        db.query(BillingRecord).filter(BillingRecord.resident_id.in_(old_resident_ids)).delete(synchronize_session=False)
-        db.query(DailyRecord).filter(DailyRecord.resident_id.in_(old_resident_ids)).delete(synchronize_session=False)
-        for r in old_residents:
-            db.delete(r)
+    old_resident_ids = [r.id for r in db.query(Resident).filter(Resident.center_id.in_(old_center_ids)).all()] if old_center_ids else []
+    targets = {"centers": old_center_ids, "residents": old_resident_ids, "users": old_user_ids}
+
+    if old_center_ids:  # 센터 ↔ 센터장 순환 참조를 먼저 끊는다
+        db.query(Center).filter(Center.id.in_(old_center_ids)).update({Center.manager_id: None}, synchronize_session=False)
+    # 자식 표부터 지운다 (참조하는 쪽이 먼저 사라져야 부모를 지울 수 있다)
+    for table in reversed(Base.metadata.sorted_tables):
+        if table.name in targets:
+            continue
+        conditions = []
+        for column in table.columns:
+            for fk in column.foreign_keys:
+                ids = targets.get(fk.column.table.name)
+                if ids:
+                    conditions.append(column.in_(ids))
+        if conditions:
+            db.execute(table.delete().where(or_(*conditions)))
+    if old_resident_ids:
+        db.query(Resident).filter(Resident.id.in_(old_resident_ids)).delete(synchronize_session=False)
     if old_user_ids:
-        db.query(Notification).filter(Notification.user_id.in_(old_user_ids)).delete(synchronize_session=False)
-    for u in old_users:
-        db.delete(u)
-    if old_center:
-        db.delete(old_center)
+        db.query(User).filter(User.id.in_(old_user_ids)).delete(synchronize_session=False)
+    if old_center_ids:
+        db.query(Center).filter(Center.id.in_(old_center_ids)).delete(synchronize_session=False)
     db.commit()
     return True
 

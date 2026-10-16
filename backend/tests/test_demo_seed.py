@@ -1,17 +1,17 @@
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 from app import models
 from app.api import admin
 from app.api.users import create_access_token
 from app.database import Base, get_db
-from app.demo_seed import DEMO_CENTER_NAME, DEMO_MANAGER_EMAIL, DEMO_SOCIAL_EMAIL
+from app.demo_seed import DEMO_CAREGIVER_EMAIL, DEMO_CENTER_NAME, DEMO_GUARDIAN_EMAIL, DEMO_MANAGER_EMAIL, DEMO_SOCIAL_EMAIL
 
 
 def auth(uid, email, role="center_manager"):
@@ -27,6 +27,11 @@ REAL_MANAGER = auth(2, "real@center.kr")
 def env(tmp_path, monkeypatch):
     monkeypatch.setenv("PLATFORM_ADMIN_EMAILS", "ops@eeum.kr")
     engine = create_engine(f"sqlite:///{tmp_path / 'demo.db'}")
+
+    @event.listens_for(engine, "connect")
+    def _enforce_foreign_keys(dbapi_connection, _):  # 운영 PostgreSQL처럼 외래키를 강제한다
+        dbapi_connection.execute("PRAGMA foreign_keys=ON")
+
     Base.metadata.create_all(bind=engine)
     Session = sessionmaker(bind=engine)
     db = Session()
@@ -84,14 +89,36 @@ def test_orphan_demo_guardian_left_by_a_center_delete_does_not_block_a_new_seed(
     client.post("/api/v1/admin/demo/reset", headers=OPERATOR)
     demo_center = db.query(models.Center).filter_by(name=DEMO_CENTER_NAME).one()
     # 운영자 콘솔에서 센터만 지워 보호자 계정(센터 없음)이 남은 상태를 흉내 낸다
-    db.query(models.User).filter(models.User.center_id == demo_center.id).delete()
+    demo_center.manager_id = None
+    db.flush()
     db.query(models.Schedule).filter_by(center_id=demo_center.id).delete()
     db.query(models.BillingRecord).filter_by(center_id=demo_center.id).delete()
     db.query(models.DailyRecord).delete()
     db.query(models.ResidentMessage).delete()
+    db.query(models.Notification).delete()
     db.query(models.Resident).filter_by(center_id=demo_center.id).delete()
+    db.query(models.User).filter(models.User.center_id == demo_center.id).delete()
     db.delete(demo_center)
     db.commit()
     assert db.query(models.User).filter(models.User.email.like("demo_guardian%")).count() == 1
     assert client.post("/api/v1/admin/demo/reset", headers=OPERATOR).status_code == 200
     assert db.query(models.User).filter_by(email=DEMO_MANAGER_EMAIL).count() == 1
+
+
+def test_reset_still_works_after_demo_accounts_were_used(env):
+    """체험 계정으로 근태·점검·보호자 열람을 남긴 뒤에도 초기화가 500으로 죽지 않아야 한다 (운영 DB는 외래키를 강제한다)."""
+    db, client = env
+    assert client.post("/api/v1/admin/demo/reset", headers=OPERATOR).status_code == 200
+    manager = db.query(models.User).filter_by(email=DEMO_MANAGER_EMAIL).one()
+    caregiver = db.query(models.User).filter_by(email=DEMO_CAREGIVER_EMAIL).one()
+    guardian = db.query(models.User).filter_by(email=DEMO_GUARDIAN_EMAIL).one()
+    resident = db.query(models.Resident).filter_by(center_id=manager.center_id).first()
+    db.add_all([
+        models.WorkLog(center_id=manager.center_id, staff_id=caregiver.id, work_date=datetime(2026, 10, 15).date(), clock_in=datetime(2026, 10, 15, 9)),
+        models.GuardianViewLog(guardian_id=guardian.id, resident_id=resident.id, center_id=manager.center_id, kind="visits"),
+        models.InspectionLog(center_id=manager.center_id, kind="vehicle", check_date=datetime(2026, 10, 15).date(), inspector_id=caregiver.id, results="{}"),
+    ])
+    db.commit()
+    response = client.post("/api/v1/admin/demo/reset", headers=OPERATOR)
+    assert response.status_code == 200, response.text
+    assert response.json()["reset"] is True
