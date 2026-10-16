@@ -125,11 +125,27 @@ def list_plans(from_date: date = Query(...), to_date: date = Query(...), db: Ses
          "planned_date": r.planned_date.isoformat(), "note": r.note, "done": bool(r.done)} for r in rows]}
 
 
+class DoneBody(BaseModel):
+    service_checked: bool = True
+    note: Optional[str] = Field(None, max_length=500)
+
+
 @router.post("/visit-plans/{plan_id}/done")
-def mark_done(plan_id: int, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
+def mark_done(plan_id: int, body: Optional[DoneBody] = None, db: Session = Depends(get_db),
+              actor: User = Depends(require_social_or_manager)):
+    """방문 예정을 완료하면 같은 달 월 방문 확인 기록도 함께 남긴다. 이미 그 달 기록이 있으면 새로 만들지 않는다."""
     row = db.query(SocialVisitPlan).filter(SocialVisitPlan.id == plan_id, SocialVisitPlan.center_id == actor.center_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="방문 예정을 찾을 수 없습니다")
+    body = body or DoneBody()
     row.done = True
+    year_month = row.planned_date.strftime("%Y-%m")
+    exists = db.query(MonthlyMonitoring).filter(MonthlyMonitoring.resident_id == row.resident_id,
+                                                MonthlyMonitoring.year_month == year_month).first()
+    created = exists is None
+    if created:
+        db.add(MonthlyMonitoring(center_id=actor.center_id, resident_id=row.resident_id, year_month=year_month,
+                                 visit_date=row.planned_date, author_id=actor.id, service_checked=body.service_checked,
+                                 note=(body.note or "").strip() or "방문 예정 완료에서 기록"))
     db.commit()
-    return {"status": "success"}
+    return {"status": "success", "data": {"monitoring_created": created}}

@@ -110,3 +110,15 @@ def test_visit_plan_is_created_listed_and_marked_done(env):
     assert client.get("/api/v1/social-work/visit-plans", params={"from_date": "2026-10-01", "to_date": "2026-10-31"}, headers=SOCIAL).json()["data"][0]["done"] is True
     assert client.post("/api/v1/social-work/visit-plans", json={"resident_id": 1, "planned_date": "2026-10-20"}, headers=CAREGIVER).status_code == 403
     assert client.post(f"/api/v1/social-work/visit-plans/{pid}/done", headers=OTHER_SOCIAL).status_code == 404
+
+
+def test_completing_a_plan_records_the_monthly_visit_once(env):
+    _, client = env
+    first = client.post("/api/v1/social-work/visit-plans", json={"resident_id": 1, "planned_date": "2026-10-20"}, headers=SOCIAL).json()["data"]["id"]
+    second = client.post("/api/v1/social-work/visit-plans", json={"resident_id": 1, "planned_date": "2026-10-27"}, headers=SOCIAL).json()["data"]["id"]
+    done = client.post(f"/api/v1/social-work/visit-plans/{first}/done", json={"service_checked": True}, headers=SOCIAL).json()["data"]
+    assert done["monitoring_created"] is True
+    status = client.get("/api/v1/social-work/monitoring/status", params={"year_month": "2026-10"}, headers=MANAGER).json()["data"]
+    assert [x["resident_id"] for x in status["done"]] == [1]
+    again = client.post(f"/api/v1/social-work/visit-plans/{second}/done", headers=SOCIAL).json()["data"]
+    assert again["monitoring_created"] is False  # 같은 달 기록은 한 번만
