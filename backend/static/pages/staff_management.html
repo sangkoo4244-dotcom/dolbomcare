@@ -393,7 +393,7 @@
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
                             <input id="staffSearch" type="search" placeholder="이름, 이메일로 검색하세요" oninput="filterStaff()">
                         </label>
-                        <select id="roleFilter" onchange="filterStaff()"><option value="">직종 전체</option><option value="caregiver">요양사</option><option value="center_manager">센터장</option></select>
+                        <select id="roleFilter" onchange="filterStaff()"><option value="">직종 전체</option><option value="caregiver">요양사</option><option value="center_manager">센터장</option><option value="social_worker">사회복지사</option></select>
                         <select id="statusFilter" onchange="filterStaff()"><option value="">근무상태 전체</option><option value="active">근무 중</option><option value="leave">휴직</option><option value="inactive">비활성</option></select>
                         <select id="certFilter" onchange="filterStaff()"><option value="">자격증 전체</option><option value="has">보유</option><option value="none">미보유</option></select>
                         <button type="button" class="btn-ghost2" onclick="resetStaffFilters()">↻ 초기화</button>
@@ -412,10 +412,14 @@
                             <input id="newStaffPassword" type="password" autocomplete="new-password" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 180px;">
                         </label>
                         <label style="display: flex; flex-direction: column; font-size: 12px; gap: 4px;">역할
-                            <select id="newStaffRole" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                            <select id="newStaffRole" onchange="toggleBonusCheck()" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
                                 <option value="caregiver">요양사</option>
                                 <option value="center_manager">센터장</option>
+                                <option value="social_worker">사회복지사</option>
                             </select>
+                        </label>
+                        <label id="bonusCheckLabel" style="display: none; flex-direction: row; align-items: center; gap: 6px; font-size: 12px;">
+                            <input id="newStaffBonus" type="checkbox"> 시군구 가산 인력으로 등록됨
                         </label>
                         <button onclick="addStaff()" style="padding: 9px 16px; background: #0F8B80; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">직원 추가</button>
                         <button type="button" onclick="resetAddStaffForm()" style="padding: 9px 16px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 6px; font-weight: 700; cursor: pointer;">초기화</button>
@@ -638,6 +642,7 @@
 
         function jobOf(s) {
             if (s.position) return s.position;
+            if (s.role === 'social_worker') return '사회복지사';
             return s.role === 'caregiver' ? '요양사' : '관리직';
         }
 
@@ -1115,6 +1120,14 @@
         function resetAddStaffForm() {
             ['newStaffName', 'newStaffEmail', 'newStaffPassword'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('newStaffRole').value = 'caregiver';
+            document.getElementById('newStaffBonus').checked = false;
+            toggleBonusCheck();
+        }
+
+        // 사회복지사는 가산 인력 등록 여부를 센터가 체크한다 (2026 평가: 등록된 인력이 한 상담·계획만 인정)
+        function toggleBonusCheck() {
+            const isSocial = document.getElementById('newStaffRole').value === 'social_worker';
+            document.getElementById('bonusCheckLabel').style.display = isSocial ? 'flex' : 'none';
         }
 
         async function addStaff() {
@@ -1122,6 +1135,7 @@
             const email = document.getElementById('newStaffEmail').value.trim();
             const password = document.getElementById('newStaffPassword').value;
             const role = document.getElementById('newStaffRole').value;
+            const careBonusRegistered = role === 'social_worker' && document.getElementById('newStaffBonus').checked;
             if (!name || !email || !password) {
                 alert('이름, 이메일, 초기 비밀번호를 모두 입력해 주세요');
                 return;
@@ -1138,7 +1152,7 @@
                 const response = await fetch(`${API_URL}/users/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, full_name: name, role })
+                    body: JSON.stringify({ email, password, full_name: name, role, care_bonus_registered: careBonusRegistered })
                 });
                 if (!response.ok) {
                     const err = await response.json().catch(() => ({}));

@@ -102,3 +102,17 @@ def test_social_worker_can_write_assessments_and_other_center_is_refused(env):
 def test_social_worker_cannot_create_billing_or_admin_users(env):
     _, client = env
     assert client.post("/api/v1/users/register", json={"email": "x@test.com", "password": "password123", "full_name": "x", "role": "social_worker"}, headers=SOCIAL).status_code == 403
+
+
+def test_manager_registers_social_worker_with_bonus_flag(env):
+    db, client = env
+    body = {"email": "new.social@test.com", "password": "password123", "full_name": "새 복지사", "role": "social_worker", "care_bonus_registered": True}
+    r = client.post("/api/v1/users/register", json=body, headers=MANAGER)
+    assert r.status_code == 200, r.text
+    u = db.query(models.User).filter(models.User.email == "new.social@test.com").one()
+    assert u.role == "social_worker" and u.center_id == 1 and u.care_bonus_registered is True
+    # 요양사로 만들 때는 가산 인력 표시가 저장되지 않는다
+    client.post("/api/v1/users/register", json={**body, "email": "c3@test.com", "role": "caregiver"}, headers=MANAGER)
+    assert db.query(models.User).filter(models.User.email == "c3@test.com").one().care_bonus_registered is False
+    # 사회복지사는 사회복지사 계정을 만들 수 없다
+    assert client.post("/api/v1/users/register", json={**body, "email": "x2@test.com"}, headers=SOCIAL).status_code == 403
