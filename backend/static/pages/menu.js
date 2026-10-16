@@ -176,22 +176,42 @@ SIDEBAR_MENUS.social_worker = [
     { href: 'social_guide.html', icon: 'stamp', label: '사용 안내' },
 ];
 
-const SIDEBAR_GROUPS = [
-    ['메인', ['대시보드', '알림']],
-    ['방문 운영', ['나의 일정', '제공 기록', '방문 일정 승인', '제공 기록 관리', '제공기록지', '방문간호 지시서', '목욕·간호 기록지', '급여제공계획 확인', '주야간 이용 기록', '공단 태그 대조', '오늘 방문 현황', '점검 기록', '계약통보서 초안', '인수인계', '사고·응급 보고']],
-    ['청구·급여', ['나의 청구', '청구관리', '청구 입력 도우미', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과', '나의 급여']],
-    ['수급자·보호자', ['수급자 관리', '담당 수급자', '보호자 관리', '보호자 소통']],
-    ['서비스 품질·평가', ['급여제공계획', '상담 기록', '업무수행일지', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
-    ['센터·직원', ['직원관리', '직원 규정준수', '근무 현황', '교육 이력', '나의 기록', '출퇴근', '센터 정보']],
-    ['도움말', ['사용 안내', '센터장 안내']],
-];
+// 역할별 사이드 메뉴 묶음: 같은 업무끼리 모은다. 목록에 없는 메뉴는 이 역할에게 안 보이는 것이므로 여기서 빠진 메뉴는 맨 아래에 붙는다.
+const SIDEBAR_GROUPS_BY_ROLE = {
+    center_manager: [
+        ['메인', ['대시보드', '알림']],
+        ['방문 관리', ['방문 일정 승인', '오늘 방문 현황', '제공 기록 관리', '제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '인수인계', '사고·응급 보고']],
+        ['청구·정산', ['청구관리', '청구 입력 도우미', '공단 태그 대조', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과']],
+        ['수급자·보호자', ['수급자 관리', '보호자 관리', '보호자 소통', '계약통보서 초안']],
+        ['서비스 계획·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '평가 준비 자료', '교육·안내 기록']],
+        ['직원·센터', ['직원관리', '직원 규정준수', '근무 현황', '점검 기록', '센터 정보']],
+        ['도움말', ['센터장 안내']],
+    ],
+    caregiver: [
+        ['메인', ['대시보드', '알림']],
+        ['오늘 업무', ['나의 일정', '제공 기록', '제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '인수인계', '사고·응급 보고', '점검 기록']],
+        ['수급자·보호자', ['담당 수급자', '급여제공계획 확인', '보호자 소통']],
+        ['나의 청구·급여', ['나의 청구', '나의 급여']],
+        ['근무·교육', ['출퇴근', '나의 기록', '교육 이력']],
+        ['도움말', ['사용 안내']],
+    ],
+    social_worker: [
+        ['메인', ['대시보드', '알림']],
+        ['사례 관리', ['수급자 관리', '급여제공계획', '상담 기록', '업무수행일지', '결과평가·사례관리', '보호자 소통']],
+        ['방문·기록', ['제공기록지', '평가 준비 자료']],
+        ['근무·교육', ['출퇴근', '나의 기록']],
+        ['도움말', ['사용 안내']],
+    ],
+};
 
-function applySidebarGroups(nav) {
+function applySidebarGroups(nav, roleMenu) {
+    const groups = SIDEBAR_GROUPS_BY_ROLE[roleMenu];
+    if (!groups) return;
     const links = Array.from(nav.querySelectorAll(':scope > a.side-item'));
     const byLabel = {};
     links.forEach(a => { byLabel[(a.querySelector('span:last-child') || a).textContent.trim()] = a; });
     const frag = document.createDocumentFragment();
-    SIDEBAR_GROUPS.forEach(([label, names]) => {
+    groups.forEach(([label, names]) => {
         const found = names.map(n => byLabel[n]).filter(Boolean);
         if (!found.length) return;
         const h = document.createElement('div');
@@ -312,7 +332,7 @@ function renderSidebar() {
             <span>로그아웃</span>
         </a>
     `;
-    if (roleMenu !== 'guardian') applySidebarGroups(nav);
+    applySidebarGroups(nav, roleMenu);
     // 메뉴가 길 때 지금 보고 있는 메뉴가 가려져 있으면 가운데로 스크롤해서 보여 준다
     const activeItem = nav.querySelector('.side-item.active');
     if (activeItem && nav.scrollHeight > nav.clientHeight) {
