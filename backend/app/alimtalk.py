@@ -72,3 +72,27 @@ def send_alimtalk(phone: str, kind: str, message: str) -> None:
         )
     except Exception as e:  # 알림톡 실패가 본 요청을 막으면 안 된다
         print(f"[WARN] alimtalk send failed (kind={kind}): {e}")
+
+
+def sms_configured() -> bool:
+    return bool(SOLAPI_API_KEY and SOLAPI_API_SECRET and SOLAPI_SENDER_PHONE)
+
+
+def send_sms(phone: str, text: str) -> bool:
+    """문자(SMS)를 보낸다. 템플릿이 필요 없는 자유 문장이다. 발송이 접수되면 True.
+    발신번호(SOLAPI_SENDER_PHONE)는 솔라피에 미리 등록된 번호여야 한다."""
+    if not (sms_configured() and phone and text):
+        return False
+    date = datetime.now(timezone.utc).isoformat()
+    salt = uuid.uuid4().hex
+    try:
+        response = httpx.post(
+            "https://api.solapi.com/messages/v4/send",
+            headers={"Authorization": f"HMAC-SHA256 apiKey={SOLAPI_API_KEY}, date={date}, salt={salt}, signature={_signature(date, salt)}"},
+            json={"message": {"to": phone, "from": SOLAPI_SENDER_PHONE, "text": text, "type": "SMS"}},
+            timeout=5,
+        )
+        return response.status_code < 300
+    except Exception as e:  # 문자 실패가 본 요청을 막으면 안 된다
+        print(f"[WARN] sms send failed: {e}")
+        return False

@@ -759,6 +759,20 @@ class TrialRequest(Base):
     created_at = Column(DateTime, default=datetime.now)
 
 
+class SmsLog(Base):
+    """센터가 보호자에게 보낸 문자 발송 내역 (안내발송내역)."""
+    __tablename__ = "sms_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    sent_by = Column(Integer, ForeignKey("users.id"))
+    phone = Column(String)
+    text = Column(Text)
+    status = Column(String)  # sent / failed / no_phone / blocked
+    created_at = Column(DateTime, default=datetime.now)
+
+
 class FacilityRegistry(Base):
     """공단 장기요양기관 목록(공공데이터 '시설별 현황' 파일). 체험 신청 때 기관기호와 기관명을 대조하는 데 쓴다.
     파일을 올릴 때마다 통째로 바꾼다."""
