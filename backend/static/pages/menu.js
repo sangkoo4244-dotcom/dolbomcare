@@ -96,6 +96,7 @@ const SIDEBAR_MENUS = {
         { href: 'dashboard.html', icon: 'dashboard', label: '대시보드' },
         { href: 'notifications.html', icon: 'notify', label: '알림' },
         { href: 'my_schedule.html', icon: 'schedule', label: '나의 일정' },
+        { href: 'visit_map.html', icon: 'schedule', label: '방문 지도' },
         { href: 'voice_record.html', icon: 'voice', label: '제공 기록' },
         { href: 'day_care.html', icon: 'schedule_check', label: '주야간 이용 기록', benefit: 'day_night' },
         { href: 'caregiver_billing.html', icon: 'billing', label: '나의 청구' },
@@ -132,6 +133,7 @@ const SIDEBAR_MENUS = {
         { href: 'contract_notice.html', icon: 'stamp', label: '계약통보서 초안' },
         { href: 'day_care.html', icon: 'schedule_check', label: '주야간 이용 기록', benefit: 'day_night' },
         { href: 'today_board.html', icon: 'schedule_check', label: '오늘 방문 현황' },
+        { href: 'visit_map.html', icon: 'schedule', label: '방문 지도' },
         { href: 'rfid_compare.html', icon: 'schedule_check', label: '공단 태그 대조' },
         { href: 'handover.html', icon: 'messages', label: '인수인계' },
         { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
@@ -180,7 +182,7 @@ SIDEBAR_MENUS.social_worker = [
 const SIDEBAR_GROUPS_BY_ROLE = {
     center_manager: [
         ['메인', ['대시보드', '알림']],
-        ['방문 관리', ['방문 일정 승인', '오늘 방문 현황', '제공 기록 관리', '제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '인수인계', '사고·응급 보고']],
+        ['방문 관리', ['방문 일정 승인', '오늘 방문 현황', '방문 지도', '제공 기록 관리', '제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '인수인계', '사고·응급 보고']],
         ['청구·정산', ['청구관리', '청구 입력 도우미', '공단 태그 대조', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과']],
         ['수급자·보호자', ['수급자 관리', '보호자 관리', '보호자 소통', '계약통보서 초안']],
         ['서비스 계획·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '평가 준비 자료', '교육·안내 기록']],
@@ -189,7 +191,7 @@ const SIDEBAR_GROUPS_BY_ROLE = {
     ],
     caregiver: [
         ['메인', ['대시보드', '알림']],
-        ['오늘 업무', ['나의 일정', '제공 기록', '제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '인수인계', '사고·응급 보고', '점검 기록']],
+        ['오늘 업무', ['나의 일정', '방문 지도', '제공 기록', '제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '인수인계', '사고·응급 보고', '점검 기록']],
         ['수급자·보호자', ['담당 수급자', '급여제공계획 확인', '보호자 소통']],
         ['나의 청구·급여', ['나의 청구', '나의 급여']],
         ['근무·교육', ['출퇴근', '나의 기록', '교육 이력']],

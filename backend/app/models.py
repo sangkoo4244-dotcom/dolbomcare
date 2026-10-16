@@ -69,6 +69,8 @@ class Resident(Base):
     client_type = Column(String, default="일반")  # '일반', '차상위계층', '기초생활보장', '의료급여'
     gender = Column(String, nullable=True)  # '남', '여'
     address = Column(String, nullable=True)
+    latitude = Column(Float, nullable=True)  # 주소를 한 번 좌표로 바꿔 저장해 두는 값 (방문 지도용)
+    longitude = Column(Float, nullable=True)
     recognition_number = Column(String, nullable=True)  # 장기요양인정번호
     recognition_start = Column(Date, nullable=True)  # 인정 유효기간 시작
     recognition_end = Column(Date, nullable=True)  # 인정 유효기간 종료

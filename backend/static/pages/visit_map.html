@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>방문 지도 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+        .field { padding: 9px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; }
+        .map-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; }
+        #map { width: 100%; height: 520px; border-radius: 12px; border: 1px solid var(--line2); background: #E2E8F0; }
+        .visit { display: grid; grid-template-columns: 34px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
+        .num { width: 28px; height: 28px; border-radius: 50%; background: var(--teal); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+        .sub { font-size: 12px; color: #64748B; margin-top: 2px; }
+        .note { font-size: 12px; color: #94A3B8; margin-top: 10px; line-height: 1.6; }
+        .empty-note { color: #94A3B8; font-size: 13px; }
+        @media (max-width: 900px) { .map-wrap { grid-template-columns: 1fr; } }
+    </style>
+    <script src="menu.js"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>방문 지도</h1>
+                <div class="breadcrumb">홈 › 방문 운영 › <b>방문 지도</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-role" id="userRole"></div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="panel" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <input id="day" type="date" class="field" onchange="load()">
+                <button class="logout-btn" onclick="load()">새로고침</button>
+                <span id="stamp" style="font-size:13px;color:#64748B;"></span>
+            </div>
+            <div class="map-wrap">
+                <div class="panel" style="margin:0;"><div id="map"><div class="empty-note" style="padding:20px;">지도를 불러오는 중…</div></div></div>
+                <div class="panel" style="margin:0;"><div id="list"><div class="empty-note">불러오는 중…</div></div>
+                    <div class="note" id="note"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+        let kakaoReady = null;
+
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html';
+            }
+        }
+
+        function loadKakao() {
+            if (kakaoReady) return kakaoReady;
+            kakaoReady = (async () => {
+                const r = await fetch('/api/v1/centers/kakao-js-key').then(x => x.json()).catch(() => ({}));
+                if (!r.key) return false;
+                await new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(r.key)}&autoload=false`;
+                    s.onload = resolve; s.onerror = reject;
+                    document.head.appendChild(s);
+                });
+                await new Promise(resolve => window.kakao.maps.load(resolve));
+                return true;
+            })().catch(() => false);
+            return kakaoReady;
+        }
+
+        async function drawMap(visits) {
+            const box = document.getElementById('map');
+            const ok = await loadKakao();
+            const points = visits.filter(v => v.latitude != null && v.longitude != null);
+            if (!ok) { box.innerHTML = '<div class="empty-note" style="padding:20px;">지도 키가 설정되지 않았습니다. 오른쪽 목록으로 확인하세요.</div>'; return; }
+            if (!points.length) { box.innerHTML = '<div class="empty-note" style="padding:20px;">표시할 주소가 없습니다.</div>'; return; }
+            box.innerHTML = '';
+            const map = new kakao.maps.Map(box, { center: new kakao.maps.LatLng(points[0].latitude, points[0].longitude), level: 6 });
+            const bounds = new kakao.maps.LatLngBounds();
+            points.forEach(v => {
+                const pos = new kakao.maps.LatLng(v.latitude, v.longitude);
+                bounds.extend(pos);
+                const marker = new kakao.maps.CustomOverlay({ position: pos, yAnchor: 1, content: `<div style="background:#0F8B80;color:#fff;border-radius:50%;width:26px;height:26px;line-height:26px;text-align:center;font-weight:700;font-size:13px;border:2px solid #fff;">${v.number}</div>` });
+                marker.setMap(map);
+            });
+            if (points.length > 1) {
+                new kakao.maps.Polyline({ map, path: points.map(v => new kakao.maps.LatLng(v.latitude, v.longitude)), strokeWeight: 3, strokeColor: '#0F8B80', strokeOpacity: 0.7 });
+            }
+            map.setBounds(bounds);
+        }
+
+        async function load() {
+            const day = document.getElementById('day').value;
+            const q = day ? `?day=${day}` : '';
+            const r = await fetch(`/api/v1/visit-map/day${q}`, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { document.getElementById('list').innerHTML = `<div class="empty-note">${esc(d.detail || '불러오지 못했습니다')}</div>`; return; }
+            const v = d.data;
+            document.getElementById('stamp').textContent = v.date ? `${v.date} 방문 ${v.visits.length}건` : '';
+            document.getElementById('list').innerHTML = v.visits.length ? v.visits.map(x => `<div class="visit">
+                <div class="num">${x.number}</div>
+                <div><b>${esc(x.time)}</b> ${esc(x.resident)} <span class="sub">${esc(x.caregiver)}${x.duration ? ' · ' + x.duration + '분' : ''}</span>
+                <div class="sub">${x.address ? esc(x.address) : '<span style="color:#B91C1C;">주소 없음</span>'}${x.latitude == null && x.address ? ' · 지도 표시 실패' : ''}</div></div></div>`).join('')
+                : '<div class="empty-note">이 날 방문 일정이 없습니다.</div>';
+            document.getElementById('note').textContent = '번호는 방문 시각 순서입니다. 이동 거리 최적화는 하지 않습니다. 주소는 지도 표시를 위해 카카오로 보내 좌표로 바꿉니다.';
+            drawMap(v.visits);
+        }
+
+        (async function init() {
+            if (typeof renderSidebar === 'function') renderSidebar();
+            document.getElementById('userName').textContent = user.full_name || '';
+            document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양보호사' : '센터장';
+            document.getElementById('day').value = new Date().toISOString().slice(0, 10);
+            load();
+        })();
+    </script>
+</body>
+</html>

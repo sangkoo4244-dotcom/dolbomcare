@@ -98,6 +98,8 @@ ADDITIVE_COLUMNS = [
     ("trial_requests", "institution_verified", "BOOLEAN DEFAULT FALSE"),
     ("facility_registry", "sido_code", "VARCHAR"),
     ("centers", "verified", "BOOLEAN"),
+    ("residents", "latitude", "FLOAT"),
+    ("residents", "longitude", "FLOAT"),
     ("trial_requests", "cert_name", "VARCHAR"),
     ("trial_requests", "cert_type", "VARCHAR"),
     ("trial_requests", "cert_data", "TEXT"),
