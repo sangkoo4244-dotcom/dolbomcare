@@ -364,6 +364,20 @@ class NursingOrder(Base):
     created_at = Column(DateTime, default=datetime.now)
 
 
+class InspectionLog(Base):
+    """센터 내부 점검 기록(차량·욕조·간호 용품). 공단 공식 서식이 아니라 센터가 점검 사실을 남기는 대장이다."""
+    __tablename__ = "inspection_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    kind = Column(String, index=True)  # vehicle / bath_tub / nursing_kit
+    check_date = Column(Date, index=True)
+    inspector_id = Column(Integer, ForeignKey("users.id"))
+    results = Column(Text)  # JSON: {항목명: "ok" | "fail" | "na"}
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+
+
 class GuardianViewLog(Base):
     """보호자가 방문 기록을 열어 본 기록. 공단 다빈도 Q&A(Q57): 기록지를 전자로 열람하게 한 경우 증빙으로 쓴다."""
     __tablename__ = "guardian_view_logs"
