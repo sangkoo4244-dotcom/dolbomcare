@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user, require_manager
 from app.database import get_db
 from app.education import status_for
-from app.models import StaffRecord, User
+from app.api.notifications import notify
+from app.models import Notification, StaffRecord, User
 
 router = APIRouter()
 SELF_TYPES = {"health_checkup": "건강검진", "continuing_education": "보수교육", "annual_leave": "연차·유급휴일"}
@@ -34,6 +35,17 @@ def _is_caregiver_for_education(u: User) -> bool:
     return (u.job_type or "요양보호사") == "요양보호사" and u.role == "caregiver"
 
 
+def _remind_due(db: Session, user: User, st: Optional[dict]) -> None:
+    """이수 기한이 올해인 요양보호사에게 한 번만 알림을 남긴다 (같은 해 같은 문구는 중복 저장하지 않음)."""
+    if not st or st.get("state") != "due" or not st.get("due_year"):
+        return
+    msg = f"{st['due_year']}년 보수교육 이수가 필요합니다. 센터 교육 일정을 확인해 주세요."
+    exists = db.query(Notification).filter(Notification.user_id == user.id, Notification.kind == "education_due", Notification.message == msg).first()
+    if not exists:
+        notify(db, user.id, "education_due", msg)
+        db.commit()
+
+
 def _education(u: User, db: Session, today: date) -> Optional[dict]:
     if not _is_caregiver_for_education(u):
         return None
@@ -56,8 +68,10 @@ def my_records(db: Session = Depends(get_db), actor: User = Depends(get_current_
         elif r.record_type == "grievance":
             grievances.append(_item(r))
     today = date.today()
+    edu = _education(actor, db, today)
+    _remind_due(db, actor, edu)
     return {"status": "success", "data": {
-        "education": _education(actor, db, today),
+        "education": edu,
         "records": {code: {"label": label, "items": out[code]} for code, label in SELF_TYPES.items()},
         "grievances": grievances,
         "note": PRIVATE_NOTE,
@@ -85,6 +99,7 @@ def center_education_status(db: Session = Depends(get_db), actor: User = Depends
         st = _education(u, db, today)
         if st is None:
             continue
+        _remind_due(db, u, st)
         rows.append({"staff_id": u.id, "name": u.full_name, **st})
     return {"status": "success", "data": {
         "staff": rows,

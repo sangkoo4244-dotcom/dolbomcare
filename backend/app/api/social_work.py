@@ -1,5 +1,5 @@
 """사회복지사 업무: 업무수행일지(방문상담)와 월 방문 확인 기록. 사회복지사·센터장이 쓰고, 같은 센터 이용자만 보인다."""
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import require_social_or_manager
 from app.database import get_db
-from app.models import MonthlyMonitoring, Resident, SocialWorkLog, User
+from app.models import MonthlyMonitoring, Resident, SocialVisitPlan, SocialWorkLog, User
 
 router = APIRouter()
 
@@ -96,3 +96,40 @@ def monitoring_status(year_month: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-
         "done": [{"resident_id": r.id, "name": r.name} for r in residents if r.id in done],
         "missing": [{"resident_id": r.id, "name": r.name} for r in residents if r.id not in done],
     }}
+
+
+class PlanBody(BaseModel):
+    resident_id: int
+    planned_date: date
+    note: Optional[str] = Field(None, max_length=200)
+
+
+@router.post("/visit-plans")
+def add_plan(body: PlanBody, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
+    _resident(db, body.resident_id, actor.center_id)
+    row = SocialVisitPlan(center_id=actor.center_id, resident_id=body.resident_id, author_id=actor.id,
+                          planned_date=body.planned_date, note=(body.note or "").strip() or None)
+    db.add(row)
+    db.commit()
+    return {"status": "success", "data": {"id": row.id}}
+
+
+@router.get("/visit-plans")
+def list_plans(from_date: date = Query(...), to_date: date = Query(...), db: Session = Depends(get_db),
+               actor: User = Depends(require_social_or_manager)):
+    rows = db.query(SocialVisitPlan).filter(SocialVisitPlan.center_id == actor.center_id,
+                                            SocialVisitPlan.planned_date >= from_date, SocialVisitPlan.planned_date <= to_date)         .order_by(SocialVisitPlan.planned_date).all()
+    names = {r.id: r.name for r in db.query(Resident).filter(Resident.center_id == actor.center_id).all()}
+    return {"status": "success", "data": [
+        {"id": r.id, "resident_id": r.resident_id, "resident_name": names.get(r.resident_id, ""),
+         "planned_date": r.planned_date.isoformat(), "note": r.note, "done": bool(r.done)} for r in rows]}
+
+
+@router.post("/visit-plans/{plan_id}/done")
+def mark_done(plan_id: int, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
+    row = db.query(SocialVisitPlan).filter(SocialVisitPlan.id == plan_id, SocialVisitPlan.center_id == actor.center_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="방문 예정을 찾을 수 없습니다")
+    row.done = True
+    db.commit()
+    return {"status": "success"}

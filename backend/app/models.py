@@ -304,6 +304,20 @@ class SocialWorkLog(Base):
     created_at = Column(DateTime, default=datetime.now)
 
 
+class SocialVisitPlan(Base):
+    """사회복지사 가정방문 예정. 완료하면 월 방문 확인 기록과 같은 날짜로 이어진다."""
+    __tablename__ = "social_visit_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    author_id = Column(Integer, ForeignKey("users.id"), index=True)
+    planned_date = Column(Date, index=True)
+    note = Column(String, nullable=True)
+    done = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.now)
+
+
 class MonthlyMonitoring(Base):
     """매월 1회 이상 급여제공 시간 중 가정을 방문해 서비스 제공 여부를 확인·기록한 것 (고시 제57조 ② 1호)."""
     __tablename__ = "monthly_monitorings"
@@ -317,6 +331,19 @@ class MonthlyMonitoring(Base):
     author_id = Column(Integer, ForeignKey("users.id"), index=True)
     service_checked = Column(Boolean, default=True)  # 급여제공 시간 중 서비스 제공 여부 확인
     note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+
+
+class WorkLog(Base):
+    """직원 출퇴근 기록. 방문 기록(DailyRecord)과 맞춰 '방문은 있는데 출근 기록이 없는 날'을 찾는 데 쓴다."""
+    __tablename__ = "work_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    staff_id = Column(Integer, ForeignKey("users.id"), index=True)
+    work_date = Column(Date, index=True)
+    clock_in = Column(DateTime)
+    clock_out = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
 
 

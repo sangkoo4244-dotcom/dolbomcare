@@ -131,3 +131,15 @@ def test_career_ratio_counts_six_month_staff_and_continuous_service(env):
     assert data["threshold_months"] in (12, 24) and data["denominator"] == 0  # 급여 기록이 없으면 분모도 0 (점수 0)
     assert data["score"] == 0
     assert client.get("/api/v1/staff-self/career-ratio", headers=CG).status_code == 403
+
+
+def test_education_due_reminder_is_sent_once_to_the_caregiver(env):
+    db, client = env
+    # 올해가 대상 연도가 되도록 생년을 맞춘다
+    db.query(models.User).filter(models.User.id == 2).update({"birth_date": date(date.today().year - 46, 3, 1)})  # 오늘 연도와 같은 홀짝
+    db.commit()
+    client.get("/api/v1/staff-self/education-status", headers=MANAGER)
+    client.get("/api/v1/staff-self/me", headers=CG)
+    client.get("/api/v1/staff-self/me", headers=CG)
+    notes = db.query(models.Notification).filter(models.Notification.user_id == 2, models.Notification.kind == "education_due").all()
+    assert len(notes) == 1

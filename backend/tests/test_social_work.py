@@ -97,3 +97,16 @@ def test_roles_and_centers_are_respected(env):
     assert client.post("/api/v1/social-work/logs", json=log_body(), headers=CAREGIVER).status_code == 403
     assert client.post("/api/v1/social-work/logs", json=log_body(), headers=OTHER_SOCIAL).status_code == 404  # 다른 센터 이용자
     assert client.get("/api/v1/social-work/logs", params={"resident_id": 1}, headers=OTHER_SOCIAL).status_code == 404
+
+
+def test_visit_plan_is_created_listed_and_marked_done(env):
+    _, client = env
+    r = client.post("/api/v1/social-work/visit-plans", json={"resident_id": 1, "planned_date": "2026-10-20", "note": "월 방문 확인"}, headers=SOCIAL)
+    assert r.status_code == 200, r.text
+    pid = r.json()["data"]["id"]
+    rows = client.get("/api/v1/social-work/visit-plans", params={"from_date": "2026-10-01", "to_date": "2026-10-31"}, headers=SOCIAL).json()["data"]
+    assert rows[0]["resident_name"] == "김이용" and rows[0]["done"] is False
+    assert client.post(f"/api/v1/social-work/visit-plans/{pid}/done", headers=SOCIAL).status_code == 200
+    assert client.get("/api/v1/social-work/visit-plans", params={"from_date": "2026-10-01", "to_date": "2026-10-31"}, headers=SOCIAL).json()["data"][0]["done"] is True
+    assert client.post("/api/v1/social-work/visit-plans", json={"resident_id": 1, "planned_date": "2026-10-20"}, headers=CAREGIVER).status_code == 403
+    assert client.post(f"/api/v1/social-work/visit-plans/{pid}/done", headers=OTHER_SOCIAL).status_code == 404

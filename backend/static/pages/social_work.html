@@ -120,6 +120,17 @@
             </div>
 
             <div class="panel">
+                <h2>방문 예정 (이번 달)</h2>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <input id="planDate" type="date" style="padding:8px;border:2px solid var(--line2);border-radius:10px;">
+                    <input id="planNote" maxlength="200" placeholder="메모 (예: 월 방문 확인)" style="padding:8px;border:2px solid var(--line2);border-radius:10px;min-width:200px;">
+                    <button class="btn-outline" onclick="addPlan()">선택한 이용자 방문 예정 추가</button>
+                    <span id="planErr" style="color:#DC2626;font-size:13px;"></span>
+                </div>
+                <div id="planList" style="margin-top:12px;"></div>
+            </div>
+
+            <div class="panel">
                 <h2>업무수행일지 (방문 상담)</h2>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                     <div><label style="font-size:13px;font-weight:700;">방문(상담) 일시</label><input id="visitedAt" type="datetime-local" style="width:100%;padding:8px;border:2px solid var(--line2);border-radius:10px;"></div>
@@ -198,6 +209,33 @@
             loadAll();
         }
 
+        async function loadPlans() {
+            const start = ym() + '-01';
+            const end = new Date(new Date(start).getFullYear(), new Date(start).getMonth() + 1, 0).toISOString().slice(0, 10);
+            const d = await fetch(`${API}/visit-plans?from_date=${start}&to_date=${end}`).then(r => r.json()).catch(() => ({}));
+            const rows = d.data || [];
+            document.getElementById('planList').innerHTML = rows.length ? rows.map(p => `<div class="row"><div class="who">${esc(p.planned_date)} · ${esc(p.resident_name)}</div>
+                <div class="sub">${esc(p.note || '')} ${p.done ? '<span class="badge ok">완료</span>' : `<button class="btn-outline" onclick="donePlan(${p.id})">방문 완료</button>`}</div></div>`).join('')
+                : '<div class="empty-note">이번 달 방문 예정이 없습니다.</div>';
+        }
+
+        async function addPlan() {
+            const err = document.getElementById('planErr'); err.textContent = '';
+            const date = document.getElementById('planDate').value;
+            if (!date) { err.textContent = '방문 날짜를 골라 주세요'; return; }
+            const r = await fetch(`${API}/visit-plans`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ resident_id: Number(document.getElementById('resident').value), planned_date: date, note: document.getElementById('planNote').value }) });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { err.textContent = d.detail || '추가하지 못했습니다'; return; }
+            document.getElementById('planNote').value = '';
+            loadPlans();
+        }
+
+        async function donePlan(id) {
+            const r = await fetch(`${API}/visit-plans/${id}/done`, { method: 'POST' });
+            if (r.ok) loadPlans();
+        }
+
         (async function init() {
             if (typeof renderSidebar === 'function') renderSidebar();  // 사이드바는 본문이 그려진 뒤에 채운다
             const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
@@ -205,6 +243,7 @@
             document.getElementById('userRole').textContent = user.role === 'social_worker' ? '사회복지사' : '관리자';
             await loadResidents();
             loadAll();
+            loadPlans();
         })();
     </script>
 </body>
