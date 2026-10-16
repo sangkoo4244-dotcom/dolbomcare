@@ -79,6 +79,8 @@ ADDITIVE_COLUMNS = [
     ("users", "job_type", "VARCHAR"),
     ("users", "care_bonus_registered", "BOOLEAN DEFAULT FALSE"),
     ("users", "birth_date", "DATE"),
+    ("users", "leave_date", "DATE"),
+    ("users", "career_excluded", "BOOLEAN DEFAULT FALSE"),
     ("schedules", "benefit_type", "VARCHAR DEFAULT 'home_care'"),
     ("schedules", "bath_mode", "VARCHAR"),
     ("schedules", "co_caregiver_id", "INTEGER"),

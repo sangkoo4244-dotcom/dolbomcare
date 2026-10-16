@@ -11,6 +11,8 @@ class User(Base):
     hashed_password = Column(String)
     full_name = Column(String)
     role = Column(String)  # 'center_manager', 'caregiver', 'guardian', 'social_worker'
+    leave_date = Column(Date, nullable=True)  # 퇴사일 (경력직 근무 기간 계산)
+    career_excluded = Column(Boolean, default=False)  # 경력직 비율 제외 대상 (대표자 겸 시설장, 불가피 퇴직, 대체·기간제 직원 등)
     birth_date = Column(Date, nullable=True)  # 직원 생년월일: 보수교육 대상 연도(출생연도 홀수·짝수) 계산에 쓴다
     care_bonus_registered = Column(Boolean, default=False)  # 사회복지사: 시군구 가산 인력으로 등록되어 상담·욕구사정·계획을 인정받는 직원 (센터가 직접 체크)
     center_id = Column(Integer, ForeignKey("centers.id"), nullable=True)

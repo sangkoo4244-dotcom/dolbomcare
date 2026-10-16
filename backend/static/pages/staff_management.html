@@ -665,6 +665,8 @@
                     <label>연락처<input id="ePhone" value="${escapeAttr(s.phone)}"></label>
                     <label>입사일<input id="eHire" type="date" value="${escapeAttr(s.hire_date)}"></label>
                     <label>생년월일 (보수교육 대상 연도)<input id="eBirth" type="date" value="${escapeAttr(s.birth_date)}"></label>
+                    <label>퇴사일 (경력직 비율)<input id="eLeave" type="date" value="${escapeAttr(s.leave_date)}"></label>
+                    <label style="flex-direction:row;align-items:center;gap:6px;"><input id="eCareerEx" type="checkbox" ${s.career_excluded ? 'checked' : ''}> 경력직 비율 제외 (대표자 겸 시설장 등)</label>
                     <label>직종<select id="eJob">${(JOB_OPTIONS.includes(jobOf(s)) ? JOB_OPTIONS : [...JOB_OPTIONS, jobOf(s)]).map(j => `<option ${jobOf(s) === j ? 'selected' : ''}>${j}</option>`).join('')}</select></label>
                     <label>근무 상태<select id="eStatus">${Object.entries(STATUS_LABEL).map(([k, v]) => `<option value="${k}" ${statusOf(s) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
                     ${s.role === 'caregiver' ? `
@@ -685,6 +687,8 @@
                 phone: document.getElementById('ePhone').value.trim(),
                 hire_date: document.getElementById('eHire').value || null,
                 birth_date: document.getElementById('eBirth').value || null,
+                leave_date: document.getElementById('eLeave').value || null,
+                career_excluded: document.getElementById('eCareerEx').checked,
                 position: document.getElementById('eJob').value,
                 job_type: NURSING_JOBS.includes(document.getElementById('eJob').value) ? document.getElementById('eJob').value : '',
                 employment_status: document.getElementById('eStatus').value

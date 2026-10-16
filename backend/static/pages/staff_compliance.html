@@ -117,6 +117,15 @@
                 <div style="font-size:12px;color:#94A3B8;margin-top:8px;">기준은 공단 운영지침 원문으로 확인해 주세요 (2년 주기·출생연도 홀짝·11월 입사 예외). 생년이 없으면 직원관리에서 입력하세요.</div>
             </div>
             <div class="panel">
+                <h2>경력직 비율 <span style="font-size:13px;color:#64748B;font-weight:600;">지표적용기간 2023.1~2025.12 · 1점</span></h2>
+                <div id="careerBox"><span class="empty-note">불러오는 중…</span></div>
+                <div style="font-size:12px;color:#94A3B8;margin-top:8px;">퇴사일과 제외 여부는 직원관리 수정에서 입력하세요. 휴업 기간과 증빙 휴가는 반영하지 않은 근사 계산이니 제출 전에 공단 원문으로 확인하세요.</div>
+            </div>
+            <div class="panel">
+                <h2>인력현황 게시 점검</h2>
+                <div id="publishBox"><span class="empty-note">불러오는 중…</span></div>
+            </div>
+            <div class="panel">
                 <h2>접수된 고충</h2>
                 <div id="grievanceBox"><span class="empty-note">불러오는 중…</span></div>
             </div>
@@ -140,6 +149,20 @@
                     : '<div class="empty-note">조치가 필요한 요양보호사가 없습니다.</div>';
                 document.getElementById('staffList').innerHTML = d.data.staff.map(r =>
                     `<div class="row"><div class="who">${esc(r.name)}</div><div class="sub">${esc(r.label)}</div></div>`).join('') || '<div class="empty-note">요양보호사가 없습니다.</div>';
+            }
+            const cr = await fetch('/api/v1/staff-self/career-ratio').then(r => r.json()).catch(() => null);
+            if (cr && cr.data) {
+                const c = cr.data;
+                document.getElementById('careerBox').innerHTML = `<div class="row"><div class="who">비율 ${c.ratio_pct}% · 점수 ${c.score}점</div><div class="sub">분모 ${c.denominator}명 · 분자 ${c.numerator}명 · 연속 ${c.threshold_months}개월 기준 · 운영 ${c.operated_months}개월</div></div>`
+                    + c.staff.map(x => `<div class="row"><div class="who">${esc(x.name)}</div><div class="sub">${x.included ? (x.continuous_ok ? '포함 · 연속 기준 충족' : '포함 · 연속 기준 미달') : '제외: ' + esc(x.reason)}</div></div>`).join('');
+            }
+            const pc = await fetch('/api/v1/staff-self/publication-check').then(r => r.json()).catch(() => null);
+            if (pc && pc.data) {
+                const groups = {};
+                pc.data.items.forEach(i => { (groups[i.group] = groups[i.group] || []).push(i); });
+                document.getElementById('publishBox').innerHTML = Object.entries(groups).map(([g, list]) =>
+                    `<div style="margin-top:8px;"><b>${esc(g)}</b>` + list.map(i => `<div class="row"><div class="who">${esc(i.name)}</div><div class="sub">${i.auto ? `<span class="badge ok">센터 정보 확인</span> ${esc(i.value || '')}` : '<span class="badge wait">직접 확인</span>'}</div></div>`).join('') + '</div>').join('')
+                    + `<div style="font-size:12px;color:#94A3B8;margin-top:8px;">${esc(pc.data.rule)}</div>`;
             }
             const g = await fetch('/api/v1/staff-self/grievances').then(r => r.json()).catch(() => null);
             const rows = (g && g.data) || [];

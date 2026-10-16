@@ -30,7 +30,9 @@ class UserUpdate(BaseModel):
     employment_status: Optional[str] = None
     wage_ratio: Optional[int] = None  # 급여 비율(%) - 요양사가 받는 급여 = 청구액 × 이 비율
     job_type: Optional[str] = None  # 직종: 요양보호사/간호사/간호조무사/치과위생사. 빈 문자열이면 요양보호사
-    birth_date: Optional[date] = None  # 직원 생년월일 (보수교육 대상 연도 계산)로 되돌린다
+    birth_date: Optional[date] = None  # 직원 생년월일 (보수교육 대상 연도 계산)
+    leave_date: Optional[date] = None  # 퇴사일 (경력직 비율)
+    career_excluded: Optional[bool] = None  # 경력직 비율 제외 여부로 되돌린다
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
@@ -272,6 +274,8 @@ async def list_users(
                 "phone": u.phone,
                 "hire_date": u.hire_date.isoformat() if u.hire_date else None,
                 "birth_date": u.birth_date.isoformat() if u.birth_date else None,
+                "leave_date": u.leave_date.isoformat() if u.leave_date else None,
+                "career_excluded": bool(u.career_excluded),
                 "position": u.position,
                 "emergency_contact": u.emergency_contact,
                 "employment_status": u.employment_status,
@@ -300,6 +304,10 @@ async def update_user(
 
     if user_update.birth_date:
         user.birth_date = user_update.birth_date
+    if user_update.leave_date:
+        user.leave_date = user_update.leave_date
+    if user_update.career_excluded is not None:
+        user.career_excluded = user_update.career_excluded
     if user_update.full_name:
         user.full_name = user_update.full_name
     if user_update.email:

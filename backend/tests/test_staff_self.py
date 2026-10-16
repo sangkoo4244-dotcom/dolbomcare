@@ -116,3 +116,18 @@ def test_manager_sees_center_grievances_and_resolves_them(env):
     rows = client.get("/api/v1/staff-self/grievances", headers=MANAGER).json()["data"]
     assert rows[0]["title"] == "배차 조정" and rows[0]["staff_name"] == "요양사A"
     assert client.get("/api/v1/staff-self/grievances", headers=CG).status_code == 403
+
+
+def test_career_ratio_counts_six_month_staff_and_continuous_service(env):
+    db, client = env
+    db.query(models.User).filter(models.User.id == 2).update({"hire_date": date(2022, 1, 1), "job_type": None, "role": "caregiver"})
+    db.query(models.User).filter(models.User.id == 3).update({"hire_date": date(2024, 6, 1)})
+    db.commit()
+    data = client.get("/api/v1/staff-self/career-ratio", headers=MANAGER).json()["data"]
+    names = {r["name"]: r for r in data["staff"]}
+    # 요양보호사는 실제 급여제공 월로 센다. 요양사B는 급여 기록이 없어 6개월 미만으로 분모에서 빠진다
+    assert names["요양사B"]["included"] is False and "6개월" in names["요양사B"]["reason"]
+    assert names["요양사A"]["included"] is False  # 급여 기록 없음 (요양사A도 같은 규칙)
+    assert data["threshold_months"] in (12, 24) and data["denominator"] == 0  # 급여 기록이 없으면 분모도 0 (점수 0)
+    assert data["score"] == 0
+    assert client.get("/api/v1/staff-self/career-ratio", headers=CG).status_code == 403
