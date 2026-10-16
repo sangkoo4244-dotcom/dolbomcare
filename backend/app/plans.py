@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Optional
 
 TRIAL_DAYS = 30
-PARTNER_SLOT_LIMIT = 30
+PARTNER_SLOT_LIMIT = 20
 PARTNER_RESIDENT_LIMIT = 100  # 파트너 센터가 무료로 등록할 수 있는 이용자 수 (넘으면 요금제를 시작해야 한다)
 
 PLAN_TRIAL = "trial"

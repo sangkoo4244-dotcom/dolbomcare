@@ -32,7 +32,7 @@ class C:  # 센터 흉내
 
 
 def test_trial_is_one_month_and_states_follow_the_plan():
-    assert TRIAL_DAYS == 30 and PARTNER_SLOT_LIMIT == 30
+    assert TRIAL_DAYS == 30 and PARTNER_SLOT_LIMIT == 20
     assert center_plan_info(C(None, None))["state"] == "paid"                        # 기존 센터: 제한 없음
     assert center_plan_info(C("paid", NOW + timedelta(days=3)))["state"] == "paid"
     trial = center_plan_info(C("trial", NOW + timedelta(days=10, hours=1)))
@@ -108,7 +108,7 @@ def test_expired_trial_center_can_read_but_not_write(env):
 
 def test_operator_can_make_and_end_partners_within_the_slot_limit(env):
     db, client = env
-    assert client.get("/api/v1/centers/partner-slots").json() == {"limit": 30, "used": 1, "remaining": 29}  # 로그인 없이 볼 수 있다
+    assert client.get("/api/v1/centers/partner-slots").json() == {"limit": 20, "used": 1, "remaining": 19}  # 로그인 없이 볼 수 있다
     assert client.post("/api/v1/admin/centers/3/partner", json={"note": "1호"}, headers=TRIAL_MGR).status_code == 403
     r = client.post("/api/v1/admin/centers/3/partner", json={"note": "오픈 이벤트"}, headers=OPERATOR)
     assert r.status_code == 200 and r.json()["used"] == 2
@@ -116,12 +116,12 @@ def test_operator_can_make_and_end_partners_within_the_slot_limit(env):
     c = db.query(models.Center).filter_by(id=3).one()
     assert (c.plan, c.trial_ends_at, c.partner_note) == ("partner", None, "오픈 이벤트") and c.partner_since is not None
     assert client.post("/api/v1/admin/centers/3/partner", json={}, headers=OPERATOR).status_code == 400  # 이미 파트너
-    # 자리는 30곳까지만: 이미 2곳이니 28곳 더 지정할 수 있고 그다음은 거절
-    for i in range(10, 39):
+    # 자리는 20곳까지만: 이미 2곳이니 18곳 더 지정할 수 있고 그다음은 거절
+    for i in range(10, 29):
         db.add(models.Center(id=i, name=f"c{i}", plan="trial", trial_ends_at=NOW + timedelta(days=5)))
     db.commit()
-    codes = [client.post(f"/api/v1/admin/centers/{i}/partner", json={}, headers=OPERATOR).status_code for i in range(10, 39)]
-    assert codes.count(200) == 28 and codes[-1] == 400
+    codes = [client.post(f"/api/v1/admin/centers/{i}/partner", json={}, headers=OPERATOR).status_code for i in range(10, 29)]
+    assert codes.count(200) == 18 and codes[-1] == 400
     assert client.get("/api/v1/centers/partner-slots").json()["remaining"] == 0
     # 해제하면 체험 기간으로 돌아가고 자리가 하나 난다
     r = client.post("/api/v1/admin/centers/3/end-partner", json={"days": 30}, headers=OPERATOR)
