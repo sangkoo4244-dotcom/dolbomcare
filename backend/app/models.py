@@ -285,6 +285,38 @@ class GuardianInvite(Base):
     expires_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.now)
 
+class SocialWorkLog(Base):
+    """사회복지사 업무수행일지(별지 제24호 항목). 2026 평가: 상담직원명·상담대상자명(관계)·상담결과 필수, 서명은 확인하지 않음."""
+    __tablename__ = "social_work_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    author_id = Column(Integer, ForeignKey("users.id"), index=True)  # 상담직원
+    visited_at = Column(DateTime, index=True)  # 방문(상담) 일시
+    counseling_target = Column(String, nullable=True)  # 상담대상자명(관계) 예: 김영희(딸)
+    counseling_result = Column(Text, nullable=True)  # 상담결과
+    content = Column(Text, nullable=True)  # 상담 내용
+    monitoring_checked = Column(Boolean, default=False)  # 급여제공 확인(모니터링)을 함께 했는지
+    created_at = Column(DateTime, default=datetime.now)
+
+
+class MonthlyMonitoring(Base):
+    """매월 1회 이상 급여제공 시간 중 가정을 방문해 서비스 제공 여부를 확인·기록한 것 (고시 제57조 ② 1호)."""
+    __tablename__ = "monthly_monitorings"
+    __table_args__ = (UniqueConstraint("resident_id", "year_month", name="uq_monthly_monitoring"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    year_month = Column(String, index=True)  # YYYY-MM
+    visit_date = Column(Date)
+    author_id = Column(Integer, ForeignKey("users.id"), index=True)
+    service_checked = Column(Boolean, default=True)  # 급여제공 시간 중 서비스 제공 여부 확인
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+
+
 class NursingOrder(Base):
     """방문간호지시서 보관본. 공단 서식 목록에 있는 지시서를 파일로 보관한다(유효기간 판단은 센터가 발급일을 보고 한다)."""
     __tablename__ = "nursing_orders"

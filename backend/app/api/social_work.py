@@ -1,0 +1,98 @@
+"""사회복지사 업무: 업무수행일지(방문상담)와 월 방문 확인 기록. 사회복지사·센터장이 쓰고, 같은 센터 이용자만 보인다."""
+from datetime import datetime
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+
+from app.auth import require_social_or_manager
+from app.database import get_db
+from app.models import MonthlyMonitoring, Resident, SocialWorkLog, User
+
+router = APIRouter()
+
+
+class LogBody(BaseModel):
+    resident_id: int
+    visited_at: datetime
+    counseling_target: Optional[str] = Field(None, max_length=100)  # 상담대상자명(관계)
+    counseling_result: Optional[str] = Field(None, max_length=2000)  # 상담결과 (필수)
+    content: Optional[str] = Field(None, max_length=4000)
+    monitoring_checked: bool = False
+
+
+class MonitoringBody(BaseModel):
+    resident_id: int
+    year_month: str = Field(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$")
+    visit_date: datetime
+    service_checked: bool = True
+    note: Optional[str] = Field(None, max_length=1000)
+
+
+def _resident(db: Session, resident_id: int, center_id: Optional[int]) -> Resident:
+    r = db.query(Resident).filter(Resident.id == resident_id, Resident.center_id == center_id).first() if center_id else None
+    if not r:
+        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    return r
+
+
+def _log_dict(log: SocialWorkLog, names: dict) -> dict:
+    return {"id": log.id, "resident_id": log.resident_id, "visited_at": log.visited_at.strftime("%Y-%m-%d %H:%M"),
+            "author_name": names.get(log.author_id, ""), "counseling_target": log.counseling_target,
+            "counseling_result": log.counseling_result, "content": log.content, "monitoring_checked": log.monitoring_checked}
+
+
+@router.post("/logs")
+def create_log(body: LogBody, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
+    _resident(db, body.resident_id, actor.center_id)
+    if not (body.counseling_target or "").strip():
+        raise HTTPException(status_code=400, detail="상담대상자명(관계)을 적어 주세요 (예: 김영희(딸))")
+    if not (body.counseling_result or "").strip():
+        raise HTTPException(status_code=400, detail="상담결과를 적어 주세요 (2026 평가 필수 항목)")
+    log = SocialWorkLog(center_id=actor.center_id, resident_id=body.resident_id, author_id=actor.id, visited_at=body.visited_at,
+                        counseling_target=body.counseling_target.strip(), counseling_result=body.counseling_result.strip(),
+                        content=(body.content or "").strip() or None, monitoring_checked=body.monitoring_checked)
+    db.add(log)
+    db.commit()
+    return {"status": "success", "data": _log_dict(log, {actor.id: actor.full_name})}
+
+
+@router.get("/logs")
+def list_logs(resident_id: int = Query(...), db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
+    _resident(db, resident_id, actor.center_id)
+    rows = db.query(SocialWorkLog).filter(SocialWorkLog.resident_id == resident_id, SocialWorkLog.center_id == actor.center_id) \
+        .order_by(SocialWorkLog.visited_at.desc()).all()
+    names = {u.id: u.full_name for u in db.query(User).filter(User.center_id == actor.center_id).all()}
+    return {"status": "success", "data": [_log_dict(r, names) for r in rows]}
+
+
+@router.post("/monitoring")
+def record_monitoring(body: MonitoringBody, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
+    _resident(db, body.resident_id, actor.center_id)
+    if body.visit_date.strftime("%Y-%m") != body.year_month:
+        raise HTTPException(status_code=400, detail="방문일이 기록 월(YYYY-MM)과 맞지 않습니다")
+    exists = db.query(MonthlyMonitoring).filter(MonthlyMonitoring.resident_id == body.resident_id,
+                                                MonthlyMonitoring.year_month == body.year_month).first()
+    if exists:
+        raise HTTPException(status_code=409, detail="이 달의 방문 확인 기록이 이미 있습니다")
+    row = MonthlyMonitoring(center_id=actor.center_id, resident_id=body.resident_id, year_month=body.year_month,
+                            visit_date=body.visit_date.date(), author_id=actor.id, service_checked=body.service_checked,
+                            note=(body.note or "").strip() or None)
+    db.add(row)
+    db.commit()
+    return {"status": "success", "data": {"id": row.id, "resident_id": row.resident_id, "year_month": row.year_month}}
+
+
+@router.get("/monitoring/status")
+def monitoring_status(year_month: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"), db: Session = Depends(get_db),
+                      actor: User = Depends(require_social_or_manager)):
+    """이번 달 방문 확인이 빠진 이용자 목록 (고시 제57조: 가산 대상 모든 수급자 매월 1회 이상)."""
+    residents = db.query(Resident).filter(Resident.center_id == actor.center_id).all()
+    done = {m.resident_id for m in db.query(MonthlyMonitoring).filter(MonthlyMonitoring.center_id == actor.center_id,
+                                                                     MonthlyMonitoring.year_month == year_month).all()}
+    return {"status": "success", "data": {
+        "year_month": year_month,
+        "done": [{"resident_id": r.id, "name": r.name} for r in residents if r.id in done],
+        "missing": [{"resident_id": r.id, "name": r.name} for r in residents if r.id not in done],
+    }}

@@ -5,7 +5,7 @@ from app.models import (
     RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken,
     Counseling, CarePlan, ServiceEvaluation, CaseConference,
     TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest,
-    GuardianViewLog, NursingOrder,
+    GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring,
 )
 from sqlalchemy import text
 
@@ -103,7 +103,7 @@ def run_migrations():
     """
     for table_cls in (StaffCertificate, SalaryStatement, GuardianInvite, Notification,
                        ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
-                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, ServiceEvaluation, CaseConference, TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest, GuardianViewLog, NursingOrder):
+                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, ServiceEvaluation, CaseConference, TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest, GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring):
         try:
             table_cls.__table__.create(bind=engine, checkfirst=True)
         except Exception as e:

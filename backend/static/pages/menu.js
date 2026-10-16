@@ -149,6 +149,7 @@ SIDEBAR_MENUS.social_worker = [
     { href: 'resident_management.html', icon: 'residents', label: '이용자관리' },
     { href: 'care_plan.html', icon: 'schedule_check', label: '급여제공계획' },
     { href: 'counseling.html', icon: 'messages', label: '상담 기록' },
+    { href: 'social_work.html', icon: 'schedule_check', label: '업무수행일지' },
     { href: 'service_review.html', icon: 'profit', label: '결과평가·사례관리' },
     { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
 ];
@@ -158,7 +159,7 @@ const SIDEBAR_GROUPS = [
     ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '주야간 이용 기록', '공단 태그 대조', '인수인계', '사고·응급 보고']],
     ['청구·급여', ['나의 청구', '청구관리', '청구 입력 도우미', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과', '나의 급여']],
     ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
-    ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
+    ['서비스 품질·평가', ['급여제공계획', '상담 기록', '업무수행일지', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
     ['센터·직원', ['직원관리', '센터 정보']],
     ['도움말', ['사용 안내', '센터장 안내']],
 ];

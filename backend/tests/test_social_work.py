@@ -1,0 +1,99 @@
+"""사회복지사 업무수행일지와 월 방문 확인 기록: 필수 항목, 월 1회, 같은 센터, 청구·급여와 분리."""
+from datetime import datetime, timedelta
+
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from app import models
+from app.api import social_work
+from app.api.users import create_access_token
+from app.database import Base, get_db
+
+
+def auth(uid, role, email):
+    token = create_access_token({"sub": email, "uid": uid, "role": role}, timedelta(hours=1))
+    return {"Authorization": f"Bearer {token}"}
+
+
+MANAGER = auth(1, "center_manager", "m@test.com")
+SOCIAL = auth(3, "social_worker", "s@test.com")
+CAREGIVER = auth(2, "caregiver", "c@test.com")
+OTHER_SOCIAL = auth(7, "social_worker", "o@test.com")
+VISIT = "2026-10-14T10:00:00"
+
+
+@pytest.fixture
+def env(tmp_path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'sw2.db'}")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine)
+    db = Session()
+    db.add_all([
+        models.Center(id=1, name="A"), models.Center(id=2, name="B"),
+        models.User(id=1, email="m@test.com", full_name="센터장", role="center_manager", center_id=1),
+        models.User(id=2, email="c@test.com", full_name="요양사", role="caregiver", center_id=1),
+        models.User(id=3, email="s@test.com", full_name="사회복지사", role="social_worker", center_id=1),
+        models.User(id=7, email="o@test.com", full_name="타센터 복지사", role="social_worker", center_id=2),
+        models.Resident(id=1, center_id=1, name="김이용", care_grade=2),
+        models.Resident(id=2, center_id=1, name="박이용", care_grade=3),
+    ])
+    db.commit()
+    app = FastAPI()
+    app.include_router(social_work.router, prefix="/api/v1/social-work")
+
+    def override():
+        s = Session()
+        try:
+            yield s
+        finally:
+            s.close()
+    app.dependency_overrides[get_db] = override
+    return db, TestClient(app)
+
+
+def log_body(**kw):
+    base = {"resident_id": 1, "visited_at": VISIT, "counseling_target": "김영희(딸)",
+            "counseling_result": "식사량 감소로 보호자와 식단 조정", "content": "정기 상담", "monitoring_checked": True}
+    base.update(kw)
+    return base
+
+
+def test_social_worker_writes_a_log_and_manager_reads_it(env):
+    _, client = env
+    r = client.post("/api/v1/social-work/logs", json=log_body(), headers=SOCIAL)
+    assert r.status_code == 200, r.text
+    assert r.json()["data"]["author_name"] == "사회복지사"
+    rows = client.get("/api/v1/social-work/logs", params={"resident_id": 1}, headers=MANAGER).json()["data"]
+    assert rows[0]["counseling_target"] == "김영희(딸)" and rows[0]["monitoring_checked"] is True
+
+
+def test_required_fields_for_counseling_log(env):
+    _, client = env
+    assert client.post("/api/v1/social-work/logs", json=log_body(counseling_target=" "), headers=SOCIAL).status_code == 400
+    assert client.post("/api/v1/social-work/logs", json=log_body(counseling_result=""), headers=SOCIAL).status_code == 400
+
+
+def test_one_monitoring_visit_per_resident_per_month(env):
+    _, client = env
+    body = {"resident_id": 1, "year_month": "2026-10", "visit_date": "2026-10-14T10:00:00", "service_checked": True}
+    assert client.post("/api/v1/social-work/monitoring", json=body, headers=SOCIAL).status_code == 200
+    assert client.post("/api/v1/social-work/monitoring", json=body, headers=SOCIAL).status_code == 409
+    assert client.post("/api/v1/social-work/monitoring", json={**body, "visit_date": "2026-09-30T10:00:00"}, headers=SOCIAL).status_code == 400
+
+
+def test_monthly_status_lists_who_is_still_missing(env):
+    _, client = env
+    client.post("/api/v1/social-work/monitoring", json={"resident_id": 1, "year_month": "2026-10", "visit_date": "2026-10-14T10:00:00"}, headers=SOCIAL)
+    data = client.get("/api/v1/social-work/monitoring/status", params={"year_month": "2026-10"}, headers=MANAGER).json()["data"]
+    assert [x["resident_id"] for x in data["done"]] == [1]
+    assert [x["resident_id"] for x in data["missing"]] == [2]
+
+
+def test_roles_and_centers_are_respected(env):
+    _, client = env
+    assert client.post("/api/v1/social-work/logs", json=log_body(), headers=CAREGIVER).status_code == 403
+    assert client.post("/api/v1/social-work/logs", json=log_body(), headers=OTHER_SOCIAL).status_code == 404  # 다른 센터 이용자
+    assert client.get("/api/v1/social-work/logs", params={"resident_id": 1}, headers=OTHER_SOCIAL).status_code == 404
