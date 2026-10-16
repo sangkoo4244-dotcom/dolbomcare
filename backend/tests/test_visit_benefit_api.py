@@ -17,6 +17,19 @@ def auth(uid, role, email):
     return {"Authorization": f"Bearer {token}"}
 
 
+@pytest.fixture(autouse=True)
+def _daytime_visits(monkeypatch):
+    """방문 시각은 서버 현재 시각이라, 실행 시간대에 따라 야간 가산이 붙어 금액이 달라졌다. 이 파일의 테스트는 모두 낮 10시로 고정한다."""
+    import datetime as _dt
+
+    class _Daytime(_dt.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return _dt.datetime(2026, 10, 12, 10, 0)
+
+    monkeypatch.setattr(records, "datetime", _Daytime)
+
+
 CG_A = auth(2, "caregiver", "a@test.com")
 CG_B = auth(3, "caregiver", "b@test.com")
 NURSE = auth(4, "caregiver", "n@test.com")

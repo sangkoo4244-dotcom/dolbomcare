@@ -759,6 +759,20 @@ class TrialRequest(Base):
     created_at = Column(DateTime, default=datetime.now)
 
 
+class CognitivePlan(Base):
+    """수급자별 월 인지활동 계획표. items는 JSON 배열: [{"code", "frequency_per_week", "minutes", "note"}]."""
+    __tablename__ = "cognitive_plans"
+    __table_args__ = (UniqueConstraint("resident_id", "year_month", name="uq_cognitive_plan"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    year_month = Column(String, index=True)  # YYYY-MM
+    items = Column(Text)
+    updated_by = Column(Integer, ForeignKey("users.id"))
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+
 class SmsLog(Base):
     """센터가 보호자에게 보낸 문자 발송 내역 (안내발송내역)."""
     __tablename__ = "sms_logs"

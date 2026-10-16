@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인지활동 계획 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+        .panel h2 { margin: 0 0 10px; font-size: 16px; }
+        .note { background: #FFF7EB; border: 1px solid #FCE2B5; color: #8A4A07; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+        .field { padding: 9px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; }
+        .btn-solid { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .act { display: grid; grid-template-columns: 28px 1fr 90px 90px 1fr; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
+        .sheet { display: none; }
+        @media (max-width: 768px) { .act { grid-template-columns: 28px 1fr; } }
+        @media print {
+            .sidebar, .topbar, .no-print { display: none !important; }
+            .main-layout { margin-left: 0 !important; }
+            .sheet { display: block; }
+            .sheet table { width: 100%; border-collapse: collapse; }
+            .sheet td, .sheet th { border: 1px solid #94A3B8; padding: 6px; font-size: 12px; }
+        }
+    </style>
+    <script src="menu.js"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar no-print">
+            <div class="topbar-title">
+                <h1>인지활동 계획</h1>
+                <div class="breadcrumb">홈 › 서비스 계획·평가 › <b>인지활동 계획</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-role">사회복지사·센터장</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content no-print">
+            <div class="note">활동 목록은 일반적인 예시입니다. 수급자의 상태에 맞게 사회복지사나 요양보호사가 확인해서 고르세요. 공단 평가나 청구와는 연결되지 않습니다.</div>
+            <div class="panel" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <select id="resident" class="field" onchange="load()" style="min-width:200px;"></select>
+                <input id="month" type="month" class="field" onchange="load()">
+                <span id="msg" style="font-size:13px;color:#64748B;"></span>
+            </div>
+            <div class="panel">
+                <h2>활동 고르기</h2>
+                <div id="catalog"></div>
+                <div style="display:flex;gap:10px;margin-top:12px;">
+                    <button class="btn-solid" onclick="save()">저장</button>
+                    <button class="btn-outline" onclick="printSheet()">활동지 인쇄</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sheet" id="sheet"></div>
+    </div>
+
+    <script>
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+        const auth = () => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` });
+        let catalog = [];
+
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html';
+            }
+        }
+
+        function rowsHtml(saved) {
+            const picked = Object.fromEntries((saved || []).map(i => [i.code, i]));
+            return catalog.map(c => {
+                const p = picked[c.code];
+                return `<div class="act">
+                    <input type="checkbox" class="pick" data-code="${c.code}" ${p ? 'checked' : ''}>
+                    <span>${esc(c.label)}</span>
+                    <input type="number" min="1" max="7" class="fw" value="${p ? p.frequency_per_week : 1}" title="주 횟수" style="width:80px;">
+                    <input type="number" min="5" max="120" class="mn" value="${p ? p.minutes : 20}" title="회당 분" style="width:80px;">
+                    <input type="text" class="nt" maxlength="200" value="${esc(p ? p.note : '')}" placeholder="메모">
+                </div>`;
+            }).join('');
+        }
+
+        function collect() {
+            return [...document.querySelectorAll('.pick:checked')].map(b => {
+                const row = b.closest('.act');
+                return {
+                    code: b.dataset.code,
+                    frequency_per_week: Number(row.querySelector('.fw').value),
+                    minutes: Number(row.querySelector('.mn').value),
+                    note: row.querySelector('.nt').value.trim() || null,
+                };
+            });
+        }
+
+        async function load() {
+            const rid = document.getElementById('resident').value;
+            const ym = document.getElementById('month').value;
+            if (!rid || !ym) return;
+            const r = await fetch(`/api/v1/cognitive/plan?resident_id=${rid}&year_month=${ym}`, { headers: auth() });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { document.getElementById('msg').textContent = d.detail || '불러오지 못했습니다'; return; }
+            document.getElementById('catalog').innerHTML = rowsHtml(d.data.items);
+            document.getElementById('msg').textContent = d.data.items.length ? '저장된 계획을 불러왔습니다' : '아직 저장된 계획이 없습니다';
+        }
+
+        async function save() {
+            const rid = Number(document.getElementById('resident').value);
+            const ym = document.getElementById('month').value;
+            const items = collect();
+            if (!items.length) { document.getElementById('msg').textContent = '활동을 하나 이상 고르세요'; return; }
+            const r = await fetch('/api/v1/cognitive/plan', { method: 'PUT', headers: { ...auth(), 'Content-Type': 'application/json' }, body: JSON.stringify({ resident_id: rid, year_month: ym, items }) });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { document.getElementById('msg').textContent = typeof d.detail === 'string' ? d.detail : '저장하지 못했습니다'; return; }
+            document.getElementById('msg').textContent = '저장했습니다';
+        }
+
+        function printSheet() {
+            const items = collect();
+            const name = document.getElementById('resident').selectedOptions[0]?.textContent || '';
+            const ym = document.getElementById('month').value;
+            if (!items.length) { document.getElementById('msg').textContent = '활동을 고른 뒤 인쇄하세요'; return; }
+            const label = Object.fromEntries(catalog.map(c => [c.code, c.label]));
+            document.getElementById('sheet').innerHTML = `<h2>인지활동 계획표</h2>
+                <p>수급자: ${esc(name)} · 기간: ${esc(ym)}</p>
+                <table><tr><th>활동</th><th>주 횟수</th><th>회당 분</th><th>메모</th></tr>
+                ${items.map(i => `<tr><td>${esc(label[i.code])}</td><td>${i.frequency_per_week}회</td><td>${i.minutes}분</td><td>${esc(i.note || '')}</td></tr>`).join('')}
+                </table><p style="margin-top:24px;">작성: ____________ (서명)　　확인: ____________ (서명)</p>`;
+            window.print();
+        }
+
+        (async function init() {
+            if (typeof renderSidebar === 'function') renderSidebar();
+            document.getElementById('userName').textContent = user.full_name || '';
+            document.getElementById('month').value = new Date().toISOString().slice(0, 7);
+            const cat = await fetch('/api/v1/cognitive/catalog', { headers: auth() }).then(r => r.json()).catch(() => ({}));
+            catalog = cat.data || [];
+            const rd = await fetch('/api/v1/residents/', { headers: auth() }).then(r => r.json()).catch(() => ({}));
+            const list = Array.isArray(rd) ? rd : (rd.residents || []);
+            document.getElementById('resident').innerHTML = list.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('') || '<option value="">수급자가 없습니다</option>';
+            load();
+        })();
+    </script>
+</body>
+</html>
