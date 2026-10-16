@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>돌봄케어 - 이용자 방문 기록</title>
+    <title>돌봄케어 - 수급자 방문 기록</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
@@ -81,8 +81,8 @@
         <main class="ml-72 w-full flex flex-col">
             <div class="g-header-row bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-sm sticky top-0 z-40">
                 <div>
-                    <div class="g-breadcrumb">홈 › <b>이용자 방문 기록</b></div>
-                    <h1 class="text-3xl font-bold text-[#1E3A5F] mt-1">이용자 방문 기록</h1>
+                    <div class="g-breadcrumb">홈 › <b>수급자 방문 기록</b></div>
+                    <h1 class="text-3xl font-bold text-[#1E3A5F] mt-1">수급자 방문 기록</h1>
                     <p class="text-sm text-gray-500 mt-1">소중한 가족의 방문요양 기록을 한눈에 확인하실 수 있습니다.</p>
                 </div>
                 <div class="flex items-center gap-6">
@@ -334,9 +334,9 @@
         // 대시보드·보호자 소통과 동일한 사이드바 그룹 라벨 (menu.js는 그대로 두고 이 페이지에서만 DOM 보정)
         const SIDE_GROUPS = [
             ['메인', ['대시보드', '알림']],
-            ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '주야간 이용 기록', '공단 태그 대조', '인수인계', '사고·응급 보고']],
+            ['방문 운영', ['나의 일정', '제공 기록', '방문 일정 승인', '제공 기록 관리', '주야간 이용 기록', '공단 태그 대조', '오늘 방문 현황', '점검 기록', '계약통보서 초안', '인수인계', '사고·응급 보고']],
             ['청구·급여', ['나의 청구', '청구관리', '청구 입력 도우미', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과', '나의 급여']],
-            ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
+            ['수급자·보호자', ['수급자 관리', '담당 수급자', '보호자 관리', '보호자 소통']],
             ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
             ['센터·직원', ['직원관리', '센터 정보']],
             ['도움말', ['사용 안내', '센터장 안내']],

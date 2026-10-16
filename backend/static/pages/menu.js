@@ -96,12 +96,12 @@ const SIDEBAR_MENUS = {
         { href: 'dashboard.html', icon: 'dashboard', label: '대시보드' },
         { href: 'notifications.html', icon: 'notify', label: '알림' },
         { href: 'my_schedule.html', icon: 'schedule', label: '나의 일정' },
-        { href: 'voice_record.html', icon: 'voice', label: '음성 기록' },
+        { href: 'voice_record.html', icon: 'voice', label: '제공 기록' },
         { href: 'day_care.html', icon: 'schedule_check', label: '주야간 이용 기록', benefit: 'day_night' },
         { href: 'caregiver_billing.html', icon: 'billing', label: '나의 청구' },
         { href: 'handover.html', icon: 'messages', label: '인수인계' },
         { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
-        { href: 'resident_management.html', icon: 'residents', label: '담당 이용자' },
+        { href: 'resident_management.html', icon: 'residents', label: '담당 수급자' },
         { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
         { href: 'my_salary.html', icon: 'salary', label: '나의 급여' },
         { href: 'my_care_plan.html', icon: 'schedule_check', label: '급여제공계획 확인' },
@@ -115,7 +115,7 @@ const SIDEBAR_MENUS = {
         { href: 'guide_caregiver.html', icon: 'stamp', label: '사용 안내' }
     ],
     guardian: [
-        { href: 'guardian_home.html', icon: 'home', label: '이용자 방문 기록' },
+        { href: 'guardian_home.html', icon: 'home', label: '수급자 방문 기록' },
         { href: 'ltci_guide.html', icon: 'stamp', label: '장기요양 신청 안내' },
         { href: 'center_directory.html', icon: 'center', label: '센터 찾기' },
         { href: 'notifications.html', icon: 'notify', label: '알림' },
@@ -123,8 +123,8 @@ const SIDEBAR_MENUS = {
     ],
     center_manager: [
         { href: 'dashboard.html', icon: 'dashboard', label: '대시보드' },
-        { href: 'schedule_approval.html', icon: 'schedule_check', label: '방문계획 승인' },
-        { href: 'voice_record.html', icon: 'voice', label: '방문 기록 현황' },
+        { href: 'schedule_approval.html', icon: 'schedule_check', label: '방문 일정 승인' },
+        { href: 'voice_record.html', icon: 'voice', label: '제공 기록 관리' },
         { href: 'care_record_sheet.html', icon: 'voice', label: '제공기록지' },
         { href: 'nursing_orders.html', icon: 'stamp', label: '방문간호 지시서' },
         { href: 'visit_sheet.html', icon: 'voice', label: '목욕·간호 기록지' },
@@ -142,7 +142,7 @@ const SIDEBAR_MENUS = {
         { href: 'statement_confirm.html', icon: 'stamp', label: '급여 확정' },
         { href: 'profit_analysis.html', icon: 'profit', label: '수익분석' },
         { href: 'value_report.html', icon: 'profit', label: '이번 달 성과' },
-        { href: 'resident_management.html', icon: 'residents', label: '이용자관리' },
+        { href: 'resident_management.html', icon: 'residents', label: '수급자 관리' },
         { href: 'guardian_management.html', icon: 'guardian', label: '보호자 관리' },
         { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
         { href: 'care_plan.html', icon: 'schedule_check', label: '급여제공계획' },
@@ -163,7 +163,7 @@ const SIDEBAR_MENUS = {
 SIDEBAR_MENUS.social_worker = [
     { href: 'social_dashboard.html', icon: 'dashboard', label: '대시보드' },
     { href: 'notifications.html', icon: 'notify', label: '알림' },
-    { href: 'resident_management.html', icon: 'residents', label: '이용자관리' },
+    { href: 'resident_management.html', icon: 'residents', label: '수급자 관리' },
     { href: 'care_plan.html', icon: 'schedule_check', label: '급여제공계획' },
     { href: 'counseling.html', icon: 'messages', label: '상담 기록' },
     { href: 'social_work.html', icon: 'schedule_check', label: '업무수행일지' },
@@ -178,9 +178,9 @@ SIDEBAR_MENUS.social_worker = [
 
 const SIDEBAR_GROUPS = [
     ['메인', ['대시보드', '알림']],
-    ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '제공기록지', '방문간호 지시서', '목욕·간호 기록지', '급여제공계획 확인', '주야간 이용 기록', '공단 태그 대조', '인수인계', '사고·응급 보고']],
+    ['방문 운영', ['나의 일정', '제공 기록', '방문 일정 승인', '제공 기록 관리', '제공기록지', '방문간호 지시서', '목욕·간호 기록지', '급여제공계획 확인', '주야간 이용 기록', '공단 태그 대조', '오늘 방문 현황', '점검 기록', '계약통보서 초안', '인수인계', '사고·응급 보고']],
     ['청구·급여', ['나의 청구', '청구관리', '청구 입력 도우미', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과', '나의 급여']],
-    ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
+    ['수급자·보호자', ['수급자 관리', '담당 수급자', '보호자 관리', '보호자 소통']],
     ['서비스 품질·평가', ['급여제공계획', '상담 기록', '업무수행일지', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
     ['센터·직원', ['직원관리', '직원 규정준수', '근무 현황', '교육 이력', '나의 기록', '출퇴근', '센터 정보']],
     ['도움말', ['사용 안내', '센터장 안내']],
@@ -381,7 +381,7 @@ const MOBILE_LOGOUT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#B5532F
 function renderMobileTabbar(items, current, roleMenu) {
     ['mtabbar', 'mtabSheet', 'mtabBackdrop'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
     const icon = (item) => `<span class="mtab-ico">${MENU_ICONS[item.icon] || ''}</span>`;
-    const tabLabel = (item) => ({ '이용자 방문 기록': '방문 기록', '장기요양 신청 안내': '신청 안내', '센터와 메시지': '메시지' }[item.label] || item.label);
+    const tabLabel = (item) => ({ '수급자 방문 기록': '방문 기록', '장기요양 신청 안내': '신청 안내', '센터와 메시지': '메시지' }[item.label] || item.label);
     const primaryHrefs = MOBILE_PRIMARY[roleMenu];
     const primary = items.length <= 5 || !primaryHrefs ? items : primaryHrefs.map(h => items.find(i => i.href === h)).filter(Boolean);
     const more = items.filter(i => !primary.includes(i));

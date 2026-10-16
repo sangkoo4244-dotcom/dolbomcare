@@ -254,9 +254,9 @@
         // (다른 재구축 페이지들과 동일한 SIDE_GROUPS_CG)
         const SIDE_GROUPS_CG = [
             ['메인', ['대시보드', '알림']],
-            ['방문 운영', ['나의 일정', '음성 기록', '방문계획 승인', '방문 기록 현황', '주야간 이용 기록', '공단 태그 대조', '인수인계', '사고·응급 보고']],
+            ['방문 운영', ['나의 일정', '제공 기록', '방문 일정 승인', '제공 기록 관리', '주야간 이용 기록', '공단 태그 대조', '오늘 방문 현황', '점검 기록', '계약통보서 초안', '인수인계', '사고·응급 보고']],
             ['청구·급여', ['나의 청구', '청구관리', '청구 입력 도우미', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과', '나의 급여']],
-            ['이용자·보호자', ['이용자관리', '담당 이용자', '보호자 관리', '보호자 소통']],
+            ['수급자·보호자', ['수급자 관리', '담당 수급자', '보호자 관리', '보호자 소통']],
             ['서비스 품질·평가', ['급여제공계획', '상담 기록', '결과평가·사례관리', '교육·안내 기록', '평가 준비 자료']],
             ['센터·직원', ['직원관리', '센터 정보']],
             ['도움말', ['사용 안내', '센터장 안내']],
@@ -549,7 +549,7 @@
         function renderOnboarding(hasPlan, hasRecord, hasSubmitted) {
             renderOnboardingSteps([
                 [hasPlan, '방문 일정(계획) 만들기·확인하기', './my_schedule.html', '나의 일정'],
-                [hasRecord, '첫 음성 기록 저장하기', './voice_record.html', '음성 기록'],
+                [hasRecord, '첫 음성 기록 저장하기', './voice_record.html', '제공 기록'],
                 [hasSubmitted, '청구 제출하기 (센터장에게 승인 요청)', './caregiver_billing.html', '나의 청구'],
                 [onboardStore('guideCaregiverSeen') === '1', '사용 안내 읽어 보기', './guide_caregiver.html', '사용 안내'],
             ]);
@@ -559,9 +559,9 @@
             renderOnboardingSteps([
                 [s.centerReady, '센터 정보와 제공 서비스 입력하기 (기관코드·전화번호·방문요양 등)', './center_settings.html', '센터 정보'],
                 [s.hasStaff, '요양보호사 계정 만들기 (초기 비밀번호를 직원에게 알려 주세요)', './staff_management.html', '직원관리'],
-                [s.hasResident, '이용자 등록하기 (등급·본인부담 구분·담당 요양보호사)', './resident_management.html', '이용자관리'],
-                [s.hasPlan, '방문 일정 만들기 (반복 방문 등록)', './schedule_approval.html', '방문계획 승인'],
-                [s.hasRecord, '요양보호사의 첫 방문 기록 확인하기', './voice_record.html', '방문 기록 현황'],
+                [s.hasResident, '이용자 등록하기 (등급·본인부담 구분·담당 요양보호사)', './resident_management.html', '수급자 관리'],
+                [s.hasPlan, '방문 일정 만들기 (반복 방문 등록)', './schedule_approval.html', '방문 일정 승인'],
+                [s.hasRecord, '요양보호사의 첫 방문 기록 확인하기', './voice_record.html', '제공 기록 관리'],
                 [s.hasApproved, '청구 승인해 보기', './billing_management.html', '청구관리'],
                 [onboardStore('guideManagerSeen') === '1', '센터장 안내 읽어 보기', './guide_manager.html', '센터장 안내'],
             ]);
