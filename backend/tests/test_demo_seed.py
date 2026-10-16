@@ -70,6 +70,9 @@ def test_reset_creates_the_demo_accounts_and_is_repeatable_without_touching_real
     assert first["residents"] == 3 and first["bills"] == 15 and first["schedules"] == 9 and first["reset"] is False
     status = client.get("/api/v1/admin/demo/status", headers=OPERATOR).json()
     assert status["ready"] is True and all(a["exists"] for a in status["accounts"])
+    demo_center = db.query(models.Center).filter_by(name=DEMO_CENTER_NAME).one()
+    remaining = demo_center.trial_ends_at - datetime.utcnow()
+    assert demo_center.plan == "trial" and timedelta(days=14, hours=23) < remaining <= timedelta(days=15)
     roles = {u.email: u.role for u in [db.query(models.User).filter_by(email=e).one() for e in [DEMO_SOCIAL_EMAIL, DEMO_MANAGER_EMAIL]]}
     assert roles[DEMO_SOCIAL_EMAIL] == "social_worker"
     # 다시 실행하면 초기화 후 같은 모양으로 다시 만들어진다 (이용자·청구가 두 배로 늘지 않는다)

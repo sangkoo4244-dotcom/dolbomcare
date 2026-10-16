@@ -14,6 +14,7 @@ from app.api.records import get_year_month, guardian_visit_summary
 from app.api.users import get_password_hash
 from app.billing_rules import split_visit
 from app.database import Base
+from app.plans import PLAN_TRIAL
 from app.models import BillingRecord, Center, DailyRecord, Notification, Resident, ResidentMessage, Schedule, User
 
 DEMO_PASSWORD = "demo1234!"
@@ -22,6 +23,7 @@ DEMO_MANAGER_EMAIL = "demo_center_manager@dolbomcare.app"
 DEMO_CAREGIVER_EMAIL = "demo_caregiver@dolbomcare.app"
 DEMO_GUARDIAN_EMAIL = "demo_guardian@dolbomcare.app"
 DEMO_SOCIAL_EMAIL = "demo_social_worker@dolbomcare.app"
+DEMO_TRIAL_DAYS = 15  # 데모는 15일 동안 모든 기능을 쓸 수 있고, 끝나면 읽기 전용이다 (초기화하면 다시 15일)
 
 
 def _clear_old_demo(db: Session) -> bool:
@@ -63,7 +65,8 @@ def seed_demo(db: Session) -> dict:
     """데모 데이터를 (다시) 만들고 만든 내용을 요약해 돌려준다."""
     reset = _clear_old_demo(db)
 
-    center = Center(name=DEMO_CENTER_NAME, address="서울시 데모구 체험로 1", phone="02-0000-0000")
+    center = Center(name=DEMO_CENTER_NAME, address="서울시 데모구 체험로 1", phone="02-0000-0000",
+                    plan=PLAN_TRIAL, trial_ends_at=datetime.utcnow() + timedelta(days=DEMO_TRIAL_DAYS))
     db.add(center)
     db.flush()
     manager = User(email=DEMO_MANAGER_EMAIL, hashed_password=get_password_hash(DEMO_PASSWORD), full_name="데모 센터장",
