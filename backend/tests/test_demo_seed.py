@@ -11,7 +11,7 @@ from app import models
 from app.api import admin
 from app.api.users import create_access_token
 from app.database import Base, get_db
-from app.demo_seed import DEMO_CENTER_NAME, DEMO_MANAGER_EMAIL
+from app.demo_seed import DEMO_CENTER_NAME, DEMO_MANAGER_EMAIL, DEMO_SOCIAL_EMAIL
 
 
 def auth(uid, email, role="center_manager"):
@@ -65,6 +65,8 @@ def test_reset_creates_the_demo_accounts_and_is_repeatable_without_touching_real
     assert first["residents"] == 3 and first["bills"] == 15 and first["schedules"] == 9 and first["reset"] is False
     status = client.get("/api/v1/admin/demo/status", headers=OPERATOR).json()
     assert status["ready"] is True and all(a["exists"] for a in status["accounts"])
+    roles = {u.email: u.role for u in [db.query(models.User).filter_by(email=e).one() for e in [DEMO_SOCIAL_EMAIL, DEMO_MANAGER_EMAIL]]}
+    assert roles[DEMO_SOCIAL_EMAIL] == "social_worker"
     # 다시 실행하면 초기화 후 같은 모양으로 다시 만들어진다 (이용자·청구가 두 배로 늘지 않는다)
     second = client.post("/api/v1/admin/demo/reset", headers=OPERATOR).json()
     assert second["reset"] is True

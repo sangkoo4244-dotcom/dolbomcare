@@ -48,11 +48,11 @@ def check_is_admin(actor: User = Depends(require_platform_admin)):
 @router.get("/demo/status")
 def demo_status(db: Session = Depends(get_db), actor: User = Depends(require_platform_admin)):
     """로그인 화면 '둘러보기' 버튼이 쓰는 데모 계정이 운영 DB에 있는지 읽기만 한다."""
-    from app.demo_seed import DEMO_CAREGIVER_EMAIL, DEMO_GUARDIAN_EMAIL, DEMO_MANAGER_EMAIL
+    from app.demo_seed import DEMO_CAREGIVER_EMAIL, DEMO_GUARDIAN_EMAIL, DEMO_MANAGER_EMAIL, DEMO_SOCIAL_EMAIL
     center = db.query(Center).filter(Center.name == DEMO_CENTER_NAME).first()
     accounts = [
         {"email": email, "exists": db.query(User).filter(User.email == email).first() is not None}
-        for email in (DEMO_MANAGER_EMAIL, DEMO_CAREGIVER_EMAIL, DEMO_GUARDIAN_EMAIL)
+        for email in (DEMO_MANAGER_EMAIL, DEMO_CAREGIVER_EMAIL, DEMO_SOCIAL_EMAIL, DEMO_GUARDIAN_EMAIL)
     ]
     return {
         "center_exists": center is not None,

@@ -19,6 +19,7 @@ DEMO_CENTER_NAME = "데모 체험 센터"
 DEMO_MANAGER_EMAIL = "demo_center_manager@dolbomcare.app"
 DEMO_CAREGIVER_EMAIL = "demo_caregiver@dolbomcare.app"
 DEMO_GUARDIAN_EMAIL = "demo_guardian@dolbomcare.app"
+DEMO_SOCIAL_EMAIL = "demo_social_worker@dolbomcare.app"
 
 
 def _clear_old_demo(db: Session) -> bool:
@@ -57,9 +58,11 @@ def seed_demo(db: Session) -> dict:
                    role="center_manager", center_id=center.id, phone="01000000001", position="센터장", is_active=True)
     caregiver = User(email=DEMO_CAREGIVER_EMAIL, hashed_password=get_password_hash(DEMO_PASSWORD), full_name="데모 요양사",
                      role="caregiver", center_id=center.id, phone="01000000002", position="요양보호사", is_active=True)
+    social_worker = User(email=DEMO_SOCIAL_EMAIL, hashed_password=get_password_hash(DEMO_PASSWORD), full_name="데모 사회복지사",
+                         role="social_worker", center_id=center.id, phone="01000000004", position="사회복지사", is_active=True)
     guardian = User(email=DEMO_GUARDIAN_EMAIL, hashed_password=get_password_hash(DEMO_PASSWORD), full_name="데모 보호자",
                     role="guardian", phone="01000000003", is_active=True)
-    db.add_all([manager, caregiver, guardian])
+    db.add_all([manager, caregiver, social_worker, guardian])
     db.flush()
     center.manager_id = manager.id
     db.commit()
@@ -125,5 +128,5 @@ def seed_demo(db: Session) -> dict:
 
     return {
         "reset": reset, "center_id": center.id, "residents": len(residents), "bills": bill_count, "schedules": schedule_count,
-        "accounts": [DEMO_MANAGER_EMAIL, DEMO_CAREGIVER_EMAIL, DEMO_GUARDIAN_EMAIL],
+        "accounts": [DEMO_MANAGER_EMAIL, DEMO_CAREGIVER_EMAIL, DEMO_SOCIAL_EMAIL, DEMO_GUARDIAN_EMAIL],
     }
