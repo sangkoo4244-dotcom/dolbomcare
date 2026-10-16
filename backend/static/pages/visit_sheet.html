@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>방문목욕·방문간호 기록지 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --warn: #B45309; --danger2: #DC2626; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .note { background: #FFF7EB; border: 1px solid #FCE2B5; color: #8A4A07; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+        .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .tab { padding: 9px 16px; border-radius: 10px; border: 1.5px solid var(--line2); background: #fff; font-size: 14px; font-weight: 700; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .tab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+        .tab .dot { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 6px; border-radius: 999px; background: #DC2626; color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
+        .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .field { padding: 9px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; }
+        .field:focus { border-color: var(--teal); outline: none; }
+        .btn-solid { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+
+        .panel { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
+        .panel h2 { margin: 0 0 12px; font-size: 16px; color: var(--navy); }
+        .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #F1F5F9; flex-wrap: wrap; }
+        .row:first-of-type { border-top: none; }
+        .row .who { font-weight: 700; font-size: 15px; }
+        .row .sub { font-size: 12.5px; color: #64748B; margin-top: 2px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .badge.ok { background: #E7F7EF; color: #0D8A61; }
+        .badge.no { background: #FEECEC; color: #B91C1C; }
+        .badge.wait { background: #FFF7EB; color: #B45309; }
+        .empty-note { color: #94A3B8; font-size: 13px; padding: 12px 0; }
+        .rec { border-top: 1px solid #F1F5F9; padding: 12px 0; }
+        .rec:first-of-type { border-top: none; }
+        .rec .head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+        .rec .body { margin-top: 6px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+        .rec .meta { font-size: 12.5px; color: #64748B; margin-top: 4px; }
+
+        .modal-back { display: none; position: fixed; inset: 0; background: rgba(20,40,63,0.45); align-items: center; justify-content: center; padding: 16px; z-index: 200; }
+        .modal-back.open { display: flex; }
+        .modal { background: #fff; border-radius: 14px; padding: 24px; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; }
+        .modal h3 { margin: 0 0 4px; font-size: 18px; color: var(--navy); }
+        .modal .fsub { font-size: 13px; color: #64748B; margin-bottom: 14px; }
+        .modal label { display: block; font-size: 13px; font-weight: 700; margin: 12px 0 5px; }
+        .modal input[type=text], .modal input[type=date], .modal select, .modal textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 15px; font-family: inherit; }
+        .modal textarea { min-height: 110px; resize: vertical; }
+        .modal .hint { font-size: 12px; color: #94A3B8; margin-top: 4px; }
+        .modal .err { color: #DC2626; font-size: 13px; margin-top: 10px; display: none; }
+        .modal .actions { display: flex; gap: 8px; margin-top: 18px; }
+        .modal .actions button { flex: 1; height: 44px; }
+    </style>
+    <script src="menu.js"></script>
+    <script>
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = './login.html';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>방문목욕·방문간호 기록지</h1>
+                <div class="breadcrumb">홈 › 방문 운영 › <b>방문목욕·방문간호 기록지</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-role" id="userRole"></div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="panel" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                <select id="resident" onchange="load()" style="padding:8px 12px;border:2px solid var(--line2);border-radius:10px;min-width:200px;"></select>
+                <input id="weekStart" type="date" onchange="load()" style="padding:8px;border:2px solid var(--line2);border-radius:10px;">
+                <select id="kind" onchange="load()" style="padding:8px;border:2px solid var(--line2);border-radius:10px;">
+                    <option value="home_bath">방문목욕 (서식 101)</option>
+                    <option value="home_nursing">방문간호 (서식 102)</option>
+                </select>
+                <button class="btn-outline" onclick="window.print()">인쇄</button>
+            </div>
+            <div style="font-size:12px;color:#64748B;margin:0 0 10px;">저장된 항목만 채웁니다. 배뇨·욕창 상태 확인, 혈압·맥박·체온, 간호 항목은 저장하지 않으므로 인쇄 후 손으로 적어 주세요. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다.</div>
+            <div id="sheets" class="paper"><div class="empty">이용자를 선택하세요.</div></div>
+        </div>
+    </div>
+
+    <style>
+        .vs-block { background:#fff; border:1px solid #CBD5E1; padding:14px; margin-bottom:16px; font-size:13px; }
+        .vs-block table { width:100%; border-collapse:collapse; }
+        .vs-block td, .vs-block th { border:1px solid #CBD5E1; padding:6px; text-align:left; vertical-align:top; }
+        .vs-block th { background:#F1F5F9; width:22%; }
+        @media print { .sidebar, .topbar, .panel { display:none !important; } .main-layout { margin-left:0 !important; } .vs-block { page-break-inside: avoid; } }
+    </style>
+
+    <script>
+        const API = '/api/v1/care-sheet/visits';
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const KIND_LABEL = { home_bath: '방문목욕', home_nursing: '방문간호' };
+        const BATH_MODE = { vehicle_in: '차량내 목욕', vehicle_home: '가정내 목욕', no_vehicle: '차량 미이용' };
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html';
+            }
+        }
+        function mondayOf(d) { const x = new Date(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x.toISOString().slice(0, 10); }
+
+        async function loadResidents() {
+            const rd = await fetch('/api/v1/residents/').then(r => r.json()).catch(() => ({}));
+            const list = Array.isArray(rd) ? rd : (rd.residents || []);
+            document.getElementById('resident').innerHTML = list.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('') || '<option value="">이용자가 없습니다</option>';
+            load();
+        }
+
+        async function load() {
+            const rid = document.getElementById('resident').value;
+            const week = document.getElementById('weekStart').value;
+            const kind = document.getElementById('kind').value;
+            if (!rid || !week) return;
+            const d = await fetch(`${API}?resident_id=${rid}&week_start=${week}&benefit_type=${kind}`).then(r => r.json()).catch(() => null);
+            const box = document.getElementById('sheets');
+            if (!d || !d.data) { box.innerHTML = '<div class="empty">기록지를 불러오지 못했습니다.</div>'; return; }
+            const r = d.data.resident;
+            const info = `<div class="vs-block"><b>${KIND_LABEL[kind]} 기록지</b> · 수급자 ${esc(r.name)} · 등급 ${r.care_grade ? r.care_grade + '등급' : '인지지원'} · 인정번호 ${esc(r.recognition_number || '')} · 생년월일 ${esc(r.birth_date || '')}</div>`;
+            const blocks = d.data.visits.length ? d.data.visits.map(v => kind === 'home_bath' ? bathBlock(v) : nursingBlock(v)).join('')
+                : '<div class="empty">이 주에 저장된 방문이 없습니다.</div>';
+            box.innerHTML = info + blocks;
+        }
+
+        function bathBlock(v) {
+            const mode = v.bath_mode ? BATH_MODE[v.bath_mode] : '';
+            return `<div class="vs-block"><table>
+                <tr><th>일자·시간</th><td>${esc(v.date)} · 시작 ${esc(v.start_time)} ~ 종료 ${esc(v.end_time || '')} · 총 ${esc(v.total_minutes ?? '')}분</td></tr>
+                <tr><th>차량·제공 방법</th><td>${esc(mode)}${v.solo_exception ? ' (1인 몸 씻기 예외)' : ''}</td></tr>
+                <tr><th>상태 확인 (목욕 전·후)</th><td style="color:#94A3B8">인쇄 후 손으로 적기</td></tr>
+                <tr><th>특이사항</th><td>${esc(v.notes || '')}${v.special_note ? '<br>산정 사유: ' + esc(v.special_note) : ''}</td></tr>
+                <tr><th>서명</th><td>요양보호사: ${esc(v.caregivers.join(', '))} ${v.has_signature ? '· 전자서명 있음' : ''}</td></tr>
+            </table></div>`;
+        }
+
+        function nursingBlock(v) {
+            return `<div class="vs-block"><table>
+                <tr><th>일자·시간</th><td>${esc(v.date)} · 시작 ${esc(v.start_time)} ~ 종료 ${esc(v.end_time || '')} · 총 ${esc(v.total_minutes ?? '')}분</td></tr>
+                <tr><th>방문간호지시서</th><td>${esc(v.nursing_order_note || '')}</td></tr>
+                <tr><th>혈압·맥박·체온</th><td style="color:#94A3B8">인쇄 후 손으로 적기</td></tr>
+                <tr><th>건강관리·간호관리</th><td style="color:#94A3B8">인쇄 후 손으로 적기</td></tr>
+                <tr><th>특이사항</th><td>${esc(v.notes || '')}</td></tr>
+                <tr><th>서명</th><td>요양보호사: ${esc(v.caregivers.join(', '))} ${v.has_signature ? '· 전자서명 있음' : ''}</td></tr>
+            </table></div>`;
+        }
+
+        (async function init() {
+            if (typeof renderSidebar === 'function') renderSidebar();
+            const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+            document.getElementById('userName').textContent = user.full_name || '';
+            document.getElementById('userRole').textContent = user.role === 'center_manager' ? '센터장' : '직원';
+            document.getElementById('weekStart').value = mondayOf(new Date());
+            loadResidents();
+        })();
+    </script>
+</body>
+</html>
