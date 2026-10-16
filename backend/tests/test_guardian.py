@@ -130,6 +130,16 @@ def test_approved_guardian_sees_own_resident_visits_without_money(setup):
     assert body["visits"][0]["condition"] == "좋음"
     assert body["visits"][0]["notes"] == "식사를 잘 드셨습니다"
     assert "amount" not in str(body)
+    assert body["visits"][0]["health_changes"] == []  # 기록하지 않은 변화는 보이지 않는다
+
+    db = setup.Session()
+    record = db.query(models.DailyRecord).filter(models.DailyRecord.id == 1).first()
+    record.physical_change, record.meal_change, record.cognitive_change = "worsened", "maintained", None
+    record.stool_accidents, record.urine_accidents = 1, 1
+    db.commit()
+    db.close()
+    body = setup.get("/api/v1/guardian/residents/1/visits", headers=headers, params={"days": 365}).json()
+    assert body["visits"][0]["health_changes"] == ["신체 기능 나빠짐", "식사 기능 유지", "배설 실수 2회"]
 
 
 def test_guardian_cannot_see_another_residents_visits(setup):

@@ -22,6 +22,7 @@ CARE_ITEM_LABELS = {
     "wash_face": "세면 도움", "oral_care": "구강 청결", "position_change": "체위 변경", "outing": "외출 동행",
 }
 CONDITION_LABELS = {"good": "좋음", "normal": "보통", "poor": "나쁨"}
+CHANGE_LABELS = {"improved": "좋아짐", "maintained": "유지", "worsened": "나빠짐"}
 
 
 class InviteCreate(BaseModel):
@@ -190,6 +191,18 @@ def my_residents(db: Session = Depends(get_db), guardian: User = Depends(require
     ]}
 
 
+def _health_changes(record) -> list[str]:
+    """보호자 화면에 보여 줄 건강 변화. 기록하지 않은 항목은 빼고, 실수 횟수는 0이 아닐 때만 적는다."""
+    out = []
+    for label, value in (("신체 기능", record.physical_change), ("식사 기능", record.meal_change), ("인지 기능", record.cognitive_change)):
+        if value in CHANGE_LABELS:
+            out.append(f"{label} {CHANGE_LABELS[value]}")
+    accidents = (record.stool_accidents or 0) + (record.urine_accidents or 0)
+    if accidents:
+        out.append(f"배설 실수 {accidents}회")
+    return out
+
+
 @router.get("/residents/{resident_id}/visits")
 def resident_visits(resident_id: int, days: int = 14, db: Session = Depends(get_db), guardian: User = Depends(require_guardian)):
     """보호자에게는 방문 기록만 보인다. 청구 금액과 요양사 급여는 포함하지 않는다."""
@@ -213,6 +226,7 @@ def resident_visits(resident_id: int, days: int = 14, db: Session = Depends(get_
             "caregiver_name": caregivers.get(r.caregiver_id),
             "care_items": [CARE_ITEM_LABELS.get(c, c) for c in codes],
             "condition": CONDITION_LABELS.get(r.condition, None),
+            "health_changes": _health_changes(r),
             "notes": r.notes,
             "has_signature": bool(r.signature),
         })
