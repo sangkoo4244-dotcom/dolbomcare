@@ -179,8 +179,18 @@ def test_two_caregivers_on_home_care_make_two_linked_records_and_bills(env):
     assert db.query(models.Notification).filter(models.Notification.user_id == 3, models.Notification.kind == "record_pair").count() == 1
 
 
-def test_editing_or_deleting_one_side_of_a_pair_keeps_both_in_sync(env):
+def test_editing_or_deleting_one_side_of_a_pair_keeps_both_in_sync(env, monkeypatch):
     db, client = env
+    # 방문 시각은 서버 현재 시각이므로, 야간 가산이 끼지 않도록 낮 시간으로 고정한다 (실행 시각에 따라 금액이 달라지지 않게)
+    import datetime as _dt
+    from app.api import records as records_api
+
+    class _Daytime(_dt.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return _dt.datetime(2026, 10, 12, 10, 0)
+
+    monkeypatch.setattr(records_api, "datetime", _Daytime)
     r = client.post("/api/v1/records/create", json=payload(duration_minutes=60, co_caregiver_id=3, special_note="동의"), headers=CG_A)
     rid = r.json()["data"]["record_id"]
     assert client.patch(f"/api/v1/records/daily/{rid}", json={"duration_minutes": 120, "notes": "수정"}, headers=CG_A).status_code == 200

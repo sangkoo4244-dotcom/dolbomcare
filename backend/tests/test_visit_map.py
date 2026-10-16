@@ -90,3 +90,20 @@ def test_each_address_is_converted_once_and_then_reused(env):
     again = client.get("/api/v1/visit-map/day", params={"day": DAY}, headers=MANAGER).json()["data"]["visits"]
     assert len(calls) == first_count  # 두 번째 조회에서는 다시 바꾸지 않는다
     assert all(v["latitude"] is not None for v in again)
+
+
+def test_social_worker_sees_home_visit_plans_of_the_day_in_entry_order(env):
+    client, _ = env
+    from app import models as m
+    db_session = client.app.dependency_overrides[visit_map.get_db]()
+    db = next(db_session)
+    db.add(m.User(id=4, email="s@test.com", full_name="사회복지사", role="social_worker", center_id=1))
+    db.add_all([
+        m.SocialVisitPlan(center_id=1, resident_id=2, author_id=4, planned_date=datetime(2026, 10, 12).date(), note="상담"),
+        m.SocialVisitPlan(center_id=1, resident_id=1, author_id=4, planned_date=datetime(2026, 10, 12).date()),
+    ])
+    db.commit()
+    social = auth(4, "social_worker", "s@test.com")
+    visits = client.get("/api/v1/visit-map/day", params={"day": DAY}, headers=social).json()["data"]
+    assert visits["kind"] == "social" and [v["resident"] for v in visits["visits"]] == ["이용자2", "이용자1"]
+    assert visits["visits"][0]["note"] == "상담"

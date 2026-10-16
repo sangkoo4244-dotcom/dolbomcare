@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user
 from app.database import get_db
 from app.kakao_local import geocode_address
-from app.models import Resident, Schedule, User
+from app.models import Resident, Schedule, SocialVisitPlan, User
 
 router = APIRouter()
 
@@ -30,15 +30,35 @@ def _coordinates(db: Session, resident: Resident):
     return found
 
 
+def _social_day(db: Session, actor: User, target: date):
+    """사회복지사 가정방문: 날짜만 있는 방문 예정을 등록 순서대로 번호 매긴다 (시각 정보가 없다)."""
+    plans = db.query(SocialVisitPlan).filter(SocialVisitPlan.center_id == actor.center_id,
+                                              SocialVisitPlan.planned_date == target).order_by(SocialVisitPlan.id).all()
+    residents = {r.id: r for r in db.query(Resident).filter(Resident.id.in_({p.resident_id for p in plans})).all()} if plans else {}
+    visits = []
+    for number, plan in enumerate(plans, start=1):
+        resident = residents.get(plan.resident_id)
+        point = _coordinates(db, resident) if resident else None
+        visits.append({
+            "number": number, "schedule_id": None, "time": "", "duration": None,
+            "resident": resident.name if resident else "", "address": resident.address if resident else None,
+            "caregiver": "사회복지사 방문", "note": plan.note or "", "done": bool(plan.done),
+            "latitude": point[0] if point else None, "longitude": point[1] if point else None,
+        })
+    return {"status": "success", "data": {"date": target.isoformat(), "visits": visits, "kind": "social"}}
+
+
 @router.get("/day")
 def day_map(
     day: Optional[date] = Query(None),
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    if actor.role not in ("center_manager", "caregiver") or not actor.center_id:
-        return {"status": "success", "data": {"date": None, "visits": [], "message": "이 화면은 센터장과 요양보호사만 봅니다"}}
+    if actor.role not in ("center_manager", "caregiver", "social_worker") or not actor.center_id:
+        return {"status": "success", "data": {"date": None, "visits": [], "message": "이 화면은 센터장, 요양보호사, 사회복지사만 봅니다"}}
     target = day or datetime.now().date()
+    if actor.role == "social_worker":
+        return _social_day(db, actor, target)
     start = datetime.combine(target, datetime.min.time())
     end = start + timedelta(days=1)
     query = db.query(Schedule).filter(

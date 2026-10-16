@@ -138,17 +138,17 @@
             document.getElementById('stamp').textContent = v.date ? `${v.date} 방문 ${v.visits.length}건` : '';
             document.getElementById('list').innerHTML = v.visits.length ? v.visits.map(x => `<div class="visit">
                 <div class="num">${x.number}</div>
-                <div><b>${esc(x.time)}</b> ${esc(x.resident)} <span class="sub">${esc(x.caregiver)}${x.duration ? ' · ' + x.duration + '분' : ''}</span>
+                <div>${x.time ? '<b>' + esc(x.time) + '</b> ' : ''}${esc(x.resident)} <span class="sub">${esc(x.caregiver)}${x.duration ? ' · ' + x.duration + '분' : ''}</span>
                 <div class="sub">${x.address ? esc(x.address) : '<span style="color:#B91C1C;">주소 없음</span>'}${x.latitude == null && x.address ? ' · 지도 표시 실패' : ''}</div></div></div>`).join('')
                 : '<div class="empty-note">이 날 방문 일정이 없습니다.</div>';
-            document.getElementById('note').textContent = '번호는 방문 시각 순서입니다. 이동 거리 최적화는 하지 않습니다. 주소는 지도 표시를 위해 카카오로 보내 좌표로 바꿉니다.';
+            document.getElementById('note').textContent = v.kind === 'social' ? '번호는 등록 순서입니다(사회복지사 방문 예정에는 시각이 없습니다). 주소는 지도 표시를 위해 카카오로 보내 좌표로 바꿉니다.' : '번호는 방문 시각 순서입니다. 이동 거리 최적화는 하지 않습니다. 주소는 지도 표시를 위해 카카오로 보내 좌표로 바꿉니다.';
             drawMap(v.visits);
         }
 
         (async function init() {
             if (typeof renderSidebar === 'function') renderSidebar();
             document.getElementById('userName').textContent = user.full_name || '';
-            document.getElementById('userRole').textContent = user.role === 'caregiver' ? '요양보호사' : '센터장';
+            document.getElementById('userRole').textContent = { caregiver: '요양보호사', social_worker: '사회복지사' }[user.role] || '센터장';
             document.getElementById('day').value = new Date().toISOString().slice(0, 10);
             load();
         })();
