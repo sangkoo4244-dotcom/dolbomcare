@@ -149,6 +149,7 @@ const SIDEBAR_MENUS = {
 // 사이드바 묶음: 모든 페이지가 같은 그룹으로 보이도록 여기서 한 번에 정한다 (페이지마다 따로 그룹을 정하던 방식은 새 페이지에서 빠뜨리기 쉽다)
 // 사회복지사: 상담·사례관리·급여제공계획·보호자 소통 중심 (청구·급여·직원 관리 메뉴는 없음)
 SIDEBAR_MENUS.social_worker = [
+    { href: 'social_dashboard.html', icon: 'dashboard', label: '대시보드' },
     { href: 'notifications.html', icon: 'notify', label: '알림' },
     { href: 'resident_management.html', icon: 'residents', label: '이용자관리' },
     { href: 'care_plan.html', icon: 'schedule_check', label: '급여제공계획' },
@@ -158,6 +159,7 @@ SIDEBAR_MENUS.social_worker = [
     { href: 'care_record_sheet.html', icon: 'voice', label: '제공기록지' },
     { href: 'audit_prep.html', icon: 'billing', label: '평가 준비 자료' },
     { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
+    { href: 'social_guide.html', icon: 'stamp', label: '사용 안내' },
 ];
 
 const SIDEBAR_GROUPS = [
