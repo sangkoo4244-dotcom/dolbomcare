@@ -870,3 +870,20 @@ class Equipment(Base):
     disposed_date = Column(Date, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now)
+
+
+class ResidentLog(Base):
+    """수급자 관찰일지(kind=observation)와 프로그램 의견수렴·반영 기록(kind=feedback)을 한 테이블에 담는다."""
+    __tablename__ = "resident_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    log_date = Column(Date, index=True)
+    kind = Column(String, index=True)  # observation / feedback
+    source = Column(String, nullable=True)  # feedback: 수급자 / 보호자 / 요양보호사 / 기타
+    content = Column(Text)  # 관찰 내용 또는 의견 내용
+    action = Column(Text, nullable=True)  # feedback: 반영 내용 (반영하지 않았다면 이유)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now)
