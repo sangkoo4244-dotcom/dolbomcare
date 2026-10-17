@@ -161,6 +161,8 @@ const SIDEBAR_MENUS = {
         { href: 'staff_compliance.html', icon: 'stamp', label: '직원 규정준수' },
         { href: 'attendance.html', icon: 'schedule', label: '근무 현황' },
         { href: 'leave.html', icon: 'schedule', label: '연차 승인' },
+        { href: 'committee.html', icon: 'messages', label: '운영위원회 회의록' },
+        { href: 'equipment.html', icon: 'staff', label: '비품 관리대장' },
         { href: 'center_settings.html', icon: 'center', label: '센터 정보' },
         { href: 'guide_manager.html', icon: 'stamp', label: '센터장 안내' }
     ]
@@ -198,7 +200,7 @@ const SIDEBAR_GROUPS_BY_ROLE = {
         ['청구·정산', ['청구관리', '청구 입력 도우미', '공단 태그 대조', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과']],
         ['수급자·보호자', ['수급자 관리', '보호자 관리', '보호자 소통', '문자 보내기', '계약통보서 초안']],
         ['서비스 계획·평가', ['급여제공계획', '기초평가 현황', '인지활동 계획', '상담 기록', '결과평가·사례관리', '평가 준비 자료', '교육·안내 기록']],
-        ['직원·센터', ['직원관리', '직원 규정준수', '근무 현황', '연차 승인', '점검 기록', '센터 정보']],
+        ['직원·센터', ['직원관리', '직원 규정준수', '근무 현황', '연차 승인', '점검 기록', '운영위원회 회의록', '비품 관리대장', '센터 정보']],
         ['도움말', ['센터장 안내']],
     ],
     caregiver: [

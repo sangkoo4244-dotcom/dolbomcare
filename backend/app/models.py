@@ -835,3 +835,38 @@ class LeaveRequest(Base):
     decided_at = Column(DateTime, nullable=True)
     decision_note = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
+
+
+class CommitteeMeeting(Base):
+    """운영위원회 회의록. 센터장이 작성하고 수정한다."""
+    __tablename__ = "committee_meetings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    meeting_date = Column(Date, index=True)
+    title = Column(String)
+    attendees = Column(Text, nullable=True)  # 참석자 (쉼표 구분)
+    agenda = Column(Text, nullable=True)  # 안건
+    minutes = Column(Text, nullable=True)  # 논의 내용
+    decisions = Column(Text, nullable=True)  # 의결 사항
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now)
+
+
+class Equipment(Base):
+    """비품 관리대장. 상태는 사용중·수리중·폐기 중 하나이고, 폐기해도 기록은 남긴다."""
+    __tablename__ = "equipment"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    name = Column(String)
+    category = Column(String, nullable=True)  # 가구, 전산, 위생, 의료, 기타
+    quantity = Column(Integer, default=1)
+    location = Column(String, nullable=True)
+    purchase_date = Column(Date, nullable=True)
+    status = Column(String, default="in_use", index=True)  # in_use / repair / disposed
+    note = Column(String, nullable=True)
+    disposed_date = Column(Date, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now)

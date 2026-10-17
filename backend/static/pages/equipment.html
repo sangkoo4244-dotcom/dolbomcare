@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비품 관리대장 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+        .panel h2 { margin: 0 0 12px; font-size: 16px; }
+        .field { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; }
+        .field:focus { border-color: var(--teal); outline: none; }
+        .lbl { display: block; font-size: 12px; font-weight: 700; color: #64748B; margin: 10px 0 4px; }
+        .btn-solid { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .btn-danger { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid #FCA5A5; background: #fff; color: #B91C1C; cursor: pointer; font-family: inherit; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .tab { padding: 7px 14px; border-radius: 999px; border: 1.5px solid var(--line2); background: #fff; font-size: 13px; font-weight: 700; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .tab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+        .row { display: grid; grid-template-columns: 1.4fr 1fr 1fr 220px; gap: 12px; align-items: center; padding: 11px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
+        .meta { font-size: 12px; color: #64748B; margin-top: 2px; }
+        .tag { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .tag-in_use { background: #DCFCE7; color: #166534; }
+        .tag-repair { background: #FEF3C7; color: #92400E; }
+        .tag-disposed { background: #E2E8F0; color: #475569; }
+        .empty-note { color: #94A3B8; font-size: 13px; padding: 14px 0; }
+        .msg { font-size: 13px; margin-top: 10px; display: none; }
+        .msg.err { color: #DC2626; display: block; }
+        .msg.ok { color: #15803D; display: block; }
+        .grid3 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; align-items: end; }
+        @media (max-width: 900px) { .grid3, .row { grid-template-columns: 1fr; } }
+    </style>
+    <link rel="stylesheet" href="theme.css">
+    <script src="menu.js"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>비품 관리대장</h1>
+                <div class="breadcrumb">홈 › 직원·센터 › <b>비품 관리대장</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-role">센터장</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+        <div class="content">
+            <div class="panel">
+                <h2>비품 등록</h2>
+                <div class="grid3">
+                    <div><label class="lbl" for="eName">비품 이름</label><input id="eName" class="field" placeholder="예: 욕창예방 매트리스"></div>
+                    <div><label class="lbl" for="eQty">수량</label><input type="number" id="eQty" class="field" min="1" value="1"></div>
+                    <div><label class="lbl" for="eCat">분류</label><input id="eCat" class="field" placeholder="가구, 전산, 위생 등"></div>
+                    <div><label class="lbl" for="eDate">구입일</label><input type="date" id="eDate" class="field"></div>
+                </div>
+                <label class="lbl" for="eLoc">보관 장소</label><input id="eLoc" class="field" placeholder="예: 1층 침실">
+                <label class="lbl" for="eNote">메모</label><input id="eNote" class="field">
+                <div style="display:flex;justify-content:flex-end;margin-top:12px;"><button class="btn-solid" onclick="addEquipment()">등록</button></div>
+                <div class="msg" id="msg"></div>
+            </div>
+            <div class="panel">
+                <div class="tabs" id="tabs"></div>
+                <div id="rows"><div class="empty-note">불러오는 중…</div></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+        let current = 'all';
+        const TABS = [['all', '전체'], ['in_use', '사용중'], ['repair', '수리중'], ['disposed', '폐기']];
+
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html';
+            }
+        }
+        async function api(path, options = {}) {
+            const r = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}`, ...(options.headers || {}) } });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(typeof d.detail === 'string' ? d.detail : '처리하지 못했습니다');
+            return d;
+        }
+        function setMsg(text, ok) { const m = document.getElementById('msg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+        function renderTabs() {
+            document.getElementById('tabs').innerHTML = TABS.map(([k, l]) =>
+                `<button class="tab ${k === current ? 'active' : ''}" onclick="switchTab('${k}')">${l}</button>`).join('');
+        }
+        function switchTab(k) { current = k; renderTabs(); load(); }
+
+        async function addEquipment() {
+            const body = {
+                name: document.getElementById('eName').value,
+                quantity: parseInt(document.getElementById('eQty').value || '1', 10),
+                category: document.getElementById('eCat').value || null,
+                purchase_date: document.getElementById('eDate').value || null,
+                location: document.getElementById('eLoc').value || null,
+                note: document.getElementById('eNote').value || null,
+            };
+            try {
+                await api('/api/v1/equipment', { method: 'POST', body: JSON.stringify(body) });
+                setMsg('등록했습니다.', true);
+                ['eName', 'eCat', 'eDate', 'eLoc', 'eNote'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('eQty').value = '1';
+                load();
+            } catch (e) { setMsg(e.message, false); }
+        }
+
+        let pendingDispose = null;
+        async function changeStatus(id, status) {
+            // 폐기는 되돌릴 수 없어서 한 번 더 눌러야 확정된다
+            if (status === 'disposed' && pendingDispose !== id) {
+                pendingDispose = id;
+                load();
+                return;
+            }
+            pendingDispose = null;
+            try {
+                await api(`/api/v1/equipment/${id}/status`, { method: 'POST', body: JSON.stringify({ status }) });
+                setMsg(status === 'disposed' ? '폐기로 기록했습니다.' : '상태를 바꿨습니다.', true);
+                load();
+            } catch (e) { setMsg(e.message, false); }
+        }
+
+        async function load() {
+            const box = document.getElementById('rows');
+            try {
+                const d = await api(`/api/v1/equipment?status=${current}`);
+                box.innerHTML = d.data.length ? d.data.map(e => {
+                    const acts = e.status === 'disposed' ? '' : `
+                        <button class="btn-outline" onclick="changeStatus(${e.id}, '${e.status === 'repair' ? 'in_use' : 'repair'}')">${e.status === 'repair' ? '사용중으로' : '수리중으로'}</button>
+                        <button class="btn-danger" onclick="changeStatus(${e.id}, 'disposed')">${pendingDispose === e.id ? '한 번 더 누르면 폐기' : '폐기'}</button>`;
+                    return `<div class="row">
+                        <div><b>${esc(e.name)}</b> × ${e.quantity}<div class="meta">${esc(e.category)}${e.purchase_date ? ' · 구입 ' + esc(e.purchase_date) : ''}${e.note ? ' · ' + esc(e.note) : ''}</div></div>
+                        <div>${esc(e.location) || '<span class="meta">장소 미기록</span>'}</div>
+                        <div><span class="tag tag-${e.status}">${esc(e.status_label)}</span>${e.disposed_date ? `<div class="meta">폐기일 ${esc(e.disposed_date)}</div>` : ''}</div>
+                        <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">${acts}</div>
+                    </div>`;
+                }).join('') : '<div class="empty-note">해당하는 비품이 없습니다.</div>';
+            } catch (e) { box.innerHTML = `<div class="empty-note">${esc(e.message)}</div>`; }
+        }
+
+        (function init() {
+            if (typeof renderSidebar === 'function') renderSidebar();
+            document.getElementById('userName').textContent = user.full_name || '';
+            renderTabs();
+            load();
+        })();
+    </script>
+</body>
+</html>

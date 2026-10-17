@@ -38,6 +38,7 @@ from app.api import audit_prep, visit_precheck, counseling, care_plans, service_
 from app.api import staff_records
 from app.api import record_review
 from app.api import leave
+from app.api import committee, equipment
 from app.api import resident_media
 from app.api import centers
 from app.api import center_directory
@@ -98,6 +99,8 @@ app.include_router(nursing_orders.router, prefix="/api/v1/nursing-orders", tags=
 app.include_router(social_work.router, prefix="/api/v1/social-work", tags=["social-work"], dependencies=[Depends(get_current_user)])
 app.include_router(record_review.router, prefix="/api/v1/record-review", tags=["record_review"], dependencies=[Depends(get_current_user)])
 app.include_router(leave.router, prefix="/api/v1/leave", tags=["leave"], dependencies=[Depends(get_current_user)])
+app.include_router(committee.router, prefix="/api/v1/committee", tags=["committee"], dependencies=[Depends(get_current_user)])
+app.include_router(equipment.router, prefix="/api/v1/equipment", tags=["equipment"], dependencies=[Depends(get_current_user)])
 app.include_router(staff_self.router, prefix="/api/v1/staff-self", tags=["staff-self"], dependencies=[Depends(get_current_user)])
 app.include_router(attendance.router, prefix="/api/v1/attendance", tags=["attendance"], dependencies=[Depends(get_current_user)])
 app.include_router(inspections.router, prefix="/api/v1/inspections", tags=["inspections"], dependencies=[Depends(get_current_user)])
