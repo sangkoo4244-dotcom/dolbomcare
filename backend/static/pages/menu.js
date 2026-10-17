@@ -358,6 +358,7 @@ function renderSidebar() {
     }
     renderMobileTabbar(items, current, roleMenu);
     showUnreadMessageBadge();
+    showRecordReviewBadge();
     refreshBenefitsMenu();
 
     // groupSidebar()가 #navContent 안쪽을 통째로 다시 그리므로, 거기 휩쓸리지 않게 nav 바깥(aside)에 따로 붙인다
@@ -451,6 +452,24 @@ function renderMobileTabbar(items, current, roleMenu) {
     backdrop.addEventListener('click', close);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
     document.getElementById('mtabLogout').addEventListener('click', () => { close(); if (typeof logout === 'function') logout(); });
+}
+
+// 제공 기록 확인 메뉴에 사회복지사 확인을 기다리는 기록 수를 표시한다 (실패해도 메뉴는 그대로 둔다)
+async function showRecordReviewBadge() {
+    try {
+        const r = await fetch('/api/v1/record-review/pending-count', { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+        if (!r.ok) return;
+        const { pending } = (await r.json()).data;
+        if (!pending) return;
+        document.querySelectorAll('a[href$="record_review.html"] .side-icon').forEach(icon => {
+            const badge = document.createElement('span');
+            badge.textContent = pending;
+            badge.style.cssText = 'margin-left:auto;background:#d97706;color:#fff;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700;';
+            icon.parentElement.appendChild(badge);
+        });
+    } catch (e) {
+        // 배지는 부가 기능이므로 실패해도 무시한다
+    }
 }
 
 // 보호자 소통 메뉴에 안 읽은 메시지 개수를 표시한다 (실패해도 메뉴는 그대로 둔다)

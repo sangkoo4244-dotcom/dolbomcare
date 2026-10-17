@@ -101,3 +101,13 @@ def return_record(record_id: int, body: ReturnBody, db: Session = Depends(get_db
         notify(db, record.caregiver_id, "record_returned", f"{resident.name} 어르신 {day} 제공 기록에 보완 요청이 왔습니다: {note}")
     db.commit()
     return {"status": "success"}
+
+
+@router.get("/pending-count")
+def pending_count(db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
+    """메뉴 배지용: 최근 14일 안에 사회복지사 확인을 기다리는 제공 기록 수."""
+    since = datetime.now() - timedelta(days=14)
+    rows = db.query(DailyRecord).join(Resident, Resident.id == DailyRecord.resident_id).filter(
+        Resident.center_id == actor.center_id, DailyRecord.recorded_date >= since,
+        DailyRecord.review_status.is_(None)).count()
+    return {"status": "success", "data": {"pending": rows}}

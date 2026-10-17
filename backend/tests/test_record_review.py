@@ -131,3 +131,12 @@ def test_return_is_refused_when_billing_is_already_approved(env):
     assert r.status_code == 400
     assert "센터장" in r.json()["detail"]
     assert client.post("/api/v1/record-review/records/1/confirm", headers=SOCIAL).status_code == 200  # 확인은 막지 않는다
+
+
+def test_pending_count_for_menu_badge(env):
+    _, client = env
+    r = client.get("/api/v1/record-review/pending-count", headers=SOCIAL)
+    assert r.status_code == 200 and r.json()["data"]["pending"] == 1
+    client.post("/api/v1/record-review/records/1/confirm", headers=SOCIAL)
+    assert client.get("/api/v1/record-review/pending-count", headers=SOCIAL).json()["data"]["pending"] == 0
+    assert client.get("/api/v1/record-review/pending-count", headers=CAREGIVER).status_code == 403
