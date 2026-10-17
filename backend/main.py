@@ -38,7 +38,7 @@ from app.api import audit_prep, visit_precheck, counseling, care_plans, service_
 from app.api import staff_records
 from app.api import record_review
 from app.api import leave
-from app.api import committee, equipment, resident_logs, training_certs
+from app.api import committee, equipment, resident_logs, training_certs, copay_estimate
 from app.api import resident_media
 from app.api import centers
 from app.api import center_directory
@@ -103,6 +103,7 @@ app.include_router(committee.router, prefix="/api/v1/committee", tags=["committe
 app.include_router(equipment.router, prefix="/api/v1/equipment", tags=["equipment"], dependencies=[Depends(get_current_user)])
 app.include_router(resident_logs.router, prefix="/api/v1/resident-logs", tags=["resident_logs"], dependencies=[Depends(get_current_user)])
 app.include_router(training_certs.router, prefix="/api/v1/training-certs", tags=["training_certs"], dependencies=[Depends(get_current_user)])
+app.include_router(copay_estimate.router, prefix="/api/v1/public/copay", tags=["public_copay"])  # 공개 계산기: 로그인 없음, 개인 정보 없음
 app.include_router(staff_self.router, prefix="/api/v1/staff-self", tags=["staff-self"], dependencies=[Depends(get_current_user)])
 app.include_router(attendance.router, prefix="/api/v1/attendance", tags=["attendance"], dependencies=[Depends(get_current_user)])
 app.include_router(inspections.router, prefix="/api/v1/inspections", tags=["inspections"], dependencies=[Depends(get_current_user)])

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>본인부담금 계산기 - 돌봄케어</title>
+    <style>
+        :root { --teal: #0F8B80; --navy: #14283F; --line: #E2E8F0; --text: #243247; --muted: #64748B; }
+        body { margin: 0; font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif; background: #F5F7FA; color: var(--text); }
+        header { background: var(--navy); color: #fff; padding: 18px 16px; }
+        header h1 { margin: 0; font-size: 20px; }
+        header p { margin: 4px 0 0; font-size: 13px; color: #CBD5E1; }
+        main { max-width: 640px; margin: 0 auto; padding: 16px; }
+        .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+        label { display: block; font-size: 13px; font-weight: 700; color: var(--muted); margin: 10px 0 4px; }
+        select, input { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 2px solid var(--line); border-radius: 10px; font-size: 15px; font-family: inherit; background: #fff; }
+        button { width: 100%; margin-top: 14px; padding: 12px; border: none; border-radius: 10px; background: var(--teal); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; }
+        .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F1F5F9; font-size: 15px; }
+        .result-row b { color: var(--navy); }
+        .big { font-size: 22px; font-weight: 800; color: var(--teal); margin: 6px 0 2px; }
+        h2 { font-size: 16px; margin: 0 0 8px; }
+        .notes { font-size: 12.5px; color: var(--muted); line-height: 1.6; padding-left: 18px; margin: 8px 0 0; }
+        .err { color: #DC2626; font-size: 14px; margin-top: 10px; }
+        @media (max-width: 480px) { main { padding: 12px; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>방문요양 본인부담금 계산기</h1>
+        <p>등급과 제공 시간을 고르면 1회와 한 달 예상 금액을 보여 줍니다. 로그인과 개인 정보 입력이 필요 없습니다.</p>
+    </header>
+    <main>
+        <div class="card">
+            <label for="grade">장기요양 등급</label>
+            <select id="grade">
+                <option value="1">1등급</option><option value="2">2등급</option><option value="3">3등급</option>
+                <option value="4">4등급</option><option value="5">5등급</option><option value="cognitive">인지지원등급</option>
+            </select>
+            <label for="client">소득 구분</label>
+            <select id="client">
+                <option value="일반">일반</option><option value="차상위계층">차상위계층</option>
+                <option value="기초생활보장">기초생활보장</option><option value="의료급여">의료급여</option>
+            </select>
+            <label for="minutes">1회 제공 시간</label>
+            <select id="minutes">
+                <option value="30">30분</option><option value="60" selected>60분</option><option value="90">90분</option>
+                <option value="120">120분</option><option value="180">180분</option><option value="240">240분</option>
+            </select>
+            <label for="visits">한 달 방문 횟수 (1~31)</label>
+            <input type="number" id="visits" min="1" max="31" value="8">
+            <button onclick="calc()">계산하기</button>
+            <div class="err" id="err"></div>
+        </div>
+        <div class="card" id="result" style="display:none;">
+            <h2>1회 제공 기준</h2>
+            <div class="result-row"><span>급여비용 총액</span><b id="vTotal"></b></div>
+            <div class="result-row"><span>본인부담금</span><b id="vPatient"></b></div>
+            <div class="result-row"><span>공단부담금</span><b id="vInsurer"></b></div>
+            <h2 style="margin-top:16px;">한 달 기준</h2>
+            <div class="big" id="mPatient"></div>
+            <div class="result-row"><span>급여비용 총액</span><b id="mTotal"></b></div>
+            <div class="result-row"><span>월 한도액</span><b id="mLimit"></b></div>
+            <div class="result-row"><span>한도 초과분 (전액 본인부담)</span><b id="mOver"></b></div>
+            <div class="result-row"><span>공단부담금</span><b id="mInsurer"></b></div>
+            <ul class="notes" id="notes"></ul>
+        </div>
+    </main>
+    <script>
+        const won = (n) => (n ?? 0).toLocaleString('ko-KR') + '원';
+        async function calc() {
+            const err = document.getElementById('err');
+            err.textContent = '';
+            const q = new URLSearchParams({
+                grade: document.getElementById('grade').value,
+                client_type: document.getElementById('client').value,
+                minutes: document.getElementById('minutes').value,
+                visits_per_month: document.getElementById('visits').value,
+            });
+            try {
+                const r = await fetch(`/api/v1/public/copay/estimate?${q}`);
+                const d = await r.json();
+                if (!r.ok) throw new Error(typeof d.detail === 'string' ? d.detail : '계산하지 못했습니다. 입력을 확인해 주세요');
+                const v = d.data.per_visit, m = d.data.month;
+                document.getElementById('vTotal').textContent = won(v.total);
+                document.getElementById('vPatient').textContent = won(v.patient);
+                document.getElementById('vInsurer').textContent = won(v.insurer);
+                document.getElementById('mPatient').textContent = '예상 본인부담 ' + won(m.patient);
+                document.getElementById('mTotal').textContent = won(m.total);
+                document.getElementById('mLimit').textContent = won(m.limit);
+                document.getElementById('mOver').textContent = won(m.over_limit);
+                document.getElementById('mInsurer').textContent = won(m.insurer);
+                document.getElementById('notes').innerHTML = d.data.notes.map(n => `<li>${n}</li>`).join('');
+                document.getElementById('result').style.display = '';
+            } catch (e) {
+                err.textContent = e.message;
+            }
+        }
+    </script>
+</body>
+</html>
