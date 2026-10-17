@@ -80,6 +80,12 @@
                 <div id="rows"><div class="empty-note">불러오는 중…</div></div>
                 <div style="font-size:12px;color:#94A3B8;margin-top:10px;">평가를 새로 적으려면 수급자 관리에서 해당 수급자의 "욕구사정" 버튼을 누르세요.</div>
             </div>
+            <div class="panel">
+                <h2>낙상·욕창·인지 평가 기한</h2>
+                <div style="font-size:13px;color:#64748B;margin-bottom:8px;">공단 매뉴얼: 반기 1회(183일) 실시가 필수입니다. 한 번도 안 한 항목도 기한 초과로 봅니다.</div>
+                <div id="dueSummary" style="font-size:14px;margin-bottom:8px;"></div>
+                <div id="dueRows"></div>
+            </div>
         </div>
     </div>
 
@@ -107,11 +113,26 @@
                 : '<div class="empty-note">수급자가 없습니다.</div>';
         }
 
+        async function loadDue() {
+            const r = await fetch('/api/v1/risk-assessments/center-due', { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            const d = await r.json().catch(() => ({}));
+            const box = document.getElementById('dueRows');
+            if (!r.ok) { box.innerHTML = `<div class="empty-note">${esc(d.detail || '불러오지 못했습니다')}</div>`; return; }
+            const v = d.data;
+            document.getElementById('dueSummary').textContent = v.overdue_count ? `기한 지난 평가 ${v.overdue_count}건` : '기한 지난 평가가 없습니다.';
+            box.innerHTML = v.items.map(i => `<div class="row">
+                <div><b>${esc(i.resident_name)}</b></div>
+                <div>${esc(i.type_label)}</div>
+                <div>${i.last_date ? '마지막 ' + esc(i.last_date) : '<span style="color:#B91C1C;">미실시</span>'}</div>
+                <div>${i.due_date ? '기한 ' + esc(i.due_date) : '-'}</div></div>`).join('');
+        }
+
         (async function init() {
             if (typeof renderSidebar === 'function') renderSidebar();
             document.getElementById('userName').textContent = user.full_name || '';
             document.getElementById('userRole').textContent = user.role === 'social_worker' ? '사회복지사' : '센터장';
             load();
+            loadDue();
         })();
     </script>
 </body>

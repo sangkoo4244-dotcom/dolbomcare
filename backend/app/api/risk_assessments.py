@@ -207,3 +207,35 @@ def list_risk_assessments(
             "history": history,
         }
     return {"resident_name": resident.name, "assessments": result}
+
+
+@router.get("/center-due")
+def center_due(
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """센터 이용자 중 낙상·욕창·인지기능 평가 기한이 지났거나 한 번도 안 한 항목. 센터장·사회복지사용."""
+    if actor.role not in ("center_manager", "social_worker"):
+        raise HTTPException(status_code=403, detail="센터장 또는 사회복지사만 볼 수 있습니다")
+    residents = db.query(Resident).filter(Resident.center_id == actor.center_id).order_by(Resident.name).all()
+    rows = db.query(RiskAssessment).join(Resident, Resident.id == RiskAssessment.resident_id).filter(
+        Resident.center_id == actor.center_id).all()
+    now = datetime.now()
+    latest = {}
+    for a in sorted(rows, key=lambda a: a.assessed_date or datetime.min):
+        latest[(a.resident_id, a.assessment_type)] = a.assessed_date
+    items = []
+    for r in residents:
+        for code, label in ASSESSMENT_TYPES.items():
+            last = latest.get((r.id, code))
+            if last and last + timedelta(days=CADENCE_DAYS) >= now:
+                continue
+            items.append({
+                "resident_id": r.id,
+                "resident_name": r.name,
+                "type": code,
+                "type_label": label,
+                "last_date": last.date().isoformat() if last else None,
+                "due_date": (last + timedelta(days=CADENCE_DAYS)).date().isoformat() if last else None,
+            })
+    return {"status": "success", "data": {"items": items, "overdue_count": len(items), "cadence_days": CADENCE_DAYS}}
