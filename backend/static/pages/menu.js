@@ -146,6 +146,7 @@ const SIDEBAR_MENUS = {
         { href: 'copay_management.html', icon: 'billing', label: '본인부담금' },
         { href: 'monthly_settlement.html', icon: 'settlement', label: '월별정산' },
         { href: 'statement_confirm.html', icon: 'stamp', label: '급여 확정' },
+        { href: 'salary_ledger.html', icon: 'settlement', label: '급여 지급 대장' },
         { href: 'profit_analysis.html', icon: 'profit', label: '수익분석' },
         { href: 'value_report.html', icon: 'profit', label: '이번 달 성과' },
         { href: 'resident_management.html', icon: 'residents', label: '수급자 관리' },
@@ -203,7 +204,7 @@ const SIDEBAR_GROUPS_BY_ROLE = {
     center_manager: [
         ['메인', ['대시보드', '알림']],
         ['방문 관리', ['방문 일정 승인', '오늘 방문 현황', '방문 지도', '제공 기록 관리', '제공 기록 확인', '제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '인수인계', '사고·응급 보고']],
-        ['청구·정산', ['청구관리', '청구 입력 도우미', '공단 태그 대조', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과']],
+        ['청구·정산', ['청구관리', '청구 입력 도우미', '공단 태그 대조', '본인부담금', '월별정산', '급여 확정', '급여 지급 대장', '수익분석', '이번 달 성과']],
         ['수급자·보호자', ['수급자 관리', '보호자 관리', '보호자 소통', '문자 보내기', '계약통보서 초안']],
         ['서비스 계획·평가', ['급여제공계획', '기초평가 현황', '인지활동 계획', '상담 기록', '관찰일지·의견 기록', '결과평가·사례관리', '평가 준비 자료', '교육·안내 기록']],
         ['직원·센터', ['직원관리', '직원 규정준수', '교육 수료증', '근무 현황', '연차 승인', '점검 기록', '운영위원회 회의록', '비품 관리대장', '센터 정보']],

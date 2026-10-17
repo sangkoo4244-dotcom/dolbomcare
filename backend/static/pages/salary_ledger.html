@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>급여 지급 대장 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+        .panel h2 { margin: 0 0 12px; font-size: 16px; }
+        .field { padding: 8px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; }
+        .btn-solid { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 9px 8px; border-bottom: 1px solid #F1F5F9; text-align: right; white-space: nowrap; }
+        th { font-size: 12px; color: #64748B; background: #F8FAFC; }
+        th:first-child, td:first-child { text-align: left; }
+        tfoot td { font-weight: 800; border-top: 2px solid var(--line2); }
+        .notice { font-size: 13px; color: #92400E; background: #FEF3C7; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+        .empty-note { color: #94A3B8; font-size: 13px; padding: 14px 0; }
+        .table-wrap { overflow-x: auto; }
+        @media print {
+            .sidebar, .topbar, .no-print { display: none !important; }
+            .main-layout { margin-left: 0; }
+            .panel { border: none; }
+        }
+    </style>
+    <link rel="stylesheet" href="theme.css">
+    <script src="menu.js"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>급여 지급 대장</h1>
+                <div class="breadcrumb">홈 › 청구·정산 › <b>급여 지급 대장</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-role">센터장</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+        <div class="content">
+            <div class="panel no-print" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <label for="ym" style="font-size:13px;font-weight:700;">지급 월</label>
+                <input type="month" id="ym" class="field" onchange="load()">
+                <button class="btn-outline" onclick="window.print()">인쇄</button>
+            </div>
+            <div class="panel">
+                <h2 id="title">지급 대장</h2>
+                <div id="unconfirmed"></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>직원</th><th>청구 합계</th><th>급여 기준액</th><th>소득세</th><th>연금</th><th>건강보험</th><th>고용보험</th><th>공제 합계</th><th>실지급액</th><th>확정일</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body"></tbody>
+                        <tfoot id="foot"></tfoot>
+                    </table>
+                </div>
+                <div id="empty" class="empty-note" style="display:none;">이 달에 확정된 명세서가 없습니다.</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+        const won = (n) => (n ?? 0).toLocaleString('ko-KR') + '원';
+
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html';
+            }
+        }
+        async function api(path) {
+            const r = await fetch(path, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(typeof d.detail === 'string' ? d.detail : '불러오지 못했습니다');
+            return d;
+        }
+
+        async function load() {
+            const ym = document.getElementById('ym').value;
+            if (!ym) return;
+            document.getElementById('title').textContent = `${ym.replace('-', '년 ')}월 급여 지급 대장`;
+            try {
+                const d = (await api(`/api/v1/statements/ledger/${ym}`)).data;
+                const un = d.unconfirmed.length
+                    ? `<div class="notice">아직 확정되지 않은 직원: ${d.unconfirmed.map(esc).join(', ')}</div>` : '';
+                document.getElementById('unconfirmed').innerHTML = un;
+                document.getElementById('body').innerHTML = d.rows.map(r => `<tr>
+                    <td>${esc(r.caregiver_name)}</td><td>${won(r.billing_total)}</td><td>${won(r.wage_base)}</td>
+                    <td>${won(r.income_tax)}</td><td>${won(r.pension)}</td><td>${won(r.health)}</td><td>${won(r.employment)}</td>
+                    <td>${won(r.total_deduction)}</td><td><b>${won(r.net)}</b></td><td>${esc((r.confirmed_at || '').slice(0, 10))}</td>
+                </tr>`).join('');
+                const t = d.totals;
+                document.getElementById('foot').innerHTML = `<tr>
+                    <td>합계 (${d.rows.length}명)</td><td>${won(t.billing_total)}</td><td>${won(t.wage_base)}</td>
+                    <td>${won(t.income_tax)}</td><td>${won(t.pension)}</td><td>${won(t.health)}</td><td>${won(t.employment)}</td>
+                    <td>${won(t.total_deduction)}</td><td>${won(t.net)}</td><td></td></tr>`;
+                document.getElementById('empty').style.display = d.rows.length ? 'none' : '';
+            } catch (e) {
+                document.getElementById('body').innerHTML = '';
+                document.getElementById('foot').innerHTML = '';
+                document.getElementById('unconfirmed').innerHTML = `<div class="notice">${esc(e.message)}</div>`;
+            }
+        }
+
+        (function init() {
+            if (typeof renderSidebar === 'function') renderSidebar();
+            document.getElementById('userName').textContent = user.full_name || '';
+            const now = new Date();
+            document.getElementById('ym').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            load();
+        })();
+    </script>
+</body>
+</html>

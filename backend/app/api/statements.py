@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -122,3 +123,26 @@ def month_status(year_month: str, db: Session = Depends(get_db), manager: User =
             "confirmed": c.id in confirmed,
         })
     return {"year_month": year_month, "caregivers": rows}
+
+
+@router.get("/ledger/{year_month}")
+def pay_ledger(year_month: str, db: Session = Depends(get_db), manager: User = Depends(require_manager)):
+    """월별 급여 지급 대장: 확정된 명세서를 직원별 한 줄로 모으고, 아직 확정 안 된 직원은 따로 알려 준다.
+    금액은 확정 당시 저장된 값을 그대로 쓴다(다시 계산하지 않는다)."""
+    if not re.match(r"^\d{4}-(0[1-9]|1[0-2])$", year_month):
+        raise HTTPException(status_code=400, detail="연월 형식이 올바르지 않습니다 (YYYY-MM)")
+    caregivers = db.query(User).filter(User.center_id == manager.center_id, User.role == "caregiver").order_by(User.full_name).all()
+    names = {c.id: c.full_name for c in caregivers}
+    confirmed = db.query(SalaryStatement).filter(SalaryStatement.center_id == manager.center_id,
+                                                 SalaryStatement.year_month == year_month).all()
+    rows = [{
+        "caregiver_id": s.caregiver_id,
+        "caregiver_name": names.get(s.caregiver_id, ""),
+        **_to_dict(s),
+    } for s in confirmed]
+    rows.sort(key=lambda r: r["caregiver_name"])
+    keys = ("billing_total", "wage_base", "income_tax", "pension", "health", "employment", "total_deduction", "net")
+    totals = {k: sum(r[k] or 0 for r in rows) for k in keys}
+    unconfirmed = [c.full_name for c in caregivers if c.id not in {s.caregiver_id for s in confirmed}]
+    return {"status": "success", "data": {"year_month": year_month, "rows": rows, "totals": totals,
+                                          "unconfirmed": unconfirmed}}
