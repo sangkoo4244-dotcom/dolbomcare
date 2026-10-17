@@ -818,3 +818,20 @@ class HandoverNote(Base):
     content = Column(Text)
     created_at = Column(DateTime, default=datetime.now)
     acknowledged_at = Column(DateTime, nullable=True)
+
+
+class LeaveRequest(Base):
+    """직원 연차·휴가 신청. 센터장이 승인하거나 반려한다. 잔여 일수 차감은 하지 않는다(근로기준법 계산은 참고용)."""
+    __tablename__ = "leave_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    staff_id = Column(Integer, ForeignKey("users.id"), index=True)
+    leave_date = Column(Date, index=True)
+    leave_type = Column(String)  # annual / half_am / half_pm / other
+    reason = Column(String, nullable=True)
+    status = Column(String, default="pending", index=True)  # pending / approved / rejected / cancelled
+    decided_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    decided_at = Column(DateTime, nullable=True)
+    decision_note = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
