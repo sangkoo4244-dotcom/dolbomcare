@@ -887,3 +887,20 @@ class ResidentLog(Base):
     author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now)
+
+
+class TrainingCertificate(Base):
+    """직원 교육 수료증. 파일은 서명과 같이 데이터 URL 문자열로 저장하고 크기를 제한한다."""
+    __tablename__ = "training_certificates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    title = Column(String)  # 교육 이름
+    completed_on = Column(Date, index=True)
+    hours = Column(Integer, nullable=True)
+    issuer = Column(String, nullable=True)  # 발급 기관
+    file_name = Column(String, nullable=True)
+    file_data = Column(Text, nullable=True)  # data:...;base64,... 형식
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.now)

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교육 수료증 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+        .panel h2 { margin: 0 0 12px; font-size: 16px; }
+        .field { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; }
+        .field:focus { border-color: var(--teal); outline: none; }
+        .lbl { display: block; font-size: 12px; font-weight: 700; color: #64748B; margin: 10px 0 4px; }
+        .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        @media (max-width: 900px) { .grid3 { grid-template-columns: 1fr; } }
+        .btn-solid { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .btn-danger { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid #FCA5A5; background: #fff; color: #B91C1C; cursor: pointer; font-family: inherit; }
+        .row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 200px; gap: 12px; align-items: center; padding: 11px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
+        @media (max-width: 900px) { .row { grid-template-columns: 1fr; } }
+        .meta { font-size: 12px; color: #64748B; margin-top: 2px; }
+        .empty-note { color: #94A3B8; font-size: 13px; padding: 14px 0; }
+        .msg { font-size: 13px; margin-top: 10px; display: none; }
+        .msg.err { color: #DC2626; display: block; }
+        .msg.ok { color: #15803D; display: block; }
+    </style>
+    <link rel="stylesheet" href="theme.css">
+    <script src="menu.js"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>교육 수료증</h1>
+                <div class="breadcrumb">홈 › 근무·교육 › <b>교육 수료증</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-role" id="userRole"></div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+        <div class="content">
+            <div class="panel" id="formPanel" style="display:none;">
+                <h2>수료증 등록</h2>
+                <div class="grid3">
+                    <div><label class="lbl" for="staff">직원</label><select id="staff" class="field"></select></div>
+                    <div><label class="lbl" for="cTitle">교육 이름</label><input id="cTitle" class="field" placeholder="예: 요양보호사 보수교육"></div>
+                    <div><label class="lbl" for="cDate">수료일</label><input type="date" id="cDate" class="field"></div>
+                    <div><label class="lbl" for="cHours">교육 시간</label><input type="number" id="cHours" class="field" min="0" placeholder="시간"></div>
+                    <div><label class="lbl" for="cIssuer">발급 기관</label><input id="cIssuer" class="field"></div>
+                    <div><label class="lbl" for="cFile">파일 (PDF·PNG·JPG, 2MB 이하)</label><input type="file" id="cFile" class="field" accept="application/pdf,image/png,image/jpeg"></div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;margin-top:12px;"><button class="btn-solid" onclick="save()">등록</button></div>
+                <div class="msg" id="msg"></div>
+            </div>
+            <div class="panel">
+                <h2 id="listTitle">수료증 목록</h2>
+                <div id="rows"><div class="empty-note">불러오는 중…</div></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+        const isManager = user.role === 'center_manager';
+
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html';
+            }
+        }
+        async function api(path, options = {}) {
+            const r = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}`, ...(options.headers || {}) } });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(typeof d.detail === 'string' ? d.detail : '처리하지 못했습니다');
+            return d;
+        }
+        function setMsg(text, ok) { const m = document.getElementById('msg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) return resolve(null);
+                if (file.size > 2 * 1024 * 1024) return reject(new Error('파일은 2MB 이하만 올릴 수 있습니다'));
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('파일을 읽지 못했습니다'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function save() {
+            try {
+                const file = document.getElementById('cFile').files[0];
+                const data = await readFile(file);
+                const hours = document.getElementById('cHours').value;
+                await api('/api/v1/training-certs', { method: 'POST', body: JSON.stringify({
+                    user_id: parseInt(document.getElementById('staff').value, 10),
+                    title: document.getElementById('cTitle').value,
+                    completed_on: document.getElementById('cDate').value,
+                    hours: hours === '' ? null : parseInt(hours, 10),
+                    issuer: document.getElementById('cIssuer').value || null,
+                    file_name: file ? file.name : null,
+                    file_data: data,
+                }) });
+                setMsg('등록했습니다.', true);
+                ['cTitle', 'cHours', 'cIssuer'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('cFile').value = '';
+                load();
+            } catch (e) { setMsg(e.message, false); }
+        }
+
+        async function openFile(id) {
+            const r = await fetch(`/api/v1/training-certs/${id}/file`, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            if (!r.ok) { setMsg('파일을 열지 못했습니다', false); return; }
+            const url = URL.createObjectURL(await r.blob());
+            window.open(url, '_blank');
+        }
+
+        async function removeCert(id) {
+            try { await api(`/api/v1/training-certs/${id}`, { method: 'DELETE' }); setMsg('삭제했습니다.', true); load(); }
+            catch (e) { setMsg(e.message, false); }
+        }
+
+        async function loadStaff() {
+            const r = await fetch('/api/v1/users/').then(x => x.json()).catch(() => ({}));
+            const list = (r.users || r.data || []).filter(u => ['caregiver', 'social_worker', 'center_manager'].includes(u.role));
+            document.getElementById('staff').innerHTML = list.map(u => `<option value="${u.id}">${esc(u.full_name)}</option>`).join('');
+        }
+
+        async function load() {
+            const box = document.getElementById('rows');
+            try {
+                const d = await api('/api/v1/training-certs');
+                box.innerHTML = d.data.length ? d.data.map(c => `<div class="row">
+                    <div><b>${esc(c.title)}</b><div class="meta">${esc(c.issuer)}${c.hours ? ' · ' + c.hours + '시간' : ''}</div></div>
+                    <div>${isManager ? esc(c.staff_name) : esc(user.full_name)}</div>
+                    <div>${esc(c.completed_on)}</div>
+                    <div style="display:flex;gap:6px;justify-content:flex-end;">
+                        ${c.has_file ? `<button class="btn-outline" onclick="openFile(${c.id})">파일 보기</button>` : '<span class="meta">파일 없음</span>'}
+                        ${isManager ? `<button class="btn-danger" onclick="removeCert(${c.id})">삭제</button>` : ''}
+                    </div>
+                </div>`).join('') : '<div class="empty-note">수료증이 없습니다.</div>';
+            } catch (e) { box.innerHTML = `<div class="empty-note">${esc(e.message)}</div>`; }
+        }
+
+        (function init() {
+            if (typeof renderSidebar === 'function') renderSidebar();
+            document.getElementById('userName').textContent = user.full_name || '';
+            document.getElementById('userRole').textContent = isManager ? '센터장' : (user.role === 'social_worker' ? '사회복지사' : '요양보호사');
+            if (isManager) {
+                document.getElementById('formPanel').style.display = '';
+                document.getElementById('cDate').value = new Date().toISOString().slice(0, 10);
+                loadStaff();
+            }
+            load();
+        })();
+    </script>
+</body>
+</html>

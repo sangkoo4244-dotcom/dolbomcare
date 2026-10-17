@@ -114,6 +114,7 @@ const SIDEBAR_MENUS = {
         { href: 'my_training.html', icon: 'staff', label: '교육 이력' },
         { href: 'my_staff.html', icon: 'staff', label: '나의 기록' },
         { href: 'attendance.html', icon: 'schedule', label: '출퇴근' },
+    { href: 'training_certs.html', icon: 'staff', label: '교육 수료증' },
     { href: 'leave.html', icon: 'schedule', label: '연차 신청' },
         { href: 'guide_caregiver.html', icon: 'stamp', label: '사용 안내' }
     ],
@@ -161,6 +162,7 @@ const SIDEBAR_MENUS = {
         { href: 'audit_prep.html', icon: 'billing', label: '평가 준비 자료' },
         { href: 'staff_management.html', icon: 'staff', label: '직원관리' },
         { href: 'staff_compliance.html', icon: 'stamp', label: '직원 규정준수' },
+        { href: 'training_certs.html', icon: 'staff', label: '교육 수료증' },
         { href: 'attendance.html', icon: 'schedule', label: '근무 현황' },
         { href: 'leave.html', icon: 'schedule', label: '연차 승인' },
         { href: 'committee.html', icon: 'messages', label: '운영위원회 회의록' },
@@ -191,6 +193,7 @@ SIDEBAR_MENUS.social_worker = [
     { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
     { href: 'my_staff.html', icon: 'staff', label: '나의 기록' },
     { href: 'attendance.html', icon: 'schedule', label: '출퇴근' },
+    { href: 'training_certs.html', icon: 'staff', label: '교육 수료증' },
     { href: 'leave.html', icon: 'schedule', label: '연차 신청' },
     { href: 'social_guide.html', icon: 'stamp', label: '사용 안내' },
 ];
@@ -203,7 +206,7 @@ const SIDEBAR_GROUPS_BY_ROLE = {
         ['청구·정산', ['청구관리', '청구 입력 도우미', '공단 태그 대조', '본인부담금', '월별정산', '급여 확정', '수익분석', '이번 달 성과']],
         ['수급자·보호자', ['수급자 관리', '보호자 관리', '보호자 소통', '문자 보내기', '계약통보서 초안']],
         ['서비스 계획·평가', ['급여제공계획', '기초평가 현황', '인지활동 계획', '상담 기록', '관찰일지·의견 기록', '결과평가·사례관리', '평가 준비 자료', '교육·안내 기록']],
-        ['직원·센터', ['직원관리', '직원 규정준수', '근무 현황', '연차 승인', '점검 기록', '운영위원회 회의록', '비품 관리대장', '센터 정보']],
+        ['직원·센터', ['직원관리', '직원 규정준수', '교육 수료증', '근무 현황', '연차 승인', '점검 기록', '운영위원회 회의록', '비품 관리대장', '센터 정보']],
         ['도움말', ['센터장 안내']],
     ],
     caregiver: [
@@ -211,14 +214,14 @@ const SIDEBAR_GROUPS_BY_ROLE = {
         ['오늘 업무', ['나의 일정', '방문 지도', '제공 기록', '제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '인수인계', '사고·응급 보고', '점검 기록']],
         ['수급자·보호자', ['담당 수급자', '급여제공계획 확인', '관찰일지·의견 기록', '보호자 소통']],
         ['나의 청구·급여', ['나의 청구', '나의 급여']],
-        ['근무·교육', ['출퇴근', '연차 신청', '나의 기록', '교육 이력']],
+        ['근무·교육', ['출퇴근', '연차 신청', '나의 기록', '교육 이력', '교육 수료증']],
         ['도움말', ['사용 안내']],
     ],
     social_worker: [
         ['메인', ['대시보드', '알림']],
         ['사례 관리', ['수급자 관리', '기초평가 현황', '인지활동 계획', '급여제공계획', '상담 기록', '업무수행일지', '관찰일지·의견 기록', '결과평가·사례관리', '보호자 소통']],
         ['방문·기록', ['방문 지도', '제공 기록 확인', '사고·응급 보고', '제공기록지', '평가 준비 자료']],
-        ['근무·교육', ['출퇴근', '연차 신청', '나의 기록']],
+        ['근무·교육', ['출퇴근', '연차 신청', '나의 기록', '교육 수료증']],
         ['도움말', ['사용 안내']],
     ],
 };
