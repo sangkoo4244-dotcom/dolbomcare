@@ -111,6 +111,10 @@ class DailyRecord(Base):
     bath_solo_exception = Column(Boolean, default=False)  # 방문목욕에서 수치심 등으로 몸 씻기만 1인이 제공한 예외(차량 미이용만)
     pair_record_id = Column(Integer, nullable=True)  # 방문요양 2인 동시 제공: 함께 제공한 요양보호사의 기록(요양보호사별로 각각 청구한다)
     bath_companion = Column(Boolean, default=False)  # 방문목욕에서 함께 간 요양보호사의 기록(급여비용 0원, 중증 가산만 받음). 주 1회 횟수에서 뺀다
+    review_status = Column(String, nullable=True, index=True)  # NULL=사회복지사 확인 대기, 'confirmed'=확인, 'returned'=보완 요청
+    reviewed_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # 확인하거나 보완 요청한 사회복지사
+    reviewed_at = Column(DateTime, nullable=True)
+    review_note = Column(String, nullable=True)  # 보완 요청 내용
     created_at = Column(DateTime, default=datetime.now)
 
 class HealthMetric(Base):

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제공 기록 확인 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+        .note { background: #FFF7EB; border: 1px solid #FCE2B5; color: #8A4A07; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+        .tab { padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--line2); background: #fff; font-size: 13px; font-weight: 700; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .tab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+        .tab .cnt { margin-left: 4px; opacity: 0.85; }
+        .btn-solid { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .btn-danger { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid #FCA5A5; background: #fff; color: #B91C1C; cursor: pointer; font-family: inherit; }
+        .field { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; }
+        .field:focus { border-color: var(--teal); outline: none; }
+        .row { display: grid; grid-template-columns: 110px 110px 1fr 130px; gap: 10px; align-items: start; padding: 12px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
+        .row .who { font-weight: 700; }
+        .row .meta { font-size: 12px; color: #64748B; margin-top: 2px; }
+        .row .body { line-height: 1.5; word-break: keep-all; }
+        .row .acts { display: flex; flex-direction: column; gap: 6px; }
+        .return-box { grid-column: 1 / -1; display: none; gap: 8px; }
+        .return-box.open { display: grid; }
+        .tag { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .tag-pending { background: #FEF3C7; color: #92400E; }
+        .tag-confirmed { background: #DCFCE7; color: #166534; }
+        .tag-returned { background: #FEE2E2; color: #991B1B; }
+        .review-note { font-size: 12px; color: #991B1B; margin-top: 4px; }
+        .empty-note { color: #94A3B8; font-size: 13px; padding: 16px 0; }
+        .msg { font-size: 13px; margin-top: 10px; display: none; }
+        .msg.err { color: #DC2626; display: block; }
+        @media (max-width: 900px) { .row { grid-template-columns: 1fr; } .row .acts { flex-direction: row; } }
+    </style>
+    <link rel="stylesheet" href="theme.css">
+    <script src="menu.js"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>제공 기록 확인</h1>
+                <div class="breadcrumb">홈 › 방문·기록 › <b>제공 기록 확인</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-role" id="userRole"></div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="note">요양보호사가 작성한 제공 기록을 확인합니다. 확인하면 기록이 확인 완료로 바뀌고, 보완이 필요하면 요양보호사에게 이유를 알려 줍니다. 요양보호사가 기록을 고치면 다시 확인 대기로 돌아옵니다.</div>
+            <div class="panel">
+                <div class="tabs" id="tabs"></div>
+                <div id="rows"><div class="empty-note">불러오는 중…</div></div>
+                <div class="msg" id="msg"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+        const isSocial = user.role === 'social_worker';
+        const TABS = [['pending', '확인 대기'], ['returned', '보완 요청'], ['confirmed', '확인 완료']];
+        const TAG = { pending: ['tag-pending', '확인 대기'], confirmed: ['tag-confirmed', '확인 완료'], returned: ['tag-returned', '보완 요청'] };
+        let current = 'pending';
+        let data = { counts: {}, items: [] };
+
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html';
+            }
+        }
+
+        function showMsg(text, isErr) {
+            const m = document.getElementById('msg');
+            m.textContent = text; m.className = 'msg' + (isErr ? ' err' : '');
+        }
+
+        function renderTabs() {
+            document.getElementById('tabs').innerHTML = TABS.map(([key, label]) =>
+                `<button class="tab ${key === current ? 'active' : ''}" onclick="switchTab('${key}')">${label}<span class="cnt">${data.counts[key] ?? 0}</span></button>`).join('');
+        }
+
+        function rowHtml(i) {
+            const [cls, label] = TAG[i.status];
+            const actions = isSocial && i.status !== 'confirmed' ? `
+                <button class="btn-solid" onclick="confirmRecord(${i.id})">확인</button>
+                <button class="btn-danger" onclick="toggleReturn(${i.id})">보완 요청</button>` : '';
+            const returnBox = isSocial ? `
+                <div class="return-box" id="rb-${i.id}">
+                    <textarea class="field" id="rn-${i.id}" rows="2" placeholder="요양보호사에게 전할 보완 내용 (예: 식사량, 소요 시간)"></textarea>
+                    <div style="display:flex;gap:8px;justify-content:flex-end;">
+                        <button class="btn-outline" onclick="toggleReturn(${i.id})">취소</button>
+                        <button class="btn-danger" onclick="sendReturn(${i.id})">보완 요청 보내기</button>
+                    </div>
+                </div>` : '';
+            const reviewed = i.reviewed_at ? `<div class="meta">${esc(i.reviewed_by_name || '')} · ${esc(i.reviewed_at)}</div>` : '';
+            const reviewNote = i.status === 'returned' && i.review_note ? `<div class="review-note">보완 요청: ${esc(i.review_note)}</div>` : '';
+            return `<div class="row">
+                <div><div class="who">${esc(i.recorded_date)}</div><div class="meta">${esc(i.resident_name)}</div></div>
+                <div><div>${esc(i.caregiver_name)}</div><div class="meta">${esc(i.service_type || '')}${i.duration_minutes ? ' · ' + i.duration_minutes + '분' : ''}</div></div>
+                <div><div class="body">${esc(i.notes || '(메모 없음)')}</div>${i.care_items ? `<div class="meta">항목: ${esc(i.care_items)}</div>` : ''}${reviewNote}${reviewed}</div>
+                <div class="acts"><span class="tag ${cls}">${label}</span>${actions}</div>
+                ${returnBox}
+            </div>`;
+        }
+
+        function renderRows() {
+            const el = document.getElementById('rows');
+            el.innerHTML = data.items.length ? data.items.map(rowHtml).join('')
+                : `<div class="empty-note">${current === 'pending' ? '확인할 기록이 없습니다.' : '해당 기록이 없습니다.'}</div>`;
+        }
+
+        async function api(path, options = {}) {
+            const r = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}`, ...(options.headers || {}) } });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(typeof d.detail === 'string' ? d.detail : '처리하지 못했습니다');
+            return d;
+        }
+
+        async function load() {
+            try {
+                const d = await api(`/api/v1/record-review/records?status=${current}&days=14`);
+                data = d.data;
+                renderTabs();
+                renderRows();
+            } catch (e) {
+                document.getElementById('rows').innerHTML = `<div class="empty-note">${esc(e.message)}</div>`;
+            }
+        }
+
+        function switchTab(key) { current = key; showMsg(''); load(); }
+
+        async function confirmRecord(id) {
+            try { await api(`/api/v1/record-review/records/${id}/confirm`, { method: 'POST' }); showMsg('확인했습니다.'); load(); }
+            catch (e) { showMsg(e.message, true); }
+        }
+
+        function toggleReturn(id) {
+            document.getElementById(`rb-${id}`).classList.toggle('open');
+        }
+
+        async function sendReturn(id) {
+            const note = document.getElementById(`rn-${id}`).value.trim();
+            if (!note) { showMsg('보완 내용을 적어 주세요.', true); return; }
+            try { await api(`/api/v1/record-review/records/${id}/return`, { method: 'POST', body: JSON.stringify({ note }) }); showMsg('요양보호사에게 보완 요청을 보냈습니다.'); load(); }
+            catch (e) { showMsg(e.message, true); }
+        }
+
+        (async function init() {
+            if (typeof renderSidebar === 'function') renderSidebar();
+            document.getElementById('userName').textContent = user.full_name || '';
+            document.getElementById('userRole').textContent = isSocial ? '사회복지사' : '센터장';
+            load();
+        })();
+    </script>
+</body>
+</html>

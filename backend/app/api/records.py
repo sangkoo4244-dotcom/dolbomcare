@@ -1005,6 +1005,8 @@ async def update_record(
             value = getattr(request, field)
             if value is not None:
                 setattr(record, field, value)
+        record.review_status = None  # 고치면 사회복지사 확인을 다시 받는다
+        record.review_note = None
 
         db.commit()
         db.refresh(record)
@@ -1036,6 +1038,8 @@ async def update_record(
             for field in ("service_type", "notes", "duration_minutes", "care_items", "item_minutes", "condition", "special_note",
                           "physical_change", "meal_change", "cognitive_change", "stool_accidents", "urine_accidents"):
                 setattr(pair, field, getattr(record, field))
+            pair.review_status = None
+            pair.review_note = None
             if pair_billing:
                 pair_billing.service_type = record.service_type
                 if pair_billing.benefit_type != "home_bath":  # 방문목욕 동행자는 급여비용 0원, 중증 가산만 받는다
