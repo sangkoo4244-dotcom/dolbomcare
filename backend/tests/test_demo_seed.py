@@ -144,3 +144,13 @@ def test_demo_login_resets_a_stale_demo_only_once_a_day_and_keeps_the_trial_end(
     assert client.post("/api/v1/users/login", json={"email": DEMO_MANAGER_EMAIL, "password": "demo1234!"}).status_code == 200
     db.expire_all()
     assert db.query(models.Center).filter_by(name=DEMO_CENTER_NAME).one().id == refreshed.id  # 같은 날 두 번째 로그인은 다시 만들지 않는다
+
+
+def test_demo_residents_have_addresses_and_points_for_the_visit_map(env):
+    db, client = env
+    assert client.post("/api/v1/admin/demo/reset", headers=OPERATOR).status_code == 200
+    demo = db.query(models.Center).filter_by(name=DEMO_CENTER_NAME).one()
+    residents = db.query(models.Resident).filter_by(center_id=demo.id).all()
+    assert len(residents) == 3
+    # 데모 이용자는 주소와 좌표를 미리 가진다 (방문 지도에 점이 찍히도록, 주소 변환 API를 부르지 않도록)
+    assert all(r.address and r.latitude is not None and r.longitude is not None for r in residents)

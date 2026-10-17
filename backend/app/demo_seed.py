@@ -84,16 +84,21 @@ def seed_demo(db: Session, trial_ends_at: datetime | None = None) -> dict:
     db.commit()
 
     # 이용자 3명 (그중 1명은 데모 보호자와 연결)
+    # 주소와 좌표는 서울 도심의 공개 장소를 쓴다 (실제 사람의 주소가 아님). 좌표를 미리 넣어 두어 방문 지도에 점이 바로 찍힌다.
     residents_spec = [
-        dict(name="김복동", age=84, care_grade=2, client_type="일반", guardian_id=None),
-        dict(name="이순자", age=79, care_grade=3, client_type="차상위계층", guardian_id=guardian.id),
-        dict(name="박만수", age=88, care_grade=1, client_type="일반", guardian_id=None),
+        dict(name="김복동", age=84, care_grade=2, client_type="일반", guardian_id=None,
+             address="서울특별시 중구 세종대로 110", latitude=37.5663, longitude=126.9779),
+        dict(name="이순자", age=79, care_grade=3, client_type="차상위계층", guardian_id=guardian.id,
+             address="서울특별시 중구 태평로1가 31", latitude=37.5652, longitude=126.9768),
+        dict(name="박만수", age=88, care_grade=1, client_type="일반", guardian_id=None,
+             address="서울특별시 중구 세종대로 99", latitude=37.5658, longitude=126.9751),
     ]
     residents = []
     for spec in residents_spec:
         r = Resident(center_id=center.id, name=spec["name"], age=spec["age"], admission_date=datetime.now() - timedelta(days=200),
                      health_status="stable", guardian_id=spec["guardian_id"], care_grade=spec["care_grade"],
-                     client_type=spec["client_type"], gender="여")
+                     client_type=spec["client_type"], gender="여",
+                     address=spec["address"], latitude=spec["latitude"], longitude=spec["longitude"])
         db.add(r)
         residents.append(r)
     db.flush()
