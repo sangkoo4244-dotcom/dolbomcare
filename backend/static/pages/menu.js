@@ -403,6 +403,7 @@ function addOperatorLinks() {
 const MOBILE_PRIMARY = {
     center_manager: ['dashboard.html', 'schedule_approval.html', 'messages.html', 'billing_management.html'],
     caregiver: ['dashboard.html', 'my_schedule.html', 'voice_record.html', 'caregiver_billing.html'],
+    social_worker: ['social_dashboard.html', 'resident_management.html', 'visit_map.html', 'messages.html'],
 };
 const MOBILE_LOGOUT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#B5532F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>';
 
