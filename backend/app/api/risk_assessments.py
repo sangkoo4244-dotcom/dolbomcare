@@ -209,17 +209,11 @@ def list_risk_assessments(
     return {"resident_name": resident.name, "assessments": result}
 
 
-@router.get("/center-due")
-def center_due(
-    db: Session = Depends(get_db),
-    actor: User = Depends(get_current_user),
-):
-    """센터 이용자 중 낙상·욕창·인지기능 평가 기한이 지났거나 한 번도 안 한 항목. 센터장·사회복지사용."""
-    if actor.role not in ("center_manager", "social_worker"):
-        raise HTTPException(status_code=403, detail="센터장 또는 사회복지사만 볼 수 있습니다")
-    residents = db.query(Resident).filter(Resident.center_id == actor.center_id).order_by(Resident.name).all()
+def due_items(db: Session, center_id: int) -> list:
+    """센터의 낙상·욕창·인지기능 평가 중 기한이 지났거나 한 번도 안 한 항목."""
+    residents = db.query(Resident).filter(Resident.center_id == center_id).order_by(Resident.name).all()
     rows = db.query(RiskAssessment).join(Resident, Resident.id == RiskAssessment.resident_id).filter(
-        Resident.center_id == actor.center_id).all()
+        Resident.center_id == center_id).all()
     now = datetime.now()
     latest = {}
     for a in sorted(rows, key=lambda a: a.assessed_date or datetime.min):
@@ -238,24 +232,18 @@ def center_due(
                 "last_date": last.date().isoformat() if last else None,
                 "due_date": (last + timedelta(days=CADENCE_DAYS)).date().isoformat() if last else None,
             })
-    return {"status": "success", "data": {"items": items, "overdue_count": len(items), "cadence_days": CADENCE_DAYS}}
+    return items
 
 
-@router.post("/center-due/notify")
-def notify_center_due(
-    db: Session = Depends(get_db),
-    actor: User = Depends(get_current_user),
-):
-    """기한이 지난 평가를 센터장·사회복지사에게 인앱 알림으로 보낸다. 같은 이용자·같은 평가는 달마다 한 번만 보낸다."""
+def send_due_notices(db: Session, center_id: int, month: str | None = None) -> int:
+    """기한 지난 평가를 센터장·사회복지사에게 인앱 알림으로 보낸다. 같은 이용자·평가·달은 한 번만 보낸다.
+    화면 열기와 정기 스케줄러가 함께 부르므로, 여러 번 불러도 같은 알림이 중복으로 쌓이지 않는다."""
     from app.api.notifications import notify
-    if actor.role not in ("center_manager", "social_worker"):
-        raise HTTPException(status_code=403, detail="센터장 또는 사회복지사만 할 수 있습니다")
-    due = center_due(db=db, actor=actor)["data"]["items"]
-    month = datetime.now().strftime("%Y-%m")
-    recipients = db.query(User).filter(User.center_id == actor.center_id, User.role.in_(("center_manager", "social_worker")),
+    month = month or datetime.now().strftime("%Y-%m")
+    recipients = db.query(User).filter(User.center_id == center_id, User.role.in_(("center_manager", "social_worker")),
                                        User.is_active == True).all()  # noqa: E712
     sent = 0
-    for item in due:
+    for item in due_items(db, center_id):
         key = f"[due:{item['resident_id']}:{item['type']}:{month}]"
         msg = f"{item['resident_name']} 어르신 {item['type_label']} 평가가 기한을 지났습니다. 반기 1회 실시가 필요합니다. {key}"
         for u in recipients:
@@ -266,4 +254,27 @@ def notify_center_due(
             notify(db, u.id, "assessment_due", msg)
             sent += 1
     db.commit()
-    return {"status": "success", "data": {"sent": sent}}
+    return sent
+
+
+@router.get("/center-due")
+def center_due(
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """센터 이용자 중 낙상·욕창·인지기능 평가 기한이 지났거나 한 번도 안 한 항목. 센터장·사회복지사용."""
+    if actor.role not in ("center_manager", "social_worker"):
+        raise HTTPException(status_code=403, detail="센터장 또는 사회복지사만 볼 수 있습니다")
+    items = due_items(db, actor.center_id)
+    return {"status": "success", "data": {"items": items, "overdue_count": len(items), "cadence_days": CADENCE_DAYS}}
+
+
+@router.post("/center-due/notify")
+def notify_center_due(
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """기한이 지난 평가를 센터장·사회복지사에게 인앱 알림으로 보낸다. 같은 이용자·같은 평가는 달마다 한 번만 보낸다."""
+    if actor.role not in ("center_manager", "social_worker"):
+        raise HTTPException(status_code=403, detail="센터장 또는 사회복지사만 할 수 있습니다")
+    return {"status": "success", "data": {"sent": send_due_notices(db, actor.center_id)}}
