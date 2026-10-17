@@ -113,6 +113,9 @@ def create_report(body: IncidentBody, db: Session = Depends(get_db), actor: User
         for manager in db.query(User).filter(User.center_id == actor.center_id, User.role == "center_manager").all():
             notify(db, manager.id, "incident_reported",
                    f"{resident.name} 어르신 {TYPES[body.incident_type]} 사고가 보고되었습니다. 보호자 통보와 재발방지 대책을 기록해 주세요.")
+    for sw in db.query(User).filter(User.center_id == actor.center_id, User.role == "social_worker", User.is_active == True).all():  # noqa: E712
+        notify(db, sw.id, "incident_reported",
+               f"{resident.name} 어르신 {TYPES[body.incident_type]} 사고가 보고되었습니다. 사례 회의나 서비스 평가가 필요한지 확인해 주세요.")
     db.commit()
     return {"status": "success", "data": _to_dict(report, _names(db, [report]))}
 

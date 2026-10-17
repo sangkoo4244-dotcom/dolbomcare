@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.api.notifications import notify
 from app.auth import get_current_user, require_manager
 from app.database import get_db
-from app.models import LeaveRequest, Schedule, User
+from app.models import LeaveRequest, Resident, Schedule, User
 
 router = APIRouter()
 
@@ -38,23 +38,29 @@ def _to_dict(r: LeaveRequest, names: dict, visit_counts: dict) -> dict:
         "status": r.status,
         "decided_by_name": names.get(r.decided_by_id) if r.decided_by_id else None,
         "decision_note": r.decision_note,
-        "scheduled_visits": visit_counts.get((r.staff_id, r.leave_date), 0),
+        "scheduled_visits": len(visit_counts.get((r.staff_id, r.leave_date), [])),
+        "visits": visit_counts.get((r.staff_id, r.leave_date), []),
     }
 
 
 def _visit_counts(db: Session, center_id: int, rows: list) -> dict:
-    """신청일에 잡혀 있는 방문 수. 승인 전에 방문이 있는지 센터장이 보도록 한다."""
+    """신청일에 잡혀 있는 방문. 승인 전에 센터장이 누구를 어떻게 옮겨야 하는지 보도록 시간과 이용자를 함께 준다."""
     if not rows:
         return {}
     days = {r.leave_date for r in rows}
     staff = {r.staff_id for r in rows}
-    counts = {}
+    residents = {r.id: r.name for r in db.query(Resident).filter(Resident.center_id == center_id).all()}
+    visits = {}
     for s in db.query(Schedule).filter(Schedule.center_id == center_id, Schedule.status != "cancelled",
-                                       Schedule.caregiver_id.in_(staff)).all():
+                                       Schedule.caregiver_id.in_(staff)).order_by(Schedule.scheduled_date).all():
         d = s.scheduled_date.date() if s.scheduled_date else None
         if d in days:
-            counts[(s.caregiver_id, d)] = counts.get((s.caregiver_id, d), 0) + 1
-    return counts
+            visits.setdefault((s.caregiver_id, d), []).append({
+                "time": s.scheduled_date.strftime("%H:%M"),
+                "resident_name": residents.get(s.resident_id, ""),
+                "duration_minutes": s.duration_minutes,
+            })
+    return visits
 
 
 @router.post("/requests")

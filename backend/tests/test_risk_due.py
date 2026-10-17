@@ -72,3 +72,15 @@ def test_center_due_lists_overdue_and_never_done(env):
 def test_social_worker_allowed_and_caregiver_refused(env):
     assert env.get("/api/v1/risk-assessments/center-due", headers=SOCIAL).status_code == 200
     assert env.get("/api/v1/risk-assessments/center-due", headers=CAREGIVER).status_code == 403
+
+
+def test_notify_due_sends_once_per_month_per_item(env):
+    db_session = env.app.dependency_overrides[get_db]()
+    db = next(db_session)
+    r1 = env.post("/api/v1/risk-assessments/center-due/notify", headers=MANAGER)
+    assert r1.status_code == 200 and r1.json()["data"]["sent"] > 0
+    r2 = env.post("/api/v1/risk-assessments/center-due/notify", headers=MANAGER)
+    assert r2.json()["data"]["sent"] == 0  # 같은 달에는 다시 보내지 않는다
+    kinds = db.query(models.Notification).filter(models.Notification.kind == "assessment_due").all()
+    assert {n.user_id for n in kinds} == {1, 3}  # 센터장과 사회복지사만
+    assert env.post("/api/v1/risk-assessments/center-due/notify", headers=CAREGIVER).status_code == 403

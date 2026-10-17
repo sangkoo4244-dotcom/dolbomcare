@@ -76,3 +76,12 @@ def test_social_worker_cannot_create_or_update_incidents(env):
             "description": "x", "action_taken": "y"}
     assert client.post("/api/v1/incidents", json=body, headers=SOCIAL).status_code == 403
     assert client.put("/api/v1/incidents/1/progress", json={"prevention": "x"}, headers=SOCIAL).status_code == 403
+
+
+def test_caregiver_report_notifies_social_worker_and_manager(env):
+    db, client = env
+    body = {"resident_id": 1, "occurred_date": date.today().isoformat(), "incident_type": "fall",
+            "description": "욕실 앞에서 미끄러져 넘어짐", "action_taken": "바로 일으키고 혈압과 통증 확인 후 보호자에게 연락"}
+    assert client.post("/api/v1/incidents", json=body, headers=CAREGIVER_A).status_code == 200
+    kinds_to = {n.user_id for n in db.query(models.Notification).filter(models.Notification.kind == "incident_reported").all()}
+    assert {1, 3} <= kinds_to  # 센터장(1), 사회복지사(3)

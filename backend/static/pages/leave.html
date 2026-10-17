@@ -50,6 +50,7 @@
         .tag-rejected { background: #FEE2E2; color: #991B1B; }
         .tag-cancelled { background: #E2E8F0; color: #475569; }
         .warn { font-size: 12px; color: #B45309; font-weight: 700; }
+        .visit-list { margin: 6px 0 0; padding-left: 18px; font-size: 12px; color: #475569; }
         .empty-note { color: #94A3B8; font-size: 13px; padding: 14px 0; }
         .msg { font-size: 13px; margin-top: 10px; display: none; }
         .msg.err { color: #DC2626; display: block; }
@@ -187,7 +188,8 @@
             const acts = r.status === 'pending' ? `<div style="display:flex;flex-direction:column;gap:6px;">
                     <button class="btn-solid" onclick="decide(${r.id}, 'approve')">승인</button>
                     <button class="btn-danger" onclick="toggleReject(${r.id})">반려</button></div>` : `<span class="tag ${cls}">${label}</span>`;
-            const warn = r.scheduled_visits && r.status === 'pending' ? `<div class="warn">이 날 방문 ${r.scheduled_visits}건이 잡혀 있습니다. 일정을 먼저 조정하세요.</div>` : '';
+            const warn = r.scheduled_visits && r.status === 'pending' ? `<div class="warn">이 날 방문 ${r.scheduled_visits}건이 잡혀 있습니다. 방문 일정을 다른 직원에게 옮긴 뒤 승인하세요.</div>
+                <ul class="visit-list">${r.visits.map(v => `<li>${esc(v.time)} · ${esc(v.resident_name)}${v.duration_minutes ? ' · ' + v.duration_minutes + '분' : ''}</li>`).join('')}</ul>` : '';
             const decided = r.decided_by_name ? `<div class="meta">${esc(r.decided_by_name)} 처리${r.decision_note ? ': ' + esc(r.decision_note) : ''}</div>` : '';
             return `<div class="row">
                 <div><b>${esc(r.leave_date)}</b></div>

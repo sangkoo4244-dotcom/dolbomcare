@@ -112,3 +112,15 @@ def test_social_worker_can_request_but_not_approve(env):
     assert client.post("/api/v1/leave/requests", json={"leave_date": FUTURE, "leave_type": "other"}, headers=SOCIAL).status_code == 200
     rid = client.get("/api/v1/leave/requests", headers=MANAGER).json()["data"][0]["id"]
     assert client.post(f"/api/v1/leave/requests/{rid}/approve", json={}, headers=SOCIAL).status_code == 403
+
+
+def test_pending_request_lists_affected_visits(env):
+    db, client = env
+    from datetime import datetime as dt
+    db.add(models.Resident(id=1, center_id=1, name="김이용", age=80, health_status="stable", care_grade=2, client_type="일반"))
+    db.add(models.Schedule(caregiver_id=2, resident_id=1, center_id=1, scheduled_date=dt.combine(date.today() + timedelta(days=5), dt.min.time()).replace(hour=10, minute=30), duration_minutes=60, status="planned"))
+    db.commit()
+    client.post("/api/v1/leave/requests", json={"leave_date": FUTURE, "leave_type": "annual"}, headers=CAREGIVER)
+    row = client.get("/api/v1/leave/requests", headers=MANAGER).json()["data"][0]
+    assert row["scheduled_visits"] == 1
+    assert row["visits"] == [{"time": "10:30", "resident_name": "김이용", "duration_minutes": 60}]

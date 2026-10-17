@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
 from app.database import get_db
-from app.models import RiskAssessment, Resident, User
+from app.models import Notification, RiskAssessment, Resident, User
 
 router = APIRouter()
 
@@ -239,3 +239,31 @@ def center_due(
                 "due_date": (last + timedelta(days=CADENCE_DAYS)).date().isoformat() if last else None,
             })
     return {"status": "success", "data": {"items": items, "overdue_count": len(items), "cadence_days": CADENCE_DAYS}}
+
+
+@router.post("/center-due/notify")
+def notify_center_due(
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """기한이 지난 평가를 센터장·사회복지사에게 인앱 알림으로 보낸다. 같은 이용자·같은 평가는 달마다 한 번만 보낸다."""
+    from app.api.notifications import notify
+    if actor.role not in ("center_manager", "social_worker"):
+        raise HTTPException(status_code=403, detail="센터장 또는 사회복지사만 할 수 있습니다")
+    due = center_due(db=db, actor=actor)["data"]["items"]
+    month = datetime.now().strftime("%Y-%m")
+    recipients = db.query(User).filter(User.center_id == actor.center_id, User.role.in_(("center_manager", "social_worker")),
+                                       User.is_active == True).all()  # noqa: E712
+    sent = 0
+    for item in due:
+        key = f"[due:{item['resident_id']}:{item['type']}:{month}]"
+        msg = f"{item['resident_name']} 어르신 {item['type_label']} 평가가 기한을 지났습니다. 반기 1회 실시가 필요합니다. {key}"
+        for u in recipients:
+            exists = db.query(Notification).filter(Notification.user_id == u.id, Notification.kind == "assessment_due",
+                                                   Notification.message.contains(key)).first()
+            if exists:
+                continue
+            notify(db, u.id, "assessment_due", msg)
+            sent += 1
+    db.commit()
+    return {"status": "success", "data": {"sent": sent}}
