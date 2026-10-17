@@ -93,3 +93,17 @@ def test_equipment_other_center_and_caregiver_refused(env):
     env.post("/api/v1/equipment", json={"name": "체중계"}, headers=MANAGER)
     assert env.get("/api/v1/equipment", headers=OTHER_MANAGER).json()["data"] == []
     assert env.get("/api/v1/equipment", headers=CAREGIVER).status_code == 403
+
+
+def test_meeting_notifies_staff_on_create_and_on_date_change_only(env):
+    from app.database import get_db as _gd
+    db = next(env.app.dependency_overrides[_gd]())
+    env.post("/api/v1/committee", json=MEETING, headers=MANAGER)
+    staff = {n.user_id for n in db.query(models.Notification).filter(models.Notification.kind == "staff_meeting").all()}
+    assert staff == {2}  # 요양보호사만 있고 센터장은 제외 (사회복지사 계정은 이 테스트 픽스처에 없음)
+    mid = env.get("/api/v1/committee", headers=MANAGER).json()["data"][0]["id"]
+    env.put(f"/api/v1/committee/{mid}", json={**MEETING, "decisions": "내용만 수정"}, headers=MANAGER)
+    assert db.query(models.Notification).filter(models.Notification.kind == "staff_meeting").count() == 1
+    new_date = (date.today() + timedelta(days=3)).isoformat()
+    env.put(f"/api/v1/committee/{mid}", json={**MEETING, "meeting_date": new_date}, headers=MANAGER)
+    assert db.query(models.Notification).filter(models.Notification.kind == "staff_meeting").count() == 2
