@@ -5,13 +5,13 @@
 - SCHEDULER_ENABLED=0 이면 시작하지 않는다 (테스트나 점검 시). SCHEDULER_HOUR로 실행 시각을 바꾼다.
 """
 import asyncio
-import logging
 import os
+import traceback
 from datetime import datetime, timedelta
 
 from app.models import Center
 
-log = logging.getLogger("scheduler")
+# 서버 기본 로그 설정은 INFO를 숨기므로, 운영 로그에서 보이도록 print로 남긴다 (flush로 즉시 출력)
 
 
 def seconds_until(hour: int, now: datetime | None = None) -> float:
@@ -39,9 +39,10 @@ async def _loop(hour: int, session_factory) -> None:
         db = session_factory()
         try:
             summary = await asyncio.to_thread(run_daily_jobs, db)
-            log.info("정기 점검 완료: %s", summary)
+            print(f"[scheduler] 정기 점검 완료: {summary}", flush=True)
         except Exception:
-            log.exception("정기 점검 실패 (다음 실행 때 다시 시도한다)")
+            print("[scheduler] 정기 점검 실패 (다음 실행 때 다시 시도한다)", flush=True)
+            traceback.print_exc()
         finally:
             db.close()
 
@@ -51,4 +52,5 @@ def start(session_factory) -> asyncio.Task | None:
     if os.getenv("SCHEDULER_ENABLED", "1") != "1":
         return None
     hour = int(os.getenv("SCHEDULER_HOUR", "7"))
+    print(f"[scheduler] 정기 점검 예약: 매일 {hour:02d}:00", flush=True)
     return asyncio.create_task(_loop(hour, session_factory))
