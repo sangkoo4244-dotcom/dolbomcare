@@ -80,8 +80,8 @@ def residents(db: Session = Depends(get_db), actor: User = Depends(get_current_u
 
 @router.get("")
 def list_reports(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
-    """센터장은 센터 전체, 요양보호사는 본인이 보고한 건만 본다."""
-    if actor.role not in ("center_manager", "caregiver"):
+    """센터장·사회복지사는 센터 전체를 본다(사회복지사는 열람만), 요양보호사는 본인이 보고한 건만 본다."""
+    if actor.role not in ("center_manager", "caregiver", "social_worker"):
         raise HTTPException(status_code=403, detail="권한이 없습니다")
     q = db.query(IncidentReport).filter(IncidentReport.center_id == actor.center_id)
     if actor.role == "caregiver":

@@ -178,6 +178,7 @@ SIDEBAR_MENUS.social_worker = [
     { href: 'social_work.html', icon: 'schedule_check', label: '업무수행일지' },
     { href: 'service_review.html', icon: 'profit', label: '결과평가·사례관리' },
     { href: 'record_review.html', icon: 'schedule_check', label: '제공 기록 확인' },
+    { href: 'incident.html', icon: 'schedule_check', label: '사고·응급 보고' },
     { href: 'care_record_sheet.html', icon: 'voice', label: '제공기록지' },
     { href: 'audit_prep.html', icon: 'billing', label: '평가 준비 자료' },
     { href: 'messages.html', icon: 'messages', label: '보호자 소통' },
@@ -208,7 +209,7 @@ const SIDEBAR_GROUPS_BY_ROLE = {
     social_worker: [
         ['메인', ['대시보드', '알림']],
         ['사례 관리', ['수급자 관리', '기초평가 현황', '인지활동 계획', '급여제공계획', '상담 기록', '업무수행일지', '결과평가·사례관리', '보호자 소통']],
-        ['방문·기록', ['방문 지도', '제공 기록 확인', '제공기록지', '평가 준비 자료']],
+        ['방문·기록', ['방문 지도', '제공 기록 확인', '사고·응급 보고', '제공기록지', '평가 준비 자료']],
         ['근무·교육', ['출퇴근', '나의 기록']],
         ['도움말', ['사용 안내']],
     ],

@@ -105,7 +105,7 @@
                 낙상·욕창·투약 사고·응급 이송이 생기면 <b>경과와 조치를 바로 기록</b>하고, 센터장은 <b>보호자에게 알린 날짜(사고 당일~다음 날)</b>와 <b>재발방지 대책</b>을 남깁니다.
                 공단 평가에서 사고 발생 시 대응을 확인할 때 이 기록이 증빙이 됩니다. 응급 상황이면 먼저 119에 연락하고, 안정된 뒤에 기록해 주세요.
             </div>
-            <div style="margin-bottom:14px;"><button type="button" class="btn-solid" onclick="openForm()">사고 보고하기</button></div>
+            <div style="margin-bottom:14px;"><button type="button" class="btn-solid" id="reportBtn" onclick="openForm()">사고 보고하기</button></div>
             <div id="list"><div class="panel">불러오는 중입니다</div></div>
         </div>
     </div>
@@ -144,8 +144,9 @@
         function init() {
             const user = JSON.parse(localStorage.getItem('user') || 'null');
             if (!user) { window.location.href = './login.html'; return; }
-            if (!['center_manager', 'caregiver'].includes(user.role)) { window.location.href = './dashboard.html'; return; }
+            if (!['center_manager', 'caregiver', 'social_worker'].includes(user.role)) { window.location.href = './dashboard.html'; return; }
             currentUser = user;
+            if (user.role === 'social_worker') document.getElementById('reportBtn').style.display = 'none';  // 사회복지사는 열람만
             document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
             if (typeof renderSidebar === 'function') renderSidebar();
             load();
