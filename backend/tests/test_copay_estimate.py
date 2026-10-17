@@ -49,3 +49,4 @@ def test_bad_inputs_refused():
 def test_notes_say_it_is_reference_only():
     notes = client().get("/api/v1/public/copay/estimate?grade=1&minutes=60").json()["data"]["notes"]
     assert any("참고용" in n for n in notes) and any("중증 가산" in n for n in notes)
+    assert any("상한제" in n for n in notes) and any("복지용구" in n for n in notes)
