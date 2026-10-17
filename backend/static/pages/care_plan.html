@@ -255,9 +255,11 @@
             const old = document.getElementById('entrySheetPanel');
             if (old) old.remove();
             window.copyEntryField = (i) => navigator.clipboard && navigator.clipboard.writeText(values[i] || '');
+            window.copyEntryTab = (ti) => navigator.clipboard && navigator.clipboard.writeText(data.tabs[ti].fields.map(f => `${f.label}: ${f.value || ''}`).join('\n'));
             const values = [];
-            const tabs = data.tabs.map(t => `
-                <h4 style="margin:14px 0 6px;font-weight:700;">${esc(t.tab)}</h4>
+            const tabs = data.tabs.map((t, ti) => `
+                <h4 style="margin:14px 0 6px;font-weight:700;display:flex;justify-content:space-between;align-items:center;">${esc(t.tab)}
+                  <button type="button" class="btn-outline" style="font-size:12px;" onclick="copyEntryTab(${ti})">탭 전체 복사</button></h4>
                 ${t.fields.map(f => `
                     <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;">
                         <div style="flex:0 0 42%;font-size:13px;color:#4B5563;">${esc(f.label)}</div>
