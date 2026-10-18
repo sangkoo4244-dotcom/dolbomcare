@@ -1023,6 +1023,47 @@
             navigator.clipboard.writeText(text).then(() => showMessage('복사했습니다', 'success'), () => showMessage('복사에 실패했습니다', 'error'));
         }
 
+        // 입력 중 임시 저장: 긴 기록을 쓰다가 창이 닫히거나 새로고침돼도 내용이 남는다 (이 기기의 브라우저에만 저장, 저장 성공 시 지움)
+        const draftKey = () => `recordDraft:${(JSON.parse(localStorage.getItem('user') || 'null') || {}).id || 'anon'}`;
+        function saveRecordDraft() {
+            try {
+                const data = {};
+                document.querySelectorAll('#recordForm input[type=checkbox], #recordForm input[type=radio]').forEach(el => {
+                    if (el.name) data[`${el.name}|${el.value}`] = el.checked;
+                });
+                document.querySelectorAll('#recordForm input[id], #recordForm select[id], #recordForm textarea[id]').forEach(el => {
+                    if (el.type !== 'file' && el.type !== 'password' && el.type !== 'checkbox' && el.type !== 'radio' && el.id) data[el.id] = el.value;
+                });
+                localStorage.setItem(draftKey(), JSON.stringify({ savedAt: new Date().toISOString(), data }));
+            } catch (e) { /* 저장소를 쓸 수 없으면 임시 저장만 건너뛴다 */ }
+        }
+        function restoreRecordDraft() {
+            try {
+                const raw = localStorage.getItem(draftKey());
+                if (!raw) return;
+                const { data } = JSON.parse(raw);
+                Object.entries(data || {}).forEach(([key, value]) => {
+                    if (key.includes('|')) {
+                        const [name, val] = key.split('|');
+                        document.querySelectorAll(`#recordForm input[name="${name}"]`).forEach(el => { if (el.value === val) el.checked = value; });
+                    } else {
+                        const el = document.getElementById(key);
+                        if (el && !el.value) el.value = value;
+                    }
+                });
+                const notice = document.createElement('div');
+                notice.style.cssText = 'font-size:13px;color:#0F766E;background:#E6F7F5;padding:8px 12px;border-radius:8px;margin-bottom:12px;';
+                notice.textContent = '임시 저장된 내용을 불러왔습니다. 저장하지 않으면 이 기기에만 남아 있습니다.';
+                document.getElementById('recordForm').prepend(notice);
+            } catch (e) { /* 깨진 임시 저장은 무시한다 */ }
+        }
+        function clearRecordDraft() {
+            try { localStorage.removeItem(draftKey()); } catch (e) { /* 무시 */ }
+        }
+        document.getElementById('recordForm').addEventListener('input', saveRecordDraft);
+        document.getElementById('recordForm').addEventListener('change', saveRecordDraft);
+        restoreRecordDraft();
+
         document.getElementById('recordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const rid = document.getElementById('resident').value;
@@ -1082,6 +1123,7 @@
                 });
 
                 if (r.ok) {
+                    clearRecordDraft();
                     showMessage('기록이 저장되었습니다 ✅', 'success');
                     document.getElementById('recordForm').reset();
                     onFormReset();
