@@ -155,7 +155,7 @@
             if (typeof renderSidebar === 'function') renderSidebar();
             document.getElementById('userName').textContent = user.full_name || '';
             document.getElementById('userRole').textContent = isManager ? '센터장' : '직원';
-            document.getElementById('checkDate').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('checkDate').value = todayLocal();
             const d = await fetch('/api/v1/inspections/items').then(r => r.json()).catch(() => ({}));
             catalog = d.data || {};
             renderItems();

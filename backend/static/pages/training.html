@@ -163,7 +163,7 @@
         let currentUser = null, opts = null, rnCtx = null, staffList = [];
 
         const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
-        const today = () => typeof todayLocal === 'function' ? todayLocal() : new Date().toISOString().slice(0, 10);
+        const today = () => todayLocal();
         const closeModal = (id) => document.getElementById(id).classList.remove('open');
 
         function init() {

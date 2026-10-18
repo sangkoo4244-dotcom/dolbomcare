@@ -169,7 +169,7 @@
         (async function init() {
             if (typeof renderSidebar === 'function') renderSidebar();
             document.getElementById('userName').textContent = user.full_name || '';
-            document.getElementById('month').value = new Date().toISOString().slice(0, 7);
+            document.getElementById('month').value = todayLocal().slice(0, 7);
             const cat = await fetch('/api/v1/cognitive/catalog', { headers: auth() }).then(r => r.json()).catch(() => ({}));
             catalog = cat.data || [];
             const rd = await fetch('/api/v1/residents/', { headers: auth() }).then(r => r.json()).catch(() => ({}));

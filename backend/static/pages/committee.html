@@ -117,7 +117,7 @@
             editingId = null;
             document.getElementById('formTitle').textContent = '새 회의록';
             ['mTitle', 'mAttendees', 'mAgenda', 'mMinutes', 'mDecisions'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('mDate').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('mDate').value = todayLocal();
         }
         function editMeeting(id) {
             const m = meetings.find(x => x.id === id);

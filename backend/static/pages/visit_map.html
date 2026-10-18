@@ -243,7 +243,7 @@
             if (typeof renderSidebar === 'function') renderSidebar();
             document.getElementById('userName').textContent = user.full_name || '';
             document.getElementById('userRole').textContent = { caregiver: '요양보호사', social_worker: '사회복지사' }[user.role] || '센터장';
-            document.getElementById('day').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('day').value = todayLocal();
             load();
             if (user.role === 'center_manager') setupManagerPanels();
         })();

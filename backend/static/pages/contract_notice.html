@@ -144,7 +144,7 @@
             if (typeof renderSidebar === 'function') renderSidebar();
             document.getElementById('userName').textContent = user.full_name || '';
             document.getElementById('userRole').textContent = user.role === 'social_worker' ? '사회복지사' : '센터장';
-            document.getElementById('month').value = new Date().toISOString().slice(0, 7);
+            document.getElementById('month').value = todayLocal().slice(0, 7);
             loadResidents();
         })();
     </script>

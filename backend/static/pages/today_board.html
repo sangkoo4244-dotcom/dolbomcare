@@ -129,7 +129,7 @@
         (async function init() {
             if (typeof renderSidebar === 'function') renderSidebar();
             document.getElementById('userName').textContent = user.full_name || '';
-            document.getElementById('day').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('day').value = todayLocal();
             load();
             setInterval(load, 60000);
         })();

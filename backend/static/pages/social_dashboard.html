@@ -140,7 +140,7 @@
 
     <script>
         const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
-        const ym = () => new Date().toISOString().slice(0, 7);
+        const ym = () => todayLocal().slice(0, 7);
         function logout() {
             if (confirm('로그아웃 하시겠습니까?')) {
                 localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html';

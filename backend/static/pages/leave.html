@@ -239,8 +239,8 @@
             } else {
                 document.getElementById('staffView').style.display = '';
                 const today = new Date(); today.setDate(today.getDate() + 1);
-                document.getElementById('lDate').min = today.toISOString().slice(0, 10);
-                document.getElementById('lDate').value = today.toISOString().slice(0, 10);
+                document.getElementById('lDate').min = todayLocal(today);
+                document.getElementById('lDate').value = todayLocal(today);
                 loadMine();
             }
         })();

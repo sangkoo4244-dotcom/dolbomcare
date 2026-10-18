@@ -137,7 +137,7 @@
             editingId = null;
             document.getElementById('content').value = '';
             document.getElementById('action').value = '';
-            document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('logDate').value = todayLocal();
         }
 
         async function loadResidents() {

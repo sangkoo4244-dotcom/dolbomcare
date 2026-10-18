@@ -179,7 +179,7 @@
             document.getElementById('userRole').textContent = isManager ? '센터장' : (user.role === 'social_worker' ? '사회복지사' : '요양보호사');
             if (isManager) {
                 document.getElementById('formPanel').style.display = '';
-                document.getElementById('cDate').value = new Date().toISOString().slice(0, 10);
+                document.getElementById('cDate').value = todayLocal();
                 loadStaff();
             }
             load();

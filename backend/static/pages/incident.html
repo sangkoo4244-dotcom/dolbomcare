@@ -139,7 +139,7 @@
         let currentUser = null;
 
         const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
-        const today = () => typeof todayLocal === 'function' ? todayLocal() : new Date().toISOString().slice(0, 10);
+        const today = () => todayLocal();
 
         function init() {
             const user = JSON.parse(localStorage.getItem('user') || 'null');
