@@ -2,12 +2,13 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.api.notifications import notify
 from app.auth import get_current_user, require_manager
 from app.database import get_db
-from app.models import DailyRecord, Resident, ResidentMessage, ResidentThreadRead, Schedule, User
+from app.models import DailyRecord, Notification, Resident, ResidentMessage, ResidentThreadRead, Schedule, User
 
 router = APIRouter()
 
@@ -130,6 +131,12 @@ def mark_read(resident_id: int, db: Session = Depends(get_db), user: User = Depe
         row = ResidentThreadRead(user_id=user.id, resident_id=resident_id, last_read_message_id=0)
         db.add(row)
     row.last_read_message_id = max(row.last_read_message_id or 0, latest[0] if latest else 0)
+    # 이 이용자의 메시지 알림도 같이 읽음 처리한다. 안 그러면 대화를 다 읽어도 종 모양 숫자가 남는다
+    db.query(Notification).filter(
+        Notification.user_id == user.id, Notification.kind == "message_received", Notification.is_read == False,  # noqa: E712
+        or_(Notification.message.startswith(f"{resident.name} 보호자 메시지:"),
+            Notification.message.startswith(f"{resident.name} 센터 메시지:")),
+    ).update({Notification.is_read: True}, synchronize_session=False)
     db.commit()
     return {"status": "success"}
 
