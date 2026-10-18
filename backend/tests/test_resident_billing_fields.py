@@ -94,3 +94,17 @@ def test_saving_the_form_with_empty_optional_fields_works(env):
         "name": "이용자", "recognition_start": None, "recognition_end": None, "service_start_date": None,
         "billing_address": "", "billing_channels": []})
     assert r.status_code == 200, r.text
+
+
+def test_changing_the_address_clears_the_old_map_point(env):
+    db = env.app.dependency_overrides[get_db]().__next__()
+    resident = db.query(models.Resident).filter(models.Resident.id == 1).first()
+    resident.address = "서울 중구 1"
+    resident.latitude, resident.longitude = 37.5, 127.0
+    db.commit()
+    env.put("/api/v1/residents/1", headers=MANAGER, json={"address": "서울 용산구 2"})
+    db.refresh(resident)
+    assert (resident.latitude, resident.longitude) == (None, None)
+    env.put("/api/v1/residents/1", headers=MANAGER, json={"name": "이름만 바꿈"})
+    db.refresh(resident)
+    assert resident.latitude is None  # 주소가 그대로면 좌표를 건드리지 않는다 (이 테스트는 다시 채우지 않았으므로 None 유지)

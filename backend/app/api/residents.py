@@ -484,6 +484,10 @@ async def update_resident(
         if update_data.gender is not None:
             resident.gender = update_data.gender
         if update_data.address is not None:
+            if update_data.address != resident.address:
+                # 주소가 바뀌면 예전 좌표는 틀리므로 지운다. 다음 방문 지도 조회 때 새 주소로 다시 구한다
+                resident.latitude = None
+                resident.longitude = None
             resident.address = update_data.address
         if update_data.recognition_number is not None:
             resident.recognition_number = update_data.recognition_number
