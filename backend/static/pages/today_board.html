@@ -81,6 +81,8 @@
 
             <div class="cards" id="cards"></div>
 
+            <div class="panel" id="byCaregiver" style="display:none;"></div>
+
             <div class="panel">
                 <div id="rows"><div class="empty-note">불러오는 중…</div></div>
                 <div class="note" id="note"></div>
@@ -116,6 +118,11 @@
                 <div>${x.arrived ? '도착 ' + esc(x.arrived) : '도착 전'}${x.left ? ' · 퇴실 ' + esc(x.left) : ''}</div>
                 <div><span class="badge b-${x.status}">${LABEL[x.status]}</span></div></div>`).join('')
                 : '<div class="empty-note">이 날 계획된 방문이 없습니다.</div>';
+            const cg = document.getElementById('byCaregiver');
+            cg.style.display = v.by_caregiver.length ? '' : 'none';
+            cg.innerHTML = '<div style="font-weight:700;margin-bottom:8px;">요양보호사별 기록 현황</div>' + v.by_caregiver.map(g => `<div class="row" style="grid-template-columns:1fr auto auto;">
+                <div>${esc(g.caregiver)}</div><div>기록 ${g.recorded}/${g.total}</div>
+                <div><span class="badge ${g.open ? 'b-check' : 'b-recorded'}">${g.open ? '누락 ' + g.open + '건' : '누락 없음'}</span></div></div>`).join('');
             document.getElementById('note').textContent = v.note;
         }
 

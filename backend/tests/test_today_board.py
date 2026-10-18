@@ -70,6 +70,11 @@ def test_board_splits_visits_by_state_and_skips_cancelled(env):
     assert data["record_rate"] == 25
 
 
+def test_per_caregiver_counts_unrecorded_visits_first(env):
+    data = env.get("/api/v1/today-board", params={"day": DAY}, headers=MANAGER).json()["data"]
+    assert data["by_caregiver"] == [{"caregiver": "요양사", "total": 4, "recorded": 1, "open": 2}]
+
+
 def test_empty_day_has_no_rows_and_caregiver_is_refused(env):
     data = env.get("/api/v1/today-board", params={"day": "2099-01-01"}, headers=MANAGER).json()["data"]
     assert data["total"] == 0 and data["record_rate"] is None

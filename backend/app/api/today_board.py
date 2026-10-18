@@ -52,10 +52,19 @@ def board(day: Optional[date] = Query(None), db: Session = Depends(get_db), acto
     counts = {k: sum(1 for r in rows if r["status"] == k)
               for k in ("upcoming", "in_progress", "left_unrecorded", "check", "recorded")}
     total = len(rows)
+    per_caregiver = {}
+    for r in rows:
+        g = per_caregiver.setdefault(r["caregiver"] or "미배정", {"caregiver": r["caregiver"] or "미배정", "total": 0, "recorded": 0, "open": 0})
+        g["total"] += 1
+        if r["status"] == "recorded":
+            g["recorded"] += 1
+        elif r["status"] in ("left_unrecorded", "check"):
+            g["open"] += 1
     return {"status": "success", "data": {
         "date": target.isoformat(), "generated_at": now.strftime("%H:%M"),
         "total": total, "counts": counts,
         "record_rate": round(counts["recorded"] * 100 / total) if total else None,
+        "by_caregiver": sorted(per_caregiver.values(), key=lambda g: (-g["open"], g["caregiver"])),
         "rows": rows,
         "note": "공단 전송 여부는 이 화면에서 알 수 없습니다. 전송 확인은 '공단 태그 대조'에서 합니다.",
     }}
