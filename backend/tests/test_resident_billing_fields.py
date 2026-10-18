@@ -130,3 +130,18 @@ def test_additional_guardian_contact_is_shown_only_to_manager_and_social_worker(
         assert g["name"] == "김자녀" and g["relation"] == "자녀"
         assert (g["phone"] == "010-2000-0000") is shows
         assert (g["email"] == "kid@test.com") is shows
+
+
+def test_caregiver_sees_masked_guardian_phone_and_masked_writes_do_not_overwrite(env):
+    assert env.get("/api/v1/residents/1", headers=CAREGIVER).json()["guardian_phone"] is None  # 픽스처에는 주 보호자 연락처가 없다
+    db = env.Session()
+    resident = db.query(models.Resident).filter(models.Resident.id == 1).first()
+    resident.guardian_phone = "010-1234-5678"
+    db.commit()
+    db.close()
+    assert env.get("/api/v1/residents/1", headers=CAREGIVER).json()["guardian_phone"] == "010-****-5678"
+    assert env.get("/api/v1/residents/1", headers=MANAGER).json()["guardian_phone"] == "010-1234-5678"
+    env.put("/api/v1/residents/1", headers=CAREGIVER, json={"guardian_phone": "010-****-5678"})
+    db = env.Session()
+    assert db.query(models.Resident).filter(models.Resident.id == 1).first().guardian_phone == "010-1234-5678"
+    db.close()

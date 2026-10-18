@@ -1,3 +1,5 @@
+import re
+
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -10,6 +12,20 @@ from app.auth import get_current_user, require_manager, assert_self_or_manager, 
 from datetime import datetime, date
 
 BILLING_CHANNELS = ("sms", "alimtalk", "email", "mail")
+
+
+def _mask_phone(phone):
+    """요양보호사에게는 주 보호자 연락처를 가운데만 가려서 보여 준다 (010-****-5678). 긴급 연락은 센터를 거친다."""
+    if not phone:
+        return phone
+    digits = re.sub(r"\D", "", phone)
+    if len(digits) < 8:
+        return "***"
+    return f"{digits[:3]}-****-{digits[-4:]}"
+
+
+def _guardian_phone_for(actor: User, phone):
+    return _mask_phone(phone) if actor.role == "caregiver" else phone
 
 
 def _guardian_for(actor: User, g: ResidentGuardian) -> dict:
@@ -133,7 +149,7 @@ async def get_residents(
                 "recognition_start": r.recognition_start.isoformat() if r.recognition_start else None,
                 "recognition_end": r.recognition_end.isoformat() if r.recognition_end else None,
                 "guardian_name": r.guardian_name,
-                "guardian_phone": r.guardian_phone,
+                "guardian_phone": _guardian_phone_for(actor, r.guardian_phone),
                 "service_start_date": r.service_start_date.isoformat() if r.service_start_date else None,
                 "billing_address": r.billing_address,
                 "billing_channels": _channels(r.billing_channels),
@@ -206,7 +222,7 @@ async def get_resident(
         "recognition_start": resident.recognition_start.isoformat() if resident.recognition_start else None,
         "recognition_end": resident.recognition_end.isoformat() if resident.recognition_end else None,
         "guardian_name": resident.guardian_name,
-        "guardian_phone": resident.guardian_phone,
+        "guardian_phone": _guardian_phone_for(actor, resident.guardian_phone),
         "service_start_date": resident.service_start_date.isoformat() if resident.service_start_date else None,
         "billing_address": resident.billing_address,
         "billing_channels": _channels(resident.billing_channels),
@@ -508,7 +524,7 @@ async def update_resident(
         resident.recognition_end = new_end
         if update_data.guardian_name is not None:
             resident.guardian_name = update_data.guardian_name
-        if update_data.guardian_phone is not None:
+        if update_data.guardian_phone is not None and "*" not in update_data.guardian_phone:  # 가려진 번호를 되돌려 보내도 원래 번호를 지우지 않는다
             resident.guardian_phone = update_data.guardian_phone
         if update_data.service_start_date is not None:
             resident.service_start_date = date.fromisoformat(update_data.service_start_date.strip()) if update_data.service_start_date and update_data.service_start_date.strip() else None

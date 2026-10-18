@@ -2065,7 +2065,9 @@
                 // 요양사는 기존 이용자의 건강상태·주소·보호자 정보만 직접 수정할 수 있다
                 const isCaregiverEdit = currentResidentId && currentUser.role === 'caregiver';
                 const payload = isCaregiverEdit
-                    ? { health_status: healthStatus, address: address, guardian_name: guardianName, guardian_phone: guardianPhone }
+                    ? { health_status: healthStatus, address: address, guardian_name: guardianName,
+                        // 요양사 화면에는 가려진 번호(010-****-1234)가 보이므로, 새로 적은 번호가 있을 때만 보낸다
+                        ...(guardianPhone && !guardianPhone.includes('*') ? { guardian_phone: guardianPhone } : {}) }
                     : fullBody;
 
                 const response = await fetch(url, {
