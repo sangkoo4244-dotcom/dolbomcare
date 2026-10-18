@@ -351,7 +351,7 @@
                         <select id="fResident" class="filter-input"><option value="">이용자 전체</option></select>
                         <select id="fService" class="filter-input">
                             <option value="">서비스 유형 전체</option>
-                            <option value="basic_care">기본 요양</option><option value="meal_service">식사 서비스</option><option value="medical_care">의료 처치</option><option value="emergency">응급 대응</option>
+                            <option value="basic_care">기본 요양</option><option value="day_night">주야간보호</option><option value="meal_service">식사 서비스</option><option value="medical_care">의료 처치</option><option value="emergency">응급 대응</option>
                         </select>
                         <select id="fStatus" class="filter-input">
                             <option value="">상태 전체</option><option value="draft">작성 중</option><option value="pending">검토 중</option><option value="approved">승인 완료</option><option value="submitted_to_nhis">공단 청구</option><option value="reimbursed">정산 완료</option><option value="rejected">반려</option>
@@ -453,9 +453,15 @@
         }
 
         // 서비스 타입 한글 변환 함수
+        // 주·야간보호 청구는 서비스 유형이 기본 요양으로 저장되므로, 급여 종류(benefit_type)로 구분한다
+        function serviceKey(r) {
+            return r.benefit_type === 'day_night' ? 'day_night' : (r.service_type || 'basic_care');
+        }
+
         function getServiceLabel(type) {
             const serviceMap = {
                 'basic_care': '기본 요양',
+                'day_night': '주야간보호',
                 'meal_service': '식사 서비스',
                 'medical_care': '의료 처치',
                 'emergency': '응급 대응'
@@ -517,7 +523,7 @@
                 if (from && key < from) return false;
                 if (to && key > to) return false;
                 if (resident && String(r.resident_id) !== resident) return false;
-                if (svc && r.service_type !== svc) return false;
+                if (svc && serviceKey(r) !== svc) return false;
                 if (st && r.approval_status !== st) return false;
                 if (currentFilter !== 'all' && r.approval_status !== currentFilter) return false;
                 return true;
@@ -540,7 +546,7 @@
             const header = ['청구번호', '이용자', '서비스 기간', '방문횟수', '서비스 유형', '청구금액', '본인부담금', '상태'];
             const lines = rows.map(r => [
                 claimNumber(r), residentMapGlobal[r.resident_id] || `ID ${r.resident_id}`, periodLabel(r.recorded_date),
-                visitCount(r), getServiceLabel(r.service_type), r.amount || 0, patientAmount(r) ?? '', getStatusLabel(r.approval_status)
+                visitCount(r), getServiceLabel(serviceKey(r)), r.amount || 0, patientAmount(r) ?? '', getStatusLabel(r.approval_status)
             ]);
             const csv = [header, ...lines].map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
             const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
@@ -740,7 +746,7 @@
         function renderServiceStatsPanel(monthRecords) {
             const byType = {};
             monthRecords.forEach(r => {
-                const key = r.service_type || 'basic_care';
+                const key = serviceKey(r);
                 byType[key] = (byType[key] || 0) + (r.amount || 0);
             });
             const total = Object.values(byType).reduce((a, b) => a + b, 0) || 1;
@@ -818,7 +824,7 @@
             } else {
                 records.forEach(record => {
                     const statusLabel = getStatusLabel(record.approval_status || record.status);
-                    const serviceLabel = getServiceLabel(record.service_type);
+                    const serviceLabel = getServiceLabel(serviceKey(record));
                     const pAmount = patientAmount(record);
                     const checked = selectedBillingIds.has(record.id) ? 'checked' : '';
 
