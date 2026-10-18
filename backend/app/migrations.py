@@ -1,6 +1,6 @@
 from app.database import engine, SessionLocal
 from app.models import (
-    StaffCertificate, SalaryStatement, GuardianInvite, Notification,
+    ResidentGuardian, StaffCertificate, SalaryStatement, GuardianInvite, Notification,
     ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
     RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken,
     Counseling, CarePlan, ServiceEvaluation, CaseConference,
@@ -24,6 +24,9 @@ ADDITIVE_COLUMNS = [
     ("residents", "recognition_end", "DATE"),
     ("residents", "guardian_name", "VARCHAR"),
     ("residents", "guardian_phone", "VARCHAR"),
+    ("residents", "service_start_date", "DATE"),
+    ("residents", "billing_address", "VARCHAR"),
+    ("residents", "billing_channels", "VARCHAR"),
     ("daily_records", "care_items", "VARCHAR"),
     ("daily_records", "condition", "VARCHAR"),
     ("daily_records", "duration_minutes", "INTEGER"),
@@ -117,7 +120,7 @@ def run_migrations():
     이후 모든 문장이 연쇄적으로 실패한다. 그래서 테이블 생성과 컬럼 추가는 각각 독립된 트랜잭션으로
     실행하고, 하나가 실패해도 롤백 후 다음 것을 계속 시도한다 (한 항목의 실패가 나머지를 막지 않는다).
     """
-    for table_cls in (StaffCertificate, SalaryStatement, GuardianInvite, Notification,
+    for table_cls in (ResidentGuardian, StaffCertificate, SalaryStatement, GuardianInvite, Notification,
                        ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
                        RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, ServiceEvaluation, CaseConference, TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest, GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog, FacilityRegistry, SmsLog, CognitivePlan, LeaveRequest, CommitteeMeeting, Equipment, ResidentLog, TrainingCertificate):
         try:

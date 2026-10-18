@@ -763,6 +763,37 @@
                     <input type="tel" id="guardianPhone" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
                 </div>
 
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">급여 개시일</label>
+                    <input type="date" id="serviceStartDate" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">청구지 주소 (거주지와 다를 때만)</label>
+                    <input type="text" id="billingAddress" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">청구서 수신 방법</label>
+                    <div style="display: flex; gap: 14px; flex-wrap: wrap; font-size: 14px;">
+                        <label><input type="checkbox" id="chSms" value="sms"> 문자</label>
+                        <label><input type="checkbox" id="chAlimtalk" value="alimtalk"> 알림톡</label>
+                        <label><input type="checkbox" id="chEmail" value="email"> 이메일</label>
+                        <label><input type="checkbox" id="chMail" value="mail"> 우편</label>
+                    </div>
+                </div>
+
+                <div id="guardianSection" style="margin-bottom: 16px; border-top: 1px solid #e5e7eb; padding-top: 14px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #1a202c;">추가 보호자</label>
+                    <div id="additionalGuardians"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 6px; margin-top: 8px;">
+                        <input type="text" id="agName" placeholder="이름" style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                        <input type="text" id="agRelation" placeholder="관계 (자녀 등)" style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                        <input type="tel" id="agPhone" placeholder="연락처" style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                        <button type="button" onclick="addAdditionalGuardian()" style="padding: 8px 12px; background: #0F8B80; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">추가</button>
+                    </div>
+                </div>
+
                 <div style="display: flex; gap: 12px; margin-top: 24px;">
                     <button type="submit" style="flex: 1; padding: 10px; background: #B5532F; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">저장</button>
                     <button type="button" onclick="closeResidentModal()" style="flex: 1; padding: 10px; background: #f3f4f6; color: #6b7280; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">취소</button>
@@ -1355,6 +1386,7 @@
             currentResidentId = null;
             document.getElementById('modalTitle').textContent = '이용자 추가';
             document.getElementById('residentForm').reset();
+            renderAdditionalGuardians();
             document.getElementById('residentModal').style.display = 'flex';
         }
 
@@ -1377,11 +1409,64 @@
             document.getElementById('recognitionEnd').value = resident.recognition_end || '';
             document.getElementById('guardianName').value = resident.guardian_name || '';
             document.getElementById('guardianPhone').value = resident.guardian_phone || '';
+            document.getElementById('serviceStartDate').value = resident.service_start_date || '';
+            document.getElementById('billingAddress').value = resident.billing_address || '';
+            setBillingChannels(resident.billing_channels || []);
+            document.getElementById('guardianSection').style.display = currentUser.role === 'caregiver' ? 'none' : '';
+            renderAdditionalGuardians();
             lockFieldsForCaregiver();
             document.getElementById('residentModal').style.display = 'flex';
         }
 
         const CAREGIVER_EDITABLE_IDS = ['healthStatus', 'residentAddress', 'guardianName', 'guardianPhone'];
+
+        const CHANNEL_BOXES = { sms: 'chSms', alimtalk: 'chAlimtalk', email: 'chEmail', mail: 'chMail' };
+        function setBillingChannels(list) {
+            Object.entries(CHANNEL_BOXES).forEach(([code, id]) => document.getElementById(id).checked = list.includes(code));
+        }
+        function getBillingChannels() {
+            return Object.entries(CHANNEL_BOXES).filter(([, id]) => document.getElementById(id).checked).map(([code]) => code);
+        }
+
+        async function renderAdditionalGuardians() {
+            const box = document.getElementById('additionalGuardians');
+            const addRow = document.querySelector('#guardianSection > div:last-child');
+            if (!currentResidentId) {
+                box.innerHTML = '<div style="font-size:12px;color:#94a3b8;">이용자를 저장한 뒤 추가 보호자를 등록할 수 있습니다.</div>';
+                if (addRow) addRow.style.display = 'none';
+                return;
+            }
+            if (addRow) addRow.style.display = currentUser.role === 'caregiver' ? 'none' : '';
+            const r = await fetch(`${API_URL}/residents/${currentResidentId}`, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            const d = await r.json().catch(() => ({}));
+            const list = d.additional_guardians || [];
+            box.innerHTML = list.length ? list.map(g => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
+                <span>${escapeHtml(g.name)}${g.relation ? ' (' + escapeHtml(g.relation) + ')' : ''} ${escapeHtml(g.phone || '')}</span>
+                ${currentUser.role === 'caregiver' ? '' : `<button type="button" onclick="deleteAdditionalGuardian(${g.id})" style="border:none;background:none;color:#B91C1C;cursor:pointer;font-size:12px;">삭제</button>`}</div>`).join('')
+                : '<div style="font-size:12px;color:#94a3b8;">등록된 추가 보호자가 없습니다.</div>';
+        }
+
+        async function addAdditionalGuardian() {
+            const name = document.getElementById('agName').value.trim();
+            if (!name) { alert('보호자 이름을 적어 주세요'); return; }
+            const r = await fetch(`${API_URL}/residents/${currentResidentId}/guardians`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+                body: JSON.stringify({ name, relation: document.getElementById('agRelation').value, phone: document.getElementById('agPhone').value }),
+            });
+            if (!r.ok) { const d = await r.json().catch(() => ({})); alert(d.detail || '추가하지 못했습니다'); return; }
+            ['agName', 'agRelation', 'agPhone'].forEach(id => document.getElementById(id).value = '');
+            renderAdditionalGuardians();
+        }
+
+        async function deleteAdditionalGuardian(guardianId) {
+            if (!confirm('이 추가 보호자를 지울까요?')) return;
+            const r = await fetch(`${API_URL}/residents/${currentResidentId}/guardians/${guardianId}`, {
+                method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+            });
+            if (!r.ok) { alert('지우지 못했습니다'); return; }
+            renderAdditionalGuardians();
+        }
 
         function lockFieldsForCaregiver() {
             const isCaregiver = currentUser && currentUser.role === 'caregiver';
@@ -1937,6 +2022,9 @@
             const recognitionEnd = document.getElementById('recognitionEnd').value || null;
             const guardianName = document.getElementById('guardianName').value;
             const guardianPhone = document.getElementById('guardianPhone').value;
+            const serviceStartDate = document.getElementById('serviceStartDate').value || null;
+            const billingAddress = document.getElementById('billingAddress').value.trim();
+            const billingChannels = getBillingChannels();
 
             if (recognitionStart && recognitionEnd && recognitionEnd < recognitionStart) {
                 alert('인정 종료일이 시작일보다 빠를 수 없습니다. 인정서의 날짜를 다시 확인해 주세요.');
@@ -1969,6 +2057,9 @@
                         recognition_end: recognitionEnd,
                         guardian_name: guardianName,
                         guardian_phone: guardianPhone,
+                        service_start_date: serviceStartDate,
+                        billing_address: billingAddress,
+                        billing_channels: billingChannels,
                         admission_date: new Date().toISOString()
                 };
                 // 요양사는 기존 이용자의 건강상태·주소·보호자 정보만 직접 수정할 수 있다

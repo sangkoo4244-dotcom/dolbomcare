@@ -76,7 +76,23 @@ class Resident(Base):
     recognition_end = Column(Date, nullable=True)  # 인정 유효기간 종료
     guardian_name = Column(String, nullable=True)
     guardian_phone = Column(String, nullable=True)
+    service_start_date = Column(Date, nullable=True)  # 급여 개시일 (계약통보서·이용 기간)
+    billing_address = Column(String, nullable=True)  # 청구지 주소 (거주지와 다를 수 있음)
+    billing_channels = Column(String, nullable=True)  # 청구서 수신 채널, 쉼표 구분: sms,alimtalk,email,mail
     care_notes = Column(Text, nullable=True)  # 요양사가 편집 가능한 요양 기록
+    created_at = Column(DateTime, default=datetime.now)
+
+
+class ResidentGuardian(Base):
+    """추가 보호자: 주 보호자(Resident.guardian_name·guardian_phone) 말고 가족이 더 있을 때 함께 적는다."""
+    __tablename__ = "resident_guardians"
+
+    id = Column(Integer, primary_key=True, index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    name = Column(String)
+    relation = Column(String, nullable=True)  # 가족 관계 (자녀, 배우자 등)
+    phone = Column(String, nullable=True)
+    email = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
 
 class DailyRecord(Base):

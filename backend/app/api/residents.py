@@ -2,31 +2,48 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional
-from app.models import Resident, Center, User
+from app.models import Resident, ResidentGuardian, Center, User
 from app.schemas import ResidentCreate
 from app.database import get_db
 from app.plans import assert_resident_capacity
 from app.auth import get_current_user, require_manager, assert_self_or_manager, assert_my_center
 from datetime import datetime, date
 
+BILLING_CHANNELS = ("sms", "alimtalk", "email", "mail")
+
+
+def _channels(raw):
+    return [c for c in (raw or "").split(",") if c]
+
+
+class GuardianIn(BaseModel):
+    name: str
+    relation: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+
+
 class CareNotesUpdate(BaseModel):
     care_notes: str
     user_role: str = "caregiver"
 
 class ResidentUpdate(BaseModel):
-    name: str = None
-    birth_date: str = None
+    name: Optional[str] = None
+    birth_date: Optional[str] = None
     age: int = None
     care_grade: Optional[int] = None  # 필드를 아예 안 보내면 유지, None을 명시하면 인지지원등급으로 설정 (exclude_unset으로 구분)
-    client_type: str = None
-    health_status: str = None
-    gender: str = None
-    address: str = None
-    recognition_number: str = None
-    recognition_start: str = None
-    recognition_end: str = None
-    guardian_name: str = None
-    guardian_phone: str = None
+    client_type: Optional[str] = None
+    health_status: Optional[str] = None
+    gender: Optional[str] = None
+    address: Optional[str] = None
+    recognition_number: Optional[str] = None
+    recognition_start: Optional[str] = None
+    recognition_end: Optional[str] = None
+    guardian_name: Optional[str] = None
+    guardian_phone: Optional[str] = None
+    service_start_date: Optional[str] = None
+    billing_address: Optional[str] = None
+    billing_channels: Optional[list] = None  # sms, alimtalk, email, mail 중에서 고른다
     primary_caregiver_id: Optional[int] = None  # exclude_unset으로 "안 보냄"과 "배정 해제(null)"를 구분
     user_role: str = "center_manager"
 
@@ -108,6 +125,9 @@ async def get_residents(
                 "recognition_end": r.recognition_end.isoformat() if r.recognition_end else None,
                 "guardian_name": r.guardian_name,
                 "guardian_phone": r.guardian_phone,
+                "service_start_date": r.service_start_date.isoformat() if r.service_start_date else None,
+                "billing_address": r.billing_address,
+                "billing_channels": _channels(r.billing_channels),
                 "primary_caregiver_id": r.primary_caregiver_id,
                 "primary_caregiver_name": caregiver_names.get(r.primary_caregiver_id)
             }
@@ -178,7 +198,14 @@ async def get_resident(
         "recognition_end": resident.recognition_end.isoformat() if resident.recognition_end else None,
         "guardian_name": resident.guardian_name,
         "guardian_phone": resident.guardian_phone,
-        "primary_caregiver_id": resident.primary_caregiver_id
+        "service_start_date": resident.service_start_date.isoformat() if resident.service_start_date else None,
+        "billing_address": resident.billing_address,
+        "billing_channels": _channels(resident.billing_channels),
+        "primary_caregiver_id": resident.primary_caregiver_id,
+        "additional_guardians": [
+            {"id": g.id, "name": g.name, "relation": g.relation, "phone": g.phone, "email": g.email}
+            for g in db.query(ResidentGuardian).filter(ResidentGuardian.resident_id == resident.id).order_by(ResidentGuardian.id).all()
+        ],
     }
 
 @router.put("/{resident_id}/update-grade")
@@ -422,7 +449,8 @@ async def update_resident(
         # 요양사는 건강상태 외에는 수정할 수 없다 (청구 금액에 영향을 주는 정보 보호)
         caregiver_locked = [
             name for name in ("name", "birth_date", "age", "care_grade", "client_type", "gender",
-                              "recognition_number", "recognition_start", "recognition_end", "primary_caregiver_id")
+                              "recognition_number", "recognition_start", "recognition_end", "primary_caregiver_id",
+                              "service_start_date", "billing_address", "billing_channels")
             if (name in provided if name in ("care_grade", "primary_caregiver_id") else getattr(update_data, name) is not None)
         ]
         if actor.role == "caregiver" and caregiver_locked:
@@ -469,6 +497,15 @@ async def update_resident(
             resident.guardian_name = update_data.guardian_name
         if update_data.guardian_phone is not None:
             resident.guardian_phone = update_data.guardian_phone
+        if update_data.service_start_date is not None:
+            resident.service_start_date = date.fromisoformat(update_data.service_start_date) if update_data.service_start_date else None
+        if update_data.billing_address is not None:
+            resident.billing_address = update_data.billing_address.strip() or None
+        if update_data.billing_channels is not None:
+            bad = [c for c in update_data.billing_channels if c not in BILLING_CHANNELS]
+            if bad:
+                raise HTTPException(status_code=400, detail="청구서 수신 채널은 문자, 알림톡, 이메일, 우편 중에서 골라 주세요")
+            resident.billing_channels = ",".join(dict.fromkeys(update_data.billing_channels)) or None
 
         db.commit()
         db.refresh(resident)
@@ -567,3 +604,34 @@ async def delete_resident(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"이용자 삭제 중 오류: {str(e)}")
+
+
+@router.post("/{resident_id}/guardians")
+def add_additional_guardian(resident_id: int, body: GuardianIn, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """추가 보호자 등록 (센터장만). 주 보호자는 이용자 정보의 보호자 이름·연락처에 적는다."""
+    resident = db.query(Resident).filter(Resident.id == resident_id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="Resident not found")
+    assert_my_center(actor, resident.center_id)
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="보호자 이름을 적어 주세요")
+    row = ResidentGuardian(resident_id=resident.id, name=name, relation=(body.relation or "").strip() or None,
+                           phone=(body.phone or "").strip() or None, email=(body.email or "").strip() or None)
+    db.add(row)
+    db.commit()
+    return {"status": "success", "data": {"id": row.id}}
+
+
+@router.delete("/{resident_id}/guardians/{guardian_id}")
+def delete_additional_guardian(resident_id: int, guardian_id: int, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    resident = db.query(Resident).filter(Resident.id == resident_id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="Resident not found")
+    assert_my_center(actor, resident.center_id)
+    row = db.query(ResidentGuardian).filter(ResidentGuardian.id == guardian_id, ResidentGuardian.resident_id == resident.id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="보호자를 찾을 수 없습니다")
+    db.delete(row)
+    db.commit()
+    return {"status": "success"}
