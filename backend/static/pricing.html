@@ -85,7 +85,7 @@
         .section-header p { font-size: 15.5px; color: var(--text-soft); line-height: 1.7; }
 
         /* ===== Pricing cards ===== */
-        .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 24px; }
+        .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 24px; }
         .price-card { border: 1.5px solid var(--border); border-radius: 16px; padding: 34px 30px; position: relative; background: var(--card); transition: transform .2s, box-shadow .2s, border-color .2s; }
         .price-card:hover { border-color: var(--teal); box-shadow: 0 16px 32px rgba(7,27,53,0.08); transform: translateY(-4px); }
         .price-card.featured { border-color: var(--teal); border-width: 2px; box-shadow: 0 20px 44px rgba(0,184,169,0.14); }
@@ -201,8 +201,8 @@
             <div class="price-grid">
                 <div class="price-card">
                     <div class="plan-name">스타터</div>
-                    <div class="price">19,000<span class="price-sub">원 / 월</span></div>
-                    <div class="price-period">이용자 15명까지 · 부가세 포함 · 셋팅비 없음</div>
+                    <div class="price">9,900<span class="price-sub">원 / 월</span></div>
+                    <div class="price-period">이용자 10명까지 · 부가세 포함 · 셋팅비 없음</div>
                     <ul class="features-list">
                         <li>음성 기반 방문 기록</li>
                         <li>자동 청구 생성 및 정산</li>
@@ -217,14 +217,26 @@
                 <div class="price-card featured">
                     <div class="price-badge">가장 인기있음</div>
                     <div class="plan-name">스탠다드</div>
-                    <div class="price">39,000<span class="price-sub">원 / 월</span></div>
-                    <div class="price-period">이용자 16명 이상(인원 제한 없음) · 부가세 포함 · 셋팅비 없음</div>
+                    <div class="price">19,900<span class="price-sub">원 / 월</span></div>
+                    <div class="price-period">이용자 30명까지 · 부가세 포함 · 셋팅비 없음</div>
                     <ul class="features-list">
                         <li>스타터의 모든 기능</li>
-                        <li>이용자 수 제한 없음</li>
+                        <li>이용자 30명까지 (11명 이상부터)</li>
                         <li>우선 이메일 지원</li>
                     </ul>
                     <button class="btn-block primary" onclick="selectPlan('standard')">1개월 무료체험 시작</button>
+                </div>
+
+                <div class="price-card">
+                    <div class="plan-name">프로</div>
+                    <div class="price">34,900<span class="price-sub">원 / 월</span></div>
+                    <div class="price-period">이용자 수 제한 없음 · 부가세 포함 · 셋팅비 없음</div>
+                    <ul class="features-list">
+                        <li>스탠다드의 모든 기능</li>
+                        <li>이용자 수 제한 없음</li>
+                        <li>대규모 센터용 우선 지원</li>
+                    </ul>
+                    <button class="btn-block secondary" onclick="selectPlan('pro')">1개월 무료체험 시작</button>
                 </div>
 
                 <div class="price-card">
@@ -266,7 +278,7 @@
                 <div class="compare-card highlight">
                     <div class="compare-type">돌봄케어</div>
                     <h4>음성 기록 + 자동 청구·급여 + 보호자 공유</h4>
-                    <div class="compare-price">이용자 15명까지 월 19,000원부터</div>
+                    <div class="compare-price">이용자 10명까지 월 9,900원부터</div>
                     <p class="desc">비슷한 가격대에서, 방문 중 말로 남기는 음성 기록과 보호자용 모바일 화면을 기본으로 포함합니다. 1개월 무료체험, 셋팅비 없음.</p>
                 </div>
             </div>
@@ -291,7 +303,7 @@
                 </div>
                 <div class="faq-item">
                     <h3>이용자 수가 늘어나 구간이 바뀌면 어떻게 되나요?</h3>
-                    <p>이용자가 15명을 넘어가면 다음 결제 주기부터 스탠다드 요금이 적용됩니다. 스탠다드는 이용자 수 제한이 없어, 그 이후로는 인원이 더 늘어도 요금이 그대로입니다.</p>
+                    <p>이용자가 10명을 넘어가면 다음 결제 주기부터 스탠다드 요금이 적용되고, 30명을 넘으면 프로 요금이 적용됩니다. 프로는 이용자 수 제한이 없어, 그 이후로는 인원이 더 늘어도 요금이 그대로입니다.</p>
                 </div>
                 <div class="faq-item">
                     <h3>계약을 취소할 수 있나요?</h3>
@@ -307,7 +319,7 @@
                 </div>
                 <div class="faq-item">
                     <h3>기술 지원은 어떻게 받나요?</h3>
-                    <p>스탠다드 요금제부터 이메일 지원을 기본 제공합니다. 엔터프라이즈는 전담 담당자와 전화 상담을 받을 수 있습니다.</p>
+                    <p>스탠다드 요금제부터 이메일 지원을 기본 제공하고, 프로는 대규모 센터용 우선 지원을 받습니다. 엔터프라이즈는 전담 담당자와 전화 상담을 받을 수 있습니다.</p>
                 </div>
             </div>
         </div>
