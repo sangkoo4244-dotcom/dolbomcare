@@ -627,7 +627,9 @@ async def get_all_records(
                 "amount": billing_amount,
                 "billing_amount": billing_amount,
                 "total_cost": billing_info.get("total_cost") or billing_amount,
-                "approval_status": billing_info.get("approval_status") or "pending"
+                "approval_status": billing_info.get("approval_status") or "pending",
+                "review_status": r.review_status,  # NULL=사회복지사 확인 대기, confirmed=확인, returned=보완 요청
+                "review_note": r.review_note
             })
 
         return {

@@ -134,3 +134,47 @@ def test_status_endpoint_reports_wage_ratio_and_base(setup):
 
     other = next(r for r in rows if r["caregiver_id"] == 3)
     assert other["wage_ratio"] == 100  # 설정 안 하면 기존 동작과 동일(100%)
+
+
+def add_approved_claim(client, claim_id, amount, caregiver_id=2):
+    db = client.Session()
+    db.add(models.BillingRecord(
+        id=claim_id, caregiver_id=caregiver_id, resident_id=1, center_id=1, service_type="basic_care",
+        amount=amount, approval_status="approved", year_month=YM, recorded_date=datetime(2026, 10, 20),
+    ))
+    db.commit()
+    db.close()
+
+
+def status_row(client, caregiver_id=2):
+    rows = client.get("/api/v1/statements/status", params={"year_month": YM}, headers=MANAGER).json()["caregivers"]
+    return next(r for r in rows if r["caregiver_id"] == caregiver_id)
+
+
+def test_status_shows_confirmed_amount_and_flags_claims_added_after_confirmation(setup):
+    confirm(setup)
+    added_before = status_row(setup)
+    assert added_before["confirmed"] and not added_before["stale"]
+    add_approved_claim(setup, 2, 500000)
+    row = status_row(setup)
+    assert row["billing_total"] == 1000000  # 확정 당시 금액을 보여 준다
+    assert row["live_billing_total"] == 1500000
+    assert row["stale"] is True
+    assert row["net"] == added_before["net"]
+
+
+def test_reconfirm_updates_the_saved_amount_only_when_claims_changed(setup):
+    confirm(setup)
+    assert setup.post("/api/v1/statements/reconfirm", json={"caregiver_id": 2, "year_month": YM}, headers=MANAGER).status_code == 400
+    add_approved_claim(setup, 2, 500000)
+    r = setup.post("/api/v1/statements/reconfirm", json={"caregiver_id": 2, "year_month": YM}, headers=MANAGER)
+    assert r.status_code == 200 and r.json()["statement"]["billing_total"] == 1500000
+    row = status_row(setup)
+    assert row["billing_total"] == 1500000 and row["stale"] is False
+    assert setup.get("/api/v1/statements/mine", headers=CAREGIVER1).json()["statements"][0]["billing_total"] == 1500000
+
+
+def test_reconfirm_needs_a_prior_confirmation_and_only_manager(setup):
+    assert setup.post("/api/v1/statements/reconfirm", json={"caregiver_id": 2, "year_month": YM}, headers=MANAGER).status_code == 400
+    confirm(setup)
+    assert setup.post("/api/v1/statements/reconfirm", json={"caregiver_id": 2, "year_month": YM}, headers=CAREGIVER1).status_code == 403

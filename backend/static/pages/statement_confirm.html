@@ -341,13 +341,15 @@
                 const totalBilled = stat.insurance + stat.patient;
                 const wageRatio = c.wage_ratio ?? 100;
                 const wageBase = c.wage_base ?? wageBaseOf(c.billing_total, wageRatio);
-                const net = estimateNet(wageBase);
+                const net = c.confirmed && c.net != null ? c.net : estimateNet(wageBase);
                 sumDays += stat.days.size; sumVisits += stat.visits; sumTotal += totalBilled;
                 sumInsurance += c.billing_total; sumPatient += stat.patient; sumWageBase += wageBase; sumNet += net;
 
-                const [label, cls] = c.confirmed ? ['확정 완료', 'sp-confirmed'] : (stat.reviewCount > 0 ? ['검토 필요', 'sp-review'] : ['미확정', 'sp-pending']);
+                const [label, cls] = c.confirmed
+                    ? (c.stale ? ['재확정 필요', 'sp-review'] : ['확정 완료', 'sp-confirmed'])
+                    : (stat.reviewCount > 0 ? ['검토 필요', 'sp-review'] : ['미확정', 'sp-pending']);
                 const initial = escapeHtml((c.caregiver_name || '?').slice(0, 1));
-                const actionDisabled = c.confirmed || c.billing_total <= 0;
+                const actionDisabled = (c.confirmed && !c.stale) || c.billing_total <= 0;
                 const inFlight = confirmInFlight.has(c.caregiver_id);
                 return `<tr>
                     <td>${i + 1}</td>
@@ -355,7 +357,7 @@
                     <td>${stat.days.size}일</td>
                     <td>${stat.visits}회</td>
                     <td class="num">₩${totalBilled.toLocaleString()}</td>
-                    <td class="num">₩${c.billing_total.toLocaleString()}</td>
+                    <td class="num">₩${c.billing_total.toLocaleString()}${c.stale ? `<div style="font-size:11.5px;color:#B45309;">확정 후 변경: 현재 ₩${c.live_billing_total.toLocaleString()}</div>` : ''}</td>
                     <td class="num">₩${stat.patient.toLocaleString()}</td>
                     <td class="num">${wageRatio}%</td>
                     <td class="num">₩${wageBase.toLocaleString()}</td>
@@ -363,7 +365,7 @@
                     <td><span class="status-pill2 ${cls}">${label}</span></td>
                     <td>${actionDisabled
                         ? '<span style="color:#94A3B8;">-</span>'
-                        : `<button onclick="confirmStatement(${c.caregiver_id}, this)" ${inFlight ? 'disabled' : ''} style="padding:6px 14px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-size:12px;font-weight:700;cursor:pointer;">${inFlight ? '처리 중…' : '확정'}</button>`}</td>
+                        : `<button onclick="confirmStatement(${c.caregiver_id}, this, ${c.confirmed})" ${inFlight ? 'disabled' : ''} style="padding:6px 14px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-size:12px;font-weight:700;cursor:pointer;">${inFlight ? '처리 중…' : (c.confirmed ? '재확정' : '확정')}</button>`}</td>
                 </tr>`;
             }).join('') + `
                 <tr class="total-row">
@@ -379,23 +381,26 @@
                 </tr>`;
         }
 
-        async function confirmStatement(caregiverId, btn) {
+        async function confirmStatement(caregiverId, btn, again = false) {
             const ym = document.getElementById('yearMonth').value;
             const row = statusRows.find(c => c.caregiver_id === caregiverId);
             const wageRatio = row?.wage_ratio ?? 100;
             const wageBase = row ? (row.wage_base ?? wageBaseOf(row.billing_total, wageRatio)) : 0;
             const amountText = row ? `₩${wageBase.toLocaleString()} (청구액의 ${wageRatio}%)` : '';
-            if (!confirm(`${row?.caregiver_name || ''} 요양사의 ${ym} 급여를 ${amountText} 기준으로 확정할까요?\n확정 후에는 되돌릴 수 없습니다.`)) return;
+            const askText = again
+                ? `${row?.caregiver_name || ''} 요양사의 ${ym} 명세를 현재 승인 청구 기준(${amountText})으로 다시 확정할까요?\n이전 확정 금액은 덮어씁니다.`
+                : `${row?.caregiver_name || ''} 요양사의 ${ym} 급여를 ${amountText} 기준으로 확정할까요?\n확정 후에는 되돌릴 수 없습니다.`;
+            if (!confirm(askText)) return;
             if (confirmInFlight.has(caregiverId)) return;
             confirmInFlight.add(caregiverId);
             if (btn) { btn.disabled = true; btn.textContent = '처리 중…'; }
             try {
-                const r = await fetch(`${API_URL}/statements/confirm`, {
+                const r = await fetch(`${API_URL}/statements/${again ? 'reconfirm' : 'confirm'}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ caregiver_id: caregiverId, year_month: ym }),
                 });
                 const d = await r.json().catch(() => ({}));
-                showMessage(r.ok ? '확정했습니다. 요양사에게 알림이 갑니다.' : (d.detail || '확정하지 못했습니다'), r.ok);
+                showMessage(r.ok ? (again ? '다시 확정했습니다. 요양사에게 알림이 갑니다.' : '확정했습니다. 요양사에게 알림이 갑니다.') : (d.detail || '확정하지 못했습니다'), r.ok);
             } finally {
                 confirmInFlight.delete(caregiverId);
                 loadStatus();

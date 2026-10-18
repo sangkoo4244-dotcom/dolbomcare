@@ -14,8 +14,11 @@ from app.api.users import create_access_token
 from app.auth import get_current_user
 from app.database import Base, get_db
 
+# 시각에 따라 상태가 달라지지 않도록 방문 시각을 지금 기준으로 잡는다.
+# 요양사A의 방문은 지금(도착·퇴실 후 기록), 요양사B의 방문은 3시간 뒤(아직 도착 전 = 예정).
 NOW = datetime.now().replace(second=0, microsecond=0)
-VISIT_AT = NOW.replace(hour=10, minute=0) if NOW.hour < 20 else NOW.replace(hour=9, minute=0)
+VISIT_AT = NOW
+LATER = NOW + timedelta(hours=3)
 YEAR_MONTH = VISIT_AT.strftime("%Y-%m")
 
 
@@ -67,7 +70,7 @@ def test_visit_flows_from_schedule_to_manager_views_with_same_numbers(env):
     for cg, res in ((2, 1), (3, 2)):
         r = env.post("/api/v1/schedule/", headers=MANAGER, json={
             "caregiver_id": cg, "resident_id": res, "center_id": 1,
-            "scheduled_date": VISIT_AT.isoformat(), "duration_minutes": 60, "benefit_type": "home_care"})
+            "scheduled_date": (VISIT_AT if res == 1 else LATER).isoformat(), "duration_minutes": 60, "benefit_type": "home_care"})
         assert r.status_code == 200, r.text
 
     # 2. 요양사A 화면에 그 일정이 보이고, 도착·퇴실을 누른다

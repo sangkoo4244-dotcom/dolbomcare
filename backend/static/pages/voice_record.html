@@ -163,7 +163,10 @@
                 <div class="vr-layout">
                 <div class="space-y-8">
                 <div class="vr-tabs">
-                    <div class="vr-tab active" data-tab="today" onclick="switchTab(event)">
+                    <div class="vr-tab active" data-tab="month" onclick="switchTab(event)">
+                        이번 달 기록 (<span id="monthCount">0</span>)
+                    </div>
+                    <div class="vr-tab" data-tab="today" onclick="switchTab(event)">
                         오늘 기록 (<span id="todayCount">0</span>)
                     </div>
                     <div class="vr-tab" data-tab="all" onclick="switchTab(event)">
@@ -302,14 +305,14 @@
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
                     <h2 class="text-xl font-bold text-gray-900 mb-6">월별 현황</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="border-blue-200 border rounded-lg p-5 flex items-center gap-4" style="background:#E8EEF9"><div><div class="text-sm font-bold text-blue-600">전체 기록</div><div class="text-2xl font-bold text-blue-900 mt-1" id="totalRecordsCount">0</div><div class="text-xs text-blue-600 mt-1">이번 달 누적 기록 수</div></div></div><div class="border-amber-200 border rounded-lg p-5 flex items-center gap-4" style="background:#F7F1E6"><div><div class="text-sm font-bold text-amber-600">검토중</div><div class="text-2xl font-bold text-amber-900 mt-1" id="pendingCount">0</div><div class="text-xs text-amber-600 mt-1">검토 대기 중인 기록</div></div></div><div class="border-emerald-200 border rounded-lg p-5 flex items-center gap-4" style="background:#E8F0EA"><div><div class="text-sm font-bold text-emerald-600">승인완료</div><div class="text-2xl font-bold text-emerald-900 mt-1" id="approvedCount">0</div><div class="text-xs text-emerald-600 mt-1">승인된 기록 수</div></div></div><div class="border-indigo-200 border rounded-lg p-5 flex items-center gap-4" style="background:#ECEBF7"><div><div class="text-sm font-bold text-indigo-600">승인 이상 금액</div><div class="text-2xl font-bold text-indigo-900 mt-1" id="monthTotalBilling">₩0</div><div class="text-xs text-indigo-600 mt-1">이번 달 승인 이상 금액</div></div></div>
+                        <div class="border-blue-200 border rounded-lg p-5 flex items-center gap-4" style="background:#E8EEF9"><div><div class="text-sm font-bold text-blue-600">전체 기록</div><div class="text-2xl font-bold text-blue-900 mt-1" id="totalRecordsCount">0</div><div class="text-xs text-blue-600 mt-1">이번 달 누적 기록 수</div></div></div><div class="border-amber-200 border rounded-lg p-5 flex items-center gap-4" style="background:#F7F1E6"><div><div class="text-sm font-bold text-amber-600">청구 검토중</div><div class="text-2xl font-bold text-amber-900 mt-1" id="pendingCount">0</div><div class="text-xs text-amber-600 mt-1">센터장 승인 대기 청구</div></div></div><div class="border-emerald-200 border rounded-lg p-5 flex items-center gap-4" style="background:#E8F0EA"><div><div class="text-sm font-bold text-emerald-600">승인완료</div><div class="text-2xl font-bold text-emerald-900 mt-1" id="approvedCount">0</div><div class="text-xs text-emerald-600 mt-1">승인된 기록 수</div></div></div><div class="border-indigo-200 border rounded-lg p-5 flex items-center gap-4" style="background:#ECEBF7"><div><div class="text-sm font-bold text-indigo-600">승인 이상 금액</div><div class="text-2xl font-bold text-indigo-900 mt-1" id="monthTotalBilling">₩0</div><div class="text-xs text-indigo-600 mt-1">이번 달 승인 이상 금액</div></div></div>
                     </div>
                 </div>
 
                 <!-- 검토중 · 승인완료 -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">검토중 (Pending)</h3>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">청구 검토중 (Pending)</h3>
                         <div id="pendingRecords" class="space-y-3 max-h-96 overflow-y-auto">
                             <div class="text-center py-8 text-gray-400">기록이 없습니다</div>
                         </div>
@@ -739,6 +742,7 @@
                 }));
                 document.getElementById('allCount').textContent = records.length;
                 document.getElementById('todayCount').textContent = getTodayCount();
+                document.getElementById('monthCount').textContent = records.filter(r => new Date(r.recorded_date).getMonth() === new Date().getMonth() && new Date(r.recorded_date).getFullYear() === new Date().getFullYear()).length;
                 fillCaregiverFilter();
                 updateDashboard();
                 renderRecords();
@@ -826,13 +830,22 @@
 
         const SERVICE_TYPE_LABELS = { basic_care: '기본 돌봄', meal_service: '식사 서빙', medical_care: '의료 관리', emergency: '응급' };
         const STATUS_LABELS = {
-            draft: ['작성중', 'sp-draft'], pending: ['검토중', 'sp-pending'],
+            draft: ['작성중', 'sp-draft'], pending: ['청구 검토중', 'sp-pending'],
             approved: ['승인', 'sp-approved'], rejected: ['보완요청', 'sp-rejected'],
             submitted_to_nhis: ['공단 청구', 'sp-approved'], reimbursed: ['환급 완료', 'sp-approved']
         };
         // 승인 이후 단계(공단 청구·환급)도 '승인 이상'으로 묶는다: 처리할수록 승인 건수가 줄어들어 보이지 않게
         const APPROVED_GROUP = ['approved', 'submitted_to_nhis', 'reimbursed'];
-        let currentTabMode = 'today';
+        // 청구 전 기록은 사회복지사 확인 상태를 먼저 보여 준다 (사회복지사 화면의 '확인 대기'와 같은 말을 쓰도록)
+        function recordStatusLabel(r) {
+            if (r.approval_status === 'draft') {
+                if (r.review_status === 'returned') return ['보완 요청', 'sp-rejected'];
+                if (!r.review_status) return ['확인 대기', 'sp-pending'];
+                if (r.review_status === 'confirmed') return ['확인 완료 (제출 전)', 'sp-approved'];
+            }
+            return STATUS_LABELS[r.approval_status] || ['-', 'sp-draft'];
+        }
+        let currentTabMode = 'month';
 
         function visibleRecords() {
             const q = (document.getElementById('recordSearch').value || '').trim();
@@ -845,6 +858,7 @@
             const todayStr = new Date().toDateString();
             return records
                 .filter(r => currentTabMode !== 'today' || new Date(r.recorded_date).toDateString() === todayStr)
+                .filter(r => currentTabMode !== 'month' || (new Date(r.recorded_date).getMonth() === new Date().getMonth() && new Date(r.recorded_date).getFullYear() === new Date().getFullYear()))
                 .filter(r => !q || (r.resident_name || '').includes(q))
                 .filter(r => !from || (r.recorded_date || '') >= from)
                 .filter(r => !to || (r.recorded_date || '') <= to + 'T23:59:59')
@@ -864,7 +878,7 @@
             }
 
             tbody.innerHTML = rows.map((r, i) => {
-                const [label, cls] = STATUS_LABELS[r.approval_status] || ['-', 'sp-draft'];
+                const [label, cls] = recordStatusLabel(r);
                 const dt = new Date(r.recorded_date);
                 const notesText = (r.notes || '-').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 return `<tr>

@@ -40,40 +40,79 @@ def confirm_statement(body: ConfirmBody, db: Session = Depends(get_db), manager:
     """센터장이 한 달의 급여를 확정한다. 확정한 시점의 금액을 저장하며, 이후 청구가 바뀌어도 명세는 그대로 둔다."""
     if len(body.year_month) != 7 or body.year_month[4] != "-":
         raise HTTPException(status_code=400, detail="year_month는 YYYY-MM 형식이어야 합니다")
-    caregiver = db.query(User).filter(
-        User.id == body.caregiver_id, User.center_id == manager.center_id, User.role == "caregiver"
-    ).first()
-    if not caregiver:
-        raise HTTPException(status_code=404, detail="요양사를 찾을 수 없습니다")
+    caregiver = _own_caregiver(db, body.caregiver_id, manager)
     if db.query(SalaryStatement).filter(
         SalaryStatement.caregiver_id == caregiver.id, SalaryStatement.year_month == body.year_month
     ).first():
         raise HTTPException(status_code=400, detail="이미 확정된 달입니다")
 
-    total = sum(
-        b.amount or 0 for b in db.query(BillingRecord).filter(
-            BillingRecord.caregiver_id == caregiver.id,
-            BillingRecord.year_month == body.year_month,
-            BillingRecord.approval_status.in_(SALARY_STATUSES),
-        ).all()
-    )
+    total = _approved_total(db, caregiver.id, body.year_month)
     if total <= 0:
         raise HTTPException(status_code=400, detail="승인된 청구가 없는 달은 확정할 수 없습니다")
 
-    wage_ratio = caregiver.wage_ratio if caregiver.wage_ratio is not None else DEFAULT_WAGE_RATIO
-    wage_base = calc_wage_base(total, wage_ratio)
-    deductions = calc_deductions(wage_base)
-    statement = SalaryStatement(
-        center_id=manager.center_id, caregiver_id=caregiver.id, year_month=body.year_month, billing_total=total,
-        wage_ratio=wage_ratio, wage_base=wage_base,
-        income_tax=deductions["income_tax"], pension=deductions["pension"], health=deductions["health"],
-        employment=deductions["employment"], total_deduction=deductions["total_deduction"], net=deductions["net"],
-        confirmed_by=manager.id, confirmed_at=datetime.now(),
-    )
+    statement = SalaryStatement(center_id=manager.center_id, caregiver_id=caregiver.id, year_month=body.year_month)
+    _fill_statement(statement, caregiver, manager, total)
     db.add(statement)
     notify(db, caregiver.id, "statement_confirmed", f"{body.year_month} 급여 명세가 확정되었습니다")
     db.commit()
     return {"status": "success", "statement": _to_dict(statement)}
+
+
+@router.post("/reconfirm")
+def reconfirm_statement(body: ConfirmBody, db: Session = Depends(get_db), manager: User = Depends(require_manager)):
+    """확정 후 승인 청구가 바뀐 달의 명세 금액을 현재 승인 청구 기준으로 다시 저장한다. 바뀐 것이 없으면 하지 않는다."""
+    caregiver = _own_caregiver(db, body.caregiver_id, manager)
+    statement = db.query(SalaryStatement).filter(
+        SalaryStatement.caregiver_id == caregiver.id, SalaryStatement.year_month == body.year_month
+    ).first()
+    if not statement:
+        raise HTTPException(status_code=400, detail="아직 확정하지 않은 달입니다. 먼저 확정해 주세요")
+    total = _approved_total(db, caregiver.id, body.year_month)
+    if total <= 0:
+        raise HTTPException(status_code=400, detail="승인된 청구가 없어 다시 확정할 수 없습니다")
+    if total == statement.billing_total:
+        raise HTTPException(status_code=400, detail="확정 후 바뀐 승인 청구가 없습니다")
+
+    _fill_statement(statement, caregiver, manager, total)
+    notify(db, caregiver.id, "statement_confirmed", f"{body.year_month} 급여 명세가 청구 변경을 반영해 다시 확정되었습니다")
+    db.commit()
+    return {"status": "success", "statement": _to_dict(statement)}
+
+
+def _own_caregiver(db: Session, caregiver_id: int, manager: User) -> User:
+    caregiver = db.query(User).filter(
+        User.id == caregiver_id, User.center_id == manager.center_id, User.role == "caregiver"
+    ).first()
+    if not caregiver:
+        raise HTTPException(status_code=404, detail="요양사를 찾을 수 없습니다")
+    return caregiver
+
+
+def _approved_total(db: Session, caregiver_id: int, year_month: str) -> int:
+    return sum(
+        b.amount or 0 for b in db.query(BillingRecord).filter(
+            BillingRecord.caregiver_id == caregiver_id,
+            BillingRecord.year_month == year_month,
+            BillingRecord.approval_status.in_(SALARY_STATUSES),
+        ).all()
+    )
+
+
+def _fill_statement(statement: SalaryStatement, caregiver: User, manager: User, total: int) -> None:
+    wage_ratio = caregiver.wage_ratio if caregiver.wage_ratio is not None else DEFAULT_WAGE_RATIO
+    wage_base = calc_wage_base(total, wage_ratio)
+    deductions = calc_deductions(wage_base)
+    statement.billing_total = total
+    statement.wage_ratio = wage_ratio
+    statement.wage_base = wage_base
+    statement.income_tax = deductions["income_tax"]
+    statement.pension = deductions["pension"]
+    statement.health = deductions["health"]
+    statement.employment = deductions["employment"]
+    statement.total_deduction = deductions["total_deduction"]
+    statement.net = deductions["net"]
+    statement.confirmed_by = manager.id
+    statement.confirmed_at = datetime.now()
 
 
 @router.get("/mine")
@@ -87,7 +126,8 @@ def my_statements(db: Session = Depends(get_db), caregiver: User = Depends(get_c
 
 @router.get("/status")
 def month_status(year_month: str, db: Session = Depends(get_db), manager: User = Depends(require_manager)):
-    """센터장 화면: 달별로 요양사의 승인 청구 합계와 확정 여부를 본다."""
+    """센터장 화면: 달별로 요양사의 승인 청구 합계와 확정 여부를 본다.
+    확정한 요양사는 확정 당시 저장된 금액을 보여 주고, 그 뒤 승인 청구가 바뀌었으면 stale로 알려 준다(재확정 필요)."""
     caregivers = db.query(User).filter(User.center_id == manager.center_id, User.role == "caregiver").all()
     confirmed = {
         s.caregiver_id: s for s in db.query(SalaryStatement).filter(
@@ -96,14 +136,7 @@ def month_status(year_month: str, db: Session = Depends(get_db), manager: User =
     }
     rows = []
     for c in caregivers:
-        total = sum(
-            b.amount or 0 for b in db.query(BillingRecord).filter(
-                BillingRecord.caregiver_id == c.id,
-                BillingRecord.year_month == year_month,
-                BillingRecord.approval_status.in_(SALARY_STATUSES),
-            ).all()
-        )
-        wage_ratio = c.wage_ratio if c.wage_ratio is not None else DEFAULT_WAGE_RATIO
+        live_total = _approved_total(db, c.id, year_month)
         # 중증 가산(고시 제19조의2·제26조의2)은 수급자 부담 없이 공단이 '해당 요양보호사에게 지급'하도록 한 금액이라 급여 비율과 별개로 알려 준다
         severe_bonus = sum(
             b.extra_amount or 0 for b in db.query(BillingRecord).filter(
@@ -113,14 +146,33 @@ def month_status(year_month: str, db: Session = Depends(get_db), manager: User =
                 BillingRecord.benefit_type.in_(("home_care", "home_bath")),
             ).all()
         )
+        snapshot = confirmed.get(c.id)
+        if snapshot:
+            rows.append({
+                "caregiver_id": c.id,
+                "caregiver_name": c.full_name,
+                "severe_bonus": severe_bonus,
+                "billing_total": snapshot.billing_total,
+                "live_billing_total": live_total,
+                "stale": live_total != snapshot.billing_total,
+                "wage_ratio": snapshot.wage_ratio if snapshot.wage_ratio is not None else DEFAULT_WAGE_RATIO,
+                "wage_base": snapshot.wage_base if snapshot.wage_base is not None else snapshot.billing_total,
+                "net": snapshot.net,
+                "confirmed": True,
+            })
+            continue
+        wage_ratio = c.wage_ratio if c.wage_ratio is not None else DEFAULT_WAGE_RATIO
         rows.append({
             "caregiver_id": c.id,
             "caregiver_name": c.full_name,
             "severe_bonus": severe_bonus,
-            "billing_total": total,
+            "billing_total": live_total,
+            "live_billing_total": live_total,
+            "stale": False,
             "wage_ratio": wage_ratio,
-            "wage_base": calc_wage_base(total, wage_ratio),
-            "confirmed": c.id in confirmed,
+            "wage_base": calc_wage_base(live_total, wage_ratio),
+            "net": None,
+            "confirmed": False,
         })
     return {"year_month": year_month, "caregivers": rows}
 
