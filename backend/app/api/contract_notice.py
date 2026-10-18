@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.auth import require_social_or_manager
 from app.billing_rules import split_benefit
 from app.database import get_db
-from app.models import Center, Resident, Schedule, User
+from app.models import Center, Resident, ResidentGuardian, Schedule, User
 
 router = APIRouter()
 BENEFIT_LABELS = {"home_care": "방문요양", "home_bath": "방문목욕", "home_nursing": "방문간호"}
@@ -87,8 +87,14 @@ def draft(
         "center": {"name": center.name if center else "", "institution_code": center.institution_code if center else None},
         "resident": {"name": resident.name, "birth_date": resident.birth_date.isoformat() if resident.birth_date else None,
                      "care_grade": resident.care_grade, "recognition_number": resident.recognition_number,
-                     "client_type": resident.client_type},
+                     "client_type": resident.client_type,
+                     "service_start_date": resident.service_start_date.isoformat() if resident.service_start_date else None,
+                     "billing_address": resident.billing_address or ""},
         "guardian": {"name": resident.guardian_name or "", "phone": resident.guardian_phone or ""},
+        "additional_guardians": [
+            {"name": g.name, "relation": g.relation or "", "phone": g.phone or ""}
+            for g in db.query(ResidentGuardian).filter(ResidentGuardian.resident_id == resident.id).order_by(ResidentGuardian.id).all()
+        ],
         "to_fill": TO_FILL,
         "visits": visits,
         "count": len(visits),

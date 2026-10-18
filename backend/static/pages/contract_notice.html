@@ -128,8 +128,10 @@
                     <tr><th>장기요양등급</th><td>${v.resident.care_grade ? v.resident.care_grade + '등급' : '인지지원등급'}</td><th>장기요양인정번호</th><td>${v.resident.recognition_number ? esc(v.resident.recognition_number) : blank('입력')}</td></tr>
                     <tr><th>장기요양기관명</th><td>${esc(v.center.name)}</td><th>장기요양기관기호</th><td>${v.center.institution_code ? esc(v.center.institution_code) : blank('기관 정보에 없음')}</td></tr>
                     <tr><th>계약자 성명·관계</th><td>${v.guardian.name ? esc(v.guardian.name) : blank('입력')}</td><th>전화번호</th><td>${v.guardian.phone ? esc(v.guardian.phone) : blank('입력')}</td></tr>
-                    <tr><th>계약일</th><td>${blank('입력')}</td><th>급여개시일</th><td>${blank('입력')}</td></tr>
-                    <tr><th>계약기간</th><td colspan="3">${blank('시작일 ~ 종료일 입력')}</td></tr>
+                    <tr><th>계약일</th><td>${blank('입력')}</td><th>급여개시일</th><td>${v.resident.service_start_date ? esc(v.resident.service_start_date) : blank('입력')}</td></tr>
+                    <tr><th>계약기간</th><td colspan="3">${v.resident.service_start_date ? esc(v.resident.service_start_date) + ' ~ ' : ''}${blank('종료일 입력')}</td></tr>
+                    <tr><th>청구지 주소</th><td colspan="3">${v.resident.billing_address ? esc(v.resident.billing_address) : blank('거주지와 같음 또는 입력')}</td></tr>
+                    <tr><th>추가 보호자</th><td colspan="3">${v.additional_guardians && v.additional_guardians.length ? v.additional_guardians.map(g => `${esc(g.name)}${g.relation ? ' (' + esc(g.relation) + ')' : ''} ${esc(g.phone)}`).join(' · ') : blank('없음')}</td></tr>
                 </table>
                 <table>
                     <tr><th>방문 일자</th><th>이용 시간</th><th>요양보호사</th><th>급여비용</th></tr>

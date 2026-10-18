@@ -458,6 +458,8 @@
             return r.benefit_type === 'day_night' ? 'day_night' : (r.service_type || 'basic_care');
         }
 
+        const escapeText = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
         function getServiceLabel(type) {
             const serviceMap = {
                 'basic_care': '기본 요양',
@@ -806,7 +808,8 @@
             const name = record.resident_name || residentMapGlobal[record.resident_id] || `ID ${record.resident_id}`;
             if (!ag) return name;
             const genderLabel = ag.gender === 'male' || ag.gender === '남' ? '남' : (ag.gender === 'female' || ag.gender === '여' ? '여' : (ag.gender || '-'));
-            return `${record.resident_name || name}<div style="font-size:11px;color:#94A3B8;margin-top:1px;">${genderLabel}, ${ag.age ?? '-'}세</div>`;
+            const addr = record.billing_address ? `<div style="font-size:11px;color:#64748B;margin-top:1px;">청구지 ${escapeText(record.billing_address)}</div>` : '';
+            return `${record.resident_name || name}<div style="font-size:11px;color:#94A3B8;margin-top:1px;">${genderLabel}, ${ag.age ?? '-'}세</div>${addr}`;
         }
 
         function renderBillingTable(records, residentMap = {}) {

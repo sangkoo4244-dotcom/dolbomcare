@@ -10,7 +10,7 @@ from app.alimtalk import send_sms, sms_configured
 from app.alimtalk_billing import reserve_send
 from app.auth import require_manager
 from app.database import get_db
-from app.models import Resident, SmsLog, User
+from app.models import Resident, ResidentGuardian, SmsLog, User
 
 router = APIRouter()
 MAX_TEXT = 300
@@ -26,6 +26,16 @@ def _to_dict(row: SmsLog, names: dict) -> dict:
             "status": row.status, "created_at": row.created_at.isoformat(timespec="minutes") if row.created_at else None}
 
 
+def _recipient_phones(db: Session, resident: Resident) -> list:
+    """주 보호자와 추가 보호자의 연락처를 중복 없이 모은다. 같은 번호에는 한 번만 보낸다."""
+    phones = []
+    for raw in [resident.guardian_phone] + [g.phone for g in db.query(ResidentGuardian).filter(ResidentGuardian.resident_id == resident.id).order_by(ResidentGuardian.id).all()]:
+        phone = (raw or "").strip()
+        if phone and phone not in phones:
+            phones.append(phone)
+    return phones
+
+
 @router.post("/send")
 def send_guardian_sms(body: SmsSendIn, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
     text = body.text.strip()
@@ -36,15 +46,18 @@ def send_guardian_sms(body: SmsSendIn, db: Session = Depends(get_db), actor: Use
     residents = db.query(Resident).filter(Resident.center_id == actor.center_id, Resident.id.in_(body.resident_ids)).all()
     counts = {"sent": 0, "failed": 0, "no_phone": 0, "blocked": 0}
     for resident in residents:
-        phone = (resident.guardian_phone or "").strip()
-        if not phone:
-            status = "no_phone"
-        elif not reserve_send(db, actor.center_id):
-            status = "blocked"  # 무료 한도와 충전 잔액이 모두 없으면 보내지 않는다
-        else:
-            status = "sent" if send_sms(phone, text) else "failed"
-        counts[status] += 1
-        db.add(SmsLog(center_id=actor.center_id, resident_id=resident.id, sent_by=actor.id, phone=phone, text=text, status=status))
+        phones = _recipient_phones(db, resident)
+        if not phones:
+            counts["no_phone"] += 1
+            db.add(SmsLog(center_id=actor.center_id, resident_id=resident.id, sent_by=actor.id, phone="", text=text, status="no_phone"))
+            continue
+        for phone in phones:
+            if not reserve_send(db, actor.center_id):
+                status = "blocked"  # 무료 한도와 충전 잔액이 모두 없으면 보내지 않는다
+            else:
+                status = "sent" if send_sms(phone, text) else "failed"
+            counts[status] += 1
+            db.add(SmsLog(center_id=actor.center_id, resident_id=resident.id, sent_by=actor.id, phone=phone, text=text, status=status))
     db.commit()
     return {"status": "success", "data": counts}
 
