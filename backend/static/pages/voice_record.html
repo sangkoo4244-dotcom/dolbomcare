@@ -174,6 +174,50 @@
                     </div>
                 </div>
 
+                <!-- 전체 기록 목록 -->
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
+                    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-2xl font-bold text-gray-900">제공 기록 목록</h2>
+                            <span class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-bold" id="recordCountBadge">0건</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 mb-5">
+                        <input id="recordSearch" type="search" placeholder="이용자 이름으로 검색" class="filter-input w-56">
+                        <input id="recordDateFrom" type="date" class="filter-input">
+                        <span class="text-gray-400 text-sm">~</span>
+                        <input id="recordDateTo" type="date" class="filter-input">
+                        <select id="recordServiceFilter" class="filter-input">
+                            <option value="">서비스 유형 전체</option>
+                            <option value="basic_care">기본 돌봄</option><option value="meal_service">식사 서빙</option><option value="medical_care">의료 관리</option><option value="emergency">응급</option>
+                        </select>
+                        <select id="recordStatusFilter" class="filter-input">
+                            <option value="">상태 전체</option>
+                            <option value="draft">작성중</option><option value="pending">검토중</option><option value="approved">승인</option><option value="rejected">보완요청</option>
+                        </select>
+                        <select id="recordCaregiverFilter" class="filter-input" style="display:none;">
+                            <option value="">요양보호사 전체</option>
+                        </select>
+                        <select id="recordSort" class="filter-input">
+                            <option value="new">최신순</option>
+                            <option value="old">오래된순</option>
+                        </select>
+                        <button type="button" onclick="resetRecordFilters()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold text-gray-600">초기화</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="record-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th><th>방문일시</th><th>이용자</th><th>서비스유형</th><th>기록내용</th><th>상태</th><th>작성자</th><th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recordsTableBody">
+                                <tr><td colspan="8" style="text-align:center;padding:40px 0;color:#94A3B8;">기록이 없습니다</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- 입력 카드 -->
                 <form id="recordForm" class="bg-white rounded-lg border border-gray-200 shadow-sm p-8 space-y-8">
                     <div class="flex flex-wrap items-center justify-between gap-6">
@@ -325,49 +369,6 @@
                     </div>
                 </div>
 
-                <!-- 전체 기록 목록 -->
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
-                    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-                        <div class="flex items-center gap-3">
-                            <h2 class="text-2xl font-bold text-gray-900">제공 기록 목록</h2>
-                            <span class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-bold" id="recordCountBadge">0건</span>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2 mb-5">
-                        <input id="recordSearch" type="search" placeholder="이용자 이름으로 검색" class="filter-input w-56">
-                        <input id="recordDateFrom" type="date" class="filter-input">
-                        <span class="text-gray-400 text-sm">~</span>
-                        <input id="recordDateTo" type="date" class="filter-input">
-                        <select id="recordServiceFilter" class="filter-input">
-                            <option value="">서비스 유형 전체</option>
-                            <option value="basic_care">기본 돌봄</option><option value="meal_service">식사 서빙</option><option value="medical_care">의료 관리</option><option value="emergency">응급</option>
-                        </select>
-                        <select id="recordStatusFilter" class="filter-input">
-                            <option value="">상태 전체</option>
-                            <option value="draft">작성중</option><option value="pending">검토중</option><option value="approved">승인</option><option value="rejected">보완요청</option>
-                        </select>
-                        <select id="recordCaregiverFilter" class="filter-input" style="display:none;">
-                            <option value="">요양보호사 전체</option>
-                        </select>
-                        <select id="recordSort" class="filter-input">
-                            <option value="new">최신순</option>
-                            <option value="old">오래된순</option>
-                        </select>
-                        <button type="button" onclick="resetRecordFilters()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold text-gray-600">초기화</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="record-table">
-                            <thead>
-                                <tr>
-                                    <th>No</th><th>방문일시</th><th>이용자</th><th>서비스유형</th><th>기록내용</th><th>상태</th><th>작성자</th><th>관리</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recordsTableBody">
-                                <tr><td colspan="8" style="text-align:center;padding:40px 0;color:#94A3B8;">기록이 없습니다</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
                 </div>
 
                 <div>
