@@ -1,5 +1,6 @@
 """센터가 보호자에게 보내는 문자 (안내 문자). 발송 건수는 알림톡과 같은 무료 한도·충전 잔액에서 차감한다.
 발송 키가 설정되어 있지 않으면 아무것도 보내지 않고, 건수도 차감하지 않는다."""
+import re
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -28,10 +29,12 @@ def _to_dict(row: SmsLog, names: dict) -> dict:
 
 def _recipient_phones(db: Session, resident: Resident) -> list:
     """주 보호자와 추가 보호자의 연락처를 중복 없이 모은다. 같은 번호에는 한 번만 보낸다."""
-    phones = []
+    phones, seen = [], set()
     for raw in [resident.guardian_phone] + [g.phone for g in db.query(ResidentGuardian).filter(ResidentGuardian.resident_id == resident.id).order_by(ResidentGuardian.id).all()]:
         phone = (raw or "").strip()
-        if phone and phone not in phones:
+        digits = re.sub(r"\D", "", phone)  # 010-1234-5678과 01012345678은 같은 번호다
+        if digits and digits not in seen:
+            seen.add(digits)
             phones.append(phone)
     return phones
 

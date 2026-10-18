@@ -502,7 +502,7 @@ async def update_resident(
         if update_data.guardian_phone is not None:
             resident.guardian_phone = update_data.guardian_phone
         if update_data.service_start_date is not None:
-            resident.service_start_date = date.fromisoformat(update_data.service_start_date) if update_data.service_start_date else None
+            resident.service_start_date = date.fromisoformat(update_data.service_start_date.strip()) if update_data.service_start_date and update_data.service_start_date.strip() else None
         if update_data.billing_address is not None:
             resident.billing_address = update_data.billing_address.strip() or None
         if update_data.billing_channels is not None:

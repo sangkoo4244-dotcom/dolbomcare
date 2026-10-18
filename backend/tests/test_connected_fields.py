@@ -100,3 +100,22 @@ def test_resident_detail_shows_the_new_fields_to_the_social_worker_too(env):
     assert d["service_start_date"] == "2026-04-01"
     assert d["billing_address"] == "서울 강남구 1"
     assert [g["name"] for g in d["additional_guardians"]] == ["김자녀", "김형제"]
+
+
+def test_same_number_with_different_dashes_is_sent_once(env, monkeypatch):
+    sent = []
+    monkeypatch.setattr(sms, "sms_configured", lambda: True)
+    monkeypatch.setattr(sms, "reserve_send", lambda db, center_id: True)
+    monkeypatch.setattr(sms, "send_sms", lambda phone, text: sent.append(phone) or True)
+    db = env.Session()
+    db.add(models.ResidentGuardian(resident_id=1, name="중복형제", relation="형제", phone="01020000000"))  # 010-2000-0000과 같은 번호
+    db.commit()
+    db.close()
+    env.post("/api/v1/sms/send", headers=MANAGER, json={"resident_ids": [1], "text": "안내"})
+    assert sent == ["010-1000-0000", "010-2000-0000"]
+
+
+def test_empty_service_start_date_string_does_not_fail(env):
+    r = env.put("/api/v1/residents/1", headers=MANAGER, json={"service_start_date": "   "})
+    assert r.status_code == 200, r.text
+    assert env.get("/api/v1/residents/1", headers=MANAGER).json()["service_start_date"] is None
