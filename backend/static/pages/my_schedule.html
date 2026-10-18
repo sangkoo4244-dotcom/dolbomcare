@@ -413,24 +413,9 @@
             document.getElementById('userName').textContent = user.full_name || '사용자';
             document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
             renderSidebar();
-            loadBellBadge();
             document.getElementById('monthPicker').value = ymKey(currentMonth);
             selectedDate = dateKey(new Date());
             loadSchedules();
-        }
-
-        async function loadBellBadge() {
-            try {
-                const r = await fetch(`${API_URL}/notifications/mine`);
-                if (!r.ok) return;
-                const d = await r.json();
-                const n = d.unread_count || 0;
-                if (n > 0) {
-                    const badgeEl = document.getElementById('bellBadge');
-                    badgeEl.textContent = n > 99 ? '99+' : n;
-                    badgeEl.style.display = 'flex';
-                }
-            } catch (e) { /* 부가 기능이므로 실패해도 무시 */ }
         }
 
         // 월간/주간/일간/목록 보기 전환. 목록은 별도 화면이 아니라 하단 테이블로 스크롤만 한다

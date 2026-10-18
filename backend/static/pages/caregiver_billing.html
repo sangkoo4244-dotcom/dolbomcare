@@ -264,24 +264,9 @@
             document.getElementById('userName').textContent = user.full_name || '사용자';
             document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
             renderSidebar();
-            loadBellBadge();
             const now = new Date();
             document.getElementById('monthSelect').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             loadBillings();
-        }
-
-        async function loadBellBadge() {
-            try {
-                const r = await fetch(`${API_URL}/notifications/mine`);
-                if (!r.ok) return;
-                const d = await r.json();
-                const n = d.unread_count || 0;
-                if (n > 0) {
-                    const badge = document.getElementById('bellBadge');
-                    badge.textContent = n > 99 ? '99+' : n;
-                    badge.style.display = 'flex';
-                }
-            } catch (e) { /* 부가 기능이므로 실패해도 무시 */ }
         }
 
         function escapeHtml(text) {

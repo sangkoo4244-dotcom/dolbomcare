@@ -24,6 +24,7 @@
         main .text-sm { font-size: 17px !important; }
         .g-pill { display: inline-block; padding: 6px 14px; border-radius: 10px; font-size: 15px; font-weight: 700; }
         .g-icon { object-fit: contain; mix-blend-mode: multiply; }
+        .header-bell-wrap { position: relative; display: inline-flex; }
 
         .g-breadcrumb { font-size: 13px; color: #94A3B8; }
         .g-breadcrumb b { color: var(--charcoal); font-weight: 700; }
@@ -87,7 +88,7 @@
                 </div>
                 <div class="flex items-center gap-6">
                     <div class="g-date-chip" id="headerDate"></div>
-                    <a href="./notifications.html"><img src="assets/user_design/28_top_notification_icon.png" alt="알림" class="w-7 h-7 object-contain"></a>
+                    <a href="./notifications.html" class="header-bell-wrap"><img src="assets/user_design/28_top_notification_icon.png" alt="알림" class="w-7 h-7 object-contain"></a>
                     <div class="flex items-center gap-3">
                         <img src="assets/user_design/29_top_profile_icon.png" alt="" class="w-11 h-11 rounded-full object-cover">
                         <span id="userName" class="text-base font-bold text-gray-900">보호자</span>
