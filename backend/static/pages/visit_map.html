@@ -77,6 +77,28 @@
                 <div class="panel" style="margin:0;"><div id="list"><div class="empty-note">불러오는 중…</div></div>
                     <div class="note" id="note"></div></div>
             </div>
+
+            <div class="panel" id="residentMapPanel" style="display:none;">
+                <div style="font-weight:700;margin-bottom:10px;">수급자별 이용 일정 지도 (기간)</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <input id="rmStart" type="date" class="field"> <span>~</span> <input id="rmEnd" type="date" class="field">
+                    <select id="rmCaregiver" class="field"><option value="">요양보호사 전체</option></select>
+                    <button class="logout-btn" onclick="loadResidentMap()">조회</button>
+                </div>
+                <div class="map-wrap" style="margin-top:12px;">
+                    <div class="panel" style="margin:0;"><div id="rmMap"><div class="empty-note" style="padding:20px;">기간을 고르고 조회하세요.</div></div></div>
+                    <div class="panel" style="margin:0;"><div id="rmList"></div></div>
+                </div>
+            </div>
+
+            <div class="panel" id="reportPanel" style="display:none;">
+                <div style="font-weight:700;margin-bottom:10px;">전체 방문 일정 리포트 (기간)</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <input id="rpStart" type="date" class="field"> <span>~</span> <input id="rpEnd" type="date" class="field">
+                    <button class="logout-btn" onclick="loadReport()">조회</button>
+                </div>
+                <div id="reportOut" style="margin-top:12px;"><div class="empty-note">기간을 고르고 조회하세요.</div></div>
+            </div>
         </div>
     </div>
 
@@ -146,12 +168,84 @@
             drawMap(v.visits);
         }
 
+        const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        function monthStart() { const d = new Date(); return isoLocal(new Date(d.getFullYear(), d.getMonth(), 1)); }
+        function todayIso() { return isoLocal(new Date()); }
+        const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` });
+
+        async function drawCountMap(items) {
+            const box = document.getElementById('rmMap');
+            const ok = await loadKakao();
+            const points = items.filter(v => v.latitude != null && v.longitude != null);
+            if (!ok) { box.innerHTML = '<div class="empty-note" style="padding:20px;">지도 키가 설정되지 않았습니다. 오른쪽 목록으로 확인하세요.</div>'; return; }
+            if (!points.length) { box.innerHTML = '<div class="empty-note" style="padding:20px;">표시할 주소가 없습니다.</div>'; return; }
+            box.innerHTML = '';
+            const map = new kakao.maps.Map(box, { center: new kakao.maps.LatLng(points[0].latitude, points[0].longitude), level: 7 });
+            const bounds = new kakao.maps.LatLngBounds();
+            points.forEach(v => {
+                const pos = new kakao.maps.LatLng(v.latitude, v.longitude);
+                bounds.extend(pos);
+                const marker = new kakao.maps.CustomOverlay({ position: pos, yAnchor: 1, content: `<div style="background:#0F8B80;color:#fff;border-radius:12px;padding:2px 8px;font-weight:700;font-size:12px;white-space:nowrap;">${esc(v.resident)} ${v.count}회</div>` });
+                marker.setMap(map);
+            });
+            map.setBounds(bounds);
+        }
+
+        async function loadResidentMap() {
+            const start = document.getElementById('rmStart').value, end = document.getElementById('rmEnd').value;
+            const cg = document.getElementById('rmCaregiver').value;
+            if (!start || !end) { alert('기간을 골라 주세요'); return; }
+            const q = new URLSearchParams(cg ? { start, end, caregiver_id: cg } : { start, end });
+            const r = await fetch(`/api/v1/visit-map/resident-map?${q}`, { headers: authHeader() });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { document.getElementById('rmList').innerHTML = `<div class="empty-note">${esc(d.detail || '불러오지 못했습니다')}</div>`; return; }
+            const rows = d.data.residents;
+            document.getElementById('rmList').innerHTML = rows.length ? rows.map(x => `<div class="visit">
+                <div class="num">${x.count}</div>
+                <div><b>${esc(x.resident)}</b> <span class="sub">${x.count}회</span>
+                <div class="sub">${x.address ? esc(x.address) : '<span style="color:#B91C1C;">주소 없음</span>'}</div>
+                <div class="sub">${esc(x.dates.join(', '))}${x.count > x.dates.length ? ' 외' : ''}</div></div></div>`).join('')
+                : '<div class="empty-note">이 기간에 방문 일정이 있는 수급자가 없습니다.</div>';
+            drawCountMap(rows);
+        }
+
+        async function loadReport() {
+            const start = document.getElementById('rpStart').value, end = document.getElementById('rpEnd').value;
+            if (!start || !end) { alert('기간을 골라 주세요'); return; }
+            const r = await fetch(`/api/v1/visit-map/report?${new URLSearchParams({ start, end })}`, { headers: authHeader() });
+            const d = await r.json().catch(() => ({}));
+            const out = document.getElementById('reportOut');
+            if (!r.ok) { out.innerHTML = `<div class="empty-note">${esc(d.detail || '불러오지 못했습니다')}</div>`; return; }
+            const v = d.data, t = v.totals;
+            const cards = [['전체 방문', v.total], ['기록률', v.record_rate === null ? '-' : v.record_rate + '%'], ['기록 완료', t.recorded], ['기록 필요', t.left_unrecorded], ['확인 필요', t.check], ['예정', t.upcoming + t.in_progress]]
+                .map(([k, x]) => `<div style="border:1px solid var(--line2);border-radius:10px;padding:10px 14px;min-width:110px;"><div style="font-size:12px;color:#64748B;">${k}</div><div style="font-size:20px;font-weight:800;">${esc(x)}</div></div>`).join('');
+            const rows = v.by_caregiver.length ? v.by_caregiver.map(g => `<div class="visit" style="grid-template-columns:1fr auto auto;">
+                <div>${esc(g.caregiver)}</div><div>기록 ${g.recorded}/${g.total}</div>
+                <div>${g.open ? `<span style="color:#B91C1C;font-weight:700;">누락 ${g.open}건</span>` : '누락 없음'}</div></div>`).join('')
+                : '<div class="empty-note">이 기간에 방문이 없습니다.</div>';
+            out.innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">${cards}</div>
+                <div style="font-weight:600;margin-bottom:6px;">요양보호사별</div>${rows}`;
+        }
+
+        async function setupManagerPanels() {
+            document.getElementById('residentMapPanel').style.display = '';
+            document.getElementById('reportPanel').style.display = '';
+            ['rmStart', 'rpStart'].forEach(id => document.getElementById(id).value = monthStart());
+            ['rmEnd', 'rpEnd'].forEach(id => document.getElementById(id).value = todayIso());
+            const r = await fetch('/api/v1/users/', { headers: authHeader() });
+            const d = await r.json().catch(() => ({}));
+            const staff = (d.users || []).filter(u => u.role === 'caregiver');
+            document.getElementById('rmCaregiver').insertAdjacentHTML('beforeend', staff.map(u => `<option value="${u.id}">${esc(u.full_name)}</option>`).join(''));
+            loadReport();
+        }
+
         (async function init() {
             if (typeof renderSidebar === 'function') renderSidebar();
             document.getElementById('userName').textContent = user.full_name || '';
             document.getElementById('userRole').textContent = { caregiver: '요양보호사', social_worker: '사회복지사' }[user.role] || '센터장';
             document.getElementById('day').value = new Date().toISOString().slice(0, 10);
             load();
+            if (user.role === 'center_manager') setupManagerPanels();
         })();
     </script>
 </body>

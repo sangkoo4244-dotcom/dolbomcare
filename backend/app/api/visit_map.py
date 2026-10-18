@@ -5,13 +5,14 @@
 from datetime import date, datetime, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
 from app.database import get_db
 from app.kakao_local import geocode_address
-from app.models import Resident, Schedule, SocialVisitPlan, User
+from app.api.today_board import _status
+from app.models import DailyRecord, Resident, Schedule, SocialVisitPlan, User
 
 router = APIRouter()
 
@@ -86,3 +87,89 @@ def day_map(
             "longitude": point[1] if point else None,
         })
     return {"status": "success", "data": {"date": target.isoformat(), "visits": visits}}
+
+
+def _period(start: date, end: date):
+    if end < start:
+        raise HTTPException(status_code=400, detail="끝 날짜가 시작 날짜보다 빨라요")
+    if (end - start).days > 366:
+        raise HTTPException(status_code=400, detail="기간은 1년 이내로 골라 주세요")
+    return datetime.combine(start, datetime.min.time()), datetime.combine(end, datetime.min.time()) + timedelta(days=1)
+
+
+def _manager_only(actor: User):
+    if actor.role != "center_manager" or not actor.center_id:
+        raise HTTPException(status_code=403, detail="센터장만 볼 수 있는 화면입니다")
+
+
+@router.get("/resident-map")
+def resident_map(
+    start: date = Query(...),
+    end: date = Query(...),
+    caregiver_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """수급자별 이용 일정 지도: 기간 안의 방문 예정이 있는 수급자를 집 위치에 표시하고, 방문 횟수와 날짜를 보여 준다."""
+    _manager_only(actor)
+    begin, finish = _period(start, end)
+    query = db.query(Schedule).filter(
+        Schedule.center_id == actor.center_id, Schedule.status != "cancelled",
+        Schedule.scheduled_date >= begin, Schedule.scheduled_date < finish)
+    if caregiver_id:
+        query = query.filter(Schedule.caregiver_id == caregiver_id)
+    schedules = query.order_by(Schedule.scheduled_date).all()
+    residents = {r.id: r for r in db.query(Resident).filter(Resident.id.in_({s.resident_id for s in schedules})).all()} if schedules else {}
+    by_resident = {}
+    for s in schedules:
+        by_resident.setdefault(s.resident_id, []).append(s)
+    rows = []
+    for rid, items in by_resident.items():
+        resident = residents.get(rid)
+        if not resident:
+            continue
+        point = _coordinates(db, resident)
+        rows.append({
+            "resident_id": rid, "resident": resident.name, "address": resident.address,
+            "count": len(items), "dates": [s.scheduled_date.strftime("%m/%d %H:%M") for s in items[:10]],
+            "latitude": point[0] if point else None, "longitude": point[1] if point else None,
+        })
+    rows.sort(key=lambda r: (-r["count"], r["resident"]))
+    return {"status": "success", "data": {"start": start.isoformat(), "end": end.isoformat(), "residents": rows}}
+
+
+@router.get("/report")
+def visit_report(
+    start: date = Query(...),
+    end: date = Query(...),
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """전체 방문 일정 리포트: 기간 안의 방문을 요양보호사별·상태별로 센다. 상태 계산은 오늘 방문 현황과 같다."""
+    _manager_only(actor)
+    begin, finish = _period(start, end)
+    now = datetime.now()
+    schedules = db.query(Schedule).filter(
+        Schedule.center_id == actor.center_id, Schedule.status != "cancelled",
+        Schedule.scheduled_date >= begin, Schedule.scheduled_date < finish).all()
+    recorded_ids = {r.schedule_id for r in db.query(DailyRecord).filter(
+        DailyRecord.schedule_id.in_({s.id for s in schedules})).all()} if schedules else set()
+    staff = {u.id: u.full_name for u in db.query(User).filter(User.center_id == actor.center_id).all()}
+    totals = {k: 0 for k in ("upcoming", "in_progress", "left_unrecorded", "check", "recorded")}
+    by_caregiver = {}
+    for s in schedules:
+        status = _status(s, s.id in recorded_ids, now)
+        totals[status] += 1
+        name = staff.get(s.caregiver_id, "미배정")
+        row = by_caregiver.setdefault(name, {"caregiver": name, "total": 0, "recorded": 0, "open": 0})
+        row["total"] += 1
+        if status == "recorded":
+            row["recorded"] += 1
+        elif status in ("left_unrecorded", "check"):
+            row["open"] += 1
+    total = len(schedules)
+    return {"status": "success", "data": {
+        "start": start.isoformat(), "end": end.isoformat(), "total": total, "totals": totals,
+        "record_rate": round(totals["recorded"] * 100 / total) if total else None,
+        "by_caregiver": sorted(by_caregiver.values(), key=lambda r: (-r["open"], r["caregiver"])),
+    }}
