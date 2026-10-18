@@ -265,39 +265,14 @@
             document.getElementById('planBadge').style.display = 'block';
         }
 
-        // 폼 제출
-        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+        // 이전 버전이 브라우저에 남긴 가입 정보(비밀번호 포함)를 지운다
+        try { localStorage.removeItem('signupData'); } catch (e) { /* 저장소를 쓸 수 없으면 건너뛴다 */ }
+
+        // 이 화면은 가입을 받지 않는다. 실제 체험 신청은 서버에 저장되는 신청 화면에서 한다 (정보를 이 기기에 남기지 않는다)
+        document.getElementById('signupForm').addEventListener('submit', (e) => {
             e.preventDefault();
-
-            // 비밀번호 확인
-            const password = document.getElementById('password').value;
-            const passwordConfirm = document.getElementById('passwordConfirm').value;
-            if (password !== passwordConfirm) {
-                showError('비밀번호가 일치하지 않습니다.');
-                return;
-            }
-
-            // API 호출 (나중에 실제 구현)
-            const formData = {
-                center_name: document.getElementById('centerName').value,
-                president_name: document.getElementById('presidentName').value,
-                staff_count: document.getElementById('staffCount').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                password: password,
-                plan: plan
-            };
-
-            try {
-                // 임시: 로컬 스토리지에 저장
-                localStorage.setItem('signupData', JSON.stringify(formData));
-
-                // 대시보드로 이동
-                alert('가입 완료! 30일 무료 체험을 시작합니다.');
-                window.location.href = '/pages/dashboard.html';
-            } catch (error) {
-                showError('가입 중 오류가 발생했습니다. 다시 시도해주세요.');
-            }
+            showError('체험 신청은 로그인 화면의 "무료 체험 신청"에서 진행해 주세요. 이 화면에는 정보를 저장하지 않습니다.');
+            setTimeout(() => { window.location.href = '/pages/login.html?trial=1'; }, 1500);
         });
 
         function showError(message) {

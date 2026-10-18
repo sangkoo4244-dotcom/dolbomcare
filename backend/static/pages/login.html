@@ -536,6 +536,7 @@
 
         // 이메일 기억하기: 이메일만 저장한다 (비밀번호는 저장하지 않는다)
         window.addEventListener('load', () => {
+            if (new URLSearchParams(location.search).get('trial') === '1') openTrialRequestModal();
             const savedEmail = localStorage.getItem('savedEmail');
             if (savedEmail) {
                 emailInput.value = savedEmail;
