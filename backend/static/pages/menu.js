@@ -703,3 +703,37 @@ async function saveProfile() {
     }).observe(document.documentElement, { childList: true, subtree: true });
     schedule();
 })();
+
+// 상단 종 모양 알림 배지: 어느 화면에서든 같은 숫자(서버의 안 읽은 알림 수)를 보여 준다.
+// 배지가 없는 종 모양에는 배지를 붙여 준다. 실패해도 화면은 그대로 둔다.
+async function refreshBellBadges() {
+    const wraps = document.querySelectorAll('.bell-wrap, .header-bell-wrap');
+    const token = localStorage.getItem('access_token');
+    if (!wraps.length || !token) return;
+    let n = 0;
+    try {
+        const r = await fetch('/api/v1/notifications/mine', { headers: { Authorization: `Bearer ${token}` } });
+        if (!r.ok) return;
+        n = (await r.json()).unread_count || 0;
+    } catch (e) {
+        return;
+    }
+    setBellCount(n);
+}
+
+// 같은 화면에서 알림을 읽어 개수가 바뀌었을 때도 종 모양 배지를 같이 맞춘다
+function setBellCount(n) {
+    const wraps = document.querySelectorAll('.bell-wrap, .header-bell-wrap');
+    wraps.forEach(wrap => {
+        let badge = wrap.querySelector('.bell-badge, .header-bell-badge');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'bell-badge';
+            badge.style.cssText = 'position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#dc2626;color:#fff;font-size:10px;font-weight:700;align-items:center;justify-content:center;';
+            wrap.appendChild(badge);
+        }
+        badge.textContent = n > 99 ? '99+' : n;
+        badge.style.display = n > 0 ? 'flex' : 'none';
+    });
+}
+document.addEventListener('DOMContentLoaded', refreshBellBadges);

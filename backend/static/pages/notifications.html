@@ -205,6 +205,7 @@
         let currentUser = null;
         const API_URL = '/api/v1';
         let allNotifications = [];
+        let serverUnread = 0;  // 서버가 센 안 읽은 알림 수 (목록은 최근 50건만 받으므로 목록으로 세면 틀린다)
         let currentFilter = 'all';
         let currentPage = 1;
         let pageSize = 10;
@@ -306,7 +307,8 @@
                 const r = await fetch(`${API_URL}/notifications/mine`);
                 const d = await r.json();
                 allNotifications = d.notifications || [];
-                updateMetrics(d.unread_count || 0);
+                serverUnread = d.unread_count || 0;
+                updateMetrics(serverUnread);
                 renderNotifications();
                 if (selectedId === null && allNotifications.length) selectNotification(allNotifications[0].id, false);
             } catch (e) {
@@ -329,6 +331,7 @@
         }
 
         function updateMetrics(unreadCount) {
+            if (typeof setBellCount === 'function') setBellCount(unreadCount);
             document.getElementById('metricNew').textContent = `${unreadCount}건`;
             const actionCount = allNotifications.filter(n => !n.is_read && IMPORTANT_KINDS.includes(n.kind)).length;
             const importantCount = allNotifications.filter(n => IMPORTANT_KINDS.includes(n.kind)).length;
@@ -346,7 +349,7 @@
 
         function filterCount(key) {
             if (key === 'all') return allNotifications.length;
-            if (key === 'unread') return allNotifications.filter(n => !n.is_read).length;
+            if (key === 'unread') return serverUnread;
             if (key === 'action') return allNotifications.filter(n => !n.is_read && IMPORTANT_KINDS.includes(n.kind)).length;
             if (key === 'important') return allNotifications.filter(n => IMPORTANT_KINDS.includes(n.kind)).length;
             return allNotifications.filter(n => (CATEGORY_OF[n.kind] || 'system') === key).length;
@@ -483,8 +486,8 @@
                     const r = await fetch(`${API_URL}/notifications/${id}/read`, { method: 'POST' });
                     if (r.ok) {
                         n.is_read = true;
-                        const unread = allNotifications.filter(x => !x.is_read).length;
-                        updateMetrics(unread);
+                        serverUnread = Math.max(0, serverUnread - 1);
+                        updateMetrics(serverUnread);
                         renderNotifications();
                         renderDetail(n);
                     }
