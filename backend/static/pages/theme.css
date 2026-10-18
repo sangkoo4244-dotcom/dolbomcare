@@ -256,7 +256,7 @@ main [class*="bg-gradient-to"] {
     table.m-cards thead { display: none; }
     table.m-cards tbody { display: block; }
     table.m-cards tr { display: block; margin: 0 0 12px; padding: 4px 14px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; }
-    table.m-cards td { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: auto; min-width: 0; padding: 9px 0 !important; border: 0 !important; border-bottom: 1px solid #f1f5f9 !important; white-space: normal; text-align: right; }
+    table.m-cards td { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; width: auto; min-width: 0; padding: 9px 0 !important; border: 0 !important; border-bottom: 1px solid #f1f5f9 !important; white-space: normal; text-align: right; }
     table.m-cards td:last-child { border-bottom: 0 !important; }
     table.m-cards td[data-label]::before { content: attr(data-label); flex: 0 0 auto; max-width: 42%; color: #64748b; font-size: 12px; font-weight: 600; text-align: left; }
     table.m-cards td[data-label=""]::before { display: none; }
