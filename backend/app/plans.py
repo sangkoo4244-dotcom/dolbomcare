@@ -12,6 +12,22 @@ TRIAL_DAYS = 30
 PARTNER_SLOT_LIMIT = 20
 PARTNER_RESIDENT_LIMIT = 100  # 파트너 센터가 무료로 등록할 수 있는 이용자 수 (넘으면 요금제를 시작해야 한다)
 
+# 이용자 수 비례 요금 (부가세 포함). 10명까지 기본 요금, 10명을 넘으면 1명당 추가. 100명을 넘으면 엔터프라이즈에서 협의한다.
+BASE_FEE = 9900
+BASE_RESIDENTS = 10
+EXTRA_FEE_PER_RESIDENT = 500
+MAX_STANDARD_RESIDENTS = 100
+
+
+def monthly_fee(resident_count: int) -> Optional[int]:
+    """이용자 수에 따른 월 요금(원). 100명을 넘으면 None (엔터프라이즈 협의)."""
+    if resident_count <= BASE_RESIDENTS:
+        return BASE_FEE
+    if resident_count > MAX_STANDARD_RESIDENTS:
+        return None
+    return BASE_FEE + (resident_count - BASE_RESIDENTS) * EXTRA_FEE_PER_RESIDENT
+
+
 PLAN_TRIAL = "trial"
 PLAN_PARTNER = "partner"
 PLAN_PAID = "paid"
