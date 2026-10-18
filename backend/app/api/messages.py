@@ -54,6 +54,13 @@ def _staff_recipients(db: Session, resident: Resident, sender_id: int) -> set:
     return (caregiver_ids | manager_ids) - {sender_id, None}
 
 
+def _center_staff(db: Session, resident: Resident, sender_id: int) -> list:
+    """같은 센터의 직원 전체: 이용자 메시지를 열어 볼 수 있는 사람들이다."""
+    return db.query(User).filter(
+        User.center_id == resident.center_id, User.role != "guardian", User.id != sender_id
+    ).all()
+
+
 def _accessible_residents(db: Session, user: User) -> list:
     if user.role == "guardian":
         return db.query(Resident).filter(Resident.guardian_id == user.id).all()
@@ -157,8 +164,15 @@ def send_message(resident_id: int, body: MessageCreate, db: Session = Depends(ge
     db.add(message)
 
     if user.role == "guardian":
-        for staff_id in _staff_recipients(db, resident, user.id):
-            notify(db, staff_id, "message_received", f"{resident.name} 보호자 메시지: {text[:30]}")
+        # 종 모양 숫자는 알림으로 세므로, 메시지를 볼 수 있는 같은 센터 직원 전원에게 알림을 남긴다.
+        # 알림톡은 기존 대상(최근 방문 요양사·센터장)에게만 보내서 발송 비용이 늘지 않게 한다.
+        alimtalk_ids = _staff_recipients(db, resident, user.id)
+        msg = f"{resident.name} 보호자 메시지: {text[:30]}"
+        for staff in _center_staff(db, resident, user.id):
+            if staff.id in alimtalk_ids:
+                notify(db, staff.id, "message_received", msg)
+            else:
+                db.add(Notification(user_id=staff.id, kind="message_received", message=msg))
     elif resident.guardian_id and resident.guardian_id != user.id:
         notify(db, resident.guardian_id, "message_received", f"{resident.name} 센터 메시지: {text[:30]}")
     db.commit()

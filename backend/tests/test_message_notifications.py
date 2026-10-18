@@ -31,6 +31,7 @@ def env(tmp_path):
     db.add_all([
         models.Center(id=1, name="A"),
         models.User(id=1, email="m@test.com", full_name="센터장", role="center_manager", center_id=1),
+        models.User(id=2, email="c@test.com", full_name="요양사", role="caregiver", center_id=1),
         models.User(id=5, email="g@test.com", full_name="보호자", role="guardian"),
         models.Resident(id=1, center_id=1, name="김복동", care_grade=2, guardian_id=5),
         models.Resident(id=2, center_id=1, name="김복동2", care_grade=2, guardian_id=5),
@@ -76,6 +77,16 @@ def test_opening_a_thread_reads_only_that_residents_message_notifications(env):
     assert unread(env, 1, "message_received") == 1  # 김복동2 메시지는 남는다 (이름 앞부분만 같은 다른 이용자)
     assert unread(env, 1, "visit_completed") == 1  # 방문 알림은 메시지 대화와 무관하다
     assert unread(env, 5) == 1  # 보호자 쪽 알림은 보호자가 읽어야 한다
+
+
+def test_guardian_message_notifies_every_center_staff_who_can_see_it(env):
+    # 요양사(id=2)는 최근 방문 기록이 없어 알림 대상이 아니었다. 그래도 메시지는 보이므로 종 숫자에 잡혀야 한다.
+    assert unread(env, 2) == 0
+    assert env.post("/api/v1/messages/residents/1", json={"body": "오늘 방문 감사합니다"}, headers=GUARDIAN).status_code == 200
+    assert unread(env, 2, "message_received") == 1
+    assert unread(env, 1, "message_received") == 3  # 센터장: 픽스처의 기존 메시지 알림 2건 + 새 알림 1건
+    assert env.get("/api/v1/messages/unread-count", headers=auth(2, "caregiver", "c@test.com")).json()["unread_count"] == 1
+    assert env.get("/api/v1/notifications/mine", headers=auth(2, "caregiver", "c@test.com")).json()["unread_count"] == 1
 
 
 def test_bell_count_matches_after_thread_is_read(env):
