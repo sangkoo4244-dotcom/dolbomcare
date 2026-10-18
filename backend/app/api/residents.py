@@ -12,6 +12,15 @@ from datetime import datetime, date
 BILLING_CHANNELS = ("sms", "alimtalk", "email", "mail")
 
 
+def _guardian_for(actor: User, g: ResidentGuardian) -> dict:
+    """추가 보호자 연락처는 꼭 필요한 사람에게만 보인다.
+    센터장·사회복지사(보호자 상담 업무)는 연락처까지, 요양보호사와 보호자 본인은 이름과 관계만 본다 (최소 노출 원칙)."""
+    show_contact = actor.role in ("center_manager", "social_worker")
+    return {"id": g.id, "name": g.name, "relation": g.relation,
+            "phone": g.phone if show_contact else None,
+            "email": g.email if show_contact else None}
+
+
 def _channels(raw):
     return [c for c in (raw or "").split(",") if c]
 
@@ -203,7 +212,7 @@ async def get_resident(
         "billing_channels": _channels(resident.billing_channels),
         "primary_caregiver_id": resident.primary_caregiver_id,
         "additional_guardians": [
-            {"id": g.id, "name": g.name, "relation": g.relation, "phone": g.phone, "email": g.email}
+            _guardian_for(actor, g)
             for g in db.query(ResidentGuardian).filter(ResidentGuardian.resident_id == resident.id).order_by(ResidentGuardian.id).all()
         ],
     }

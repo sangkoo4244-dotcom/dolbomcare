@@ -49,7 +49,9 @@ def env(tmp_path):
         finally:
             s.close()
     app.dependency_overrides[get_db] = override
-    return TestClient(app)
+    client = TestClient(app)
+    client.Session = Session
+    return client
 
 
 def test_manager_sets_service_start_billing_address_and_channels(env):
@@ -97,7 +99,7 @@ def test_saving_the_form_with_empty_optional_fields_works(env):
 
 
 def test_changing_the_address_clears_the_old_map_point(env):
-    db = env.app.dependency_overrides[get_db]().__next__()
+    db = env.Session()
     resident = db.query(models.Resident).filter(models.Resident.id == 1).first()
     resident.address = "서울 중구 1"
     resident.latitude, resident.longitude = 37.5, 127.0
@@ -105,6 +107,26 @@ def test_changing_the_address_clears_the_old_map_point(env):
     env.put("/api/v1/residents/1", headers=MANAGER, json={"address": "서울 용산구 2"})
     db.refresh(resident)
     assert (resident.latitude, resident.longitude) == (None, None)
+    resident.latitude, resident.longitude = 37.6, 127.1
+    db.commit()
     env.put("/api/v1/residents/1", headers=MANAGER, json={"name": "이름만 바꿈"})
     db.refresh(resident)
-    assert resident.latitude is None  # 주소가 그대로면 좌표를 건드리지 않는다 (이 테스트는 다시 채우지 않았으므로 None 유지)
+    assert (resident.latitude, resident.longitude) == (37.6, 127.1)  # 주소가 그대로면 좌표를 지우지 않는다
+    db.close()
+
+
+def test_additional_guardian_contact_is_shown_only_to_manager_and_social_worker(env):
+    db = env.Session()
+    db.add(models.ResidentGuardian(resident_id=1, name="김자녀", relation="자녀", phone="010-2000-0000", email="kid@test.com"))
+    db.commit()
+    db.close()
+    social = auth(4, "social_worker", "s@test.com")
+    db = env.Session()
+    db.add(models.User(id=4, email="s@test.com", full_name="사회복지사", role="social_worker", center_id=1))
+    db.commit()
+    db.close()
+    for headers, shows in ((MANAGER, True), (social, True), (CAREGIVER, False)):
+        g = env.get("/api/v1/residents/1", headers=headers).json()["additional_guardians"][0]
+        assert g["name"] == "김자녀" and g["relation"] == "자녀"
+        assert (g["phone"] == "010-2000-0000") is shows
+        assert (g["email"] == "kid@test.com") is shows
