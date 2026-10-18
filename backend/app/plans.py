@@ -12,20 +12,16 @@ TRIAL_DAYS = 30
 PARTNER_SLOT_LIMIT = 20
 PARTNER_RESIDENT_LIMIT = 100  # 파트너 센터가 무료로 등록할 수 있는 이용자 수 (넘으면 요금제를 시작해야 한다)
 
-# 이용자 수 비례 요금 (부가세 포함). 10명까지 기본 요금, 10명을 넘으면 1명당 추가. 100명을 넘으면 엔터프라이즈에서 협의한다.
-BASE_FEE = 9900
-BASE_RESIDENTS = 10
-EXTRA_FEE_PER_RESIDENT = 500
-MAX_STANDARD_RESIDENTS = 100
+# 이용자 규모 구간별 정액 (부가세 포함 총액). 인당 단가가 아니라 구간 정액이다. 101명 이상은 엔터프라이즈에서 협의한다.
+FEE_BANDS = ((20, 19900), (50, 29900), (100, 39900))  # (이 인원까지, 월 요금)
 
 
 def monthly_fee(resident_count: int) -> Optional[int]:
-    """이용자 수에 따른 월 요금(원). 100명을 넘으면 None (엔터프라이즈 협의)."""
-    if resident_count <= BASE_RESIDENTS:
-        return BASE_FEE
-    if resident_count > MAX_STANDARD_RESIDENTS:
-        return None
-    return BASE_FEE + (resident_count - BASE_RESIDENTS) * EXTRA_FEE_PER_RESIDENT
+    """이용자 수가 속한 구간의 월 요금(원). 101명 이상은 None (엔터프라이즈 협의)."""
+    for limit, fee in FEE_BANDS:
+        if resident_count <= limit:
+            return fee
+    return None
 
 
 PLAN_TRIAL = "trial"

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>요금제 - 돌봄케어 | 이음로직</title>
-    <meta name="description" content="돌봄케어 요금제. 이용자(수급자) 수에 비례한 단순한 요금제 하나로, 음성 기록·자동 청구·급여 계산·보호자 공유까지 기본 포함합니다. 1개월 무료체험.">
+    <meta name="description" content="돌봄케어 요금제. 이용자 규모 구간별 정액 요금제. 음성 기록과 보호자 화면이 기본 포함되고, 1개월 무료체험을 제공합니다.">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -200,9 +200,9 @@
         <div class="wrap">
             <div class="price-grid">
                 <div class="price-card">
-                    <div class="plan-name">스타터</div>
-                    <div class="price">9,900<span class="price-sub">원 / 월</span></div>
-                    <div class="price-period">이용자 10명까지 · 부가세 포함 · 셋팅비 없음</div>
+                    <div class="plan-name">소규모</div>
+                    <div class="price">19,900<span class="price-sub">원 / 월</span></div>
+                    <div class="price-period">이용자 1~20명 · 부가세 포함 (공급가 18,091원 + 부가세 1,809원)</div>
                     <ul class="features-list">
                         <li>음성 기반 방문 기록</li>
                         <li>자동 청구 생성 및 정산</li>
@@ -211,30 +211,40 @@
                         <li>직원·일정 관리</li>
                         <li>공단평가 준비 자료</li>
                     </ul>
-                    <button class="btn-block secondary" onclick="selectPlan('starter')">1개월 무료체험 시작</button>
+                    <button class="btn-block secondary" onclick="selectPlan('small')">1개월 무료체험 시작</button>
                 </div>
 
                 <div class="price-card featured">
                     <div class="price-badge">가장 인기있음</div>
-                    <div class="plan-name">스탠다드</div>
-                    <div class="price">14,900<span class="price-sub">원~ / 월</span></div>
-                    <div class="price-period">11명 이상 · 10명 초과 1명당 500원 추가 · 부가세 포함</div>
+                    <div class="plan-name">중규모</div>
+                    <div class="price">29,900<span class="price-sub">원 / 월</span></div>
+                    <div class="price-period">이용자 21~50명 · 부가세 포함 (공급가 27,182원 + 부가세 2,718원)</div>
                     <ul class="features-list">
-                        <li>스타터의 모든 기능</li>
-                        <li>20명 14,900원 · 30명 19,900원</li>
-                        <li>50명 29,900원 · 100명 54,900원</li>
+                        <li>소규모의 모든 기능</li>
+                        <li>이용자 21~50명 구간</li>
                         <li>우선 이메일 지원</li>
                     </ul>
-                    <button class="btn-block primary" onclick="selectPlan('standard')">1개월 무료체험 시작</button>
+                    <button class="btn-block primary" onclick="selectPlan('medium')">1개월 무료체험 시작</button>
                 </div>
 
+                <div class="price-card">
+                    <div class="plan-name">대규모</div>
+                    <div class="price">39,900<span class="price-sub">원 / 월</span></div>
+                    <div class="price-period">이용자 51~100명 · 부가세 포함 (공급가 36,273원 + 부가세 3,627원)</div>
+                    <ul class="features-list">
+                        <li>중규모의 모든 기능</li>
+                        <li>이용자 51~100명 구간</li>
+                        <li>우선 지원</li>
+                    </ul>
+                    <button class="btn-block secondary" onclick="selectPlan('large')">1개월 무료체험 시작</button>
+                </div>
 
                 <div class="price-card">
                     <div class="plan-name">엔터프라이즈</div>
                     <div class="price">맞춤형</div>
-                    <div class="price-period">이용자 100명 초과 또는 여러 센터·지점 · 별도 협의</div>
+                    <div class="price-period">이용자 101명 이상 또는 여러 센터·지점 · 별도 협의</div>
                     <ul class="features-list">
-                        <li>이용자 100명 초과</li>
+                        <li>대규모의 모든 기능</li>
                         <li>다중 시설 통합 관리</li>
                         <li>API 연동</li>
                         <li>전담 지원</li>
@@ -250,7 +260,7 @@
             <div class="section-header center">
                 <span class="eyebrow">Compare</span>
                 <h2>다른 요양관리 프로그램과 비교하면?</h2>
-                <p>업계 요양관리 프로그램은 대부분 돌봄케어처럼 이용자 수에 비례한 월정액 구조를 씁니다. 가격대는 비슷해도, 그 안에 뭐가 포함되는지는 프로그램마다 다릅니다.</p>
+                <p>이용자 수에 비례해 인당 단가로 계산하는 프로그램이 많습니다. 돌봄케어는 인당 단가가 아니라 규모 구간별 정액입니다. 가격보다 포함 범위를 함께 보시기 바랍니다.</p>
             </div>
             <div class="compare-grid">
                 <div class="compare-card">
@@ -268,8 +278,8 @@
                 <div class="compare-card highlight">
                     <div class="compare-type">돌봄케어</div>
                     <h4>음성 기록 + 자동 청구·급여 + 보호자 공유</h4>
-                    <div class="compare-price">이용자 10명까지 월 9,900원부터</div>
-                    <p class="desc">비슷한 가격대에서, 방문 중 말로 남기는 음성 기록과 보호자용 모바일 화면을 기본으로 포함합니다. 1개월 무료체험, 셋팅비 없음.</p>
+                    <div class="compare-price">이용자 1~20명 월 19,900원부터 (부가세 포함)</div>
+                    <p class="desc">이용자 규모별 정액이며, 방문 중 말로 남기는 음성 기록과 보호자용 모바일 화면을 기본으로 포함합니다. 1개월 무료체험, 셋팅비 없음.</p>
                 </div>
             </div>
             <p class="compare-note">※ 위 가격대는 각 프로그램의 공개된 요금 안내를 참고한 일반적인 수준이며, 실제 비용은 기관 규모와 계약 조건에 따라 달라질 수 있습니다.</p>
@@ -293,7 +303,7 @@
                 </div>
                 <div class="faq-item">
                     <h3>이용자 수가 늘어나 구간이 바뀌면 어떻게 되나요?</h3>
-                    <p>10명까지는 스타터 9,900원입니다. 10명을 넘으면 1명당 500원씩 더해지고, 다음 결제 주기부터 적용됩니다. 예를 들어 20명은 14,900원, 30명은 19,900원, 100명은 54,900원입니다. 100명을 넘는 센터는 엔터프라이즈에서 별도로 협의합니다.</p>
+                    <p>이용자 수 구간별 정액입니다. 1~20명은 19,900원, 21~50명은 29,900원, 51~100명은 39,900원입니다. 금액은 부가세 포함 총액이며, 공급가와 부가세를 각각 표시합니다. 101명 이상은 엔터프라이즈에서 협의합니다.</p>
                 </div>
                 <div class="faq-item">
                     <h3>계약을 취소할 수 있나요?</h3>

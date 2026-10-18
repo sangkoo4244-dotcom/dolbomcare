@@ -242,11 +242,12 @@
     <script>
         // URL에서 요금제 정보 가져오기 (pricing.html의 요금제와 동일)
         const urlParams = new URLSearchParams(window.location.search);
-        const plan = urlParams.get('plan') || 'standard';
+        const plan = urlParams.get('plan') || 'medium';
 
         const planNames = {
-            'starter': '스타터 (이용자 10명까지, 월 9,900원 · 부가세 포함)',
-            'standard': '스탠다드 (이용자 11~100명, 기본 9,900원 + 10명 초과 1명당 500원 · 부가세 포함)',
+            'small': '소규모 (이용자 1~20명, 월 19,900원 · 부가세 포함)',
+            'medium': '중규모 (이용자 21~50명, 월 29,900원 · 부가세 포함)',
+            'large': '대규모 (이용자 51~100명, 월 39,900원 · 부가세 포함)',
             'enterprise': '엔터프라이즈 (맞춤형 가격, 별도 협의)',
         };
 

@@ -1,11 +1,11 @@
-"""이용자 수에 따른 월 요금: 10명까지 9,900원, 10명을 넘으면 1명당 500원, 100명을 넘으면 협의."""
+"""이용자 규모 구간별 정액: 1~20명 19,900원, 21~50명 29,900원, 51~100명 39,900원, 101명 이상은 협의."""
 import pytest
 
 from app.plans import monthly_fee
 
 
-@pytest.mark.parametrize("count, fee", [(1, 9900), (10, 9900), (11, 10400), (20, 14900), (30, 19900), (50, 29900), (100, 54900)])
-def test_monthly_fee_follows_the_published_table(count, fee):
+@pytest.mark.parametrize("count, fee", [(1, 19900), (20, 19900), (21, 29900), (50, 29900), (51, 39900), (100, 39900)])
+def test_monthly_fee_follows_the_band(count, fee):
     assert monthly_fee(count) == fee
 
 
