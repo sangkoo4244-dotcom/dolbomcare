@@ -216,6 +216,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <div id="recordPager" class="flex items-center justify-between gap-4 mt-4 text-sm text-gray-600"></div>
                 </div>
 
                 <!-- 입력 카드 -->
@@ -772,6 +773,7 @@
         function filterByStatus(status) {
             document.getElementById('recordStatusFilter').value = status;
             currentTabMode = 'all';
+            recordPage = 1;
             document.querySelectorAll('.vr-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === 'all'));
             renderRecords();
             scrollToRecordsTable();
@@ -869,21 +871,44 @@
                 .sort((a, b) => order === 'old' ? new Date(a.recorded_date) - new Date(b.recorded_date) : new Date(b.recorded_date) - new Date(a.recorded_date));
         }
 
+        const RECORD_PAGE_SIZE = 10;
+        let recordPage = 1;
+        function resetRecordPage() { recordPage = 1; renderRecords(); }
+
+        function renderPager(total, totalPages) {
+            const pager = document.getElementById('recordPager');
+            if (total <= RECORD_PAGE_SIZE) { pager.innerHTML = ''; return; }
+            const btn = (label, page, disabled) => `<button type="button" ${disabled ? 'disabled' : ''} onclick="gotoRecordPage(${page})" class="px-4 py-2 rounded-lg border border-gray-200 font-semibold ${disabled ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'}">${label}</button>`;
+            pager.innerHTML = `${btn('이전', recordPage - 1, recordPage <= 1)}<span>${recordPage} / ${totalPages} 페이지 · 전체 ${total}건</span>${btn('다음', recordPage + 1, recordPage >= totalPages)}`;
+        }
+
+        function gotoRecordPage(page) {
+            recordPage = page;
+            renderRecords();
+            scrollToRecordsTable();
+        }
+
         function renderRecords() {
             const tbody = document.getElementById('recordsTableBody');
             const rows = visibleRecords();
+            const totalPages = Math.max(1, Math.ceil(rows.length / RECORD_PAGE_SIZE));
+            recordPage = Math.min(Math.max(1, recordPage), totalPages);
             if (rows.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px 0;color:#94A3B8;">기록이 없습니다</td></tr>';
                 document.getElementById('recordCountBadge').textContent = '0건';
+                renderPager(0, 1);
                 return;
             }
+            const start = (recordPage - 1) * RECORD_PAGE_SIZE;
+            const pageRows = rows.slice(start, start + RECORD_PAGE_SIZE);
+            renderPager(rows.length, totalPages);
 
-            tbody.innerHTML = rows.map((r, i) => {
+            tbody.innerHTML = pageRows.map((r, i) => {
                 const [label, cls] = recordStatusLabel(r);
                 const dt = new Date(r.recorded_date);
                 const notesText = (r.notes || '-').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 return `<tr>
-                    <td>${i + 1}</td>
+                    <td>${start + i + 1}</td>
                     <td>${dt.toLocaleDateString('ko-KR')} ${dt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</td>
                     <td style="font-weight:700;">${r.resident_name || '-'}</td>
                     <td>${SERVICE_TYPE_LABELS[r.service_type] || r.service_type}${r.benefit_type && r.benefit_type !== 'home_care' ? `<div style="font-size:12px;font-weight:700;color:#0F8B80;">${BenefitFields.label(r.benefit_type)}</div>` : ''}</td>
@@ -932,8 +957,8 @@
             document.getElementById('recordsTableBody').closest('.bg-white').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        ['recordSearch'].forEach(id => document.getElementById(id).addEventListener('input', renderRecords));
-        ['recordDateFrom', 'recordDateTo', 'recordServiceFilter', 'recordStatusFilter', 'recordCaregiverFilter', 'recordSort'].forEach(id => document.getElementById(id).addEventListener('change', renderRecords));
+        ['recordSearch'].forEach(id => document.getElementById(id).addEventListener('input', resetRecordPage));
+        ['recordDateFrom', 'recordDateTo', 'recordServiceFilter', 'recordStatusFilter', 'recordCaregiverFilter', 'recordSort'].forEach(id => document.getElementById(id).addEventListener('change', resetRecordPage));
 
         // 항목별 제공 시간(공단 앱 종료 전송 입력용): 선택한 항목마다 분 입력칸을 만들고, 합계가 제공 시간과 같은지 보여 준다
         function renderItemMinutes() {
@@ -1097,6 +1122,7 @@
             document.querySelectorAll('.vr-tab').forEach(b => b.classList.remove('active'));
             e.currentTarget.classList.add('active');
             currentTabMode = e.currentTarget.dataset.tab;
+            recordPage = 1;
             renderRecords();
             scrollToRecordsTable();
         }
