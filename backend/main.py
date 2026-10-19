@@ -10,6 +10,7 @@ if hasattr(time, "tzset"):  # 리눅스(운영 서버)만. 윈도우는 TZ 값�
 from fastapi import FastAPI, Depends
 from app.auth import get_current_user
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse
 from app.api import juso
@@ -131,6 +132,16 @@ app.include_router(benefits_api.router, prefix="/api/v1/benefits", tags=["benefi
 app.include_router(day_care.router, prefix="/api/v1/day-care", tags=["day_care"], dependencies=[Depends(get_current_user)])
 app.include_router(value_report.router, prefix="/api/v1/value-report", tags=["value_report"], dependencies=[Depends(get_current_user)])
 app.include_router(juso.router)
+
+OLD_DOMAIN_HOSTS = {"seniorcareinfo.kr", "www.seniorcareinfo.kr"}
+
+@app.middleware("http")
+async def redirect_old_domain(request, call_next):
+    host = request.headers.get("host", "").split(":")[0].lower()
+    if host in OLD_DOMAIN_HOSTS:
+        query = f"?{request.url.query}" if request.url.query else ""
+        return RedirectResponse(f"https://ieumlogic.co.kr{request.url.path}{query}", status_code=301)
+    return await call_next(request)
 
 @app.middleware("http")
 async def revalidate_pages(request, call_next):
