@@ -201,6 +201,7 @@
                     ${p.caregiver_ack ? (p.caregiver_ack.acknowledged_at ? `<span class="badge ok">${esc(p.caregiver_ack.caregiver_name || '요양보호사')} 확인함</span>` : `<span class="badge wait">${esc(p.caregiver_ack.caregiver_name || '요양보호사')} 미확인</span>`) : ''}
                     ${p.has_signature ? `<button type="button" class="btn-outline" onclick="viewSignature(${p.id})">서명 이미지 보기</button>` : ''}
                     <button type="button" class="btn-outline" onclick="openEntrySheet(${p.id})">공단 입력 시트</button>
+                    <button type="button" class="btn-outline" onclick="window.open('./care_plan_sheet.html?plan_id=${p.id}', '_blank')">공단 서식으로 출력</button>
                     ${p.signed_via !== 'app' && !p.guardian_signed_date ? `<button type="button" class="btn-outline" onclick="sharePlan(${p.id}, ${p.resident_id})">${p.shared_at ? '보호자에게 다시 알리기' : '보호자에게 확인·서명 요청'}</button>` : ''}
                 </div>
                 <div class="prog">

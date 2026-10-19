@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>급여제공계획서 출력 - 돌봄케어</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; color: #0f172a; background: #f1f5f9; }
+        .bar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; position: sticky; top: 0; z-index: 5; }
+        .bar a { color: #0f766e; font-weight: 700; text-decoration: none; margin-right: 6px; }
+        .bar button { height: 40px; border: 1px solid #0f766e; border-radius: 8px; padding: 0 14px; font-size: 14px; background: #0f766e; color: #fff; font-weight: 700; }
+        .note { max-width: 860px; margin: 12px auto 0; padding: 0 16px; font-size: 12px; color: #64748b; line-height: 1.6; }
+        .paper { max-width: 860px; margin: 12px auto 24px; background: #fff; padding: 24px; border: 1px solid #e2e8f0; overflow-x: auto; }
+        .paper h1 { text-align: center; font-size: 18px; margin: 6px 0 12px; }
+        .form-no { font-size: 12px; color: #334155; }
+        table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 640px; }
+        th, td { border: 1px solid #334155; padding: 5px 7px; vertical-align: middle; }
+        th { background: #f8fafc; font-weight: 600; text-align: center; }
+        td.fill { color: #0f172a; white-space: pre-wrap; }
+        td.blank { height: 28px; }
+        .sec { font-size: 13px; font-weight: 700; margin: 12px 0 4px; }
+        .sys { font-size: 11px; color: #64748b; margin-top: 2px; }
+        .empty { padding: 40px 16px; text-align: center; color: #64748b; }
+        @media print {
+            body { background: #fff; }
+            .bar, .note { display: none; }
+            .paper { border: none; margin: 0; padding: 0; max-width: none; }
+            @page { size: A4; margin: 12mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bar">
+        <a href="./care_plan.html">← 급여제공계획으로</a>
+        <button type="button" onclick="window.print()">인쇄</button>
+    </div>
+    <div class="note">공단 서식 「장기요양급여 제공 계획서(방문요양, 방문목욕, 방문간호)」(시행규칙 별지 제11호의3서식, 개정 2021.6.30) 앞쪽 칸 구성에 맞춘 출력물입니다. 돌봄케어 계획서 내용을 채웠고, 계약일·계약기간·이용계획서 번호·전화번호·서명은 시스템에 없으니 손으로 적어 주세요. 작성방법(뒤쪽)은 출력하지 않습니다. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다. 공단 통보는 장기요양정보시스템에서 직접 해야 합니다.</div>
+    <div class="paper" id="paper"><div class="empty">불러오는 중...</div></div>
+
+    <script src="menu.js"></script>
+    <script>
+        const API = '/api/v1/care-plans';
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        function render(d) {
+            const r = d.resident, p = d.plan;
+            const grade = r.care_grade ? `${r.care_grade}등급` : '인지지원등급';
+            const period = r.recognition_start || r.recognition_end ? `${r.recognition_start || ''} ~ ${r.recognition_end || ''}` : '';
+            const kind = p.plan_type === 'change' ? `변경 (${p.change_reason || ''})` : '신규·정기';
+            const minutes = p.duration_minutes ? `${p.duration_minutes}분` : '';
+            return `
+                <div class="form-no">[별지 제11호의3서식] &lt;개정 2021. 6. 30.&gt; (앞쪽)</div>
+                <h1>장기요양급여 제공 계획서(방문요양, 방문목욕, 방문간호)</h1>
+                <div class="sys">계획서 구분: ${esc(kind)}</div>
+
+                <div class="sec">① 수급자</div>
+                <table>
+                    <tr><th>수급자 성명</th><td class="fill">${esc(r.name)}</td><th>생년월일</th><td class="fill">${esc(r.birth_date)}</td></tr>
+                    <tr><th>전화번호(휴대전화번호)</th><td class="blank" colspan="3"></td></tr>
+                    <tr><th>장기요양등급</th><td class="fill">${esc(grade)}</td><th>장기요양인정번호</th><td class="fill">${esc(r.recognition_number)}</td></tr>
+                    <tr><th>장기요양 인정유효기간</th><td class="fill">${esc(period)}</td><th>개인별장기요양이용계획서 번호</th><td class="blank"></td></tr>
+                </table>
+
+                <div class="sec">② 동의자</div>
+                <table>
+                    <tr><th>성명</th><td class="fill">${esc(p.guardian_signer)}</td><th>수급자와의 관계</th><td class="blank"></td></tr>
+                    <tr><th>전화번호(휴대전화번호)</th><td class="fill">${esc(r.guardian_phone)}</td><th>동의일</th><td class="fill">${esc(p.guardian_signed_date)}</td></tr>
+                </table>
+
+                <div class="sec">③ 장기요양기관</div>
+                <table>
+                    <tr><th>장기요양기관명</th><td class="fill">${esc(d.center_name)}</td><th>장기요양기관기호</th><td class="blank"></td></tr>
+                </table>
+
+                <div class="sec">④ 급여제공계획 작성</div>
+                <table>
+                    <tr><th>장기요양급여 종류</th><th>장기요양급여 계약일</th><th>장기요양급여 계약기간</th><th>급여제공 계획서 적용기간</th><th>작성일</th><th>통보일</th></tr>
+                    <tr><td class="fill">${esc(p.service_type)}</td><td class="blank"></td><td class="blank"></td><td class="fill">${esc(p.service_start_date)} ~</td><td class="fill">${esc(p.written_date)}</td><td class="fill">${esc(p.nhis_notified_date)}</td></tr>
+                </table>
+
+                <div class="sec">⑤ 급여제공계획 내용</div>
+                <table>
+                    <tr><th>목표</th><td class="fill">${esc(p.goals)}</td></tr>
+                    <tr><th>장기요양 필요영역</th><td class="fill">${esc(p.needs)}</td></tr>
+                    <tr><th>세부 제공내용</th><td class="fill">${esc(p.details)}</td></tr>
+                    <tr><th>횟수</th><td class="fill">${esc(p.frequency)}</td></tr>
+                    <tr><th>시간(1회)</th><td class="fill">${esc(minutes)}</td></tr>
+                    <tr><th>작성자</th><td class="fill">${esc(p.author_name)}</td></tr>
+                </table>
+                <div class="sys">세부목표·필요영역·필요내용이 여러 개면 공단 서식의 해당 칸마다 나눠 적어 주세요. 돌봄케어 기록은 하나의 칸에 모아 두었습니다.</div>
+
+                <div class="sec">종합의견</div>
+                <table><tr><td class="fill">${esc(p.opinion)}</td></tr></table>
+
+                <div class="sec">통보</div>
+                <p style="font-size:13px;">「노인장기요양보험법」 제27조 및 같은 법 시행령 제13조, 같은 법 시행규칙 제21조의2에 따라 수급자의 장기요양급여 제공 계획서 내용을 국민건강보험공단에 통보합니다.</p>
+                <table>
+                    <tr><th>장기요양기관의 장(대표자)</th><td class="blank">(서명 또는 인)</td></tr>
+                    <tr><th>동의자</th><td class="blank">(서명 또는 인)</td></tr>
+                </table>`;
+        }
+
+        async function init() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            const id = new URLSearchParams(location.search).get('plan_id');
+            if (!id) { document.getElementById('paper').innerHTML = '<div class="empty">출력할 계획서가 없습니다.</div>'; return; }
+            try {
+                const r = await fetch(`${API}/${encodeURIComponent(id)}/form`);
+                if (!r.ok) throw new Error(r.status);
+                const j = await r.json();
+                document.getElementById('paper').innerHTML = render(j.data);
+            } catch (e) {
+                document.getElementById('paper').innerHTML = '<div class="empty">계획서를 불러오지 못했습니다. 사회복지사 또는 센터장 계정으로 열어 주세요.</div>';
+            }
+        }
+        init();
+    </script>
+</body>
+</html>

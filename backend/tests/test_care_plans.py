@@ -217,3 +217,19 @@ def test_manager_can_view_signature_image_only_when_signed(linked):
     res = client.get(f"/api/v1/care-plans/{pid}/signature", headers=MANAGER).json()
     assert res["signature"] == SIG and res["signer"] == "김영희(딸)"
     assert client.get(f"/api/v1/care-plans/{pid}/signature", headers=GUARDIAN).status_code == 403
+
+
+def test_plan_form_returns_print_values_and_hides_other_centers(env):
+    db, client = env
+    created = client.post("/api/v1/care-plans", json=body(), headers=MANAGER).json()["data"]
+    data = client.get(f"/api/v1/care-plans/{created['id']}/form", headers=MANAGER).json()["data"]
+    assert data["center_name"] == "센터"
+    assert data["resident"]["name"] == "김이용"
+    assert data["plan"]["frequency"] == "주 5회"
+    assert data["plan"]["duration_minutes"] == 180
+    assert data["plan"]["author_name"] == "센터장"
+    assert data["plan"]["service_start_date"] == "2026-10-10"
+    assert client.get(f"/api/v1/care-plans/{created['id']}/form", headers=CAREGIVER).status_code == 403
+    db.add(models.CarePlan(id=99, center_id=2, resident_id=3, author_id=1, written_date=date(2026, 10, 1), goals="x"))
+    db.commit()
+    assert client.get("/api/v1/care-plans/99/form", headers=MANAGER).status_code == 404

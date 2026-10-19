@@ -18,7 +18,7 @@ from app.api.notifications import notify
 from app.auth import get_current_user, require_manager, require_social_or_manager
 from app.database import get_db
 from app.care_plan_entry import entry_sheet
-from app.models import CarePlan, CarePlanAck, NeedsAssessment, Resident, RiskAssessment, User
+from app.models import CarePlan, CarePlanAck, Center, NeedsAssessment, Resident, RiskAssessment, User
 
 router = APIRouter()
 
@@ -197,6 +197,42 @@ def plan_entry_sheet(plan_id: int, db: Session = Depends(get_db), actor: User = 
         raise HTTPException(status_code=404, detail="계획서를 찾을 수 없습니다")
     resident = db.query(Resident).filter(Resident.id == plan.resident_id).first()
     return {"status": "success", "data": {"resident_name": resident.name if resident else "", **entry_sheet(plan, resident)}}
+
+
+@router.get("/{plan_id}/form")
+def plan_form(plan_id: int, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
+    """장기요양급여 제공 계획서(별지 제11호의3서식) 출력용 값. 시스템에 없는 칸(계약일·계약기간·이용계획서 번호·전화번호 등)은 비워 둔다."""
+    plan = db.query(CarePlan).filter(CarePlan.id == plan_id, CarePlan.center_id == actor.center_id).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="계획서를 찾을 수 없습니다")
+    resident = db.query(Resident).filter(Resident.id == plan.resident_id).first()
+    center = db.query(Center).filter(Center.id == actor.center_id).first()
+    author = db.query(User).filter(User.id == plan.author_id).first() if plan.author_id else None
+    return {"status": "success", "data": {
+        "center_name": center.name if center else "",
+        "resident": {
+            "name": resident.name if resident else "",
+            "birth_date": resident.birth_date.isoformat() if resident and resident.birth_date else "",
+            "guardian_phone": resident.guardian_phone if resident else "",
+            "care_grade": resident.care_grade if resident else None,
+            "recognition_number": resident.recognition_number if resident else "",
+            "recognition_start": resident.recognition_start.isoformat() if resident and resident.recognition_start else "",
+            "recognition_end": resident.recognition_end.isoformat() if resident and resident.recognition_end else "",
+        },
+        "plan": {
+            "plan_type": plan.plan_type, "change_reason": plan.change_reason, "service_type": plan.service_type or "방문요양",
+            "written_date": plan.written_date.isoformat() if plan.written_date else "",
+            "service_start_date": plan.service_start_date.isoformat() if plan.service_start_date else "",
+            "nhis_notified_date": plan.nhis_notified_date.isoformat() if plan.nhis_notified_date else "",
+            "goals": plan.goals or "", "needs": plan.needs or "", "details": plan.details or "",
+            "frequency": plan.frequency or "",
+            "duration_minutes": plan.duration_minutes,
+            "opinion": plan.opinion or "",
+            "author_name": author.full_name if author else "",
+            "guardian_signer": plan.guardian_signer or "",
+            "guardian_signed_date": plan.guardian_signed_date.isoformat() if plan.guardian_signed_date else "",
+        },
+    }}
 
 
 @router.delete("/{plan_id}")
