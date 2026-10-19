@@ -36,7 +36,7 @@
         <a href="./resident_management.html">← 이용자 관리로</a>
         <button type="button" onclick="window.print()">인쇄</button>
     </div>
-    <div class="note">공단 서식 「욕구조사기록지」(시행규칙 별지 양식, 6쪽 중 1·2쪽) 칸 구성에 맞춰 돌봄케어에 기록한 욕구조사를 채운 출력물입니다. 기록하지 않은 칸(면담자, 복약, 구강 세부, 배뇨·배변, 의견 등)은 비워 두었으니 인쇄 후 손으로 적어 주세요. 3쪽 이후는 아직 지원하지 않습니다. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다.</div>
+    <div class="note">공단 서식 「욕구조사기록지」(6쪽 중 1~5쪽) 칸 구성에 맞춰 돌봄케어에 기록한 욕구조사를 채운 출력물입니다. 기록하지 않은 칸(면담자, 복약, 구강 세부, 배뇨·배변, 의견 등)은 비워 두었으니 인쇄 후 손으로 적어 주세요. 1~5쪽을 출력합니다. 6쪽은 작성요령이라 출력하지 않습니다. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다.</div>
     <div class="paper" id="paper"><div class="empty">불러오는 중...</div></div>
 
     <script src="menu.js"></script>
@@ -109,11 +109,7 @@
                 </table>
                 <div class="sys">옷 벗고 입기, 청소·정리, 식사 준비, 교통수단 이용 등 서식의 나머지 항목은 돌봄케어에 기록하지 않아 비워 두었습니다.</div>
 
-                <div class="sec">의견 및 판단근거</div>
-                <table>
-                    <tr><th>인지상태</th><td class="fill" style="white-space:pre-wrap">${esc(a.cognition_note)}</td></tr>
-                    <tr><th>총평(종합소견)</th><td class="fill" style="white-space:pre-wrap">${esc(a.overall_opinion)}</td></tr>
-                </table>`;
+            `;
         }
 
         function renderPage2(d) {
@@ -136,11 +132,55 @@
                 <div class="sec">의견 및 판단근거</div>
                 <table>
                     <tr><th>신체기능 의견</th><td class="fill" style="white-space:pre-wrap">${esc(a.notes)}</td></tr>
-                    <tr><th>의사소통</th><td class="fill" style="white-space:pre-wrap">${esc(a.communication_note)}</td></tr>
-                    <tr><th>가족 및 환경</th><td class="fill" style="white-space:pre-wrap">${esc(a.family_env_note)}</td></tr>
-                    <tr><th>주관적 욕구</th><td class="fill" style="white-space:pre-wrap">${esc(a.subjective_needs)}</td></tr>
-                    <tr><th>자원이용 욕구</th><td class="fill" style="white-space:pre-wrap">${esc(a.resource_use)}</td></tr>
                 </table>`;
+        }
+
+        function narrativeRow(label, value) {
+            return `<tr><th>${label}</th><td class="fill" style="white-space:pre-wrap">${esc(value || '')}</td></tr>`;
+        }
+
+        function renderPage3(d) {
+            const a = d.assessment;
+            return `
+                <div class="pagebreak"></div>
+                <div class="form-no">[욕구조사기록지] (6쪽 중 제3쪽)</div>
+                <div class="sec">5. 간호관리</div>
+                <div class="sys">피부간호, 통증간호, 배뇨·배변간호 등은 돌봄케어에 기록하지 않아 비워 두었습니다. 해당 항목을 손으로 적어 주세요.</div>
+                <div class="sec">6. 인지 및 의사소통</div>
+                <table>
+                    ${narrativeRow('가. 인지기능', a.cognition_note)}
+                    ${narrativeRow('라. 의사소통', a.communication_note)}
+                </table>
+                <div class="sys">행동증상, 심리증상, 시력·청력 판정 칸은 기록하지 않아 비워 두었습니다.</div>`;
+        }
+
+        function renderPage4(d) {
+            const a = d.assessment;
+            return `
+                <div class="pagebreak"></div>
+                <div class="form-no">[욕구조사기록지] (6쪽 중 제4쪽)</div>
+                <div class="sec">7. 수급자의 가족 및 지지체계</div>
+                <table>
+                    ${narrativeRow('라. 의견 및 판단근거 (가족 및 환경)', a.family_env_note)}
+                </table>
+                <div class="sys">주거형태, 동거인, 자녀·주 수발자, 지역사회 자원은 기록하지 않아 비워 두었습니다.</div>
+                <div class="sec">8. 수급자가 거주하는 곳의 환경</div>
+                <div class="sys">거주 환경 항목은 기록하지 않아 비워 두었습니다.</div>`;
+        }
+
+        function renderPage5(d) {
+            const a = d.assessment;
+            return `
+                <div class="pagebreak"></div>
+                <div class="form-no">[욕구조사기록지] (6쪽 중 제5쪽)</div>
+                <div class="sec">9. 수급자 및 보호자가 희망하는 서비스</div>
+                <table>
+                    ${narrativeRow('자. 의견 및 판단근거 (주관적 욕구)', a.subjective_needs)}
+                    ${narrativeRow('아. 희망하는 지역사회 자원', a.resource_use)}
+                </table>
+                <div class="sys">희망 서비스 체크 항목은 기록하지 않아 비워 두었습니다.</div>
+                <div class="sec">10. 종합의견</div>
+                <table><tr><td class="fill" style="white-space:pre-wrap">${esc(a.overall_opinion)}</td></tr></table>`;
         }
 
         async function init() {
@@ -152,7 +192,7 @@
                 const r = await fetch(`${API}/${encodeURIComponent(id)}/form`);
                 if (!r.ok) throw new Error(r.status);
                 const j = await r.json();
-                document.getElementById('paper').innerHTML = render(j.data) + renderPage2(j.data);
+                document.getElementById('paper').innerHTML = render(j.data) + renderPage2(j.data) + renderPage3(j.data) + renderPage4(j.data) + renderPage5(j.data);
             } catch (e) {
                 document.getElementById('paper').innerHTML = '<div class="empty">욕구조사 기록을 불러오지 못했습니다.</div>';
             }
