@@ -373,6 +373,9 @@ def batch_delete_records(
             pair, pair_billing = _pair_of(db, record)
             if pair and _pair_is_locked(pair_billing):
                 continue  # 함께 제공한 요양보호사의 청구가 이미 제출·승인됐으면 이 기록만 지울 수 없다
+            own_billings = db.query(BillingRecord).filter(BillingRecord.daily_record_id == record.id).all()
+            if any(b.approval_status not in EDITABLE_APPROVALS for b in own_billings):
+                continue  # 제출·승인된 청구가 있는 기록은 일괄로도 지우지 않는다
 
             billings = db.query(BillingRecord).filter(
                 BillingRecord.recorded_date == record.recorded_date,
@@ -1300,6 +1303,9 @@ async def delete_record(
     billings = db.query(BillingRecord).filter(
         BillingRecord.daily_record_id == record.id
     ).all()
+    # 제출·승인된 청구를 지우면 근거 없는 금액이 흔적 없이 사라진다. 고치려면 반려된 뒤에만 가능하다.
+    if any(b.approval_status not in EDITABLE_APPROVALS for b in billings):
+        raise HTTPException(status_code=400, detail="제출·승인된 청구가 있는 기록은 삭제할 수 없습니다. 센터장과 상의해 주세요")
 
     try:
         # 청구 기록 삭제 (이 DailyRecord와 연결된 청구만)
