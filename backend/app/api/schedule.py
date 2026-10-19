@@ -1,6 +1,14 @@
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from typing import Optional
+from app.geo import judge
+
+
+class PlaceBody(BaseModel):
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    accuracy: Optional[float] = None  # 휴대폰이 알려 준 위치 오차(m)
 from sqlalchemy.orm import Session
 from app.models import Schedule, User, Resident, Center, DailyRecord, Notification
 from app.api.notifications import notify
@@ -379,9 +387,18 @@ def caregiver_schedule_view(
 
     return {"year_month": year_month, "items": items, "summary": summary}
 
+def _place_check(db: Session, schedule, body):
+    """이용자 주소 좌표와 휴대폰 위치를 비교한다. 좌표는 버리고 판정과 거리만 돌려준다."""
+    resident = db.query(Resident).filter(Resident.id == schedule.resident_id).first()
+    body = body or PlaceBody()
+    return judge(resident.latitude if resident else None, resident.longitude if resident else None,
+                 body.lat, body.lng, body.accuracy)
+
+
 @router.post("/{schedule_id}/arrive")
-def mark_arrived(schedule_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
-    """도착 시각 기록 (이미 도착한 경우 처음 시각 유지)"""
+def mark_arrived(schedule_id: int, body: Optional[PlaceBody] = None, db: Session = Depends(get_db),
+                 actor: User = Depends(get_current_user)):
+    """도착 시각 기록 (이미 도착한 경우 처음 시각 유지). 위치를 보내면 이용자 주소와 비교해 판정을 남긴다."""
     schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
@@ -390,11 +407,13 @@ def mark_arrived(schedule_id: int, db: Session = Depends(get_db), actor: User = 
         raise HTTPException(status_code=400, detail="센터장이 승인한 일정만 도착을 기록할 수 있습니다")
     if schedule.arrived_at is None:
         schedule.arrived_at = datetime.now()
+        schedule.arrive_check, schedule.arrive_distance_m = _place_check(db, schedule, body)
         db.commit()
     return {"status": "success", "arrived_at": schedule.arrived_at.isoformat()}
 
 @router.post("/{schedule_id}/depart")
-def mark_left(schedule_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+def mark_left(schedule_id: int, body: Optional[PlaceBody] = None, db: Session = Depends(get_db),
+              actor: User = Depends(get_current_user)):
     """퇴실 시각 기록 (도착 기록 이후에만 가능). 처음 퇴실 기록 시 방문 기록 작성 알림을 보낸다."""
     schedule = _my_schedule(db, schedule_id, actor)
     if not schedule:
@@ -406,6 +425,7 @@ def mark_left(schedule_id: int, db: Session = Depends(get_db), actor: User = Dep
         raise HTTPException(status_code=400, detail="도착 기록 후 퇴실을 기록할 수 있습니다")
     if schedule.left_at is None:
         schedule.left_at = datetime.now()
+        schedule.depart_check, schedule.depart_distance_m = _place_check(db, schedule, body)
         resident = db.query(Resident).filter(Resident.id == schedule.resident_id).first()
         resident_label = f"{resident.name} " if resident else ""
         notify(db, schedule.caregiver_id, "record_needed", f"{resident_label}방문 기록을 작성해 주세요")

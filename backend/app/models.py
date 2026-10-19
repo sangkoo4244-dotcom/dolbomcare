@@ -246,6 +246,10 @@ class Schedule(Base):
     planned_items = Column(String, nullable=True)  # 계획된 제공 항목 코드 (쉼표 구분)
     arrived_at = Column(DateTime, nullable=True)  # 실제 도착 시각
     left_at = Column(DateTime, nullable=True)  # 실제 퇴실 시각
+    arrive_check = Column(String, nullable=True)  # 도착 위치 판정: ok / far / no_location / no_resident_coords
+    arrive_distance_m = Column(Integer, nullable=True)  # 도착 시 이용자 주소와의 거리(m). 좌표 자체는 저장하지 않는다
+    depart_check = Column(String, nullable=True)
+    depart_distance_m = Column(Integer, nullable=True)
     review_note = Column(String, nullable=True)  # 계획 반려 사유
     service_type = Column(String, default="basic_care")  # 'basic_care', 'meal_service', 'medical_care'
     # 승인된 일정의 변경 요청: 센터장이 승인하기 전까지 원래 일정은 그대로 유지된다

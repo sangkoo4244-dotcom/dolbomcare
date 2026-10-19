@@ -549,14 +549,28 @@
             renderTable();
         }
 
+        // 도착·퇴실 위치: 허락하면 현재 위치를 보내고, 거절하거나 8초 안에 못 받으면 위치 없이 보낸다 (서버가 '위치 없음'으로 표시)
+        function currentPlace() {
+            return new Promise(resolve => {
+                if (!navigator.geolocation) return resolve({});
+                const timer = setTimeout(() => resolve({}), 8000);
+                navigator.geolocation.getCurrentPosition(
+                    pos => { clearTimeout(timer); resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }); },
+                    () => { clearTimeout(timer); resolve({}); },
+                    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+            });
+        }
+
         async function markArrived(id) {
-            const r = await fetch(`${API_URL}/schedule/${id}/arrive?user_id=${currentUser.id}&user_role=${currentUser.role}`, { method: 'POST' });
+            const place = await currentPlace();
+            const r = await fetch(`${API_URL}/schedule/${id}/arrive?user_id=${currentUser.id}&user_role=${currentUser.role}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(place) });
             if (!r.ok) { const e = await r.json().catch(() => ({})); showMessage(e.detail || '도착 기록에 실패했습니다', 'error'); return; }
             loadSchedules();
         }
 
         async function markLeft(id) {
-            const r = await fetch(`${API_URL}/schedule/${id}/depart?user_id=${currentUser.id}&user_role=${currentUser.role}`, { method: 'POST' });
+            const place = await currentPlace();
+            const r = await fetch(`${API_URL}/schedule/${id}/depart?user_id=${currentUser.id}&user_role=${currentUser.role}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(place) });
             if (!r.ok) { const e = await r.json().catch(() => ({})); showMessage(e.detail || '퇴실 기록에 실패했습니다', 'error'); return; }
             loadSchedules();
         }

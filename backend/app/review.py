@@ -59,6 +59,8 @@ def gate_reason_for(schedule, requested_date, now):
         reasons.append("계획 외 기록")
     elif schedule.arrived_at is None:
         reasons.append("도착 미기록")
+    elif getattr(schedule, "arrive_check", None) in ("far", "no_location"):
+        reasons.append("위치 확인 필요")
     if requested_date is not None and requested_date.date() != now.date():
         reasons.append("소급 기록")
     return " · ".join(reasons) or None

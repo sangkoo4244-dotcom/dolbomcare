@@ -126,7 +126,7 @@ def test_visit_flows_from_schedule_to_manager_views_with_same_numbers(env):
     assert month["total_amount"] == amount
 
     # 9. 센터장 승인 → 요양사A 화면이 승인으로 바뀌고 월 합계 금액이 그대로다
-    assert env.post(f"/api/v1/billing/{mine[0]['id']}/approve", headers=MANAGER, json={"user_id": 1, "user_role": "center_manager"}).status_code == 200
+    assert env.post(f"/api/v1/billing/{mine[0]['id']}/approve", headers=MANAGER, json={"user_id": 1, "user_role": "center_manager", "reason": "테스트: 위치 없이 도착한 방문, 센터장 확인"}).status_code == 200
     mine_after = env.get("/api/v1/billing/", headers=CG_A).json()
     mine_after = mine_after if isinstance(mine_after, list) else mine_after.get("data", mine_after.get("records", []))
     assert mine_after[0]["approval_status"] == "approved"
