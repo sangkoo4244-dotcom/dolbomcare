@@ -176,7 +176,8 @@
             const logs = await fetch(`${API}/logs?resident_id=${rid}`).then(r => r.json()).catch(() => ({}));
             const rows = (logs.data || []).map(l => `<div class="rec"><div class="head"><b>${esc(l.visited_at)}</b><span>${esc(l.author_name)}</span></div>
                 <div class="meta">상담대상자: ${esc(l.counseling_target)} ${l.monitoring_checked ? '· 급여제공 확인 함' : ''}</div>
-                <div class="body">${esc(l.counseling_result)}${l.content ? '\n' + esc(l.content) : ''}</div></div>`).join('');
+                <div class="body">${esc(l.counseling_result)}${l.content ? '\n' + esc(l.content) : ''}</div>
+                <div style="margin-top:6px;"><a href="./social_work_log_sheet.html?log_id=${l.id}" target="_blank" style="font-size:13px;color:#0F8B80;font-weight:700;">공단 서식으로 출력</a></div></div>`).join('');
             document.getElementById('logList').innerHTML = rows || '<div class="empty-note">이 이용자의 일지가 아직 없습니다.</div>';
         }
 

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>업무수행일지 출력 - 돌봄케어</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; color: #0f172a; background: #f1f5f9; }
+        .bar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; position: sticky; top: 0; z-index: 5; }
+        .bar a { color: #0f766e; font-weight: 700; text-decoration: none; margin-right: 6px; }
+        .bar button { height: 40px; border: 1px solid #0f766e; border-radius: 8px; padding: 0 14px; font-size: 14px; background: #0f766e; color: #fff; font-weight: 700; }
+        .note { max-width: 860px; margin: 12px auto 0; padding: 0 16px; font-size: 12px; color: #64748b; line-height: 1.6; }
+        .paper { max-width: 860px; margin: 12px auto 24px; background: #fff; padding: 24px; border: 1px solid #e2e8f0; overflow-x: auto; }
+        .paper h1 { text-align: center; font-size: 18px; margin: 0 0 4px; color: #1e3a8a; }
+        .paper h2 { text-align: center; font-size: 14px; margin: 0 0 14px; color: #1e3a8a; font-weight: 700; }
+        .form-no { font-size: 12px; color: #334155; margin-bottom: 6px; }
+        table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 640px; }
+        th, td { border: 1px solid #334155; padding: 6px 7px; vertical-align: middle; }
+        th { background: #f8fafc; font-weight: 600; width: 120px; text-align: center; }
+        td.fill { color: #0f172a; }
+        td.blank { height: 30px; }
+        .sec { font-size: 14px; font-weight: 700; margin: 16px 0 6px; color: #1e3a8a; }
+        .sys { font-size: 11px; color: #64748b; margin-top: 2px; }
+        .empty { padding: 40px 16px; text-align: center; color: #64748b; }
+        @media print {
+            body { background: #fff; }
+            .bar, .note { display: none; }
+            .paper { border: none; margin: 0; padding: 0; max-width: none; }
+            @page { size: A4; margin: 12mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bar">
+        <a href="./social_work.html">← 사회복지 업무로</a>
+        <button type="button" onclick="window.print()">인쇄</button>
+    </div>
+    <div class="note">공단 서식 「가정방문급여 급여관리 업무수행일지」(시행규칙 별지 제24호서식, 개정 2026.1.1) 1쪽 양식에 맞춰 돌봄케어 기록을 채운 출력물입니다. 돌봄케어에 기록하지 않는 칸(욕구조사 항목, 방문장소, 서명)은 비워 두었으니 인쇄 후 손으로 적어 주세요. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다. 2쪽 이후는 아직 지원하지 않습니다.</div>
+    <div class="paper" id="paper"><div class="empty">불러오는 중...</div></div>
+
+    <script src="menu.js"></script>
+    <script>
+        const API = '/api/v1/social-work';
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        function render(d) {
+            const grade = d.care_grade ? `${d.care_grade}등급` : '인지지원등급';
+            return `
+                <div class="form-no">[별지 제24호서식] &lt;개정 2026. 1. 1.&gt;</div>
+                <h1>가정방문급여(통합재가서비스 포함) 급여관리 업무수행 일지</h1>
+                <h2>(공통) 방문요양 인지활동형 프로그램관리자 업무수행 일지 · 1쪽</h2>
+
+                <div class="sec">1. 기본정보</div>
+                <table>
+                    <tr><th>수급자 성명</th><td class="fill">${esc(d.resident_name)}</td><th>장기요양인정번호</th><td class="fill">${esc(d.recognition_number)}</td></tr>
+                    <tr><th>장기요양등급</th><td class="fill">${esc(grade)}</td><th>방문일시</th><td class="fill">${esc(d.visited_at)}</td></tr>
+                    <tr><th>방문장소</th><td class="blank"></td><th>방문불가 사유</th><td class="blank"></td></tr>
+                    <tr><th>방문(확인)자 성명</th><td class="fill">${esc(d.author_name)} <span class="sys">(서명 칸 비움)</span></td><th>시설장(관리책임자) 성명</th><td class="blank"></td></tr>
+                </table>
+
+                <div class="sec">2. 욕구조사</div>
+                <table>
+                    <tr><th>가. 보유질환</th><td class="blank"></td></tr>
+                    <tr><th>나. 영양상태</th><td class="blank"></td></tr>
+                    <tr><th>다. 신체상태 (행보·일어서기·배뇨·배변)</th><td class="blank"></td></tr>
+                    <tr><th>라. 일상생활기능 (식사·세수·양치·화장실 등)</th><td class="blank"></td></tr>
+                    <tr><th>마. 인지 및 행동증상</th><td class="blank"></td></tr>
+                    <tr><th>바. 동거인</th><td class="blank"></td></tr>
+                </table>
+                <div class="sys">욕구조사 항목은 돌봄케어에 기록하지 않으므로 인쇄 후 손으로 적어 주세요.</div>
+
+                <div class="sec">3. 상담 기록 (돌봄케어 기록)</div>
+                <table>
+                    <tr><th>상담대상자 (관계)</th><td class="fill">${esc(d.counseling_target)}</td></tr>
+                    <tr><th>상담결과</th><td class="fill" style="white-space:pre-wrap">${esc(d.counseling_result)}</td></tr>
+                    <tr><th>상담 내용</th><td class="fill" style="white-space:pre-wrap">${esc(d.content || '')}</td></tr>
+                </table>`;
+        }
+
+        async function init() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            const logId = new URLSearchParams(location.search).get('log_id');
+            if (!logId) { document.getElementById('paper').innerHTML = '<div class="empty">출력할 업무수행일지가 없습니다.</div>'; return; }
+            try {
+                const r = await fetch(`${API}/logs/${encodeURIComponent(logId)}/form`);
+                if (!r.ok) throw new Error(r.status);
+                const j = await r.json();
+                document.getElementById('paper').innerHTML = render(j.data);
+            } catch (e) {
+                document.getElementById('paper').innerHTML = '<div class="empty">업무수행일지를 불러오지 못했습니다.</div>';
+            }
+        }
+        init();
+    </script>
+</body>
+</html>

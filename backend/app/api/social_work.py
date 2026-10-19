@@ -67,6 +67,26 @@ def list_logs(resident_id: int = Query(...), db: Session = Depends(get_db), acto
     return {"status": "success", "data": [_log_dict(r, names) for r in rows]}
 
 
+@router.get("/logs/{log_id}/form")
+def log_form(log_id: int, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
+    """업무수행일지 출력(별지 제24호 1쪽)에 필요한 값. 시스템에 없는 칸은 돌려주지 않고 출력 화면에서 빈칸으로 둔다."""
+    log = db.query(SocialWorkLog).filter(SocialWorkLog.id == log_id, SocialWorkLog.center_id == actor.center_id).first()
+    if not log:
+        raise HTTPException(status_code=404, detail="업무수행일지를 찾을 수 없습니다")
+    resident = _resident(db, log.resident_id, actor.center_id)
+    author = db.query(User).filter(User.id == log.author_id).first()
+    return {"status": "success", "data": {
+        "resident_name": resident.name,
+        "recognition_number": resident.recognition_number,
+        "care_grade": resident.care_grade,
+        "visited_at": log.visited_at.strftime("%Y-%m-%d %H:%M"),
+        "author_name": author.full_name if author else "",
+        "counseling_target": log.counseling_target,
+        "counseling_result": log.counseling_result,
+        "content": log.content,
+    }}
+
+
 @router.post("/monitoring")
 def record_monitoring(body: MonitoringBody, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     _resident(db, body.resident_id, actor.center_id)

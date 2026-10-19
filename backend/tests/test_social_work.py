@@ -122,3 +122,18 @@ def test_completing_a_plan_records_the_monthly_visit_once(env):
     assert [x["resident_id"] for x in status["done"]] == [1]
     again = client.post(f"/api/v1/social-work/visit-plans/{second}/done", headers=SOCIAL).json()["data"]
     assert again["monitoring_created"] is False  # 같은 달 기록은 한 번만
+
+
+def test_log_form_returns_print_fields_and_hides_other_centers(env):
+    _, client = env
+    log_id = client.post("/api/v1/social-work/logs", json=log_body(), headers=SOCIAL).json()["data"]["id"]
+    r = client.get(f"/api/v1/social-work/logs/{log_id}/form", headers=MANAGER)
+    assert r.status_code == 200
+    data = r.json()["data"]
+    assert data["resident_name"] == "김이용"
+    assert data["care_grade"] == 2
+    assert data["author_name"] == "사회복지사"
+    assert data["counseling_target"] == "김영희(딸)"
+    assert data["visited_at"] == "2026-10-14 10:00"
+    assert client.get(f"/api/v1/social-work/logs/{log_id}/form", headers=OTHER_SOCIAL).status_code == 404
+    assert client.get(f"/api/v1/social-work/logs/{log_id}/form", headers=CAREGIVER).status_code == 403
