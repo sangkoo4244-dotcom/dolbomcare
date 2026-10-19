@@ -38,7 +38,7 @@ function renderNavbar() {
         <nav class="navbar">
             <div class="navbar-header">
                 <div class="logo">
-                    <svg width="28" height="28" viewBox="0 0 42 42" fill="none" aria-hidden="true" style="vertical-align:middle;margin-right:8px"><path d="M11 9V33" stroke="#0B1D32" stroke-width="3.4" stroke-linecap="round"/><path d="M11 9H27M11 21H24M11 33H27" stroke="#0B8F88" stroke-width="3.4" stroke-linecap="round"/><circle cx="28.5" cy="9" r="3" fill="#57E5D4"/><circle cx="25.5" cy="21" r="3" fill="#57E5D4"/><circle cx="28.5" cy="33" r="3" fill="#57E5D4"/></svg><span class="logo-text">dolbomcare</span>
+                    <img src="/assets/brand/logo-mark-256.png" alt="" height="28" style="vertical-align:middle;margin-right:8px"><span class="logo-text">dolbomcare</span>
                 </div>
             </div>
 
