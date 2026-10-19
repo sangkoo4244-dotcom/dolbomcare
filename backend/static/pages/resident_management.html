@@ -1651,6 +1651,7 @@
                         <b>${(a.assessed_date || '').slice(0, 10)}</b> · 작성: ${escapeHtml(a.assessed_by_name || '-')}
                         ${a.diseases_label.length ? ` · 질환: ${a.diseases_label.map(escapeHtml).join(', ')}` : ''}
                         ${a.mobility_status_label ? ` · 보행: ${escapeHtml(a.mobility_status_label)}` : ''}
+                        <a href="./needs_assessment_sheet.html?id=${a.id}" target="_blank" style="font-size:12px;color:#0F8B80;font-weight:700;margin-left:6px;">공단 서식으로 출력</a>
                         ${a.missing_items && a.missing_items.length ? `<div style="color:#B45309;font-size:12px;margin-top:2px;">평가 필수 항목 비어 있음: ${a.missing_items.map(escapeHtml).join(', ')}</div>` : ''}
                     </div>`).join('');
             } catch (e) { box.textContent = '이력을 불러올 수 없습니다'; }

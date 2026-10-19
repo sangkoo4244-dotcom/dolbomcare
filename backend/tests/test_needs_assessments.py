@@ -79,3 +79,18 @@ def test_history_returns_new_fields_and_isolation(client):
     rows = client.get("/api/v1/needs-assessments/resident/1", headers=MANAGER).json()["assessments"]
     assert rows[0]["family_env_note"].startswith("아들 부부")
     assert client.post("/api/v1/needs-assessments/", json={**FULL, "resident_id": 2}, headers=MANAGER).status_code == 404
+
+
+def test_form_returns_assessment_values_for_print_and_hides_other_centers(client):
+    created = client.post("/api/v1/needs-assessments/", json=FULL, headers=MANAGER)
+    assert created.status_code == 200
+    aid = created.json()["id"] if "id" in created.json() else created.json()["data"]["id"]
+    data = client.get(f"/api/v1/needs-assessments/{aid}/form", headers=MANAGER).json()["data"]
+    assert data["resident_name"] == "김이용"
+    assert data["center_name"] == "센터"
+    assert data["assessed_by_name"] == "센터장"
+    assert data["assessment"]["diseases"] == ["arthritis"]
+    assert data["assessment"]["function_status"] == {"eating": "alone"}
+    assert data["assessment"]["mobility_status_label"] == "부축해주면 보행 가능"
+    assert client.get(f"/api/v1/needs-assessments/{aid}/form", headers=CAREGIVER).status_code == 200
+    assert client.get("/api/v1/needs-assessments/999/form", headers=MANAGER).status_code == 404

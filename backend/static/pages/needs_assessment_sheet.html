@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>욕구조사기록지 출력 - 돌봄케어</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; color: #0f172a; background: #f1f5f9; }
+        .bar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; position: sticky; top: 0; z-index: 5; }
+        .bar a { color: #0f766e; font-weight: 700; text-decoration: none; margin-right: 6px; }
+        .bar button { height: 40px; border: 1px solid #0f766e; border-radius: 8px; padding: 0 14px; font-size: 14px; background: #0f766e; color: #fff; font-weight: 700; }
+        .note { max-width: 860px; margin: 12px auto 0; padding: 0 16px; font-size: 12px; color: #64748b; line-height: 1.6; }
+        .paper { max-width: 860px; margin: 12px auto 24px; background: #fff; padding: 24px; border: 1px solid #e2e8f0; overflow-x: auto; }
+        .paper h1 { text-align: center; font-size: 18px; margin: 0 0 10px; }
+        .form-no { font-size: 12px; color: #334155; margin-bottom: 6px; }
+        table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 640px; }
+        th, td { border: 1px solid #334155; padding: 5px 7px; vertical-align: middle; }
+        th { background: #f8fafc; font-weight: 600; text-align: center; }
+        td.fill { color: #0f172a; }
+        td.blank { height: 28px; }
+        .sec { font-size: 14px; font-weight: 700; margin: 14px 0 6px; }
+        .sys { font-size: 11px; color: #64748b; margin-top: 2px; }
+        .pagebreak { page-break-after: always; margin: 0; }
+        .empty { padding: 40px 16px; text-align: center; color: #64748b; }
+        @media print {
+            body { background: #fff; }
+            .bar, .note { display: none; }
+            .paper { border: none; margin: 0; padding: 0; max-width: none; }
+            @page { size: A4; margin: 12mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bar">
+        <a href="./resident_management.html">← 이용자 관리로</a>
+        <button type="button" onclick="window.print()">인쇄</button>
+    </div>
+    <div class="note">공단 서식 「욕구조사기록지」(시행규칙 별지 양식, 6쪽 중 1·2쪽) 칸 구성에 맞춰 돌봄케어에 기록한 욕구조사를 채운 출력물입니다. 기록하지 않은 칸(면담자, 복약, 구강 세부, 배뇨·배변, 의견 등)은 비워 두었으니 인쇄 후 손으로 적어 주세요. 3쪽 이후는 아직 지원하지 않습니다. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다.</div>
+    <div class="paper" id="paper"><div class="empty">불러오는 중...</div></div>
+
+    <script src="menu.js"></script>
+    <script>
+        const API = '/api/v1/needs-assessments';
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const box = on => (on ? '☑' : '☐');
+        const has = (list, code) => (list || []).includes(code);
+
+        // 공단 서식 보유질환 칸 순서. 서식에 없는 질환은 "기타"에 쓰지 않고 제외한다(기록 원본은 그대로 남아 있다).
+        const DISEASE_ROWS = [
+            ['뇌신경계', [['stroke', '뇌졸중(뇌출혈, 뇌경색)'], ['dementia', '치매'], ['parkinson', '파킨슨병'], ['depression', '우울증']]],
+            ['호흡·순환기계', [['hypertension', '고혈압'], ['angina', '협심증'], ['mi', '심근경색증'], ['asthma', '천식'], ['copd', '만성폐쇄성폐질환']]],
+            ['내분비·대사', [['diabetes', '당뇨'], ['hyperlipidemia', '고지혈증']]],
+            ['근골격계', [['arthritis', '관절염(퇴행성·류마티스)'], ['osteoporosis', '골다공증'], ['fracture_sequela', '골절·탈골 등 사고로 인한 후유증']]],
+            ['비뇨생식기계', [['ckd', '만성신부전'], ['uti', '요로감염'], ['cystitis', '만성방광염'], ['bph', '전립선비대']]],
+            ['감각계', [['cataract', '백내장'], ['glaucoma', '녹내장'], ['hearing_loss', '난청'], ['chronic_otitis', '만성중이염'], ['tinnitus', '이명']]],
+            ['감염', [['tb', '결핵'], ['scabies', '옴']]],
+        ];
+
+        function diseaseTable(codes) {
+            return `<table>${DISEASE_ROWS.map(([group, items]) => `
+                <tr><th>${group}</th><td class="fill">${items.map(([code, label]) => `${box(has(codes, code))} ${label}`).join('&nbsp;&nbsp;&nbsp;')}</td></tr>`).join('')}
+            </table>`;
+        }
+
+        // 일상생활기능 단계: 0 혼자 할 수 있음, 1 지시(준비)도움, 2 직접(부축)도움, 3 전혀 수행할 수 없음
+        const LEVEL_NUM = { alone: 0, guided: 1, assisted: 2, unable: 3 };
+        function levelCells(fs, key) {
+            const picked = LEVEL_NUM[(fs || {})[key]];
+            return [0, 1, 2, 3].map(n => `<span style="${picked === n ? 'font-weight:800;text-decoration:underline;' : 'color:#94a3b8;'}">${n}</span>`).join(' ');
+        }
+
+        function render(d) {
+            const a = d.assessment;
+            const fs = a.function_status || {};
+            const grade = d.care_grade ? `${d.care_grade}등급` : '인지지원등급';
+            const gender = d.gender ? `${box(d.gender === '남')} 남 &nbsp; ${box(d.gender === '여')} 여` : '';
+            const nut = a.nutrition_status;
+            return `
+                <div class="form-no">[욕구조사기록지] (6쪽 중 제1쪽)</div>
+                <h1>욕구조사기록지</h1>
+                <table>
+                    <tr><th>기관명</th><td class="fill">${esc(d.center_name)}</td><th>작성일</th><td class="fill">${esc(d.assessed_date)}</td></tr>
+                    <tr><th>작성자 성명</th><td class="fill">${esc(d.assessed_by_name)}</td><th>직종</th><td class="fill">${esc(d.assessed_by_position)}</td></tr>
+                    <tr><th>욕구조사 유형</th><td colspan="3" class="blank"></td></tr>
+                </table>
+
+                <div class="sec">1. 일반사항</div>
+                <table>
+                    <tr><th>수급자 성명</th><td class="fill">${esc(d.resident_name)}</td><th>성별</th><td class="fill">${gender}</td></tr>
+                    <tr><th>생년월일</th><td class="fill">${esc(d.birth_date)}</td><th>장기요양인정번호 / 등급</th><td class="fill">${esc(d.recognition_number)} ${esc(grade)}</td></tr>
+                    <tr><th>면담자</th><td colspan="3" class="blank"></td></tr>
+                </table>
+
+                <div class="sec">2. 일반적 건강상태</div>
+                <div class="sys">가. 보유질환 (돌봄케어 기록 기준. 암·알레르기 등 서식의 기타 칸은 손으로 적어 주세요.)</div>
+                ${diseaseTable(a.diseases)}
+                <div class="sys">나. 복약 및 의료이용, 다. 구강상태는 돌봄케어에 기록하지 않아 비워 두었습니다.</div>
+                <table>
+                    <tr><th>영양상태</th><td class="fill">${box(nut === 'good')} 양호 &nbsp; ${box(nut === 'poor')} 불량 ${nut === 'poor' ? `(${esc(d.assessment.nutrition_detail_label.join(', '))})` : ''}</td></tr>
+                </table>
+
+                <div class="sec">3. 일상생활기능 <span class="sys">(0 혼자 할 수 있음 · 1 지시(준비)도움 · 2 직접(부축)도움 · 3 전혀 수행할 수 없음, 선택한 숫자에 밑줄)</span></div>
+                <table>
+                    <tr><th>구분</th><th>확인</th><th>구분</th><th>확인</th></tr>
+                    <tr><td class="fill">1) 세수하기</td><td class="fill">${levelCells(fs, 'washing_face')}</td><td class="fill">3) 화장실(이동변기) 사용하기</td><td class="fill">${levelCells(fs, 'toileting')}</td></tr>
+                    <tr><td class="fill">2) 양치질하기</td><td class="fill">${levelCells(fs, 'brushing_teeth')}</td><td class="fill">4) 몸 씻기</td><td class="blank"></td></tr>
+                    <tr><td class="fill">2) 식사하기</td><td class="fill">${levelCells(fs, 'eating')}</td><td class="fill">3) 음식 삼키기</td><td class="blank"></td></tr>
+                </table>
+                <div class="sys">옷 벗고 입기, 청소·정리, 식사 준비, 교통수단 이용 등 서식의 나머지 항목은 돌봄케어에 기록하지 않아 비워 두었습니다.</div>
+
+                <div class="sec">의견 및 판단근거</div>
+                <table>
+                    <tr><th>인지상태</th><td class="fill" style="white-space:pre-wrap">${esc(a.cognition_note)}</td></tr>
+                    <tr><th>총평(종합소견)</th><td class="fill" style="white-space:pre-wrap">${esc(a.overall_opinion)}</td></tr>
+                </table>`;
+        }
+
+        function renderPage2(d) {
+            const a = d.assessment;
+            const fs = a.function_status || {};
+            const MOB = [['independent', '자립보행 가능'], ['independent_with_device', '보장구를 사용하여 자립보행 가능'],
+                ['assisted', '부축해주면 보행 가능'], ['assisted_with_device', '보장구를 사용하여 부축을 받아 보행 가능'], ['unable', '보행 불가']];
+            return `
+                <div class="pagebreak"></div>
+                <div class="form-no">[욕구조사기록지] (6쪽 중 제2쪽)</div>
+                <div class="sec">4. 재활 및 신체기능</div>
+                <div class="sys">가. 근골격계 증상, 다. 지난 3개월간 낙상, 라 4) 실내 보행하기는 돌봄케어에 기록하지 않아 비워 두었습니다.</div>
+                <table>
+                    <tr><th>나. 보행상태</th><td class="fill">${MOB.map(([code, label]) => `${box(a.mobility_status === code)} ${label}`).join('<br>')}</td></tr>
+                </table>
+                <table>
+                    <tr><th>구분</th><th>확인</th><th>구분</th><th>확인</th></tr>
+                    <tr><td class="fill">2) 누운 상태에서 몸 일으켜 앉기</td><td class="fill">${levelCells(fs, 'sit_up')}</td><td class="fill">3) 바닥에 앉은 상태에서 일어서기</td><td class="fill">${levelCells(fs, 'stand_up')}</td></tr>
+                </table>
+                <div class="sec">의견 및 판단근거</div>
+                <table>
+                    <tr><th>신체기능 의견</th><td class="fill" style="white-space:pre-wrap">${esc(a.notes)}</td></tr>
+                    <tr><th>의사소통</th><td class="fill" style="white-space:pre-wrap">${esc(a.communication_note)}</td></tr>
+                    <tr><th>가족 및 환경</th><td class="fill" style="white-space:pre-wrap">${esc(a.family_env_note)}</td></tr>
+                    <tr><th>주관적 욕구</th><td class="fill" style="white-space:pre-wrap">${esc(a.subjective_needs)}</td></tr>
+                    <tr><th>자원이용 욕구</th><td class="fill" style="white-space:pre-wrap">${esc(a.resource_use)}</td></tr>
+                </table>`;
+        }
+
+        async function init() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user) { window.location.href = './login.html'; return; }
+            const id = new URLSearchParams(location.search).get('id');
+            if (!id) { document.getElementById('paper').innerHTML = '<div class="empty">출력할 욕구조사 기록이 없습니다.</div>'; return; }
+            try {
+                const r = await fetch(`${API}/${encodeURIComponent(id)}/form`);
+                if (!r.ok) throw new Error(r.status);
+                const j = await r.json();
+                document.getElementById('paper').innerHTML = render(j.data) + renderPage2(j.data);
+            } catch (e) {
+                document.getElementById('paper').innerHTML = '<div class="empty">욕구조사 기록을 불러오지 못했습니다.</div>';
+            }
+        }
+        init();
+    </script>
+</body>
+</html>

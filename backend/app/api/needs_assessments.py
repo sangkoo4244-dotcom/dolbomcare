@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user, require_social_or_manager
 from app.database import get_db
-from app.models import NeedsAssessment, Resident, User
+from app.models import Center, NeedsAssessment, Resident, User
 
 router = APIRouter()
 # 기초평가(욕구조사) 재작성 주기 확인 기준(일). 모델 설명의 "보통 월 1회"를 따른 값이며, 공단 매뉴얼로 확정되면 여기만 바꾼다.
@@ -195,3 +195,26 @@ def list_assessments(
     )
     assessors = {u.id: u.full_name for u in db.query(User).filter(User.center_id == actor.center_id).all()}
     return {"assessments": [_to_dict(a, assessors.get(a.assessed_by)) for a in rows]}
+
+
+@router.get("/{assessment_id}/form")
+def assessment_form(assessment_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    """욕구조사기록지(공단 별지 양식) 출력용 값. 기록하지 않은 칸은 빈 값으로 두고 출력 화면에서 빈칸으로 남긴다."""
+    row = db.query(NeedsAssessment).filter(NeedsAssessment.id == assessment_id).first()
+    resident = db.query(Resident).filter(Resident.id == row.resident_id).first() if row else None
+    if not row or not resident or resident.center_id != actor.center_id:
+        raise HTTPException(status_code=404, detail="욕구조사 기록을 찾을 수 없습니다")
+    center = db.query(Center).filter(Center.id == actor.center_id).first()
+    assessor = db.query(User).filter(User.id == row.assessed_by).first() if row.assessed_by else None
+    return {"status": "success", "data": {
+        "center_name": center.name if center else "",
+        "assessed_date": row.assessed_date.strftime("%Y-%m-%d") if row.assessed_date else "",
+        "assessed_by_name": assessor.full_name if assessor else "",
+        "assessed_by_position": assessor.position if assessor else "",
+        "resident_name": resident.name,
+        "gender": resident.gender,
+        "birth_date": resident.birth_date.strftime("%Y-%m-%d") if resident.birth_date else "",
+        "recognition_number": resident.recognition_number,
+        "care_grade": resident.care_grade,
+        "assessment": _to_dict(row, assessor.full_name if assessor else None),
+    }}
