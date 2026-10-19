@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /api/
+Disallow: /pages/
+Allow: /
+
+Sitemap: https://ieumlogic.co.kr/sitemap.xml
