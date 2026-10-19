@@ -123,7 +123,7 @@ def test_bath_and_nursing_flow_into_monthly_total(env):
     manager = {"Authorization": "Bearer " + create_access_token({"sub": "m@a.kr", "uid": 1, "role": "center_manager"}, timedelta(hours=1))}
     for bid, hdr, uid in ((a, CG, 2), (b, NURSE, 3)):
         assert client.post(f"/api/v1/billing/{bid}/submit", headers=hdr, json={"user_id": uid, "user_role": "caregiver"}).status_code == 200
-        assert client.post(f"/api/v1/billing/{bid}/approve", headers=manager, json={"user_id": 1, "user_role": "center_manager"}).status_code == 200
+        assert client.post(f"/api/v1/billing/{bid}/approve", headers=manager, json={"user_id": 1, "user_role": "center_manager", "reason": "테스트: 방문 확인 완료"}).status_code == 200
     monthly = client.get("/api/v1/billing/monthly/2026-10", headers=manager).json()
     # 청구 행은 3건: 주 담당 목욕 + 동행 요양보호사 목욕(급여 0원, 중증 가산만) + 간호. 방문요양 2인 동시 제공과 같은 방식으로 요양보호사별 청구 행을 센다
     assert monthly["total_records"] == 3 and monthly["approved_amount"] == 68200 + 45710

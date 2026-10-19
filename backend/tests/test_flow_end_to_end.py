@@ -83,7 +83,7 @@ def test_three_visits_show_the_same_money_everywhere(env):
     # 승인 전에는 매출·급여 어디에도 잡히지 않는다
     assert client.get(f"/api/v1/billing/monthly/{YM}", headers=MANAGER).json()["approved_amount"] == 0
     for v in (a, b, c):
-        assert client.post(f"/api/v1/billing/{v['billing_id']}/approve", headers=MANAGER, json={"user_id": 1, "user_role": "center_manager"}).status_code == 200
+        assert client.post(f"/api/v1/billing/{v['billing_id']}/approve", headers=MANAGER, json={"user_id": 1, "user_role": "center_manager", "reason": "테스트: 방문 확인 완료"}).status_code == 200
 
     expected = got["a"][1] + got["b"][1] + got["c"][1]
     monthly = client.get(f"/api/v1/billing/monthly/{YM}", headers=MANAGER).json()
