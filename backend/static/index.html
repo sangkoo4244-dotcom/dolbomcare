@@ -65,7 +65,7 @@ h1,h2,h3{text-wrap:balance}
 /* 히어로 배너 이미지 */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .hero-wrap{padding:48px 0 64px}
-.hero-visual{position:relative;container-type:inline-size;max-width:1217px}
+.hero-visual{position:relative;container-type:inline-size;width:100%}
 .hero-img{display:block;width:100%;height:auto;border-radius:14px}
 .hero-logo{position:absolute;left:4.27%;top:2.3cqw;display:flex;align-items:center;gap:.7cqw;color:#fff;font-size:2.6cqw;font-weight:900;letter-spacing:-.02em;line-height:1}
 .hero-logo svg{width:4.8cqw;height:4.8cqw;flex-shrink:0}
@@ -137,7 +137,7 @@ section.block.soft{background:var(--soft)}
 .app-body p{margin:0 0 14px;font-size:14px;font-weight:800}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .tiles div{background:var(--soft);border-radius:10px;padding:18px 12px;font-size:13px;font-weight:800;text-align:center;border:1px solid var(--line)}
-.tiles div:before{content:"";display:block;width:28px;height:28px;margin:0 auto 8px;border-radius:8px;background:var(--mint-soft);border:2px solid var(--teal)}
+.tiles svg{width:30px;height:30px;display:block;margin:0 auto 8px;color:var(--teal)}
 
 /* 개발 프로세스 */
 .process{display:grid;grid-template-columns:repeat(5,1fr);gap:20px;position:relative}
@@ -343,7 +343,7 @@ section.block.soft{background:var(--soft)}
           <div class="app-bar">돌봄케어</div>
           <div class="app-body">
             <p>함께 만드는 더 나은 돌봄의 시작</p>
-            <div class="tiles"><div>수급자 관리</div><div>급여제공계획</div><div>일정 관리</div><div>보고서</div></div>
+            <div class="tiles"><div><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="24" cy="16" r="7"/><path d="M10 40c0-8 6-12 14-12s14 4 14 12"/></svg>수급자 관리</div><div><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><rect x="11" y="8" width="26" height="34" rx="3"/><rect x="18" y="4" width="12" height="8" rx="2"/><path d="M17 22h14M17 29h14M17 36h8"/></svg>급여제공계획</div><div><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><rect x="8" y="10" width="32" height="30" rx="3"/><path d="M8 20h32M16 6v8M32 6v8"/></svg>일정 관리</div><div><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M14 6h14l10 10v26H14z"/><path d="M28 6v10h10M19 26h16M19 32h16"/></svg>보고서</div></div>
           </div>
         </div>
       </div>
