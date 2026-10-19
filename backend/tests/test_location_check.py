@@ -139,3 +139,18 @@ def test_departure_location_is_checked_too(client):
     row = s.query(models.Schedule).filter(models.Schedule.id == 1).first()
     assert row.depart_check == "far"
     s.close()
+
+
+def test_record_links_to_the_nearest_visit_of_the_day(client):
+    # 같은 이용자의 두 방문(10:00, 15:00). 15시 기록은 아침 방문이 아니라 15시 방문에 연결되어야 한다.
+    s = client.Session()
+    morning = s.query(models.Schedule).filter(models.Schedule.id == 1).first()
+    morning.scheduled_date = NOW.replace(hour=10, minute=0)
+    morning.left_at = NOW.replace(hour=10, minute=50)
+    afternoon = s.query(models.Schedule).filter(models.Schedule.id == 3).first()
+    afternoon.scheduled_date = NOW.replace(hour=15, minute=0)
+    s.commit()
+    from app.review import find_schedule
+    found = find_schedule(s, 2, 1, NOW.replace(hour=15, minute=40))
+    s.close()
+    assert found is not None and found.id == 3

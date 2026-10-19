@@ -27,7 +27,10 @@ def find_schedule(db, caregiver_id, resident_id, when: datetime):
         Schedule.scheduled_date >= day_start,
         Schedule.scheduled_date < day_start + timedelta(days=1),
     ).order_by(Schedule.scheduled_date).all()
-    return next((s for s in candidates if record_fits_schedule(s, when)), None)
+    fits = [s for s in candidates if record_fits_schedule(s, when)]
+    # 같은 날 방문이 여러 개면, 기록 시각에 가장 가까운 방문에 연결한다.
+    # 먼저 끝난 아침 방문의 퇴실 시각에 늦은 시간 여유를 더해 오후 기록이 붙는 것을 막는다.
+    return min(fits, key=lambda s: abs((when - s.scheduled_date).total_seconds()), default=None)
 
 
 def review_flags(db, billing, record=None):

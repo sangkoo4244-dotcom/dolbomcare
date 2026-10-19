@@ -290,6 +290,7 @@ async def list_billing_records(
             "daily_record_id": r.daily_record_id,
             "review_flags": review_flags(db, r, dailies.get(r.daily_record_id)),
             "gate_reason": r.gate_reason,
+            "gate_note": r.gate_note,
             "review_note": r.review_note,
             "resident_id": r.resident_id,
             "resident_name": current.name if current else r.resident_name,
