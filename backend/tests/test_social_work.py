@@ -135,5 +135,6 @@ def test_log_form_returns_print_fields_and_hides_other_centers(env):
     assert data["author_name"] == "사회복지사"
     assert data["counseling_target"] == "김영희(딸)"
     assert data["visited_at"] == "2026-10-14 10:00"
+    assert data["needs_assessment"] is None  # 욕구조사가 없으면 출력 칸은 빈칸으로 둔다
     assert client.get(f"/api/v1/social-work/logs/{log_id}/form", headers=OTHER_SOCIAL).status_code == 404
     assert client.get(f"/api/v1/social-work/logs/{log_id}/form", headers=CAREGIVER).status_code == 403

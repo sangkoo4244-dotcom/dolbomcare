@@ -37,13 +37,47 @@
         <a href="./social_work.html">← 사회복지 업무로</a>
         <button type="button" onclick="window.print()">인쇄</button>
     </div>
-    <div class="note">공단 서식 「가정방문급여 급여관리 업무수행일지」(시행규칙 별지 제24호서식, 개정 2026.1.1) 1쪽·2쪽 양식에 맞춰 돌봄케어 기록을 채운 출력물입니다. 돌봄케어에 기록하지 않는 칸(욕구조사, 심신상태, 제공 계획 표, 방문장소, 서명)은 비워 두었으니 인쇄 후 손으로 적어 주세요. 상담 기록은 2쪽 6번에 들어갑니다. 3쪽은 작성요령이라 출력하지 않습니다. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다.</div>
+    <div class="note">공단 서식 「가정방문급여 급여관리 업무수행일지」(시행규칙 별지 제24호서식, 개정 2026.1.1) 1쪽·2쪽 양식에 맞춰 돌봄케어 기록을 채운 출력물입니다. 욕구조사는 수급자의 최근 욕구조사 기록으로 채웁니다. 돌봄케어에 기록하지 않는 칸(심신상태, 제공 계획 표, 방문장소, 동거인, 서명)은 비워 두었으니 인쇄 후 손으로 적어 주세요. 상담 기록은 2쪽 6번에 들어갑니다. 3쪽은 작성요령이라 출력하지 않습니다. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다.</div>
     <div class="paper" id="paper"><div class="empty">불러오는 중...</div></div>
 
     <script src="menu.js"></script>
     <script>
         const API = '/api/v1/social-work';
         const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        const LEVEL_TEXT = { alone: '혼자 수행', guided: '지시(준비)도움', assisted: '직접(부축)도움', unable: '전혀 수행할 수 없음' };
+        const FUNC_NAMES = { stand_up: '바닥에 앉은 상태에서 일어서기', sit_up: '누운 상태에서 몸 일으켜 앉기', eating: '식사하기', washing_face: '세수하기', brushing_teeth: '양치질하기', toileting: '화장실 이용하기' };
+
+        function funcText(fs, keys) {
+            return keys.filter(k => fs[k]).map(k => `${FUNC_NAMES[k]}: ${LEVEL_TEXT[fs[k]] || fs[k]}`).join('<br>') || '';
+        }
+
+        function needsRows(a) {
+            const blank = '';
+            if (!a) {
+                return `<table>
+                    <tr><th>가. 보유질환</th><td class="blank"></td></tr>
+                    <tr><th>나. 영양상태</th><td class="blank"></td></tr>
+                    <tr><th>다. 신체상태 (행보·일어서기·배뇨·배변)</th><td class="blank"></td></tr>
+                    <tr><th>라. 일상생활기능 (식사·세수·양치·화장실 등)</th><td class="blank"></td></tr>
+                    <tr><th>마. 인지 및 행동증상</th><td class="blank"></td></tr>
+                    <tr><th>바. 동거인</th><td class="blank"></td></tr>
+                </table>`;
+            }
+            const nutrition = a.nutrition_status === 'good' ? '양호' : a.nutrition_status === 'poor'
+                ? `불량${a.nutrition_detail_label && a.nutrition_detail_label.length ? ` (${esc(a.nutrition_detail_label.join(', '))})` : ''}` : blank;
+            const fs = a.function_status || {};
+            const body = funcText(fs, ['stand_up', 'sit_up']);
+            const daily = funcText(fs, ['washing_face', 'brushing_teeth', 'eating', 'toileting']);
+            return `<table>
+                    <tr><th>가. 보유질환</th><td class="fill">${esc((a.diseases_label || []).join(', '))}</td></tr>
+                    <tr><th>나. 영양상태</th><td class="fill">${esc(nutrition)}</td></tr>
+                    <tr><th>다. 신체상태 (행보·일어서기·배뇨·배변)</th><td class="fill">${esc(a.mobility_status_label || '')}${body ? `<br>${body}` : ''}</td></tr>
+                    <tr><th>라. 일상생활기능 (식사·세수·양치·화장실 등)</th><td class="fill">${daily}</td></tr>
+                    <tr><th>마. 인지 및 행동증상</th><td class="fill" style="white-space:pre-wrap">${esc(a.cognition_note || '')}</td></tr>
+                    <tr><th>바. 동거인</th><td class="blank"></td></tr>
+                </table>`;
+        }
 
         function render(d) {
             const grade = d.care_grade ? `${d.care_grade}등급` : '인지지원등급';
@@ -61,15 +95,8 @@
                 </table>
 
                 <div class="sec">2. 욕구조사</div>
-                <table>
-                    <tr><th>가. 보유질환</th><td class="blank"></td></tr>
-                    <tr><th>나. 영양상태</th><td class="blank"></td></tr>
-                    <tr><th>다. 신체상태 (행보·일어서기·배뇨·배변)</th><td class="blank"></td></tr>
-                    <tr><th>라. 일상생활기능 (식사·세수·양치·화장실 등)</th><td class="blank"></td></tr>
-                    <tr><th>마. 인지 및 행동증상</th><td class="blank"></td></tr>
-                    <tr><th>바. 동거인</th><td class="blank"></td></tr>
-                </table>
-                <div class="sys">욕구조사 항목은 돌봄케어에 기록하지 않으므로 인쇄 후 손으로 적어 주세요.</div>
+                ${needsRows(d.needs_assessment)}
+                <div class="sys">${d.needs_assessment ? `돌봄케어 욕구조사(${esc((d.needs_assessment.assessed_date || '').slice(0, 10))}) 기준으로 채웠습니다. 동거인과 서식에만 있는 세부 칸은 손으로 적어 주세요.` : '돌봄케어에 기록된 욕구조사가 없어 이 칸은 비워 두었습니다. 손으로 적어 주세요.'}</div>
 
             `;
         }

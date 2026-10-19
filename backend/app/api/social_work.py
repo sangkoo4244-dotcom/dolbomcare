@@ -6,9 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app.api.needs_assessments import _to_dict as assessment_to_dict
 from app.auth import require_social_or_manager
 from app.database import get_db
-from app.models import MonthlyMonitoring, Resident, SocialVisitPlan, SocialWorkLog, User
+from app.models import MonthlyMonitoring, NeedsAssessment, Resident, SocialVisitPlan, SocialWorkLog, User
 
 router = APIRouter()
 
@@ -75,8 +76,10 @@ def log_form(log_id: int, db: Session = Depends(get_db), actor: User = Depends(r
         raise HTTPException(status_code=404, detail="업무수행일지를 찾을 수 없습니다")
     resident = _resident(db, log.resident_id, actor.center_id)
     author = db.query(User).filter(User.id == log.author_id).first()
+    latest = db.query(NeedsAssessment).filter(NeedsAssessment.resident_id == resident.id)         .order_by(NeedsAssessment.assessed_date.desc(), NeedsAssessment.id.desc()).first()
     return {"status": "success", "data": {
         "resident_name": resident.name,
+        "needs_assessment": assessment_to_dict(latest, None) if latest else None,
         "recognition_number": resident.recognition_number,
         "care_grade": resident.care_grade,
         "visited_at": log.visited_at.strftime("%Y-%m-%d %H:%M"),
