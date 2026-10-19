@@ -154,3 +154,27 @@ def test_record_links_to_the_nearest_visit_of_the_day(client):
     found = find_schedule(s, 2, 1, NOW.replace(hour=15, minute=40))
     s.close()
     assert found is not None and found.id == 3
+
+
+def test_arrival_for_a_visit_on_another_day_is_refused(client):
+    s = client.Session()
+    row = s.query(models.Schedule).filter(models.Schedule.id == 1).first()
+    row.scheduled_date = NOW + timedelta(days=1)
+    s.commit()
+    s.close()
+    r = client.post("/api/v1/schedule/1/arrive", headers=CAREGIVER, json={"lat": NEAR[0], "lng": NEAR[1], "accuracy": 10})
+    assert r.status_code == 400
+    assert "당일" in r.json()["detail"]
+    assert _check(client, 1)[2] is None
+
+
+def test_departure_for_a_visit_on_another_day_is_refused(client):
+    client.post("/api/v1/schedule/1/arrive", headers=CAREGIVER, json={"lat": NEAR[0], "lng": NEAR[1], "accuracy": 10})
+    s = client.Session()
+    row = s.query(models.Schedule).filter(models.Schedule.id == 1).first()
+    row.scheduled_date = NOW - timedelta(days=1)
+    s.commit()
+    s.close()
+    r = client.post("/api/v1/schedule/1/depart", headers=CAREGIVER, json={"lat": FAR[0], "lng": FAR[1], "accuracy": 10})
+    assert r.status_code == 400
+    assert "당일" in r.json()["detail"]

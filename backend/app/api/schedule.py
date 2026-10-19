@@ -235,6 +235,11 @@ def _my_schedule(db, schedule_id, actor):
     return schedule if schedule and actor.center_id is not None and schedule.center_id == actor.center_id else None
 
 
+def _assert_visit_day(schedule):
+    """도착·퇴실은 방문 날짜 당일에만 기록할 수 있다. 다른 날 일정에 도착을 찍어 기록을 미리 만드는 것을 막는다."""
+    if schedule.scheduled_date.date() != datetime.now().date():
+        raise HTTPException(status_code=400, detail="방문 당일에만 도착·퇴실을 기록할 수 있습니다")
+
 def _assert_owner(schedule, user_id, user_role):
     if user_role not in ("caregiver", "center_manager"):
         raise HTTPException(status_code=403, detail="요양보호사만 기록할 수 있습니다")
@@ -405,6 +410,7 @@ def mark_arrived(schedule_id: int, body: Optional[PlaceBody] = None, db: Session
     _assert_owner(schedule, actor.id, actor.role)
     if schedule.status != "scheduled":
         raise HTTPException(status_code=400, detail="센터장이 승인한 일정만 도착을 기록할 수 있습니다")
+    _assert_visit_day(schedule)
     if schedule.arrived_at is None:
         schedule.arrived_at = datetime.now()
         schedule.arrive_check, schedule.arrive_distance_m = _place_check(db, schedule, body)
@@ -421,6 +427,7 @@ def mark_left(schedule_id: int, body: Optional[PlaceBody] = None, db: Session = 
     _assert_owner(schedule, actor.id, actor.role)
     if schedule.status != "scheduled":
         raise HTTPException(status_code=400, detail="센터장이 승인한 일정만 퇴실을 기록할 수 있습니다")
+    _assert_visit_day(schedule)
     if schedule.arrived_at is None:
         raise HTTPException(status_code=400, detail="도착 기록 후 퇴실을 기록할 수 있습니다")
     if schedule.left_at is None:
