@@ -58,10 +58,15 @@ h1,h2,h3{text-wrap:balance}
 .hero h1 em{font-style:normal;color:var(--mint)}
 .hero p{font-size:17px;color:#b9c8d6;max-width:500px;margin:0 0 32px}
 .hero-actions{display:flex;flex-wrap:wrap;gap:12px}
-.hero-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:56px;padding-top:26px;border-top:1px solid rgba(255,255,255,.14)}
+.hero-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding-top:26px;border-top:1px solid rgba(255,255,255,.14)}
 .hero-facts b{display:block;font-size:15px;color:var(--white);line-height:1.4}
 .hero-facts span{font-size:12px;color:#9fb3c6}
 
+/* 히어로 배너 이미지 */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.hero-wrap{padding:48px 0 64px}
+.hero-img{display:block;width:100%;height:auto;border-radius:14px}
+.hero-foot{margin-top:32px;display:flex;flex-direction:column;gap:28px}
 /* 히어로 목업 (설계 예시 - 실제 수치 없음) */
 .mock{position:relative;padding:0 0 40px}
 .laptop{background:linear-gradient(180deg,#1d3550,#0d2038);border-radius:14px 14px 4px 4px;padding:12px 12px 0;box-shadow:0 30px 60px rgba(0,0,0,.4)}
@@ -236,11 +241,10 @@ section.block.soft{background:var(--soft)}
 
 <main>
   <section class="hero dark">
-    <div class="wrap hero-inner">
-      <div>
-        <span class="eyebrow">비즈니스에 맞춘 소프트웨어</span>
-        <h1>비즈니스에 꼭 맞는<br>소프트웨어, <em>이음로직</em>이<br>만듭니다.</h1>
-        <p>웹 플랫폼, 업무관리 시스템, 데이터 자동화까지. 문제를 먼저 파악하고 운영까지 고려한 구조로 설계해, 실제 현장에서 쓰이는 소프트웨어를 만듭니다.</p>
+    <div class="wrap hero-wrap">
+      <h1 class="sr-only">비즈니스에 꼭 맞는 소프트웨어, 이음로직이 만듭니다.</h1>
+      <img class="hero-img" src="/pages/assets/home/hero_banner.png" width="1217" height="395" alt="이음로직 - 웹 플랫폼, 업무관리 시스템, 데이터 자동화까지 비즈니스의 성장을 위한 맞춤형 소프트웨어를 설계하고 개발합니다.">
+      <div class="hero-foot">
         <div class="hero-actions">
           <a class="btn mint" href="#contact">프로젝트 상담하기 →</a>
           <a class="btn line" href="#solution">자체 솔루션 보기</a>
@@ -251,28 +255,6 @@ section.block.soft{background:var(--soft)}
           <div><b>30일 무료 체험</b><span>돌봄케어 기준</span></div>
           <div><b>한 곳에서 해결</b><span>기획부터 운영까지</span></div>
         </div>
-      </div>
-
-      <div class="mock" aria-label="관리 화면 설계 예시">
-        <div class="laptop">
-          <div class="screen">
-            <aside class="side"><strong>업무 공간</strong><i></i><i></i><i></i><i></i><i></i></aside>
-            <div class="main">
-              <h4>업무 현황</h4>
-              <div class="cards">
-                <div><small>일정</small><b>관리</b></div>
-                <div><small>승인</small><b>자동화</b></div>
-                <div><small>기록</small><b>통합</b></div>
-              </div>
-              <div class="bars"><i style="height:38%"></i><i style="height:62%"></i><i style="height:48%"></i><i style="height:78%"></i><i style="height:56%"></i><i style="height:88%"></i></div>
-            </div>
-          </div>
-          <div class="base"></div>
-        </div>
-        <div class="phone" aria-hidden="true">
-          <div><b>오늘의 업무</b><i></i><i></i><i></i></div>
-        </div>
-        <span class="example">화면은 설계 예시이며 실제 제품 화면과 다를 수 있습니다.</span>
       </div>
     </div>
   </section>
