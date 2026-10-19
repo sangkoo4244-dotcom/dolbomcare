@@ -13,6 +13,8 @@ from app.auth import require_manager
 from app.database import get_db
 from app.models import BillingRecord, DailyRecord, HandoverNote, IncidentReport, Resident, ResidentChangeRequest, Schedule, User
 from app.visit_precheck import run_precheck
+from app.anomaly import find_anomalies
+from app.models import VisitObjection
 
 router = APIRouter()
 
@@ -24,6 +26,8 @@ ITEMS = [
     ("change_requests", "이용자 정보 변경 요청", "요양보호사가 요청한 이용자 정보 변경 승인 대기", "./resident_management.html#changeRequestPanel"),
     ("schedule_changes", "방문 일정 변경 요청", "요양보호사가 요청한 방문 날짜·시간 변경 승인 대기", "./schedule_approval.html#changePanel"),
     ("handover_unread", "인수인계 미확인", "받는 요양보호사가 아직 읽지 않은 인계 메모", "./handover.html?unread=1"),
+    ("objections", "보호자 이의 제기", "보호자가 방문 사실 없음을 신고해 답변을 기다리는 건 (처리 전까지 그 날짜 청구 승인 보류)", "./objections.html"),
+    ("anomalies", "이상 패턴 확인", "같은 시간 중복 기록, 연차일 기록, 계획 없이 반복된 기록이 있는 요양보호사", "./anomalies.html"),
     ("incident_incomplete", "사고 보고 보완 필요", "보호자 통보일이나 재발방지 대책이 비어 있는 사고 보고", "./incident.html?issues=1"),
 ]
 
@@ -46,6 +50,9 @@ def manager_inbox(db: Session = Depends(get_db), actor: User = Depends(require_m
         "handover_unread": db.query(HandoverNote).filter(
             HandoverNote.center_id == center, HandoverNote.to_caregiver_id.isnot(None),
             HandoverNote.acknowledged_at.is_(None)).count(),
+        "objections": db.query(VisitObjection).filter(
+            VisitObjection.center_id == center, VisitObjection.status == "open").count(),
+        "anomalies": len(find_anomalies(db, center, datetime.now())),
         "incident_incomplete": db.query(IncidentReport).filter(
             IncidentReport.center_id == center,
             or_(IncidentReport.guardian_notified_date.is_(None), IncidentReport.prevention.is_(None),

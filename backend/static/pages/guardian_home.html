@@ -597,6 +597,7 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="mt-2 text-right"><button type="button" onclick="reportVisitObjection('${v.date}')" class="text-sm text-red-600 underline">방문 사실이 없어요</button></div>
                         <div class="mt-4 bg-gray-50 rounded-lg p-4 flex gap-3 items-start">
                             <img src="assets/user_design/guardian_memo.png" alt="" class="w-7 h-7 g-icon shrink-0">
                             <div class="text-base text-gray-700"><span class="font-bold text-gray-900 mr-2">메모</span>${escapeHtml(v.notes) || '등록된 메모가 없습니다.'}</div>
@@ -648,6 +649,26 @@
                         <div class="g-stat-caption">${escapeHtml(c.caption)}</div>
                     </div>
                 </div>`).join('');
+        }
+
+        // 보호자가 "그 날 방문이 없었다"고 신고한다. 센터장이 처리하기 전까지 그 날짜 청구는 승인되지 않는다.
+        async function reportVisitObjection(date) {
+            const id = document.getElementById('residentSelect').value;
+            if (!id) return;
+            const memo = (prompt(`${date} 방문이 없었다면 그 이유를 적어 주세요.\n(센터에서 확인한 뒤 답변을 드립니다)`) || '').trim();
+            if (!memo) return;
+            const token = localStorage.getItem('access_token');
+            try {
+                const r = await fetch(`${API_URL}/visit-objections`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ resident_id: Number(id), visit_date: date, memo })
+                });
+                const d = await r.json().catch(() => ({}));
+                alert(r.ok ? (d.message || '신고가 접수되었습니다') : (d.detail || '신고하지 못했습니다'));
+            } catch (e) {
+                alert('신고하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+            }
         }
 
         async function loadVisits() {

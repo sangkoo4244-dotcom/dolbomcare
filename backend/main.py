@@ -44,6 +44,7 @@ from app.api import centers
 from app.api import center_directory
 from app.api import nhis
 from app.api import admin
+from app.api import visit_objections, anomalies
 from app.database import Base, engine, SessionLocal
 from app.migrations import run_migrations
 import os
@@ -77,6 +78,8 @@ app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(users.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(billing.router, prefix="/api/v1/billing", tags=["billing"], dependencies=[Depends(get_current_user)])
 app.include_router(records.router, prefix="/api/v1/records", tags=["records"], dependencies=[Depends(get_current_user)])
+app.include_router(visit_objections.router, prefix="/api/v1/visit-objections", tags=["visit_objections"], dependencies=[Depends(get_current_user)])
+app.include_router(anomalies.router, prefix="/api/v1/anomalies", tags=["anomalies"], dependencies=[Depends(get_current_user)])
 app.include_router(resident_changes.router, prefix="/api/v1/residents", tags=["residents"], dependencies=[Depends(get_current_user)])
 app.include_router(residents.router, prefix="/api/v1/residents", tags=["residents"], dependencies=[Depends(get_current_user)])
 app.include_router(salary.router, prefix="/api/v1/salary", tags=["salary"], dependencies=[Depends(get_current_user)])

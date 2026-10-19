@@ -8,6 +8,7 @@ from app.models import (
     GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog, FacilityRegistry, SmsLog, CognitivePlan, LeaveRequest, CommitteeMeeting, Equipment, ResidentLog, TrainingCertificate,
 )
 from sqlalchemy import text
+from app.models import VisitObjection, RecordAuditLog
 
 # 데이터베이스 마이그레이션 (자동)
 ADDITIVE_COLUMNS = [
@@ -126,6 +127,12 @@ def run_migrations():
     for table_cls in (ResidentGuardian, StaffCertificate, SalaryStatement, GuardianInvite, Notification,
                        ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
                        RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, ServiceEvaluation, CaseConference, TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest, GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog, FacilityRegistry, SmsLog, CognitivePlan, LeaveRequest, CommitteeMeeting, Equipment, ResidentLog, TrainingCertificate):
+        try:
+            table_cls.__table__.create(bind=engine, checkfirst=True)
+        except Exception as e:
+            print(f"⚠️  테이블 생성 건너뜀 ({table_cls.__tablename__}): {e}")
+
+    for table_cls in (VisitObjection, RecordAuditLog):
         try:
             table_cls.__table__.create(bind=engine, checkfirst=True)
         except Exception as e:

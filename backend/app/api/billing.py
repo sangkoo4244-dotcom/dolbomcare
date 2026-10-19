@@ -183,6 +183,9 @@ async def approve_billing_record(
     if record.approval_status != "pending":
         raise HTTPException(status_code=400, detail="대기 중인 청구만 승인 가능합니다")
 
+    from app.api.visit_objections import open_objection_for
+    if record.recorded_date and open_objection_for(db, record.resident_id, record.recorded_date.date()):
+        raise HTTPException(status_code=400, detail="보호자가 이 날짜 방문을 신고해 처리 중입니다. 신고를 처리한 뒤 승인할 수 있습니다")
     if record.gate_reason and not record.gate_approved_at:
         note = (request.reason or "").strip()
         if not note:

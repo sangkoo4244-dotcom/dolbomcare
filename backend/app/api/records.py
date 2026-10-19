@@ -7,12 +7,14 @@ from app import benefits as benefit_catalog
 from app.review import find_schedule, gate_reason_for
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
-from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary, Notification, DayCareAttendance
+from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary, Notification, DayCareAttendance, RecordAuditLog
 from app.schemas import DailyRecordResponse
 from app.database import get_db
 from app.auth import get_current_user, require_manager, assert_self_or_manager, assert_my_center
+from app.record_audit import snapshot, log_record_change
 from app.api.notifications import notify
 from datetime import datetime, time, timedelta
+import json
 import os
 
 router = APIRouter()
@@ -383,6 +385,7 @@ def batch_delete_records(
                 BillingRecord.resident_id == record.resident_id
             ).all()
 
+            log_record_change(db, record, "delete", actor, snapshot(record), None)
             for billing in billings:
                 db.delete(billing)
             if pair:
@@ -970,6 +973,7 @@ async def update_record(
         billing = db.query(BillingRecord).filter(
             BillingRecord.daily_record_id == record_id
         ).first()
+        before_state = snapshot(record)
 
         if actor.id is not None and record.caregiver_id != actor.id:
             raise HTTPException(status_code=403, detail="본인의 기록만 수정할 수 있습니다")
@@ -1013,6 +1017,7 @@ async def update_record(
                 setattr(record, field, value)
         record.review_status = None  # 고치면 사회복지사 확인을 다시 받는다
         record.review_note = None
+        log_record_change(db, record, "update", actor, before_state, snapshot(record))
 
         db.commit()
         db.refresh(record)
@@ -1307,6 +1312,7 @@ async def delete_record(
     if any(b.approval_status not in EDITABLE_APPROVALS for b in billings):
         raise HTTPException(status_code=400, detail="제출·승인된 청구가 있는 기록은 삭제할 수 없습니다. 센터장과 상의해 주세요")
 
+    log_record_change(db, record, "delete", actor, snapshot(record), None)
     try:
         # 청구 기록 삭제 (이 DailyRecord와 연결된 청구만)
         for billing in billings:
@@ -1331,6 +1337,20 @@ async def delete_record(
 
 
 # ===== VoiceRecord 자동 청구 생성 =====
+
+@router.get("/audit")
+def record_audit_log(record_id: int = None, limit: int = 200, db: Session = Depends(get_db),
+                     manager: User = Depends(require_manager)):
+    """일일 기록의 수정·삭제 이력 (센터장 전용). 지워진 기록의 이력도 남아 있다."""
+    query = db.query(RecordAuditLog).filter(RecordAuditLog.center_id == manager.center_id)
+    if record_id is not None:
+        query = query.filter(RecordAuditLog.record_id == record_id)
+    rows = query.order_by(RecordAuditLog.created_at.desc(), RecordAuditLog.id.desc()).limit(min(limit, 500)).all()
+    return {"logs": [{"id": r.id, "record_id": r.record_id, "action": r.action, "actor_name": r.actor_name,
+                      "created_at": r.created_at.isoformat() if r.created_at else None,
+                      "before": json.loads(r.before_json) if r.before_json else None,
+                      "after": json.loads(r.after_json) if r.after_json else None} for r in rows]}
+
 
 @router.post("/voice/create")
 async def create_voice_record(

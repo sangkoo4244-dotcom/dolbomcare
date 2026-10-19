@@ -923,3 +923,37 @@ class TrainingCertificate(Base):
     file_data = Column(Text, nullable=True)  # data:...;base64,... 형식
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.now)
+
+
+class VisitObjection(Base):
+    """보호자가 "그 날 방문이 없었다"고 신고한 건. 센터장이 처리하기 전까지 그 날짜 청구는 승인되지 않는다."""
+    __tablename__ = "visit_objections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), index=True)
+    guardian_id = Column(Integer, ForeignKey("users.id"), index=True)
+    visit_date = Column(Date, index=True)
+    memo = Column(Text)
+    status = Column(String, default="open", index=True)  # open / resolved
+    created_at = Column(DateTime, default=datetime.now)
+    resolved_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    resolved_at = Column(DateTime, nullable=True)
+    resolution_note = Column(Text, nullable=True)
+
+
+class RecordAuditLog(Base):
+    """일일 기록의 수정·삭제 이력. 기록이 지워져도 이력은 남는다(record_id는 외래키가 아니다)."""
+    __tablename__ = "record_audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    record_kind = Column(String, default="daily")
+    record_id = Column(Integer, index=True)
+    action = Column(String)  # update / delete
+    actor_id = Column(Integer, nullable=True)
+    actor_name = Column(String, nullable=True)
+    before_json = Column(Text, nullable=True)
+    after_json = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.now, index=True)
+

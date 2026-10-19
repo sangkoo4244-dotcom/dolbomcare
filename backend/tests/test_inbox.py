@@ -92,7 +92,7 @@ def test_counts_each_pending_kind_for_own_center_only(env):
     db.commit()
     mine = counts(client)
     assert mine == {"missing_record": 1, "draft_claims": 1, "rejected_claims": 1, "change_requests": 1, "schedule_changes": 0,
-                    "handover_unread": 1, "incident_incomplete": 2}
+                    "handover_unread": 1, "incident_incomplete": 2, "objections": 0, "anomalies": 0}
     assert set(counts(client, OTHER_MANAGER).values()) == {0}
 
 
