@@ -22,13 +22,22 @@ def test_no_schedule_is_unplanned():
     assert gate_reason_for(None, None, NOW) == "계획 외 기록"
 
 
-def test_scheduled_same_day_record_is_not_gated():
-    assert gate_reason_for(object(), None, NOW) is None
-    assert gate_reason_for(object(), NOW, NOW) is None
+class _Sched:
+    def __init__(self, arrived):
+        self.arrived_at = arrived
+
+
+def test_scheduled_arrived_same_day_record_is_not_gated():
+    assert gate_reason_for(_Sched(NOW), None, NOW) is None
+    assert gate_reason_for(_Sched(NOW), NOW, NOW) is None
+
+
+def test_scheduled_but_never_arrived_is_gated():
+    assert gate_reason_for(_Sched(None), None, NOW) == "도착 미기록"
 
 
 def test_backdated_record_is_gated_even_with_schedule():
-    assert gate_reason_for(object(), NOW - timedelta(days=2), NOW) == "소급 기록"
+    assert gate_reason_for(_Sched(NOW), NOW - timedelta(days=2), NOW) == "소급 기록"
 
 
 def test_unplanned_and_backdated_are_both_listed():

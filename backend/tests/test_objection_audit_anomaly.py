@@ -188,3 +188,19 @@ def test_record_on_approved_leave_day_is_flagged(env):
     found = find_anomalies(s, 1, NOW)
     s.close()
     assert any(f["kind"] == "leave_day" and f["caregiver_id"] == 2 for f in found)
+
+
+def test_voice_records_count_toward_unplanned_pattern(env):
+    Session, client = env
+    s = Session()
+    for i in range(3):
+        when = NOW - timedelta(days=2 + i)
+        s.add(models.BillingRecord(id=700 + i, caregiver_id=3, resident_id=1, center_id=1, service_type="basic_care",
+                                   amount=67043, approval_status="draft", recorded_date=when,
+                                   gate_reason="계획 외 기록"))
+        s.add(models.VoiceRecord(id=700 + i, caregiver_id=3, resident_id=1, center_id=1, recorded_date=when,
+                                 billing_record_id=700 + i))
+    s.commit()
+    s.close()
+    found = client.get("/api/v1/anomalies", headers=MANAGER).json()["findings"]
+    assert any(f["kind"] == "unplanned" and f["caregiver_id"] == 3 and f["count"] == 3 for f in found)

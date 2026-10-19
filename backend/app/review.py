@@ -57,6 +57,8 @@ def gate_reason_for(schedule, requested_date, now):
     reasons = []
     if schedule is None:
         reasons.append("계획 외 기록")
+    elif schedule.arrived_at is None:
+        reasons.append("도착 미기록")
     if requested_date is not None and requested_date.date() != now.date():
         reasons.append("소급 기록")
     return " · ".join(reasons) or None
