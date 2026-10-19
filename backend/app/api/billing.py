@@ -183,6 +183,13 @@ async def approve_billing_record(
     if record.approval_status != "pending":
         raise HTTPException(status_code=400, detail="대기 중인 청구만 승인 가능합니다")
 
+    if record.gate_reason and not record.gate_approved_at:
+        note = (request.reason or "").strip()
+        if not note:
+            raise HTTPException(status_code=400, detail=f"확인이 필요한 청구입니다({record.gate_reason}). 실제 방문 여부를 확인한 내용을 적어야 승인할 수 있습니다")
+        record.gate_note = note
+        record.gate_approved_at = datetime.now()
+
     record.approval_status = "approved"
     record.approved_by = actor.id
     record.approved_at = datetime.now()
@@ -279,6 +286,7 @@ async def list_billing_records(
             "id": r.id,
             "daily_record_id": r.daily_record_id,
             "review_flags": review_flags(db, r, dailies.get(r.daily_record_id)),
+            "gate_reason": r.gate_reason,
             "review_note": r.review_note,
             "resident_id": r.resident_id,
             "resident_name": current.name if current else r.resident_name,

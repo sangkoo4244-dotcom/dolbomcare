@@ -50,3 +50,14 @@ def review_flags(db, billing, record=None):
         if record.duration_minutes > on_site + TIME_TOLERANCE_MINUTES:
             flags.append("제공 시간 초과")
     return flags
+
+
+def gate_reason_for(schedule, requested_date, now):
+    """센터장 확인이 필요한 기록의 사유. 오늘 일정과 연결되지 않은 기록과 오늘이 아닌 날짜의 소급 기록만 해당한다."""
+    reasons = []
+    if schedule is None:
+        reasons.append("계획 외 기록")
+    if requested_date is not None and requested_date.date() != now.date():
+        reasons.append("소급 기록")
+    return " · ".join(reasons) or None
+

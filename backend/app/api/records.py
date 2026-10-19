@@ -4,7 +4,7 @@ from typing import Literal, Optional
 from app.billing_rules import split_visit, split_benefit, VALID_DURATIONS, REVENUE_STATUSES
 from app.visit_benefit import normalize_visit_benefit
 from app import benefits as benefit_catalog
-from app.review import find_schedule
+from app.review import find_schedule, gate_reason_for
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary, Notification, DayCareAttendance
@@ -256,6 +256,7 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
             amount=amount,
             total_cost=total_cost,
             extra_amount=_severe_bonus(db, resident.id, now.date(), visit["benefit_type"], resident.care_grade, request.duration_minutes),
+            gate_reason=gate_reason_for(linked_schedule, request.recorded_date, datetime.now()),
             recorded_date=now,
             year_month=get_year_month(now),
             status="draft",
@@ -1370,8 +1371,10 @@ async def create_voice_record(
         db.flush()
 
         total_cost, _, billing_amount = split_visit(duration_minutes, client_type)
+        linked_schedule = find_schedule(db, caregiver_id, resident_id, now)
 
         billing_record = BillingRecord(
+            gate_reason=gate_reason_for(linked_schedule, None, now),
             caregiver_id=caregiver_id,
             resident_id=resident_id,
             resident_name=resident.name,  # 스냅샷: 청구 시점의 이용자 이름

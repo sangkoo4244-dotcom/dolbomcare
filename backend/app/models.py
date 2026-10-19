@@ -198,6 +198,9 @@ class BillingRecord(Base):
     extra_amount = Column(Integer, default=0)  # 월 한도·본인부담과 별개로 공단이 지급하는 금액: 주·야간보호 이동서비스비용·목욕서비스 가산 (수급자 부담 없음)
     status = Column(String, default="draft")  # 'draft', 'submitted', 'paid'
     approval_status = Column(String, default="pending")  # 'pending', 'approved', 'rejected'
+    gate_reason = Column(String, nullable=True)  # 센터장 확인이 필요한 사유 (계획 외 기록, 소급 기록)
+    gate_note = Column(String, nullable=True)  # 센터장이 확인하며 적은 내용
+    gate_approved_at = Column(DateTime, nullable=True)  # 센터장이 확인한 시각
     approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # 승인자 ID
     approved_at = Column(DateTime, nullable=True)  # 승인 시간
     rejection_reason = Column(String, nullable=True)  # 거절 사유

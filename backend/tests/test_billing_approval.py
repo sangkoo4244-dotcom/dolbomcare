@@ -77,11 +77,11 @@ def test_manager_rejects_pending_claim_with_reason(client):
     assert response.json()["approval_status"] == "rejected"
 
 
-def test_approve_page_does_not_ask_for_reason():
+def test_approve_page_asks_for_reason_only_for_gated_claims():
     script = PAGE.read_text(encoding="utf-8")
     approve = script[script.index("async function approveBilling"):script.index("async function rejectBilling")]
-    assert "prompt(" not in approve
-    assert "확인 사유" not in script
+    assert approve.count("prompt(") == 1
+    assert "target.gate_reason" in approve  # 확인이 필요한 청구(계획 외·소급)만 사유를 묻는다
 
 
 def test_reject_page_asks_for_non_empty_reason():

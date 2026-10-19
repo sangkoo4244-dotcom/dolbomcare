@@ -897,12 +897,19 @@
         }
 
         async function approveBilling(recordId) {
-            if (!confirm('이 청구를 승인하시겠습니까?')) return;
+            const target = allBillings.find(r => r.id === recordId);
+            let reason = '';
+            if (target && target.gate_reason) {
+                // 계획 외·소급 기록은 센터장이 실제 방문 여부를 확인한 내용을 적어야 승인된다
+                reason = (prompt(`확인이 필요한 청구입니다 (${target.gate_reason}).
+실제 방문이 있었는지 확인한 내용을 적어 주세요.`) || '').trim();
+                if (!reason) return;
+            } else if (!confirm('이 청구를 승인하시겠습니까?')) return;
             try {
                 const response = await fetch(`${API_URL}/billing/${recordId}/approve`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: currentUser.id, user_role: currentUser.role })
+                    body: JSON.stringify({ user_id: currentUser.id, user_role: currentUser.role, reason })
                 });
                 if (!response.ok) throw new Error('승인 실패');
                 loadBillingRecords();
