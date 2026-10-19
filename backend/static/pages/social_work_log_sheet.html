@@ -22,6 +22,7 @@
         td.blank { height: 30px; }
         .sec { font-size: 14px; font-weight: 700; margin: 16px 0 6px; color: #1e3a8a; }
         .sys { font-size: 11px; color: #64748b; margin-top: 2px; }
+        .pagebreak { page-break-after: always; margin: 0; }
         .empty { padding: 40px 16px; text-align: center; color: #64748b; }
         @media print {
             body { background: #fff; }
@@ -36,7 +37,7 @@
         <a href="./social_work.html">← 사회복지 업무로</a>
         <button type="button" onclick="window.print()">인쇄</button>
     </div>
-    <div class="note">공단 서식 「가정방문급여 급여관리 업무수행일지」(시행규칙 별지 제24호서식, 개정 2026.1.1) 1쪽 양식에 맞춰 돌봄케어 기록을 채운 출력물입니다. 돌봄케어에 기록하지 않는 칸(욕구조사 항목, 방문장소, 서명)은 비워 두었으니 인쇄 후 손으로 적어 주세요. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다. 2쪽 이후는 아직 지원하지 않습니다.</div>
+    <div class="note">공단 서식 「가정방문급여 급여관리 업무수행일지」(시행규칙 별지 제24호서식, 개정 2026.1.1) 1쪽·2쪽 양식에 맞춰 돌봄케어 기록을 채운 출력물입니다. 돌봄케어에 기록하지 않는 칸(욕구조사, 심신상태, 제공 계획 표, 방문장소, 서명)은 비워 두었으니 인쇄 후 손으로 적어 주세요. 상담 기록은 2쪽 6번에 들어갑니다. 3쪽은 작성요령이라 출력하지 않습니다. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다.</div>
     <div class="paper" id="paper"><div class="empty">불러오는 중...</div></div>
 
     <script src="menu.js"></script>
@@ -49,7 +50,7 @@
             return `
                 <div class="form-no">[별지 제24호서식] &lt;개정 2026. 1. 1.&gt;</div>
                 <h1>가정방문급여(통합재가서비스 포함) 급여관리 업무수행 일지</h1>
-                <h2>(공통) 방문요양 인지활동형 프로그램관리자 업무수행 일지 · 1쪽</h2>
+                <h2>(공통) 방문요양 인지활동형 프로그램관리자 업무수행 일지 (3쪽 중 제1쪽)</h2>
 
                 <div class="sec">1. 기본정보</div>
                 <table>
@@ -70,11 +71,49 @@
                 </table>
                 <div class="sys">욕구조사 항목은 돌봄케어에 기록하지 않으므로 인쇄 후 손으로 적어 주세요.</div>
 
-                <div class="sec">3. 상담 기록 (돌봄케어 기록)</div>
+            `;
+        }
+
+        function renderPage2(d) {
+            const blankRow = (label) => `<tr><th>${label}</th><td class="blank"></td></tr>`;
+            return `
+                <div class="pagebreak"></div>
+                <div class="form-no">[별지 제24호서식] (2쪽 중 제2쪽)</div>
+                <div class="sec">3. 수급자의 심신상태 및 환경변화</div>
+                <div class="sys">직전 방문상태와 비교하여 작성합니다. 유지·악화·호전은 손으로 표시해 주세요.</div>
+                <table>
+                    ${blankRow('가. 식사 및 영양상태')}${blankRow('나. 신체상태')}${blankRow('다. 일상생활기능')}
+                    ${blankRow('라. 인지기능')}${blankRow('마. 행동증상')}${blankRow('바. 가족 및 생활환경')}${blankRow('사. 기타 및 종합의견')}
+                </table>
+                <div class="sys">심신상태 항목은 돌봄케어에 기록하지 않으므로 인쇄 후 손으로 적어 주세요.</div>
+
+                <div class="sec">4. 급여제공 계획 및 내용 확인</div>
+                <table>
+                    <tr><th>급여종류</th><th>필요영역</th><th>필요내용</th><th>제공 여부</th><th>제공 확인내용</th><th>미제공 사유</th></tr>
+                    <tr><th>방문요양</th><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+                    <tr><th>방문목욕</th><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+                    <tr><th>방문간호</th><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+                </table>
+                <div class="sys">급여제공 계획은 돌봄케어 급여제공계획과 맞춰 확인한 뒤 손으로 적어 주세요.</div>
+
+                <div class="sec">5. 인지활동형 프로그램 제공 계획 및 내용 확인</div>
+                <table>
+                    <tr><th>프로그램</th><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+                    <tr><th>인지자극활동</th><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+                    <tr><th>일상생활 함께하기</th><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+                </table>
+
+                <div class="sec">6. 수급자(보호자) 상담</div>
                 <table>
                     <tr><th>상담대상자 (관계)</th><td class="fill">${esc(d.counseling_target)}</td></tr>
                     <tr><th>상담결과</th><td class="fill" style="white-space:pre-wrap">${esc(d.counseling_result)}</td></tr>
                     <tr><th>상담 내용</th><td class="fill" style="white-space:pre-wrap">${esc(d.content || '')}</td></tr>
+                </table>
+
+                <div class="sec">7. 향후계획 및 기타사항</div>
+                <table>
+                    ${blankRow('수급자 욕구 확인')}${blankRow('급여제공계획 재작성 여부')}${blankRow('급여제공 관련 유의사항 및 세부계획')}
+                    <tr><th>수급자(보호자) 성명</th><td class="blank">(서명)</td><th>급여제공자 성명</th><td class="blank">(서명)</td></tr>
                 </table>`;
         }
 
@@ -87,7 +126,7 @@
                 const r = await fetch(`${API}/logs/${encodeURIComponent(logId)}/form`);
                 if (!r.ok) throw new Error(r.status);
                 const j = await r.json();
-                document.getElementById('paper').innerHTML = render(j.data);
+                document.getElementById('paper').innerHTML = render(j.data) + renderPage2(j.data);
             } catch (e) {
                 document.getElementById('paper').innerHTML = '<div class="empty">업무수행일지를 불러오지 못했습니다.</div>';
             }
