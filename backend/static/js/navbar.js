@@ -38,7 +38,7 @@ function renderNavbar() {
         <nav class="navbar">
             <div class="navbar-header">
                 <div class="logo">
-                    <svg width="28" height="28" viewBox="0 0 42 42" fill="none" aria-hidden="true" style="vertical-align:middle;margin-right:8px"><rect width="42" height="42" rx="11" fill="#0B1D32"/><path d="M10 30V21a11 11 0 0 1 22 0V30" stroke="#57E5D4" stroke-width="3.5" stroke-linecap="round"/><circle cx="10" cy="30" r="3" fill="#ffffff"/><circle cx="32" cy="30" r="3" fill="#ffffff"/></svg><span class="logo-text">dolbomcare</span>
+                    <svg width="28" height="28" viewBox="0 0 42 42" fill="none" aria-hidden="true" style="vertical-align:middle;margin-right:8px"><path d="M11 9V33" stroke="#0B1D32" stroke-width="3.4" stroke-linecap="round"/><path d="M11 9H27M11 21H24M11 33H27" stroke="#0B8F88" stroke-width="3.4" stroke-linecap="round"/><circle cx="28.5" cy="9" r="3" fill="#57E5D4"/><circle cx="25.5" cy="21" r="3" fill="#57E5D4"/><circle cx="28.5" cy="33" r="3" fill="#57E5D4"/></svg><span class="logo-text">dolbomcare</span>
                 </div>
             </div>
 
