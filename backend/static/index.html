@@ -137,7 +137,7 @@ section.block.soft{background:var(--soft)}
 .tiles div:before{content:"";display:block;width:28px;height:28px;margin:0 auto 8px;border-radius:8px;background:var(--mint-soft);border:2px solid var(--teal)}
 
 /* 개발 프로세스 */
-.process{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;position:relative}
+.process{display:grid;grid-template-columns:repeat(5,1fr);gap:20px;position:relative}
 .step{text-align:center;position:relative;padding:0 8px}
 .step .circle{width:120px;height:120px;border-radius:50%;margin:0 auto 22px;background:var(--white);border:1px solid var(--line);box-shadow:0 8px 24px rgba(11,29,50,.06);display:flex;align-items:center;justify-content:center;position:relative;color:var(--teal)}
 .step .circle svg{width:36px;height:36px}
@@ -192,7 +192,7 @@ section.block.soft{background:var(--soft)}
   .hero-inner{grid-template-columns:1fr;gap:56px;padding:72px 0 80px}
   .mock{max-width:680px}
   .product{grid-template-columns:1fr;padding:48px 40px}
-  .process{grid-template-columns:1fr 1fr;row-gap:44px}
+  .process{grid-template-columns:repeat(3,1fr);row-gap:44px}
   .fields{grid-template-columns:1fr 1fr}
   .contact-grid{grid-template-columns:1fr;gap:48px}
   .navlinks{gap:18px}
@@ -348,14 +348,15 @@ section.block.soft{background:var(--soft)}
     <div class="wrap">
       <div class="sec-head">
         <span class="eyebrow">개발 프로세스</span>
-        <h2>요구 파악부터 운영까지,<br>4단계로 진행합니다.</h2>
+        <h2>상담부터 운영까지,<br>5단계로 진행합니다.</h2>
         <p>각 단계에서 무엇을 정하고 무엇을 만드는지 순서대로 정리했습니다.</p>
       </div>
       <div class="process">
-        <div class="step"><div class="circle"><span class="num">01</span><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><rect x="6" y="8" width="36" height="24" rx="3"/><path d="M18 40h12M24 32v8M15 18h6M15 24h18"/></svg></div><h3>분석 및 기획</h3><p>현재 업무 환경과 고객의 비즈니스 목표를 파악합니다.</p></div>
-        <div class="step"><div class="circle"><span class="num">02</span><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M10 38V10h28v28zM16 18h16M16 24h16M16 30h8M32 34l8-8"/></svg></div><h3>맞춤 설계</h3><p>구조, 데이터 흐름, 권한과 화면 경험을 설계합니다.</p></div>
-        <div class="step"><div class="circle"><span class="num">03</span><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M16 14l-10 10 10 10M32 14l10 10-10 10M28 8l-8 32"/></svg></div><h3>개발 및 테스트</h3><p>핵심 기능을 구현하고 사용 흐름과 오류를 확인합니다.</p></div>
-        <div class="step"><div class="circle"><span class="num">04</span><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M8 26v-4a16 16 0 0132 0v4M8 26h6v10H8zM34 26h6v10h-6z"/></svg></div><h3>운영 및 사후관리</h3><p>운영 환경에 적용하고 현장 의견을 바탕으로 개선합니다.</p></div>
+        <div class="step"><div class="circle"><span class="num">01</span><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M8 10h32v22H20l-8 7v-7H8z"/></svg></div><h3>상담</h3><p>업무의 문제와 원하는 결과를 듣습니다.</p></div>
+        <div class="step"><div class="circle"><span class="num">02</span><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M14 8h20v32H14zM19 16h10M19 22h10M19 28h6"/></svg></div><h3>요구 파악</h3><p>현재 업무 흐름과 필요한 기능을 정리합니다.</p></div>
+        <div class="step"><div class="circle"><span class="num">03</span><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M8 8h14v14H8zM26 26h14v14H26zM22 15h4v4h-4zM15 22v8h11"/></svg></div><h3>설계</h3><p>화면 흐름과 데이터 구조를 설계합니다.</p></div>
+        <div class="step"><div class="circle"><span class="num">04</span><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M16 14l-10 10 10 10M32 14l10 10-10 10M28 8l-8 32"/></svg></div><h3>개발·테스트</h3><p>기능을 구현하고 사용 흐름대로 확인합니다.</p></div>
+        <div class="step"><div class="circle"><span class="num">05</span><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M8 26v-4a16 16 0 0132 0v4M8 26h6v10H8zM34 26h6v10h-6z"/></svg></div><h3>운영·개선</h3><p>운영 환경에 적용하고 현장 의견을 반영합니다.</p></div>
       </div>
     </div>
   </section>
