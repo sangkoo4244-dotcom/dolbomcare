@@ -158,7 +158,7 @@ def create_center(
             f"로그인 이메일: {manager.email}\n"
             f"비밀번호: {body.manager_password}\n\n"
             f"아래 주소에서 로그인해 주세요.\n"
-            f"https://seniorcareinfo.kr/pages/login.html\n\n"
+            f"https://ieumlogic.co.kr/pages/login.html\n\n"
             f"문의: contact@eeum-logic.com\n"
             f"이음로직 드림"
         ),

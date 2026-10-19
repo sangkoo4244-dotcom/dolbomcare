@@ -221,7 +221,7 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
                 f"{user.full_name}님, 안녕하세요.\n\n"
                 f"비밀번호 재설정을 요청하셨습니다. 아래 링크에서 새 비밀번호를 설정해 주세요.\n"
                 f"(이 링크는 {RESET_TOKEN_EXPIRE_MINUTES}분 동안만 유효합니다)\n\n"
-                f"https://seniorcareinfo.kr/pages/reset_password.html?token={token}\n\n"
+                f"https://ieumlogic.co.kr/pages/reset_password.html?token={token}\n\n"
                 f"본인이 요청하지 않았다면 이 메일을 무시하셔도 됩니다.\n\n"
                 f"이음로직 드림"
             ),

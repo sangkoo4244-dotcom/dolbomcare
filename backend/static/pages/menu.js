@@ -376,8 +376,8 @@ function renderSidebar() {
         credit.id = 'sideCredit';
         credit.style.cssText = 'flex: 0 0 auto; padding: 12px 16px 16px; border-top: 1px solid #374151; font-size: 11px; line-height: 1.8;';
         credit.innerHTML = `
-            <a href="https://seniorcareinfo.kr/" target="_blank" rel="noopener" style="display:block; color: #9ca3af; text-decoration: none; font-weight: 700;">이음로직</a>
-            <a href="https://seniorcareinfo.kr/" target="_blank" rel="noopener" style="display:block; color: #6b7280; text-decoration: none;">https://seniorcareinfo.kr</a>
+            <a href="https://ieumlogic.co.kr/" target="_blank" rel="noopener" style="display:block; color: #9ca3af; text-decoration: none; font-weight: 700;">이음로직</a>
+            <a href="https://ieumlogic.co.kr/" target="_blank" rel="noopener" style="display:block; color: #6b7280; text-decoration: none;">https://ieumlogic.co.kr</a>
         `;
         nav.parentElement.appendChild(credit);
     }
