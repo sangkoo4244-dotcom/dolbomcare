@@ -357,15 +357,16 @@
         // 급여 공제율: app/salary_rules.py의 RATES와 반드시 같은 값을 쓴다 (센터가 확정하는 실제 계산과 같은 기준이어야 한다).
         // 항목별로 반올림한 뒤 합산한다 (calc_deductions()와 동일한 방식 — 전체를 한 번에 곱해 반올림하면 몇 원 단위로 어긋날 수 있음)
         // 공단 청구액(billing_total)은 센터 매출이고, 실제 급여는 그중 계약된 비율(wageRatio)만큼의 급여 산정액(wage_base)에서 공제한다.
-        function calcSalary(billingTotal, wageRatio) {
+        // 시급 방식은 fixedWageBase(시급 × 제공 시간)를 그대로 쓰고, 이때 wage_ratio는 null이다.
+        function calcSalary(billingTotal, wageRatio, fixedWageBase) {
             const ratio = wageRatio ?? 100;
-            const wageBase = Math.floor(billingTotal * ratio / 100 + 0.5);
+            const wageBase = fixedWageBase ?? Math.floor(billingTotal * ratio / 100 + 0.5);
             const incomeTax = Math.round(wageBase * 0.033);
             const pension = Math.round(wageBase * 0.09);
             const health = Math.round(wageBase * 0.0349);
             const employment = Math.round(wageBase * 0.0065);
             const totalTax = incomeTax + pension + health + employment;
-            return { billing_total: billingTotal, wage_ratio: ratio, wage_base: wageBase, income_tax: incomeTax, pension, health, employment, total_deduction: totalTax, net: wageBase - totalTax };
+            return { billing_total: billingTotal, wage_ratio: fixedWageBase === undefined ? ratio : null, wage_base: wageBase, income_tax: incomeTax, pension, health, employment, total_deduction: totalTax, net: wageBase - totalTax };
         }
 
         function escapeHtml(text) {
@@ -394,6 +395,20 @@
         };
 
         let myWageRatio = 100;
+        let myPay = { method: 'ratio', hourlyWage: 0 };
+
+        // 해당 달의 제공 시간 합계(분). 시급 계산과 같은 기준: 제공 기록의 제공 시간
+        function monthMinutes(ym) {
+            return allDailyRecords.filter(r => (r.recorded_date || '').slice(0, 7) === ym).reduce((s, r) => s + (r.duration_minutes || 0), 0);
+        }
+        // 달별 급여 미리보기: 시급 방식이면 제공 시간 × 시급, 아니면 청구액 × 급여 비율
+        function calcSalaryFor(ym, billingTotal) {
+            if (myPay.method === 'hourly' && myPay.hourlyWage) {
+                return calcSalary(billingTotal, null, Math.floor(monthMinutes(ym) * myPay.hourlyWage / 60 + 0.5));
+            }
+            return calcSalary(billingTotal, myWageRatio);
+        }
+        function payLabel(ratio, hourly) { return hourly ? '시급' : `${ratio ?? 100}%`; }
 
         async function loadSalaryData() {
             try {
@@ -408,6 +423,7 @@
                 confirmedStatements = statementsRes.statements || [];
                 // localStorage.user는 덮어쓰지 않는다 (/me는 center_id가 없어 다른 화면의 center_id 기준이 깨짐) - 비율만 따로 보관
                 myWageRatio = meRes?.wage_ratio ?? 100;
+                myPay = { method: meRes?.pay_method || 'ratio', hourlyWage: meRes?.hourly_wage || 0 };
 
                 const now = new Date();
                 const thisYm = ymKey(now);
@@ -450,7 +466,7 @@
 
             const c = confirmed
                 ? { ...confirmed, state: 'confirmed' }
-                : { ...calcSalary(billingAmountOfMonth(ym), myWageRatio), year_month: ym, state: 'pending' };
+                : { ...calcSalaryFor(ym, billingAmountOfMonth(ym)), year_month: ym, state: 'pending' };
             currentMonthStatement = c;
 
             const banner = document.getElementById('statusBanner');
@@ -476,7 +492,7 @@
             const prevYm = ymKey(new Date(now_year(ym), now_month(ym) - 2, 1));
             const prevConfirmed = confirmedStatements.find(s => s.year_month === prevYm);
             const prevAmount = billingAmountOfMonth(prevYm);
-            const prev = prevConfirmed || (prevAmount ? calcSalary(prevAmount, myWageRatio) : null);
+            const prev = prevConfirmed || (prevAmount ? calcSalaryFor(prevYm, prevAmount) : null);
             const momEl = document.getElementById('momText');
             if (prev) {
                 const diff = c.net - prev.net;
@@ -501,7 +517,7 @@
             document.getElementById('netSalary').textContent = `₩${c.net.toLocaleString()}`;
             document.getElementById('detail_billing').textContent = `₩${c.billing_total.toLocaleString()}`;
             document.getElementById('detail_wage_base').textContent = `₩${wageBase.toLocaleString()}`;
-            document.getElementById('detail_wage_ratio_note').textContent = `청구액의 ${ratio}%`;
+            document.getElementById('detail_wage_ratio_note').textContent = c.wage_ratio === null ? '시급 × 제공 시간' : `청구액의 ${ratio}%`;
             document.getElementById('detail_pay_total').textContent = `₩${wageBase.toLocaleString()}`;
             document.getElementById('detail_income_tax').textContent = `-₩${c.income_tax.toLocaleString()}`;
             document.getElementById('detail_pension').textContent = `-₩${c.pension.toLocaleString()}`;
@@ -520,7 +536,7 @@
                 const confirmed = confirmedStatements.find(s => s.year_month === ym);
                 if (confirmed) return { net: confirmed.net, state: 'confirmed' };
                 const amt = billingAmountOfMonth(ym);
-                return amt > 0 ? { net: calcSalary(amt, myWageRatio).net, state: 'pending' } : { net: 0, state: 'none' };
+                return amt > 0 ? { net: calcSalaryFor(ym, amt).net, state: 'pending' } : { net: 0, state: 'none' };
             });
 
             if (trendChart) trendChart.destroy();
@@ -553,7 +569,7 @@
             const rows = confirmedStatements.map(s => ({ ...s, state: 'confirmed' }));
             const thisAmount = billingAmountOfMonth(thisYm);
             if (!hasThisMonth && thisAmount > 0) {
-                rows.unshift({ ...calcSalary(thisAmount, myWageRatio), year_month: thisYm, state: 'pending' });
+                rows.unshift({ ...calcSalaryFor(thisYm, thisAmount), year_month: thisYm, state: 'pending' });
             }
             if (rows.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94A3B8;">급여 내역이 없습니다</td></tr>';
@@ -563,7 +579,7 @@
                 <tr>
                     <td style="font-weight:700;color:var(--navy);">${ymLabel(s.year_month)}</td>
                     <td class="num">₩${s.billing_total.toLocaleString()}</td>
-                    <td class="num">₩${(s.wage_base ?? s.billing_total).toLocaleString()} <span style="color:#94A3B8;font-size:11px;">(${s.wage_ratio ?? 100}%)</span></td>
+                    <td class="num">₩${(s.wage_base ?? s.billing_total).toLocaleString()} <span style="color:#94A3B8;font-size:11px;">(${payLabel(s.wage_ratio, s.pay_method === 'hourly')})</span></td>
                     <td class="num" style="color:var(--danger);">-₩${s.total_deduction.toLocaleString()}</td>
                     <td class="num" style="font-weight:700;color:var(--teal);">₩${s.net.toLocaleString()}</td>
                     <td>${s.state === 'pending'
@@ -657,7 +673,7 @@
                     <table class="ps-table">
                         <tr><th>지급 항목</th><th>금액</th></tr>
                         <tr><td>청구액</td><td>₩${s.billing_total.toLocaleString()}</td></tr>
-                        <tr><td>급여 산정액 (청구액의 ${s.wage_ratio ?? 100}%)</td><td>₩${(s.wage_base ?? s.billing_total).toLocaleString()}</td></tr>
+                        <tr><td>급여 산정액 (${s.pay_method === 'hourly' ? '시급 × 제공 시간' : `청구액의 ${s.wage_ratio ?? 100}%`})</td><td>₩${(s.wage_base ?? s.billing_total).toLocaleString()}</td></tr>
                         <tr class="ps-total"><td>지급 합계</td><td>₩${(s.wage_base ?? s.billing_total).toLocaleString()}</td></tr>
                     </table>
                     <table class="ps-table">
@@ -693,7 +709,7 @@
             document.getElementById('detailBody').innerHTML = `
                 <div class="flex justify-between"><span class="text-gray-500">대상월</span><span class="font-bold text-gray-900">${ymLabel(s.year_month)}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">청구액</span><span class="font-bold text-gray-900">₩${s.billing_total.toLocaleString()}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">급여 산정액 (${s.wage_ratio ?? 100}%)</span><span class="font-bold text-gray-900">₩${(s.wage_base ?? s.billing_total).toLocaleString()}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">급여 산정액 (${payLabel(s.wage_ratio, s.pay_method === 'hourly')})</span><span class="font-bold text-gray-900">₩${(s.wage_base ?? s.billing_total).toLocaleString()}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">소득세</span><span class="text-red-600">-₩${s.income_tax.toLocaleString()}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">국민연금</span><span class="text-red-600">-₩${s.pension.toLocaleString()}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">건강보험</span><span class="text-red-600">-₩${s.health.toLocaleString()}</span></div>

@@ -29,6 +29,8 @@ class UserUpdate(BaseModel):
     emergency_contact: Optional[str] = None
     employment_status: Optional[str] = None
     wage_ratio: Optional[int] = None  # 급여 비율(%) - 요양사가 받는 급여 = 청구액 × 이 비율
+    pay_method: Optional[str] = None  # ratio(청구액 비율) / hourly(시급 × 제공 시간)
+    hourly_wage: Optional[int] = None  # 시급(원). hourly 방식에서 필요
     job_type: Optional[str] = None  # 직종: 요양보호사/간호사/간호조무사/치과위생사. 빈 문자열이면 요양보호사
     birth_date: Optional[date] = None  # 직원 생년월일 (보수교육 대상 연도 계산)
     leave_date: Optional[date] = None  # 퇴사일 (경력직 비율)
@@ -287,6 +289,8 @@ async def list_users(
                 "emergency_contact": u.emergency_contact,
                 "employment_status": u.employment_status,
                 "wage_ratio": u.wage_ratio,
+                "pay_method": u.pay_method or "ratio",
+                "hourly_wage": u.hourly_wage,
                 "job_type": u.job_type or "요양보호사",
                 "role": u.role,
                 "center_id": u.center_id,
@@ -333,6 +337,16 @@ async def update_user(
         if not (0 <= user_update.wage_ratio <= 100):
             raise HTTPException(status_code=400, detail="급여 비율은 0~100 사이여야 합니다")
         user.wage_ratio = user_update.wage_ratio
+    if user_update.pay_method is not None:
+        if user_update.pay_method not in ("ratio", "hourly"):
+            raise HTTPException(status_code=400, detail="급여 방식은 ratio 또는 hourly 중에서 골라 주세요")
+        if user_update.pay_method == "hourly" and not (user_update.hourly_wage or user.hourly_wage):
+            raise HTTPException(status_code=400, detail="시급 방식은 시급을 함께 입력해 주세요")
+        user.pay_method = user_update.pay_method
+    if user_update.hourly_wage is not None:
+        if user_update.hourly_wage < 0:
+            raise HTTPException(status_code=400, detail="시급은 0원 이상이어야 합니다")
+        user.hourly_wage = user_update.hourly_wage
     if user_update.job_type is not None:
         if user_update.job_type and user_update.job_type not in JOB_TYPES:
             raise HTTPException(status_code=400, detail=f"직종은 {', '.join(JOB_TYPES)} 중에서 골라 주세요")
@@ -352,6 +366,8 @@ async def update_user(
         "emergency_contact": user.emergency_contact,
         "employment_status": user.employment_status,
         "wage_ratio": user.wage_ratio,
+        "pay_method": user.pay_method or "ratio",
+        "hourly_wage": user.hourly_wage,
         "job_type": user.job_type or "요양보호사",
         "role": user.role,
         "center_id": user.center_id,
@@ -407,6 +423,8 @@ async def get_my_profile(actor: User = Depends(get_current_user), db: Session = 
         "role": actor.role,
         "profile_image": actor.profile_image,
         "wage_ratio": actor.wage_ratio,
+        "pay_method": actor.pay_method or "ratio",
+        "hourly_wage": actor.hourly_wage,
         "job_type": actor.job_type or "요양보호사",
     }
 

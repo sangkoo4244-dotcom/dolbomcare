@@ -27,6 +27,14 @@ def calc_wage_base(billing_total: int, wage_ratio) -> int:
     return _round_half_up(billing_total * ratio / 100)
 
 
+PAY_METHODS = ("ratio", "hourly")
+
+
+def calc_hourly_base(work_minutes: int, hourly_wage: int) -> int:
+    """시급 방식 급여 산정액 = 시급 × 제공 시간(분) / 60. 원 단위로 반올림한다."""
+    return _round_half_up(hourly_wage * work_minutes / 60)
+
+
 def calc_deductions(amount: int) -> dict:
     items = {name: _round_half_up(amount * rate) for name, rate in RATES.items()}
     total_tax = sum(items.values())

@@ -23,6 +23,8 @@ class User(Base):
     employment_status = Column(String, default="active")  # 'active', 'inactive', 'leave'
     job_type = Column(String, nullable=True)  # 직종: '요양보호사'(NULL=요양보호사), '간호사', '간호조무사'. 방문간호는 간호직만 제공할 수 있다
     wage_ratio = Column(Integer, nullable=True)  # 요양사가 받는 급여 = 청구액(공단부담+본인부담) 중 이 비율(%). NULL=100(기존 동작과 동일)
+    pay_method = Column(String, nullable=True)  # ratio(청구액 비율, 기본) / hourly(시급 × 제공 시간)
+    hourly_wage = Column(Integer, nullable=True)  # 시급(원). pay_method가 hourly일 때만 쓴다
     is_active = Column(Boolean, default=True)
     alimtalk_opt_in = Column(Boolean, default=True)  # 카카오 알림톡 수신 여부 (끄면 인앱 알림만 받음)
     alimtalk_categories = Column(String, nullable=True)  # 받고 싶은 알림 종류 코드 (쉼표 구분). null=전체
@@ -452,6 +454,8 @@ class SalaryStatement(Base):
     billing_total = Column(Integer)  # 승인된 청구 합계 (공단부담, 100% 기준 — 급여와는 다른 숫자)
     wage_ratio = Column(Integer, nullable=True)  # 확정 시점에 적용된 급여 비율(%)
     wage_base = Column(Integer, nullable=True)  # billing_total * wage_ratio / 100 — 공제 전 급여 산정 기준액
+    pay_method = Column(String, nullable=True)  # 확정 시점의 산정 방식 (ratio / hourly)
+    work_minutes = Column(Integer, nullable=True)  # 시급 방식일 때 확정 시점의 제공 시간 합계(분)
     income_tax = Column(Integer)
     pension = Column(Integer)
     health = Column(Integer)

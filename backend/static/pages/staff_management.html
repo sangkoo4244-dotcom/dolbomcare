@@ -639,13 +639,22 @@
                     <label>근무 상태<select id="eStatus">${Object.entries(STATUS_LABEL).map(([k, v]) => `<option value="${k}" ${statusOf(s) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
                     ${s.role === 'caregiver' ? `
                     <label>급여 비율(%)<input id="eWageRatio" type="number" min="0" max="100" placeholder="100 (미입력 시 기본값)" value="${s.wage_ratio ?? ''}"></label>
-                    <div style="font-size:11.5px;color:#94A3B8;margin-top:-6px;">이 요양사의 급여 = 공단 청구액(청구액) × 이 비율. 비워두면 100%로 계산됩니다.</div>` : ''}
+                    <div style="font-size:11.5px;color:#94A3B8;margin-top:-6px;">이 요양사의 급여 = 공단 청구액(청구액) × 이 비율. 비워두면 100%로 계산됩니다.</div>
+                    <label>급여 방식<select id="ePayMethod" onchange="togglePayFields()"><option value="ratio" ${s.pay_method === 'hourly' ? '' : 'selected'}>청구액 비율</option><option value="hourly" ${s.pay_method === 'hourly' ? 'selected' : ''}>시급 × 제공 시간</option></select></label>
+                    <label id="eHourlyWrap" style="${s.pay_method === 'hourly' ? '' : 'display:none'}">시급(원)<input id="eHourly" type="number" min="0" placeholder="예: 12000" value="${s.hourly_wage ?? ''}"></label>
+                    <div id="eHourlyNote" style="font-size:11.5px;color:#94A3B8;margin-top:-6px;${s.pay_method === 'hourly' ? '' : 'display:none'}">급여 = 시급 × 제공 기록의 제공 시간 합계(분 ÷ 60). 청구액과 무관합니다.</div>` : ''}
                     <div class="st-form-actions">
                         <button class="st-act" onclick="closeStaffModal()">취소</button>
                         <button class="st-add-btn" onclick="saveStaffEdit()">저장</button>
                     </div>
                 </div>`;
             document.getElementById('staffModal').hidden = false;
+        }
+
+        function togglePayFields() {
+            const hourly = document.getElementById('ePayMethod').value === 'hourly';
+            document.getElementById('eHourlyWrap').style.display = hourly ? '' : 'none';
+            document.getElementById('eHourlyNote').style.display = hourly ? '' : 'none';
         }
 
         async function saveStaffEdit() {
@@ -663,6 +672,15 @@
             };
             const wageInput = document.getElementById('eWageRatio');
             if (wageInput && wageInput.value !== '') body.wage_ratio = parseInt(wageInput.value, 10);
+            const payInput = document.getElementById('ePayMethod');
+            if (payInput) {
+                body.pay_method = payInput.value;
+                const hourlyInput = document.getElementById('eHourly');
+                if (payInput.value === 'hourly') {
+                    if (!hourlyInput.value) { alert('시급 방식은 시급을 입력해 주세요'); return; }
+                    body.hourly_wage = parseInt(hourlyInput.value, 10);
+                }
+            }
             try {
                 const r = await fetch(`${API_URL}/users/${editingId}`, {
                     method: 'PUT',
@@ -692,7 +710,7 @@
                 ['긴급 연락처', s.emergency_contact || '-'],
                 ['입사일', s.hire_date || '-'],
                 ['근무 상태', STATUS_LABEL[statusOf(s)] || statusOf(s)],
-                ...(s.role === 'caregiver' ? [['급여 비율', `청구액의 ${s.wage_ratio ?? 100}%`]] : [])
+                ...(s.role === 'caregiver' ? [['급여 방식', s.pay_method === 'hourly' ? `시급 ${(s.hourly_wage ?? 0).toLocaleString()}원 × 제공 시간` : `청구액의 ${s.wage_ratio ?? 100}%`]] : [])
             ];
             document.getElementById('staffModalTitle').textContent = '직원 상세';
             document.getElementById('staffModalBody').innerHTML = rows.map(([k, v]) => `<div class="st-detail-row"><span>${k}</span><span>${escapeAttr(v)}</span></div>`).join('')
