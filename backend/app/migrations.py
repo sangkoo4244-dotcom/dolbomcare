@@ -70,6 +70,7 @@ ADDITIVE_COLUMNS = [
     ("centers", "partner_note", "VARCHAR"),
     ("users", "wage_ratio", "INTEGER"),
     ("users", "pay_method", "VARCHAR"),
+    ("training_certificates", "continuing_education", "BOOLEAN DEFAULT FALSE"),
     ("users", "hourly_wage", "INTEGER"),
     ("salary_statements", "pay_method", "VARCHAR"),
     ("salary_statements", "work_minutes", "INTEGER"),

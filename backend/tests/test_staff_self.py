@@ -143,3 +143,20 @@ def test_education_due_reminder_is_sent_once_to_the_caregiver(env):
     client.get("/api/v1/staff-self/me", headers=CG)
     notes = db.query(models.Notification).filter(models.Notification.user_id == 2, models.Notification.kind == "education_due").all()
     assert len(notes) == 1
+
+
+def test_flagged_training_certificate_counts_as_continuing_education(env):
+    db, client = env
+    from app.education import due_year
+    due = due_year(date(1980, 3, 1), None, date.today())
+    db.add(models.TrainingCertificate(center_id=1, user_id=2, title="보수교육 과정", completed_on=date(due, 1, 10),
+                                      continuing_education=False))
+    db.commit()
+    # 보수교육으로 표시하지 않은 수료증은 이수로 세지 않는다
+    assert client.get("/api/v1/staff-self/me", headers=CG).json()["data"]["education"]["state"] != "done"
+    cert = db.query(models.TrainingCertificate).one()
+    cert.continuing_education = True
+    db.commit()
+    assert client.get("/api/v1/staff-self/me", headers=CG).json()["data"]["education"]["state"] == "done"
+    rows = {r["staff_id"]: r for r in client.get("/api/v1/staff-self/education-status", headers=MANAGER).json()["data"]["staff"]}
+    assert rows[2]["state"] == "done"

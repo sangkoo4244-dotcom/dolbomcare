@@ -10,7 +10,7 @@ from app.auth import get_current_user, require_manager
 from app.database import get_db
 from app.education import status_for
 from app.api.notifications import notify
-from app.models import Notification, StaffRecord, User
+from app.models import Notification, StaffRecord, TrainingCertificate, User
 
 router = APIRouter()
 SELF_TYPES = {"health_checkup": "건강검진", "continuing_education": "보수교육", "annual_leave": "연차·유급휴일"}
@@ -52,6 +52,10 @@ def _education(u: User, db: Session, today: date) -> Optional[dict]:
     rows = db.query(StaffRecord).filter(StaffRecord.staff_id == u.id, StaffRecord.record_type == "continuing_education").all()
     exempt = any((r.status or "") == "exempt" for r in rows)
     dates = [r.record_date for r in rows if r.record_date and (r.status or "") != "exempt"]
+    # 교육 수료증 중 보수교육으로 표시한 것도 이수로 본다 (같은 교육을 두 번 입력하지 않도록)
+    certs = db.query(TrainingCertificate).filter(TrainingCertificate.user_id == u.id,
+                                                 TrainingCertificate.continuing_education == True).all()  # noqa: E712
+    dates += [c.completed_on for c in certs if c.completed_on]
     return status_for(u.birth_date, u.hire_date, dates, exempt, today)
 
 

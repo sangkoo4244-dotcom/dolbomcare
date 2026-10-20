@@ -27,6 +27,7 @@ class CertBody(BaseModel):
     issuer: Optional[str] = None
     file_name: Optional[str] = None
     file_data: Optional[str] = None
+    continuing_education: bool = False  # 보수교육으로 인정할 교육인지
 
 
 def _check_file(file_data: Optional[str]) -> Optional[str]:
@@ -55,6 +56,7 @@ def _to_dict(c: TrainingCertificate, names: dict) -> dict:
         "issuer": c.issuer or "",
         "file_name": c.file_name or "",
         "has_file": bool(c.file_data),
+        "continuing_education": bool(c.continuing_education),
     }
 
 
@@ -86,7 +88,7 @@ def create_cert(body: CertBody, db: Session = Depends(get_db), actor: User = Dep
     row = TrainingCertificate(center_id=actor.center_id, user_id=staff.id, title=title, completed_on=body.completed_on,
                               hours=body.hours, issuer=(body.issuer or "").strip() or None,
                               file_name=(body.file_name or "").strip()[:200] or None, file_data=_check_file(body.file_data),
-                              created_by=actor.id)
+                              continuing_education=body.continuing_education, created_by=actor.id)
     db.add(row)
     db.commit()
     return {"status": "success", "data": {"id": row.id}}

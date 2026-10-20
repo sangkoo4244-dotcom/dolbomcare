@@ -929,6 +929,7 @@ class TrainingCertificate(Base):
     issuer = Column(String, nullable=True)  # 발급 기관
     file_name = Column(String, nullable=True)
     file_data = Column(Text, nullable=True)  # data:...;base64,... 형식
+    continuing_education = Column(Boolean, default=False)  # 보수교육 이수로 인정하면 True (직원 규정준수 보수교육 현황에 반영)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.now)
 

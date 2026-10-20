@@ -78,6 +78,7 @@
                     <div><label class="lbl" for="cDate">수료일</label><input type="date" id="cDate" class="field"></div>
                     <div><label class="lbl" for="cHours">교육 시간</label><input type="number" id="cHours" class="field" min="0" placeholder="시간"></div>
                     <div><label class="lbl" for="cIssuer">발급 기관</label><input id="cIssuer" class="field"></div>
+                    <div style="grid-column: 1 / -1;"><label style="display:flex;align-items:center;gap:6px;font-size:13px;"><input type="checkbox" id="cContEd"> 보수교육으로 인정 (직원 규정준수의 보수교육 이수에 반영됩니다)</label></div>
                     <div><label class="lbl" for="cFile">파일 (PDF·PNG·JPG, 2MB 이하)</label><input type="file" id="cFile" class="field" accept="application/pdf,image/png,image/jpeg"></div>
                 </div>
                 <div style="display:flex;justify-content:flex-end;margin-top:12px;"><button class="btn-solid" onclick="save()">등록</button></div>
@@ -131,9 +132,11 @@
                     issuer: document.getElementById('cIssuer').value || null,
                     file_name: file ? file.name : null,
                     file_data: data,
+                    continuing_education: document.getElementById('cContEd').checked,
                 }) });
                 setMsg('등록했습니다.', true);
                 ['cTitle', 'cHours', 'cIssuer'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('cContEd').checked = false;
                 document.getElementById('cFile').value = '';
                 load();
             } catch (e) { setMsg(e.message, false); }
