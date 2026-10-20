@@ -351,7 +351,9 @@
         }
         function recordUrl(it) {
             const planned = it.planned_items.length ? `&planned=${it.planned_items.join(',')}` : '';
-            return `./voice_record.html?resident_id=${it.resident_id}${planned}`;
+            // 계획된 방문에서 작성하면 그 방문에 직접 연결한다 (기록 시각이 방문 시간대 밖이어도 같은 방문으로 보이게)
+            const link = it.planned && it.schedule_id ? `&schedule_id=${it.schedule_id}` : '';
+            return `./voice_record.html?resident_id=${it.resident_id}${planned}${link}`;
         }
         function avatarOf(it) { return it.resident_gender === '남' ? 'resident_avatar_male.png' : 'resident_avatar_female.png'; }
         // 시작 시각 + 제공 시간으로 종료 시각을 계산해 "09:00 - 11:00"처럼 보여 준다

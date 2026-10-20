@@ -96,3 +96,16 @@ def test_plan_with_record_but_no_departure_is_not_complete(setup):
     db_session.close()
     items = items_by_schedule(setup)
     assert items[1]["state"] != "완료"
+
+
+def test_record_chosen_for_a_planned_visit_links_to_it_even_outside_the_time_window(setup):
+    items = items_by_schedule(setup)
+    planned = next(i for i in items.values() if i["planned"])
+    db_session = setup.Session()
+    # 기록 시각이 방문 시간대(시작 60분 전 ~ 종료 3시간 후) 밖이어도, 화면에서 고른 방문이면 그 방문에 붙는다
+    db_session.add(models.DailyRecord(id=77, caregiver_id=2, resident_id=planned["resident_id"],
+                                      recorded_date=DAY.replace(hour=20), duration_minutes=60, schedule_id=planned["schedule_id"]))
+    db_session.commit()
+    db_session.close()
+    after = items_by_schedule(setup)[planned["schedule_id"]]
+    assert after["daily_record_id"] == 77 and after["record"]["id"] == 77

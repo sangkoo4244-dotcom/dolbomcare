@@ -326,7 +326,8 @@ def caregiver_schedule_view(
         companion = s.caregiver_id != caregiver_id
         pool = [r for r in primary_records if r.caregiver_id == s.caregiver_id] if companion else records
         if s.status == "scheduled":
-            match = next(
+            # 기록이 이 방문에 직접 연결돼 있으면(화면에서 고른 방문) 그것을 우선 쓰고, 없으면 방문 시간대로 찾는다
+            match = next((r for r in pool if r.id not in used and r.schedule_id == s.id), None) or next(
                 (r for r in pool if r.id not in used and r.resident_id == s.resident_id and record_fits_schedule(s, r.recorded_date)),
                 None,
             )

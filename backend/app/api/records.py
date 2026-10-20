@@ -7,7 +7,7 @@ from app import benefits as benefit_catalog
 from app.review import find_schedule, gate_reason_for
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
-from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary, Notification, DayCareAttendance, RecordAuditLog
+from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary, Notification, DayCareAttendance, RecordAuditLog, Schedule
 from app.schemas import DailyRecordResponse
 from app.database import get_db
 from app.auth import get_current_user, require_manager, assert_self_or_manager, assert_my_center
@@ -70,6 +70,7 @@ class CreateRecordRequest(BaseModel):
     special_note: Optional[str] = Field(None, max_length=300)  # 산정 사유: 방문요양 2인 동시 제공(수급자 동의·당시 상태), 방문목욕 1인 몸 씻기 예외·주 1회 초과
     bath_solo_exception: bool = False  # 방문목욕에서 수치심 때문에 몸 씻기만 1인이 제공(차량 미이용만)
     recorded_date: Optional[datetime] = None  # 소급 기록용 (미지정 시 현재 시각)
+    schedule_id: Optional[int] = None  # 화면에서 고른 방문 계획. 있으면 기록 시각과 상관없이 그 방문에 연결한다
     signature: Optional[str] = None  # 방문 확인 서명 (base64 PNG data URL)
     physical_change: Optional[ChangeStatus] = None  # 공단 제공기록지 변화상태
     meal_change: Optional[ChangeStatus] = None
@@ -211,6 +212,11 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
         if visit["benefit_type"] == "home_bath" and _bath_visits_that_week(db, request.resident_id, now) >= 1 and not special_note:
             raise HTTPException(status_code=400, detail="방문목욕은 같은 주에 1회까지 청구할 수 있습니다. 변실금·요실금 등으로 불가피하면 산정 사유에 적어 주세요")
         linked_schedule = find_schedule(db, caregiver_id, request.resident_id, now)
+        if request.schedule_id:
+            chosen = db.query(Schedule).filter(Schedule.id == request.schedule_id, Schedule.caregiver_id == caregiver_id,
+                                               Schedule.resident_id == request.resident_id, Schedule.status == "scheduled").first()
+            if chosen:
+                linked_schedule = chosen
         daily_record = DailyRecord(
             resident_id=request.resident_id,
             caregiver_id=caregiver_id,
