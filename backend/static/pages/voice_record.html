@@ -873,6 +873,9 @@
 
         const RECORD_PAGE_SIZE = 10;
         let recordPage = 1;
+        // 나의 일정에서 '기록 보기'로 넘어오면 ?record_id=번호 로 그 기록을 연다
+        const focusRecordId = (() => { const v = new URLSearchParams(window.location.search).get('record_id'); return v ? parseInt(v, 10) : null; })();
+        let focusRecordDone = false;
         function resetRecordPage() { recordPage = 1; renderRecords(); }
 
         function renderPager(total, totalPages) {
@@ -903,12 +906,21 @@
             const pageRows = rows.slice(start, start + RECORD_PAGE_SIZE);
             renderPager(rows.length, totalPages);
 
-            tbody.innerHTML = pageRows.map((r, i) => {
+            // 나의 일정의 '기록 보기'로 들어온 경우 그 기록이 있는 쪽을 열고 표시한다
+            if (focusRecordId && !focusRecordDone) {
+                const idx = rows.findIndex(r => r.id === focusRecordId);
+                if (idx >= 0) recordPage = Math.floor(idx / RECORD_PAGE_SIZE) + 1;
+                focusRecordDone = true;
+            }
+            renderPager(rows.length, Math.max(1, Math.ceil(rows.length / RECORD_PAGE_SIZE)));
+            const pageRowsNow = rows.slice((recordPage - 1) * RECORD_PAGE_SIZE, recordPage * RECORD_PAGE_SIZE);
+            tbody.innerHTML = pageRowsNow.map((r, i) => {
                 const [label, cls] = recordStatusLabel(r);
                 const dt = new Date(r.recorded_date);
                 const notesText = (r.notes || '-').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                return `<tr>
-                    <td>${start + i + 1}</td>
+                const focused = focusRecordId === r.id;
+                return `<tr data-record-id="${r.id}" style="${focused ? 'background:#ECFDF5;outline:2px solid #0F8B80;' : ''}">
+                    <td>${(recordPage - 1) * RECORD_PAGE_SIZE + i + 1}</td>
                     <td>${dt.toLocaleDateString('ko-KR')} ${dt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</td>
                     <td style="font-weight:700;">${r.resident_name || '-'}</td>
                     <td>${SERVICE_TYPE_LABELS[r.service_type] || r.service_type}${r.benefit_type && r.benefit_type !== 'home_care' ? `<div style="font-size:12px;font-weight:700;color:#0F8B80;">${BenefitFields.label(r.benefit_type)}</div>` : ''}</td>

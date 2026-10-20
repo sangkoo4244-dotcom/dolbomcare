@@ -355,6 +355,10 @@
             const link = it.planned && it.schedule_id ? `&schedule_id=${it.schedule_id}` : '';
             return `./voice_record.html?resident_id=${it.resident_id}${planned}${link}`;
         }
+        // '기록 보기': 제공 기록 화면으로 가서 저장된 그 기록을 연다
+        function savedRecordUrl(it) {
+            return it.record ? `./voice_record.html?record_id=${it.record.id}` : recordUrl(it);
+        }
         function avatarOf(it) { return it.resident_gender === '남' ? 'resident_avatar_male.png' : 'resident_avatar_female.png'; }
         // 시작 시각 + 제공 시간으로 종료 시각을 계산해 "09:00 - 11:00"처럼 보여 준다
         function timeRange(it) {
@@ -392,7 +396,7 @@
             if (it.companion) return '<span class="text-sm" style="color:#64748B;">함께 가는 방문입니다. 도착·퇴실·기록은 주 담당 요양보호사가 입력합니다.</span>';
             if (it.state === '승인 대기') return '<span class="text-sm" style="color:var(--warn);">센터장 승인을 기다리는 중입니다</span>';
             if (it.state === '반려') return `<button onclick="openResubmit(${it.schedule_id})" class="btn-solid">수정 후 다시 제안</button>`;
-            if (!it.planned) return `<button onclick="showSavedRecord()" class="btn-outline">기록 보기</button>`;
+            if (!it.planned) return `<a href="${savedRecordUrl(it)}" class="btn-outline" style="display:inline-block;">기록 보기</a>`;
             if (it.state === '예정') {
                 const pending = it.change_date
                     ? `<span class="text-xs" style="color:var(--warn);margin-right:8px;">변경 요청 중 (${it.change_date.slice(5, 16).replace('-', '/')}${it.change_service_type || it.change_planned_items ? ' 외' : ''})</span><button onclick="cancelChange(${it.schedule_id})" class="btn-outline" style="margin-right:8px;">요청 철회</button>`
@@ -402,9 +406,9 @@
             if (it.state === '방문중') return `<button onclick="markLeft(${it.schedule_id})" class="btn-outline">퇴실</button>
                 <a href="${recordUrl(it)}" class="btn-solid" style="margin-left:8px;display:inline-block;">기록 작성</a>`;
             if (it.state === '방문완료') return `<a href="${recordUrl(it)}" class="btn-solid" style="display:inline-block;">기록 작성</a>`;
-            if (it.state === '완료') return `<button onclick="showSavedRecord()" class="btn-outline">기록 보기</button>`;
+            if (it.state === '완료') return `<a href="${savedRecordUrl(it)}" class="btn-outline" style="display:inline-block;">기록 보기</a>`;
             if (it.state === '도착 미기록') {
-                return `<button onclick="showSavedRecord()" class="btn-outline" style="margin-right:8px;">기록 보기</button>` + (!it.arrived_at ? `<button onclick="markArrived(${it.schedule_id})" class="btn-outline">도착</button>` : '');
+                return `<a href="${savedRecordUrl(it)}" class="btn-outline" style="display:inline-block;margin-right:8px;">기록 보기</a>` + (!it.arrived_at ? `<button onclick="markArrived(${it.schedule_id})" class="btn-outline">도착</button>` : '');
             }
             if (it.state === '미기록') {
                 const arrive = !it.arrived_at ? `<button onclick="markArrived(${it.schedule_id})" class="btn-outline" style="margin-right:8px;">도착</button>` : '';
