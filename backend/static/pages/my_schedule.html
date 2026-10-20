@@ -781,7 +781,8 @@
             const recordBox = rec ? `
                 <div id="savedRecordBox" class="mt-4 p-3 rounded-lg" style="background:#F1F5F9;display:none;">
                     <div class="text-sm font-bold text-gray-900 mb-2">저장된 제공 기록</div>
-                    <div class="text-sm text-gray-700">기록 시각: ${escapeHtml(rec.recorded_date || '-')}${rec.duration_minutes ? ` · 제공 ${rec.duration_minutes}분` : ''}</div>
+                    <div class="text-sm text-gray-700">이용자: ${escapeHtml(rec.resident_name || '-')}${rec.resident_id === it.resident_id ? ' (이 방문과 같은 이용자)' : ' <span style="color:var(--danger);">(이 방문과 다른 이용자의 기록입니다)</span>'}</div>
+                    <div class="text-sm text-gray-700 mt-1">예정 ${escapeHtml(it.time)} · 기록 시각: ${escapeHtml(rec.recorded_date || '-')}${rec.duration_minutes ? ` · 제공 ${rec.duration_minutes}분` : ''}</div>
                     <div class="text-sm text-gray-700 mt-1">제공 항목: ${rec.care_items.length ? rec.care_items.map(c => escapeHtml(CARE_ITEM_LABELS[c] || c)).join(', ') : '없음'}</div>
                     ${rec.condition ? `<div class="text-sm text-gray-700 mt-1">상태: ${escapeHtml(rec.condition)}</div>` : ''}
                     ${rec.notes ? `<div class="text-sm text-gray-700 mt-1">메모: ${escapeHtml(rec.notes.slice(0, 200))}</div>` : ''}

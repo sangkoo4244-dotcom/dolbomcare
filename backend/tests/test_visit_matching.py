@@ -84,6 +84,7 @@ def test_record_inside_visit_window_completes_the_plan(setup):
     assert items[1]["state"] == "완료"
     # 화면의 '기록 보기'가 보여 줄 실제 기록 내용: 계획이 아니라 저장된 기록이어야 한다
     assert items[1]["record"]["id"] == 2 and items[1]["record"]["duration_minutes"] == 60
+    assert items[1]["record"]["resident_id"] == items[1]["resident_id"]  # 같은 이용자의 기록이어야 한다
 
 
 def test_plan_with_record_but_no_departure_is_not_complete(setup):
