@@ -68,6 +68,24 @@ def get_plan(resident_id: int = Query(...), year_month: str = Query(...), db: Se
     return {"status": "success", "data": {"resident_name": resident.name, "year_month": year_month, "items": items}}
 
 
+@router.get("/plan/previous")
+def get_previous_plan(resident_id: int = Query(...), year_month: str = Query(...), db: Session = Depends(get_db),
+                      actor: User = Depends(require_social_or_manager)):
+    """가장 최근 이전 달 계획을 돌려준다. 화면에서 채워 넣기만 하고 저장은 사용자가 따로 누른다."""
+    if not MONTH.match(year_month):
+        raise HTTPException(status_code=400, detail="월은 YYYY-MM 형식으로 적어 주세요")
+    resident = _resident(db, resident_id, actor.center_id)
+    row = (db.query(CognitivePlan)
+           .filter(CognitivePlan.resident_id == resident.id, CognitivePlan.year_month < year_month)
+           .order_by(CognitivePlan.year_month.desc()).first())
+    if not row:
+        return {"status": "success", "data": {"year_month": None, "items": []}}
+    items = json.loads(row.items)
+    for item in items:
+        item["label"] = LABELS.get(item["code"], item["code"])
+    return {"status": "success", "data": {"year_month": row.year_month, "items": items}}
+
+
 @router.put("/plan")
 def save_plan(body: PlanIn, db: Session = Depends(get_db), actor: User = Depends(require_social_or_manager)):
     if not MONTH.match(body.year_month):

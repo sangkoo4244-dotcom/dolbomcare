@@ -80,3 +80,23 @@ def test_caregiver_and_other_centers_are_refused(client):
     assert client.put("/api/v1/cognitive/plan", json=plan([{"code": "music", "frequency_per_week": 1, "minutes": 10}]), headers=CAREGIVER).status_code == 403
     assert client.get("/api/v1/cognitive/plan", params={"resident_id": 1, "year_month": "2026-10"}, headers=OTHER_MANAGER).status_code == 404
     assert client.get("/api/v1/cognitive/plan", params={"resident_id": 1, "year_month": "2026-13"}, headers=MANAGER).status_code == 400
+
+
+def test_previous_month_plan_is_offered_without_saving(client):
+    client.put("/api/v1/cognitive/plan", json={"resident_id": 1, "year_month": "2026-08", "items": [
+        {"code": "music", "frequency_per_week": 3, "minutes": 20}]}, headers=MANAGER)
+    client.put("/api/v1/cognitive/plan", json={"resident_id": 1, "year_month": "2026-09", "items": [
+        {"code": "walk", "frequency_per_week": 2, "minutes": 15}]}, headers=MANAGER)
+    prev = client.get("/api/v1/cognitive/plan/previous?resident_id=1&year_month=2026-10", headers=MANAGER).json()["data"]
+    assert prev["year_month"] == "2026-09" and [i["code"] for i in prev["items"]] == ["walk"]
+    # 가져오기만 해서는 10월 계획이 저장되지 않는다
+    own = client.get("/api/v1/cognitive/plan?resident_id=1&year_month=2026-10", headers=MANAGER).json()["data"]
+    assert own["items"] == []
+
+
+def test_no_previous_plan_and_refusals(client):
+    empty = client.get("/api/v1/cognitive/plan/previous?resident_id=1&year_month=2026-10", headers=MANAGER).json()["data"]
+    assert empty == {"year_month": None, "items": []}
+    assert client.get("/api/v1/cognitive/plan/previous?resident_id=1&year_month=2026-13", headers=MANAGER).status_code == 400
+    assert client.get("/api/v1/cognitive/plan/previous?resident_id=1&year_month=2026-10", headers=CAREGIVER).status_code == 403
+    assert client.get("/api/v1/cognitive/plan/previous?resident_id=1&year_month=2026-10", headers=OTHER_MANAGER).status_code == 404
