@@ -91,3 +91,14 @@ def test_validation_and_tenant(env):
     assert post(to_caregiver_id=None) == 200          # 받는 사람 없이 센터에 남기는 것도 가능
     assert client.post("/api/v1/handovers", json=body(), headers=GUARDIAN).status_code == 403
     assert client.get("/api/v1/handovers", headers=GUARDIAN).status_code == 403
+
+
+def test_unread_count_is_not_capped_by_the_list_limit(env, monkeypatch):
+    db, client = env
+    # 목록은 200건까지만 보여 주므로, 미확인 건수가 200건을 넘어도 정확해야 한다
+    monkeypatch.setattr(handovers, "MIN_CONTENT_LEN", 1)
+    db.add_all([models.HandoverNote(center_id=1, resident_id=1, author_id=2, to_caregiver_id=3, content="메모")
+                for _ in range(205)])
+    db.commit()
+    body_json = client.get("/api/v1/handovers", headers=CG_B).json()
+    assert len(body_json["notes"]) == 200 and body_json["unread_for_me"] == 205

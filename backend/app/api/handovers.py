@@ -69,7 +69,10 @@ def list_notes(db: Session = Depends(get_db), actor: User = Depends(get_current_
     rows = q.order_by(HandoverNote.created_at.desc(), HandoverNote.id.desc()).limit(200).all()
     names = _names(db, rows)
     notes = [_to_dict(n, names) for n in rows]
-    unread = sum(1 for n in rows if n.to_caregiver_id == actor.id and not n.acknowledged_at)
+    # 목록은 최근 200건만 보여 주지만, 미확인 건수는 전체에서 센다
+    unread = db.query(HandoverNote).filter(HandoverNote.center_id == actor.center_id,
+                                           HandoverNote.to_caregiver_id == actor.id,
+                                           HandoverNote.acknowledged_at.is_(None)).count()
     return {"notes": notes, "unread_for_me": unread}
 
 
