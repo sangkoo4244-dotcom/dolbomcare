@@ -163,6 +163,8 @@
 
             <div class="flex-1 overflow-y-auto px-8 py-8">
                 <div id="message" class="hidden mb-5 p-4 rounded-lg text-sm"></div>
+                <!-- 나에게 온 인계 메모 중 아직 확인하지 않은 것: 방문 전에 보도록 맨 위에 둔다 -->
+                <a id="handoverBanner" href="handover.html" class="hidden mb-5 p-4 rounded-lg text-sm font-semibold block" style="background:#FEF3C7;color:#92400E;text-decoration:none;"></a>
 
                 <!-- 일정 현황 요약 -->
                 <div class="summary-row">
@@ -416,6 +418,7 @@
             document.getElementById('monthPicker').value = ymKey(currentMonth);
             selectedDate = dateKey(new Date());
             loadSchedules();
+            loadHandoverBanner();
         }
 
         // 월간/주간/일간/목록 보기 전환. 목록은 별도 화면이 아니라 하단 테이블로 스크롤만 한다
@@ -526,6 +529,21 @@
 
         // 캘린더만 보이게 하고(사이드바·요약·우측패널·목록은 CSS로 숨김) 브라우저 인쇄창을 띄운다
         function printCalendar() { window.print(); }
+
+        async function loadHandoverBanner() {
+            try {
+                const r = await fetch(`${API_URL}/handovers`, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+                if (!r.ok) return;
+                const d = await r.json();
+                const banner = document.getElementById('handoverBanner');
+                if (d.unread_for_me > 0) {
+                    banner.textContent = `확인하지 않은 인수인계 메모가 ${d.unread_for_me}건 있습니다. 방문 전에 확인해 주세요 →`;
+                    banner.classList.remove('hidden');
+                } else {
+                    banner.classList.add('hidden');
+                }
+            } catch (e) { /* 배너는 부가 정보라 실패해도 일정은 그대로 보인다 */ }
+        }
 
         async function loadSchedules() {
             try {
