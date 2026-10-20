@@ -270,3 +270,16 @@ main [class*="bg-gradient-to"] {
 @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
 }
+
+/* ===== 인쇄: 휴대폰용 표 보정이 인쇄본을 잘라내지 않도록 되돌린다 (표는 쪽 폭에 맞춰 전부 나온다) ===== */
+@media print {
+    html, body { overflow: visible !important; max-width: none !important; }
+    table, table.m-cards { display: table !important; overflow: visible !important; width: 100% !important; }
+    table.m-cards thead { display: table-header-group !important; }
+    table.m-cards tbody { display: table-row-group !important; }
+    table.m-cards tr { display: table-row !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; }
+    table.m-cards td, table.m-cards th { display: table-cell !important; padding: 4px !important; border: 1px solid #cbd5e1 !important; }
+    table.m-cards td::before { content: none !important; }
+    th, td { white-space: normal !important; min-width: 0 !important; }
+}
+
