@@ -804,14 +804,28 @@
     </div>
 
     <!-- 욕구사정 (공단 표준 욕구사정 서식 핵심 영역) -->
+    <style>
+        /* 욕구사정 창: 휴대폰 폭에서 2단 배치·탭·표가 잘리지 않도록 */
+        .needs-modal-box { box-sizing: border-box; padding: 32px; width: 92%; max-width: 820px; max-height: 90vh; overflow-y: auto; }
+        .needs-tabs { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+        .needs-tab-btn { flex: 0 0 auto; white-space: nowrap; }
+        .needs-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .needs-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        @media (max-width: 640px) {
+            .needs-modal-box { padding: 18px 16px; width: 94%; }
+            .needs-grid2 { grid-template-columns: 1fr; gap: 16px; }
+            .needs-tabs { gap: 2px !important; }
+            .needs-table-wrap { overflow-x: visible; }
+        }
+    </style>
     <div id="needsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-        <div style="background: white; border-radius: 12px; padding: 32px; width: 92%; max-width: 820px; max-height: 90vh; overflow-y: auto;">
+        <div class="needs-modal-box" style="background: white; border-radius: 12px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <h2 style="margin:0;">욕구사정 <span id="needsResidentName" style="font-weight:400;color:#6b7280;font-size:14px;"></span></h2>
                 <button type="button" onclick="closeNeedsModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9ca3af;">&times;</button>
             </div>
 
-            <div style="display:flex;gap:6px;border-bottom:1px solid #e5e7eb;margin-bottom:20px;">
+            <div class="needs-tabs" style="display:flex;gap:6px;border-bottom:1px solid #e5e7eb;margin-bottom:20px;">
                 <button type="button" class="needs-tab-btn active" data-tab="core" onclick="switchNeedsTab('core')" style="padding:8px 14px;border:none;background:none;cursor:pointer;font-weight:600;font-size:13px;border-bottom:2px solid #B5532F;color:#B5532F;">욕구사정</button>
                 <button type="button" class="needs-tab-btn" data-tab="fall_risk" onclick="switchNeedsTab('fall_risk')" style="padding:8px 14px;border:none;background:none;cursor:pointer;font-weight:600;font-size:13px;border-bottom:2px solid transparent;color:#6b7280;">낙상위험도 <span id="needsBadge-fall_risk"></span></button>
                 <button type="button" class="needs-tab-btn" data-tab="pressure_sore_risk" onclick="switchNeedsTab('pressure_sore_risk')" style="padding:8px 14px;border:none;background:none;cursor:pointer;font-weight:600;font-size:13px;border-bottom:2px solid transparent;color:#6b7280;">욕창위험도 <span id="needsBadge-pressure_sore_risk"></span></button>
@@ -819,7 +833,7 @@
             </div>
 
             <div id="needsCorePanel">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+            <div class="needs-grid2">
                 <div>
                     <label style="display:block;font-weight:700;margin-bottom:8px;">보유질환 (해당 항목 선택)</label>
                     <div id="needsDiseaseBox" style="display:flex;flex-wrap:wrap;gap:6px;max-height:140px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:10px;font-size:13px;"></div>
@@ -838,10 +852,12 @@
             </div>
 
             <label style="display:block;font-weight:700;margin:20px 0 8px;">기능상태 (혼자 수행 가능한 정도)</label>
+            <div class="needs-table-wrap">
             <table style="width:100%;border-collapse:collapse;font-size:13px;">
                 <thead><tr style="background:#f9fafb;"><th style="text-align:left;padding:6px;border:1px solid #e5e7eb;">항목</th><th style="padding:6px;border:1px solid #e5e7eb;" colspan="4">평가</th></tr></thead>
                 <tbody id="needsFunctionBody"></tbody>
             </table>
+            </div>
 
             <div style="margin-top:16px;padding-top:12px;border-top:1px solid #e5e7eb;">
                 <div style="font-weight:700;margin-bottom:4px;">공단 평가 필수 항목 (서술형)</div>
