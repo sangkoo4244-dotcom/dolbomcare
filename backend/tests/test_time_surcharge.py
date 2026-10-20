@@ -59,7 +59,7 @@ def test_surcharge_goes_into_the_fee_and_the_copay_but_not_into_bath():
 
 def test_record_at_night_is_billed_with_the_surcharge_and_edits_keep_it(env):
     db, client = env
-    when = (datetime.now() - timedelta(days=2)).replace(hour=22, minute=0, second=0, microsecond=0)
+    when = datetime(2026, 10, 13).replace(hour=22, minute=0, second=0, microsecond=0)
     r = client.post("/api/v1/records/create", json=payload(benefit_type="home_care", duration_minutes=120, recorded_date=when.isoformat()), headers=CG_A)
     assert r.status_code == 200, r.text
     base = benefits.home_care_fee(120)
@@ -80,7 +80,7 @@ def test_claim_helper_flags_night_and_sunday_visits(env):
     from tests.test_visit_benefit_api import MANAGER
 
     db, client = env
-    when = (datetime.now() - timedelta(days=2)).replace(hour=22, minute=0, second=0, microsecond=0)
+    when = datetime(2026, 10, 13).replace(hour=22, minute=0, second=0, microsecond=0)
     assert client.post("/api/v1/records/create", json=payload(benefit_type="home_care", duration_minutes=60, recorded_date=when.isoformat()), headers=CG_A).status_code == 200
     bill = db.query(models.BillingRecord).one()
     bill.approval_status = "approved"

@@ -14,7 +14,7 @@ from app.api.users import create_access_token
 from app.database import Base, get_db
 from app.sheet_reader import read_table, to_datetime
 
-DAY = (datetime.now() - timedelta(days=2)).replace(hour=0, minute=0, second=0, microsecond=0)
+DAY = datetime(2026, 10, 13).replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 def make_xlsx(rows):

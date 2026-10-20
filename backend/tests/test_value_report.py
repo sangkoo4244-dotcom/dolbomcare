@@ -8,7 +8,7 @@ from app.api import claim_helper, value_report
 from app.database import get_db
 from tests.test_visit_benefit_api import CG_A, MANAGER, env, payload  # noqa: F401  (env 픽스처 재사용)
 
-DAY = (datetime.now() - timedelta(days=2)).replace(hour=22, minute=0, second=0, microsecond=0)
+DAY = datetime(2026, 10, 13).replace(hour=22, minute=0, second=0, microsecond=0)
 
 
 def make_client(client):

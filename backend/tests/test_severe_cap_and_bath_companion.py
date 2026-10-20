@@ -5,7 +5,7 @@ from app import models
 from app.api.records import _bath_visits_that_week
 from tests.test_visit_benefit_api import CG_A, CG_B, MANAGER, bath, env, payload  # noqa: F401  (env 픽스처 재사용)
 
-DAY = (datetime.now() - timedelta(days=2)).replace(hour=9, minute=0, second=0, microsecond=0)
+DAY = datetime(2026, 10, 13).replace(hour=9, minute=0, second=0, microsecond=0)
 
 
 def severe_resident(db, grade=1):

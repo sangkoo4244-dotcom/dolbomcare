@@ -22,7 +22,7 @@ MGR = auth(1, "center_manager", "m@test.com")
 CG = auth(2, "caregiver", "a@test.com")
 CG2 = auth(3, "caregiver", "b@test.com")
 OTHER_MGR = auth(7, "center_manager", "o@test.com")
-DAY = (datetime.now() - timedelta(days=3)).date()
+DAY = datetime(2026, 10, 13).date()
 MONTH = DAY.strftime("%Y-%m")
 
 
