@@ -4,7 +4,8 @@ from app import benefits
 from app import models
 from tests.test_visit_benefit_api import CG_A, CG_B, bath, env, payload  # noqa: F401  (env 픽스처 재사용)
 
-DAY = (datetime.now() - timedelta(days=2)).replace(hour=9, minute=0, second=0, microsecond=0)
+# 날짜를 고정한다: 오늘 기준으로 잡으면 일요일에 걸려 일요일 30% 가산이 붙어 금액 기대값이 달라진다
+DAY = datetime(2026, 10, 13, 9, 0, 0)  # 화요일, 공휴일 아님
 
 
 def at(hour, **kw):

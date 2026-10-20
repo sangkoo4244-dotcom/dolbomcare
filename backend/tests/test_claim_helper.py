@@ -11,7 +11,8 @@ from app.api import claim_helper
 from app.api.users import create_access_token
 from app.database import Base, get_db
 
-DAY = (datetime.now() - timedelta(days=2)).replace(hour=0, minute=0, second=0, microsecond=0)
+# 날짜를 고정한다: 오늘 기준으로 잡으면 일요일에 걸려 가산 표시와 금액이 달라진다
+DAY = datetime(2026, 10, 13, 0, 0, 0)  # 화요일, 공휴일 아님
 MONTH = DAY.strftime("%Y-%m")
 
 
