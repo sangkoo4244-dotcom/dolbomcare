@@ -76,6 +76,12 @@
             #onePage .tip { border: 2px solid #333; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
             @page { size: A4; margin: 14mm; }
         }
+    
+        /* 휴대폰: 표가 화면 폭을 넘지 않게 맞추고 글은 줄바꿈 */
+        @media (max-width: 700px) {
+            table:not(.m-cards) { display: table !important; table-layout: fixed; width: 100%; }
+            th, td { white-space: normal; word-break: keep-all; min-width: 0; }
+        }
     </style>
     <script src="menu.js"></script>
     <script>

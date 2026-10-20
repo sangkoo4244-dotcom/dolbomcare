@@ -29,6 +29,12 @@
             .paper { border: 0; margin: 0; padding: 0; max-width: none; }
             @page { size: A4; margin: 10mm; }
         }
+    
+        /* 휴대폰: 제공기록지 표를 화면 폭에 맞추고 글자를 줄인다 (인쇄본은 그대로) */
+        @media (max-width: 700px) {
+            /* 한 달치 칸이 많은 기록지는 휴대폰 폭에 맞게 축소해서 보여 준다 (자세히 보려면 PC 또는 인쇄) */
+            .paper { zoom: 0.5; padding: 0; }
+        }
     </style>
     <script src="menu.js"></script>
 </head>

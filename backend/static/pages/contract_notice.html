@@ -42,6 +42,12 @@
         .warn { color: #B45309; font-size: 13px; margin: 6px 0; }
         .empty-note { color: #94A3B8; font-size: 13px; }
         @media print { .sidebar, .topbar, .panel, .note { display: none !important; } .main-layout { margin-left: 0 !important; } .form-paper { border: none; } }
+    
+        /* 휴대폰: 표가 화면 폭을 넘지 않게 맞추고 글은 줄바꿈 */
+        @media (max-width: 700px) {
+            table:not(.m-cards) { display: table !important; table-layout: fixed; width: 100%; }
+            th, td { white-space: normal; word-break: keep-all; min-width: 0; }
+        }
     </style>
     <link rel="stylesheet" href="theme.css">
     <script src="menu.js"></script>

@@ -89,6 +89,12 @@
         .contact-card p { color: #C9D6E3; margin-top: 4px; font-size: 15px; }
         .contact-btn { background: var(--teal); color: #fff; font-weight: 800; padding: 12px 22px; border-radius: 12px; white-space: nowrap; }
         .contact-btn:hover { background: #0C756C; }
+    
+        /* 휴대폰: 등급표는 화면 폭에 맞추고 글은 줄바꿈 */
+        @media (max-width: 700px) {
+            .grade-table { table-layout: fixed; }
+            .grade-table th, .grade-table td { white-space: normal; word-break: keep-all; min-width: 0; font-size: 13px; padding: 8px 4px; }
+        }
     </style>
 </head>
 <body class="bg-gray-50">

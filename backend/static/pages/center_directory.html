@@ -150,6 +150,12 @@
         .trial-modal-submit { background: var(--teal); color: #fff; }
         .trial-modal-submit:hover { background: #0C756C; }
         .trial-modal-note { font-size: 13px; color: #94A3B8; margin-top: 12px; text-align: center; }
+    
+        /* 휴대폰: 검색칸과 버튼이 한 줄을 넘지 않게 */
+        @media (max-width: 700px) {
+            .search-field { width: 100%; box-sizing: border-box; min-width: 0; flex-wrap: wrap; }
+            .search-field input { min-width: 0; flex: 1 1 120px; }
+        }
     </style>
 </head>
 <body class="bg-gray-50">

@@ -115,6 +115,13 @@
             #printArea, #printArea * { visibility: visible; }
             #printArea { display: block; position: absolute; top: 0; left: 0; width: 100%; padding: 24px; }
         }
+    
+        /* 휴대폰: 급여 상세 표가 카드 안에서 넘치지 않게 */
+        @media (max-width: 700px) {
+            .detail-card { padding: 14px; min-width: 0; }
+            .detail-table { table-layout: fixed; }
+            .detail-table th, .detail-table td { white-space: normal; word-break: keep-all; min-width: 0; }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
