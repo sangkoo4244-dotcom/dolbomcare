@@ -11,7 +11,7 @@ from app.api import schedule
 from app.api.users import create_access_token
 from app.database import Base, get_db
 
-DAY = datetime(2026, 10, 20)
+DAY = datetime(2026, 10, 27)  # 미래 날짜: 지난 날짜면 "예정" 대신 "미기록"이 되어 오늘 날짜에 따라 결과가 달라짐
 
 
 @pytest.fixture
@@ -82,6 +82,8 @@ def test_record_inside_visit_window_completes_the_plan(setup):
     items = items_by_schedule(setup)
     assert items[1]["daily_record_id"] == 2
     assert items[1]["state"] == "완료"
+    # 화면의 '기록 보기'가 보여 줄 실제 기록 내용: 계획이 아니라 저장된 기록이어야 한다
+    assert items[1]["record"]["id"] == 2 and items[1]["record"]["duration_minutes"] == 60
 
 
 def test_plan_with_record_but_no_departure_is_not_complete(setup):

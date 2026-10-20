@@ -390,7 +390,7 @@
             if (it.companion) return '<span class="text-sm" style="color:#64748B;">함께 가는 방문입니다. 도착·퇴실·기록은 주 담당 요양보호사가 입력합니다.</span>';
             if (it.state === '승인 대기') return '<span class="text-sm" style="color:var(--warn);">센터장 승인을 기다리는 중입니다</span>';
             if (it.state === '반려') return `<button onclick="openResubmit(${it.schedule_id})" class="btn-solid">수정 후 다시 제안</button>`;
-            if (!it.planned) return `<a href="${recordUrl(it)}" class="text-xs font-bold" style="color:var(--teal);text-decoration:underline;">기록 보기</a>`;
+            if (!it.planned) return `<button onclick="openItemDetail(${it._idx})" class="btn-outline">기록 보기</button>`;
             if (it.state === '예정') {
                 const pending = it.change_date
                     ? `<span class="text-xs" style="color:var(--warn);margin-right:8px;">변경 요청 중 (${it.change_date.slice(5, 16).replace('-', '/')}${it.change_service_type || it.change_planned_items ? ' 외' : ''})</span><button onclick="cancelChange(${it.schedule_id})" class="btn-outline" style="margin-right:8px;">요청 철회</button>`
@@ -400,6 +400,10 @@
             if (it.state === '방문중') return `<button onclick="markLeft(${it.schedule_id})" class="btn-outline">퇴실</button>
                 <a href="${recordUrl(it)}" class="btn-solid" style="margin-left:8px;display:inline-block;">기록 작성</a>`;
             if (it.state === '방문완료') return `<a href="${recordUrl(it)}" class="btn-solid" style="display:inline-block;">기록 작성</a>`;
+            if (it.state === '완료') return `<button onclick="openItemDetail(${it._idx})" class="btn-outline">기록 보기</button>`;
+            if (it.state === '도착 미기록') {
+                return `<button onclick="openItemDetail(${it._idx})" class="btn-outline" style="margin-right:8px;">기록 보기</button>` + (!it.arrived_at ? `<button onclick="markArrived(${it.schedule_id})" class="btn-outline">도착</button>` : '');
+            }
             if (it.state === '미기록') {
                 const arrive = !it.arrived_at ? `<button onclick="markArrived(${it.schedule_id})" class="btn-outline" style="margin-right:8px;">도착</button>` : '';
                 return arrive + `<a href="${recordUrl(it)}" class="btn-solid" style="display:inline-block;">기록 작성</a>`;
@@ -767,12 +771,21 @@
             const plan = it.planned_items.length
                 ? `<div class="text-sm text-gray-700 mt-3">계획 항목: ${it.planned_items.map(c => `<span class="inline-block mr-1 mb-1 px-2 py-1 rounded ${it.done_items.includes(c) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}">${it.done_items.includes(c) ? '✔ ' : ''}${escapeHtml(CARE_ITEM_LABELS[c] || c)}</span>`).join('')}</div>`
                 : '';
+            const rec = it.record;
             const timeInfo = [
                 `예정 ${it.time}`,
                 it.arrived_at ? `도착 ${hm(it.arrived_at)}` : null,
                 it.left_at ? `퇴실 ${hm(it.left_at)}` : null,
-                it.duration_minutes ? `${it.duration_minutes}분` : null
+                rec ? (rec.duration_minutes ? `실제 제공 ${rec.duration_minutes}분` : null) : (it.duration_minutes ? `${it.duration_minutes}분` : null)
             ].filter(Boolean).join(' · ');
+            const recordBox = rec ? `
+                <div class="mt-4 p-3 rounded-lg" style="background:#F1F5F9;">
+                    <div class="text-sm font-bold text-gray-900 mb-2">저장된 제공 기록</div>
+                    <div class="text-sm text-gray-700">기록 시각: ${escapeHtml(rec.recorded_date || '-')}${rec.duration_minutes ? ` · 제공 ${rec.duration_minutes}분` : ''}</div>
+                    <div class="text-sm text-gray-700 mt-1">제공 항목: ${rec.care_items.length ? rec.care_items.map(c => escapeHtml(CARE_ITEM_LABELS[c] || c)).join(', ') : '없음'}</div>
+                    ${rec.condition ? `<div class="text-sm text-gray-700 mt-1">상태: ${escapeHtml(rec.condition)}</div>` : ''}
+                    ${rec.notes ? `<div class="text-sm text-gray-700 mt-1">메모: ${escapeHtml(rec.notes.slice(0, 200))}</div>` : ''}
+                </div>` : '';
             const address = it.address ? `<div class="text-sm text-gray-700 mt-2">주소: ${escapeHtml(it.address)}</div>` : '';
             const notes = it.care_notes ? `<div class="text-sm text-gray-600 mt-1">메모: ${escapeHtml(it.care_notes.slice(0, 120))}</div>` : '';
             const rejected = it.state === '반려' && it.review_note
@@ -795,7 +808,7 @@
                         <div>${actions(it)}</div>
                     </div>
                 </div>
-                ${plan}${rejected}${hint}`;
+                ${plan}${recordBox}${rejected}${hint}`;
             document.getElementById('detailModal').style.display = 'flex';
         }
         function closeItemDetail() { document.getElementById('detailModal').style.display = 'none'; }

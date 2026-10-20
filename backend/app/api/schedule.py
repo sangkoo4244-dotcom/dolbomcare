@@ -229,6 +229,20 @@ def create_recurring_schedule(req: RecurringCreate, db: Session = Depends(get_db
 def _codes(value):
     return [c for c in (value or "").split(",") if c]
 
+def _record_view(r):
+    """화면의 '기록 보기'에 보여 줄 실제 기록 내용 (계획과 따로 저장된 값을 그대로 쓴다)."""
+    if r is None:
+        return None
+    return {
+        "id": r.id,
+        "recorded_date": r.recorded_date.strftime("%Y-%m-%d %H:%M") if r.recorded_date else None,
+        "duration_minutes": r.duration_minutes,
+        "care_items": _codes(r.care_items),
+        "condition": r.condition,
+        "notes": r.notes,
+        "service_type": r.service_type,
+    }
+
 def _my_schedule(db, schedule_id, actor):
     """내 센터의 일정만 돌려준다(다른 센터 일정은 없는 것으로 본다)."""
     schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
@@ -336,6 +350,7 @@ def caregiver_schedule_view(
             "done_items": [c for c in _codes(match.care_items) if c in planned] if match else [],
             "state": state,
             "daily_record_id": match.id if match else None,
+            "record": _record_view(match),
             "schedule_id": s.id,
             "arrived_at": s.arrived_at.isoformat() if s.arrived_at else None,
             "left_at": s.left_at.isoformat() if s.left_at else None,
@@ -365,6 +380,7 @@ def caregiver_schedule_view(
             "done_items": _codes(r.care_items),
             "state": "완료",
             "daily_record_id": r.id,
+            "record": _record_view(r),
             "schedule_id": None,
             "arrived_at": None,
             "left_at": None,
