@@ -2,38 +2,20 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.api.users import get_password_hash
 from app.auth import require_platform_admin
-from app.database import get_db
+from app.database import Base, get_db
 from app.plans import PARTNER_RESIDENT_LIMIT, PARTNER_SLOT_LIMIT, PLAN_PAID, PLAN_PARTNER, PLAN_TRIAL, TRIAL_DAYS, center_plan_info
 from app.demo_seed import DEMO_CENTER_NAME, seed_demo
 from app.email_service import send_email
 from app.models import (
     AlimtalkUsage,
-    BillingRecord,
     Center,
-    CopayInvoice,
-    DailyRecord,
-    GuardianInvite,
-    HealthMetric,
-    MonthlySummary,
-    NeedsAssessment,
-    Notification,
     Resident,
-    ResidentChangeRequest,
-    ResidentMedia,
-    ResidentMessage,
-    ResidentThreadRead,
-    RiskAssessment,
-    Salary,
-    SalaryStatement,
-    Schedule,
-    StaffCertificate,
-    StaffRecord,
     User,
-    VoiceRecord,
 )
 
 router = APIRouter()
@@ -355,8 +337,9 @@ def end_partner(center_id: int, body: EndPartnerRequest, db: Session = Depends(g
 
 
 def _cascade_delete_center(db: Session, center: Center) -> None:
-    """센터에 딸린 모든 데이터를 지운다 (이용자·직원·청구·기록 등 전부). FK 제약(특히 운영 DB인
-    PostgreSQL)을 어기지 않도록, 참조당하는 테이블부터 역순으로 지운다."""
+    """센터에 딸린 모든 데이터를 지운다 (이용자·직원·청구·기록 등 전부). 센터·이용자·직원을 외래키로
+    가리키는 테이블을 모델에서 전부 찾아 자식 테이블부터 지운다. 테이블을 하나씩 나열하면 새 테이블을
+    추가할 때 빠지고, 운영 DB(PostgreSQL)는 외래키를 강제하므로 중간에 500으로 실패한다."""
     center_id = center.id
     resident_ids = [r.id for r in db.query(Resident.id).filter(Resident.center_id == center_id).all()]
     user_ids = [u.id for u in db.query(User.id).filter(User.center_id == center_id).all()]
@@ -385,37 +368,16 @@ def _cascade_delete_center(db: Session, center: Center) -> None:
     center.manager_id = None
     db.flush()
 
-    # billing_records.daily_record_id가 daily_records를 참조하므로 daily_records보다 먼저 지운다
-    db.query(BillingRecord).filter(BillingRecord.center_id == center_id).delete(synchronize_session=False)
-
-    if resident_ids:
-        db.query(DailyRecord).filter(DailyRecord.resident_id.in_(resident_ids)).delete(synchronize_session=False)
-        db.query(HealthMetric).filter(HealthMetric.resident_id.in_(resident_ids)).delete(synchronize_session=False)
-        db.query(NeedsAssessment).filter(NeedsAssessment.resident_id.in_(resident_ids)).delete(synchronize_session=False)
-        db.query(RiskAssessment).filter(RiskAssessment.resident_id.in_(resident_ids)).delete(synchronize_session=False)
-        db.query(ResidentMedia).filter(ResidentMedia.resident_id.in_(resident_ids)).delete(synchronize_session=False)
-        db.query(ResidentThreadRead).filter(ResidentThreadRead.resident_id.in_(resident_ids)).delete(synchronize_session=False)
-
-    if user_ids:
-        db.query(StaffCertificate).filter(StaffCertificate.user_id.in_(user_ids)).delete(synchronize_session=False)
-        db.query(StaffRecord).filter(StaffRecord.staff_id.in_(user_ids)).delete(synchronize_session=False)
-        db.query(ResidentThreadRead).filter(ResidentThreadRead.user_id.in_(user_ids)).delete(synchronize_session=False)
-        db.query(Notification).filter(Notification.user_id.in_(user_ids)).delete(synchronize_session=False)
-
-    db.query(ResidentMessage).filter(ResidentMessage.center_id == center_id).delete(synchronize_session=False)
-    db.query(ResidentChangeRequest).filter(ResidentChangeRequest.center_id == center_id).delete(synchronize_session=False)
-    db.query(GuardianInvite).filter(GuardianInvite.center_id == center_id).delete(synchronize_session=False)
-    db.query(Schedule).filter(Schedule.center_id == center_id).delete(synchronize_session=False)
-    db.query(MonthlySummary).filter(MonthlySummary.center_id == center_id).delete(synchronize_session=False)
-    db.query(Salary).filter(Salary.center_id == center_id).delete(synchronize_session=False)
-    db.query(SalaryStatement).filter(SalaryStatement.center_id == center_id).delete(synchronize_session=False)
-    db.query(CopayInvoice).filter(CopayInvoice.center_id == center_id).delete(synchronize_session=False)
-    db.query(VoiceRecord).filter(VoiceRecord.center_id == center_id).delete(synchronize_session=False)
-    db.query(AlimtalkUsage).filter(AlimtalkUsage.center_id == center_id).delete(synchronize_session=False)
-
-    db.query(Resident).filter(Resident.center_id == center_id).delete(synchronize_session=False)
-    if user_ids:
-        db.query(User).filter(User.id.in_(user_ids)).delete(synchronize_session=False)
+    scope = {"centers": [center_id], "residents": resident_ids, "users": user_ids}
+    # 자식 테이블(참조하는 쪽)부터 지워야 외래키 위반이 없다. sorted_tables는 참조당하는 쪽이 앞에 온다.
+    for table in reversed(Base.metadata.sorted_tables):
+        if table.name == "centers":
+            continue
+        conditions = [fk.parent.in_(scope[fk.column.table.name]) for fk in table.foreign_keys if scope.get(fk.column.table.name)]
+        if table.name == "users":
+            conditions.append(table.c.id.in_(user_ids))  # 보호자는 센터 번호가 없어서 id로 찾는다
+        if conditions:
+            db.execute(table.delete().where(or_(*conditions)))
     db.delete(center)
 
 
