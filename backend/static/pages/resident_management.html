@@ -617,6 +617,9 @@
                             <option value="">건강상태 전체</option>
                             <option value="stable">안정</option><option value="warning">주의</option><option value="critical">위험</option>
                         </select>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#475569;">
+                            <input type="checkbox" id="includeEnded" onchange="filterResidents()"> 종료자 포함
+                        </label>
                         <button type="button" class="btn-ghost" onclick="resetFilters()">초기화</button>
                         <button type="button" class="btn-ghost" onclick="exportResidentsCsv()">⬇ 엑셀 다운로드</button>
                         <button type="button" class="btn-ghost" id="importBtn" style="display:none;" onclick="openImport()">⬆ 엑셀로 일괄 등록</button>
@@ -1148,6 +1151,7 @@
             document.getElementById('gradeFilter').value = '';
             document.getElementById('healthFilter').value = '';
             document.getElementById('serviceTypeFilter').value = '';
+            document.getElementById('includeEnded').checked = false;
             setListTab('all');
         }
 
@@ -1157,6 +1161,7 @@
             const health = document.getElementById('healthFilter').value;
             const serviceType = document.getElementById('serviceTypeFilter').value;
             let list = residents;
+            if (!document.getElementById('includeEnded').checked) list = list.filter(r => !r.ended_on);
             if (currentTab === 'active') list = list.filter(r => r._active);
             if (currentTab === 'inactive') list = list.filter(r => !r._active);
             if (q) list = list.filter(r => [r.name, r.address, r.guardian_name].some(v => (v || '').includes(q)));
