@@ -23,6 +23,8 @@ ADDITIVE_COLUMNS = [
     ("residents", "recognition_number", "VARCHAR"),
     ("residents", "recognition_start", "DATE"),
     ("residents", "recognition_end", "DATE"),
+    ("residents", "ended_on", "DATE"),
+    ("residents", "end_reason", "VARCHAR"),
     ("residents", "guardian_name", "VARCHAR"),
     ("residents", "guardian_phone", "VARCHAR"),
     ("residents", "service_start_date", "DATE"),

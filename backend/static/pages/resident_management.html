@@ -1345,9 +1345,15 @@
 
             residents.forEach((r, i) => {
                 const age = calculateAge(new Date(r.birth_date));
-                const statusBadge = r._active
-                    ? '<span class="p-health health-stable">진행중</span>'
-                    : '<span class="p-health" style="color:#94A3B8;">방문없음</span>';
+                const statusBadge = r.ended_on
+                    ? `<span class="p-health" style="color:#B91C1C;">종료 ${escapeHtml(r.ended_on)} (${escapeHtml(r.end_reason || '')})</span>`
+                    : r._active
+                        ? '<span class="p-health health-stable">진행중</span>'
+                        : '<span class="p-health" style="color:#94A3B8;">방문없음</span>';
+                const endButton = currentUser.role !== 'center_manager' ? ''
+                    : r.ended_on
+                        ? `<button class="btn-detail" onclick="reopenResident(${r.id})">종료 취소</button>`
+                        : `<button class="btn-detail" onclick="endResident(${r.id})">이용 종료</button>`;
                 html += `
                     <tr>
                         <td><input type="checkbox"></td>
@@ -1373,6 +1379,7 @@
                                 <button class="btn-detail" onclick="openAlbumModal(${r.id})">사진첩</button>
                                 <button class="btn-detail" onclick="window.location.href='./care_record_sheet.html?resident_id=${r.id}'">제공기록지</button>
                                 ${currentUser.role === 'caregiver' ? `<button class="btn-detail" onclick="openInviteModal(${r.id})">보호자 초대</button>` : ''}
+                                ${endButton}
                                 <button class="btn-kebab" title="삭제" onclick="deleteResident(${r.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                             </div>
                         </td>
@@ -2135,6 +2142,51 @@
             } catch (error) {
                 console.error('삭제 오류:', error);
                 alert('삭제 중 오류가 발생했습니다');
+            }
+        }
+
+        // 퇴소·사망·입원·계약 해지. 기록은 그대로 남고, 종료일 이후의 새 방문 계획만 막힌다
+        const END_REASON_OPTIONS = ['퇴소', '사망', '입원', '계약 해지', '기타'];
+
+        async function endResident(id) {
+            const reason = prompt(`종료 사유를 입력하세요\n(${END_REASON_OPTIONS.join(' / ')})`, '퇴소');
+            if (reason === null) return;
+            if (!END_REASON_OPTIONS.includes(reason.trim())) { alert('종료 사유는 ' + END_REASON_OPTIONS.join(', ') + ' 중에서 골라 주세요'); return; }
+            const today = new Date().toLocaleDateString('sv-SE');
+            const endedOn = prompt('이용 종료일 (YYYY-MM-DD)', today);
+            if (endedOn === null) return;
+            try {
+                const response = await fetch(`${API_URL}/residents/${id}/end`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ended_on: endedOn.trim(), reason: reason.trim() })
+                });
+                if (response.ok) {
+                    alert('이용을 종료했습니다. 종료일 이후의 새 방문 계획은 만들 수 없습니다');
+                    loadResidents();
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    alert('종료하지 못했습니다: ' + (typeof err.detail === 'string' ? err.detail : response.status));
+                }
+            } catch (error) {
+                console.error('이용 종료 오류:', error);
+                alert('이용 종료 중 오류가 발생했습니다');
+            }
+        }
+
+        async function reopenResident(id) {
+            if (!confirm('이용 종료를 취소하고 다시 이용 중으로 바꿀까요?')) return;
+            try {
+                const response = await fetch(`${API_URL}/residents/${id}/reopen`, { method: 'POST' });
+                if (response.ok) {
+                    loadResidents();
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    alert('취소하지 못했습니다: ' + (typeof err.detail === 'string' ? err.detail : response.status));
+                }
+            } catch (error) {
+                console.error('종료 취소 오류:', error);
+                alert('종료 취소 중 오류가 발생했습니다');
             }
         }
 

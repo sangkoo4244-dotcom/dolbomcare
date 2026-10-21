@@ -17,7 +17,13 @@ from app.visit_benefit import normalize_visit_benefit
 from sqlalchemy import or_
 from app.database import get_db
 from app.auth import get_current_user, require_manager, assert_self_or_manager, assert_my_center
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+
+
+def _assert_service_open(resident: Resident, day: date):
+    if resident.ended_on and day > resident.ended_on:
+        raise HTTPException(status_code=409, detail=f"이용이 종료된 이용자입니다 (종료일 {resident.ended_on.isoformat()})")
+
 
 class ScheduleCreate(BaseModel):
     caregiver_id: int
@@ -118,6 +124,7 @@ async def create_schedule(
         resident = db.query(Resident).filter(Resident.id == schedule_data.resident_id, Resident.center_id == actor.center_id).first()
         if not resident:
             raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+        _assert_service_open(resident, datetime.fromisoformat(schedule_data.scheduled_date).date())
 
         center = db.query(Center).filter(Center.id == schedule_data.center_id).first()
         if not center:
@@ -195,6 +202,9 @@ def create_recurring_schedule(req: RecurringCreate, db: Session = Depends(get_db
         hour, minute = (int(x) for x in req.start_time.split(":"))
     except ValueError:
         raise HTTPException(status_code=400, detail="날짜 또는 시간 형식이 올바르지 않습니다")
+    if resident.ended_on:
+        _assert_service_open(resident, start)
+        end = min(end, resident.ended_on)
     visit = normalize_visit_benefit(db, center_id=actor.center_id, caregiver_id=caregiver.id, benefit_type=req.benefit_type,
                                     bath_mode=req.bath_mode, co_caregiver_id=req.co_caregiver_id, duration_minutes=req.duration_minutes)
     weekdays = {int(d) for d in req.weekdays if str(d).isdigit() and 0 <= int(d) <= 6}
@@ -496,6 +506,7 @@ def propose_schedule(req: ProposalRequest, db: Session = Depends(get_db), actor:
     resident = db.query(Resident).filter(Resident.id == req.resident_id).first()
     if not resident:
         raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    _assert_service_open(resident, datetime.fromisoformat(req.scheduled_date).date())
     visit = normalize_visit_benefit(db, center_id=resident.center_id, caregiver_id=req.caregiver_id, benefit_type=req.benefit_type,
                                     bath_mode=req.bath_mode, co_caregiver_id=req.co_caregiver_id, duration_minutes=req.duration_minutes)
     schedule = Schedule(

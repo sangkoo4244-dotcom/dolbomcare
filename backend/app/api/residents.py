@@ -12,6 +12,12 @@ from app.auth import get_current_user, require_manager, assert_self_or_manager, 
 from datetime import datetime, date
 
 BILLING_CHANNELS = ("sms", "alimtalk", "email", "mail")
+END_REASONS = ("퇴소", "사망", "입원", "계약 해지", "기타")
+
+
+class ResidentEndIn(BaseModel):
+    ended_on: date
+    reason: str
 
 
 def _mask_phone(phone):
@@ -154,7 +160,9 @@ async def get_residents(
                 "billing_address": r.billing_address,
                 "billing_channels": _channels(r.billing_channels),
                 "primary_caregiver_id": r.primary_caregiver_id,
-                "primary_caregiver_name": caregiver_names.get(r.primary_caregiver_id)
+                "primary_caregiver_name": caregiver_names.get(r.primary_caregiver_id),
+                "ended_on": r.ended_on.isoformat() if r.ended_on else None,
+                "end_reason": r.end_reason
             }
             for r in residents
         ]
@@ -270,6 +278,40 @@ async def update_resident_grade(
             "client_type": resident.client_type
         }
     }
+
+
+@router.post("/{resident_id}/end")
+def end_resident_service(resident_id: int, body: ResidentEndIn, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """이용 종료 (퇴소·사망·입원·계약 해지). 기록과 청구는 그대로 두고, 종료일 이후의 새 방문 계획만 막는다."""
+    resident = db.query(Resident).filter(Resident.id == resident_id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    assert_my_center(actor, resident.center_id)
+    if resident.ended_on:
+        raise HTTPException(status_code=409, detail=f"이미 이용 종료된 이용자입니다 ({resident.ended_on.isoformat()})")
+    if body.reason not in END_REASONS:
+        raise HTTPException(status_code=400, detail="종료 사유가 올바르지 않습니다")
+
+    resident.ended_on = body.ended_on
+    resident.end_reason = body.reason
+    db.commit()
+    return {"status": "success", "message": f"{resident.name}의 이용을 종료했습니다", "data": {"id": resident.id, "ended_on": resident.ended_on.isoformat(), "end_reason": resident.end_reason}}
+
+
+@router.post("/{resident_id}/reopen")
+def reopen_resident_service(resident_id: int, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """이용 종료를 되돌린다 (잘못 종료했거나 다시 이용하게 된 경우)."""
+    resident = db.query(Resident).filter(Resident.id == resident_id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
+    assert_my_center(actor, resident.center_id)
+    if not resident.ended_on:
+        raise HTTPException(status_code=409, detail="이용 중인 이용자입니다")
+
+    resident.ended_on = None
+    resident.end_reason = None
+    db.commit()
+    return {"status": "success", "message": f"{resident.name}의 이용 종료를 취소했습니다", "data": {"id": resident.id, "ended_on": None}}
 
 
 def parse_recognition_dates(start: str | None, end: str | None):

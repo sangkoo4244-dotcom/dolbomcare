@@ -82,6 +82,8 @@ class Resident(Base):
     billing_address = Column(String, nullable=True)  # 청구지 주소 (거주지와 다를 수 있음)
     billing_channels = Column(String, nullable=True)  # 청구서 수신 채널, 쉼표 구분: sms,alimtalk,email,mail
     care_notes = Column(Text, nullable=True)  # 요양사가 편집 가능한 요양 기록
+    ended_on = Column(Date, nullable=True)  # 이용 종료일 (퇴소·사망·입원·계약 해지). NULL이면 이용 중. 기록은 지우지 않고 이 날짜 이후 방문만 막는다
+    end_reason = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
 
 
