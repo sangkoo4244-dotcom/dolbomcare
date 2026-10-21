@@ -200,8 +200,8 @@
         <div class="wrap">
             <div class="price-grid">
                 <div class="price-card">
-                    <div class="plan-name">소규모</div>
-                    <div class="price">19,900<span class="price-sub">원 / 월</span></div>
+                    <div class="plan-name">기본</div>
+                    <div class="price">14,900<span class="price-sub">원 / 월</span></div>
                     <div class="price-period">이용자 1~20명 · 부가세 포함</div>
                     <ul class="features-list">
                         <li>음성 기반 방문 기록</li>
@@ -216,41 +216,48 @@
 
                 <div class="price-card featured">
                     <div class="price-badge">가장 인기있음</div>
-                    <div class="plan-name">중규모</div>
-                    <div class="price">29,900<span class="price-sub">원 / 월</span></div>
-                    <div class="price-period">이용자 21~50명 · 부가세 포함</div>
+                    <div class="plan-name">성장</div>
+                    <div class="price">19,900<span class="price-sub">원 / 월</span></div>
+                    <div class="price-period">이용자 21~40명 · 부가세 포함</div>
                     <ul class="features-list">
-                        <li>소규모의 모든 기능</li>
-                        <li>이용자 21~50명 구간</li>
+                        <li>기본의 모든 기능</li>
+                        <li>이용자 21~40명 구간</li>
                         <li>우선 이메일 지원</li>
                     </ul>
                     <button class="btn-block primary" onclick="selectPlan('medium')">1개월 무료체험 시작</button>
                 </div>
 
                 <div class="price-card">
-                    <div class="plan-name">대규모</div>
-                    <div class="price">39,900<span class="price-sub">원 / 월</span></div>
-                    <div class="price-period">이용자 51~100명 · 부가세 포함</div>
+                    <div class="plan-name">확장</div>
+                    <div class="price">27,900<span class="price-sub">원 / 월</span></div>
+                    <div class="price-period">이용자 41~60명 · 부가세 포함</div>
                     <ul class="features-list">
-                        <li>중규모의 모든 기능</li>
-                        <li>이용자 51~100명 구간</li>
-                        <li>우선 지원</li>
+                        <li>성장의 모든 기능</li>
+                        <li>이용자 41~60명 구간</li>
+                        <li>우선 이메일 지원</li>
                     </ul>
                     <button class="btn-block secondary" onclick="selectPlan('large')">1개월 무료체험 시작</button>
                 </div>
 
                 <div class="price-card">
-                    <div class="plan-name">엔터프라이즈</div>
-                    <div class="price">맞춤형</div>
-                    <div class="price-period">이용자 101명 이상 또는 여러 센터·지점 · 별도 협의</div>
+                    <div class="plan-name">대규모</div>
+                    <div class="price">34,900<span class="price-sub">원 / 월</span></div>
+                    <div class="price-period">이용자 61~100명 · 부가세 포함</div>
                     <ul class="features-list">
-                        <li>대규모의 모든 기능</li>
-                        <li>다중 시설 통합 관리</li>
-                        <li>API 연동</li>
-                        <li>전담 지원</li>
+                        <li>확장의 모든 기능</li>
+                        <li>이용자 61~100명 구간</li>
+                        <li>우선 지원</li>
                     </ul>
-                    <button class="btn-block secondary" onclick="selectPlan('enterprise')">문의하기</button>
+                    <button class="btn-block secondary" onclick="selectPlan('xlarge')">1개월 무료체험 시작</button>
                 </div>
+            </div>
+
+            <div style="margin-top:24px;padding:20px 24px;border:1.5px solid var(--border);border-radius:14px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;">
+                <div>
+                    <b style="color:var(--navy);">엔터프라이즈</b> · 이용자 101명 이상 또는 여러 센터·지점
+                    <div style="font-size:13.5px;color:var(--text-soft);margin-top:4px;">맞춤 견적 · 다중 시설 통합 관리 · API 연동 · 전담 지원</div>
+                </div>
+                <button class="btn-block secondary" style="width:auto;padding:12px 24px;" onclick="selectPlan('enterprise')">문의하기</button>
             </div>
         </div>
     </section>
@@ -278,7 +285,7 @@
                 <div class="compare-card highlight">
                     <div class="compare-type">돌봄케어</div>
                     <h4>음성 기록 + 자동 청구·급여 + 보호자 공유</h4>
-                    <div class="compare-price">이용자 1~20명 월 19,900원부터 (부가세 포함)</div>
+                    <div class="compare-price">이용자 1~20명 월 14,900원부터 (부가세 포함)</div>
                     <p class="desc">이용자 규모별 정액이며, 방문 중 말로 남기는 음성 기록과 보호자용 모바일 화면을 기본으로 포함합니다. 1개월 무료체험, 셋팅비 없음.</p>
                 </div>
             </div>
@@ -303,7 +310,11 @@
                 </div>
                 <div class="faq-item">
                     <h3>이용자 수가 늘어나 구간이 바뀌면 어떻게 되나요?</h3>
-                    <p>이용자 수 구간별 정액입니다. 1~20명은 19,900원, 21~50명은 29,900원, 51~100명은 39,900원입니다. 금액은 부가세 포함 총액입니다. 101명 이상은 엔터프라이즈에서 협의합니다.</p>
+                    <p>이용자 수 구간별 정액입니다. 1~20명은 14,900원, 21~40명은 19,900원, 41~60명은 27,900원, 61~100명은 34,900원입니다. 금액은 부가세 포함 총액입니다. 101명 이상은 엔터프라이즈에서 협의합니다.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>이미 이용 중인 센터의 요금은 바뀌나요?</h3>
+                    <p>새 요금표는 신규 가입 센터부터 적용합니다. 이미 이용 중인 센터는 가입 당시 요금을 그대로 유지합니다.</p>
                 </div>
                 <div class="faq-item">
                     <h3>계약을 취소할 수 있나요?</h3>
