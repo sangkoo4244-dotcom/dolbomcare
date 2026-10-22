@@ -451,7 +451,7 @@
 
         .ptable { width: 100%; border-collapse: collapse; font-size: 13px; }
         .ptable th { text-align: left; font-weight: 700; color: #64748B; font-size: 12px; padding: 10px 8px; border-bottom: 1px solid #EEF2F6; white-space: nowrap; }
-        .ptable td { padding: 11px 8px; border-bottom: 1px solid #F3F5F8; color: var(--charcoal); vertical-align: middle; }
+        .ptable td { padding: 11px 8px; border-bottom: 1px solid #F3F5F8; color: var(--charcoal); vertical-align: middle; white-space: nowrap; }
         .ptable tr:last-child td { border-bottom: none; }
         .ptable tr:hover td { background: #F8FAFC; }
         .p-grade { display: inline-block; min-width: 46px; text-align: center; padding: 3px 9px; border-radius: 8px; font-weight: 700; font-size: 12px; }
@@ -488,9 +488,10 @@
         @media (max-width: 700px) {
             #residentsTable.empty-state { padding: 0; text-align: left; }
             .ptable.m-cards td:nth-child(2) { display: none; }
-            .ptable.m-cards td:last-child { flex-direction: column; align-items: stretch; }
+            .ptable.m-cards td:nth-child(3) { min-width: auto; }
+            .ptable.m-cards td:last-child { min-width: auto; }
             .ptable.m-cards td:last-child::before { display: none; }
-            .ptable.m-cards .action-buttons { flex-wrap: wrap; justify-content: flex-start !important; gap: 6px; }
+            .ptable.m-cards .action-buttons { display: flex; flex-wrap: wrap; justify-content: flex-start !important; gap: 6px; }
         }
     </style>
     <script src="menu.js"></script>
