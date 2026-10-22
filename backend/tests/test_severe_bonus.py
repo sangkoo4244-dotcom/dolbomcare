@@ -28,7 +28,7 @@ def test_severe_bonus_is_separate_from_the_fee_and_has_a_daily_cap(env):
         assert client.post("/api/v1/records/create", json=at(hour, benefit_type="home_care", duration_minutes=minutes), headers=CG_A).status_code == 200
     bills = db.query(models.BillingRecord).order_by(models.BillingRecord.id).all()
     assert [b.extra_amount for b in bills] == [4000, 2000]  # 같은 날 6,000원 한도: 4,000 + 나머지 2,000
-    assert bills[0].total_cost == 43430 and bills[0].amount == 36920  # 급여비용·본인부담은 가산과 별개
+    assert bills[0].total_cost == 43430 and bills[0].amount == 36915  # 급여비용·본인부담은 가산과 별개 (본인부담 6,514.5원은 6,515원)
     # 다음 날은 한도가 새로 시작
     assert client.post("/api/v1/records/create", json=payload(recorded_date=(DAY - timedelta(days=1)).isoformat(), benefit_type="home_care", duration_minutes=180), headers=CG_A).status_code == 200
     assert db.query(models.BillingRecord).order_by(models.BillingRecord.id.desc()).first().extra_amount == 6000

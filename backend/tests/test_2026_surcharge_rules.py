@@ -21,7 +21,7 @@ def test_home_nursing_surcharge_divides_by_the_fee_table_minimum_time():
     # 45분 모두 야간이면 적용 시간이 최저시간을 넘으므로 비율 30%만: 16,131 → 16,130
     assert benefits.visit_surcharge(base, TUE.replace(hour=22), 45, 30) == 16130
     # 청구 총액에도 반영된다(일반 15%: 53,770 + 8,070 = 61,840, 본인부담 9,276→9,270)
-    assert split_benefit("home_nursing", 45, "일반", start=TUE.replace(hour=21, minute=30)) == (61840, 9270, 52570)
+    assert split_benefit("home_nursing", 45, "일반", start=TUE.replace(hour=21, minute=30)) == (61840, 9276, 52564)
 
 
 def test_home_care_surcharge_is_unchanged_because_durations_equal_table_times():
@@ -41,9 +41,9 @@ def test_day_night_evening_surcharge_follows_the_spec_example():
     assert benefits.day_night_surcharge(base, a, TUE.replace(hour=18)) == 0
     assert benefits.day_night_surcharge_minutes(TUE.replace(hour=17), TUE.replace(hour=23)) == 240
     # 총액·본인부담(일반 15%): 65,750 + 1,320 = 67,070, 본인부담 10,060.5 → 10,060
-    assert split_day_night(600, 3, "일반", a, l) == (67070, 10060, 57010)
+    assert split_day_night(600, 3, "일반", a, l) == (67070, 10061, 57009)
     # 시각을 주지 않으면 예전과 같다
-    assert split_day_night(600, 3, "일반") == (65750, 9860, 55890)
+    assert split_day_night(600, 3, "일반") == (65750, 9863, 55887)
 
 
 def test_day_care_api_adds_evening_surcharge_and_warns_about_holidays(env):
@@ -52,7 +52,7 @@ def test_day_care_api_adds_evening_surcharge_and_warns_about_holidays(env):
     r = client.post("/api/v1/day-care/preview", headers=MGR, json=body)
     assert r.status_code == 200, r.text
     d = r.json()
-    assert d["fee_total"] == 67070 and d["patient"] == 10060 and d["insurer"] == 57010
+    assert d["fee_total"] == 67070 and d["patient"] == 10061 and d["insurer"] == 57009
     assert any("18~22시" in n for n in d["notes"])
     # 한글날(2026-10-09, 금) 같은 공휴일에는 계산하지 않고 안내만 한다
     body["attendance_date"] = "2026-10-09"

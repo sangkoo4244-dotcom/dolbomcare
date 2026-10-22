@@ -33,8 +33,7 @@ TERMS = [
     {"title": "제15조(기타)", "body": "① 이 계약서에서 규정하지 않은 사항은 민법이나 사회상규에 따른다.\n② 부득이한 사정으로 소송이 제기될 경우 ‘갑’(또는 ‘병’) 또는 시설이 속한 소재지역의 관할법원으로 한다."},
 ]
 
-NIGHT_NOTE = "약관 제4조 ④·⑤는 공휴일 30%, 야간 20%, 심야 30%의 할증을 쓰고 있습니다. 시스템은 방문 시작 시각 기준 야간·일요일 30%로 계산하므로, 제출 전에 실제 청구 기준과 맞는지 확인하세요."
-ROUNDING_NOTE = "본인부담금은 시스템이 10원 단위로 내림하고(60분 일반 3,790원), 2026 고시 붙임2 표는 원 단위로 적혀 있습니다(60분 3,798원). 제출 전에 공단 기준과 맞는지 확인하세요."
+NIGHT_NOTE = "할증: 약관 제4조 ④ 공휴일 30%, ⑤ 야간(18~22시) 20%·심야 30%. 시스템은 2026 세부지침대로 방문요양의 18~22시 가산을 넣지 않고, 22~06시와 일요일 30%, 공휴일 50%로 계산합니다. 제출 전에 확인하세요."
 TO_FILL = ["계약기간(제2조)", "계약일", "요일별 이용시간(제4조②)", "이용료 납부 방법·기한(제8조③)", "정산일(제8조②)", "제공기관 대표 서명·날인", "이용자·대리인 서명·날인"]
 
 
@@ -58,7 +57,7 @@ def draft(
         raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
     center = db.query(Center).filter(Center.id == actor.center_id).first()
 
-    warnings = [NIGHT_NOTE, ROUNDING_NOTE]
+    warnings = [NIGHT_NOTE]
     if not resident.recognition_number:
         warnings.append("장기요양인정번호가 없습니다. 계약서 전에 이용자 정보를 채워 주세요.")
     if resident.client_type not in PATIENT_RATES:

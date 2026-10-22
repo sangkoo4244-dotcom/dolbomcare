@@ -36,10 +36,10 @@ def err(call):
 
 
 def test_fee_split_by_benefit_uses_nhis_table_and_copay_rates():
-    assert split_benefit(None, 60, "일반") == split_visit(60, "일반") == (25320, 3790, 21530)  # 방문요양은 기존과 같다
-    assert split_benefit("home_bath", None, "일반", "vehicle_in") == (88990, 13340, 75650)
+    assert split_benefit(None, 60, "일반") == split_visit(60, "일반") == (25320, 3798, 21522)  # 방문요양 본인부담 15%, 원 단위 반올림
+    assert split_benefit("home_bath", None, "일반", "vehicle_in") == (88990, 13349, 75641)
     assert split_benefit("home_bath", 70, "기초생활보장", "no_vehicle") == (50100, 0, 50100)
-    assert split_benefit("home_nursing", 45, "일반") == (53770, 8060, 45710)
+    assert split_benefit("home_nursing", 45, "일반") == (53770, 8066, 45704)
     with pytest.raises(ValueError):
         split_benefit("home_nursing", 10, "일반")  # 15분 미만은 청구 불가
     with pytest.raises(ValueError):
@@ -90,7 +90,7 @@ def test_bath_fee_follows_nhis_time_rule_and_solo_exception():
     assert benefits_fee("no_vehicle", 60, True) == 40080 and benefits_fee("no_vehicle", 45, True) == 35070
     with pytest.raises(ValueError):
         benefits_fee("vehicle_in", 60, True)  # 차량을 쓴 목욕에는 예외가 없다
-    assert split_benefit("home_bath", 45, "일반", "vehicle_in") == (71192, 10670, 60522)
+    assert split_benefit("home_bath", 45, "일반", "vehicle_in") == (71192, 10679, 60513)
 
 
 def benefits_fee(mode, minutes, solo=False):

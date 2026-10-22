@@ -70,7 +70,7 @@ def test_preview_shows_fee_transport_and_bath_bonus(env):
     _, client = env
     r = client.post("/api/v1/day-care/preview", json=body(transport="both", distance_km=7, bath_given=True), headers=CG).json()
     assert r["ok"] is True and r["minutes"] == 480
-    assert (r["fee_total"], r["patient"], r["insurer"]) == (59640, 8940, 50700)  # 8시간 이상 10시간 미만, 3등급
+    assert (r["fee_total"], r["patient"], r["insurer"]) == (59640, 8946, 50694)  # 8시간 이상 10시간 미만, 3등급 (15%=8,946원)
     assert (r["transport_code"], r["transport_amount"], r["bath_bonus"], r["extra_amount"]) == ("러-2", 2630, 3000, 5630)
     # 편도만이면 이동서비스비용 50%
     assert client.post("/api/v1/day-care/preview", json=body(transport="in", distance_km=7), headers=CG).json()["transport_amount"] == 1315
@@ -85,7 +85,7 @@ def test_create_makes_a_day_attendance_and_a_draft_bill_with_extra_amount(env):
     assert r.status_code == 200, r.text
     a, b = db.query(models.DayCareAttendance).one(), db.query(models.BillingRecord).one()
     assert (a.minutes, a.caregiver_id, a.transport_amount, a.bath_bonus) == (480, 2, 830, 3000) and a.billing_record_id == b.id
-    assert (b.benefit_type, b.total_cost, b.amount, b.extra_amount, b.approval_status) == ("day_night", 59640, 50700, 3830, "draft")
+    assert (b.benefit_type, b.total_cost, b.amount, b.extra_amount, b.approval_status) == ("day_night", 59640, 50694, 3830, "draft")
     assert b.service_category == "재가급여" and b.caregiver_id == 2 and b.year_month == DAY.strftime("%Y-%m")
     assert "주·야간보호" in db.query(models.Notification).filter(models.Notification.user_id == 9).one().message
 

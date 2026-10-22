@@ -80,7 +80,7 @@ def test_existing_home_care_record_is_unchanged_and_defaults_to_home_care(env):
     r = client.post("/api/v1/records/create", json=payload(duration_minutes=60), headers=CG_A)
     assert r.status_code == 200 and r.json()["data"]["benefit_type"] == "home_care"
     rec, bill = db.query(models.DailyRecord).one(), db.query(models.BillingRecord).one()
-    assert (rec.benefit_type, bill.benefit_type, bill.total_cost, bill.amount) == ("home_care", "home_care", 25320, 21530)
+    assert (rec.benefit_type, bill.benefit_type, bill.total_cost, bill.amount) == ("home_care", "home_care", 25320, 21522)
     assert client.post("/api/v1/records/create", json=payload(duration_minutes=45), headers=CG_A).status_code == 400  # 방문요양은 정해진 시간만
     assert client.post("/api/v1/records/create", json=payload(duration_minutes=300), headers=CG_A).status_code == 422
 
@@ -92,7 +92,7 @@ def test_bath_visit_bills_the_nhis_bath_fee_with_the_second_caregiver(env):
     assert r.status_code == 200, r.text
     rec, bill = db.query(models.DailyRecord).filter_by(bath_companion=False).one(), db.query(models.BillingRecord).filter_by(caregiver_id=2).one()
     assert (rec.benefit_type, rec.bath_mode, rec.co_caregiver_id) == ("home_bath", "vehicle_in", 3)
-    assert (bill.benefit_type, bill.total_cost, bill.amount) == ("home_bath", 88990, 75650)  # 총액 88,990원, 일반 본인부담 15%
+    assert (bill.benefit_type, bill.total_cost, bill.amount) == ("home_bath", 88990, 75641)  # 총액 88,990원, 일반 본인부담 15%(13,348.5원은 13,349원)
     # 보호자에게는 방문목욕이라고 알린다
     note = db.query(models.Notification).filter(models.Notification.user_id == 9).one()
     assert "방문목욕" in note.message
@@ -114,7 +114,7 @@ def test_nursing_visit_bills_by_time_band_for_nursing_staff_only(env):
     assert r.status_code == 200, r.text
     rec, bill = db.query(models.DailyRecord).one(), db.query(models.BillingRecord).one()
     assert (rec.benefit_type, rec.nursing_order_note) == ("home_nursing", "지시서 2026-10-01")
-    assert (bill.total_cost, bill.amount) == (53770, 45710)  # 30분 이상 60분 미만
+    assert (bill.total_cost, bill.amount) == (53770, 45704)  # 30분 이상 60분 미만
     # 요양보호사는 방문간호를 기록할 수 없고, 15분 미만도 안 된다
     assert client.post("/api/v1/records/create", json=payload(benefit_type="home_nursing", duration_minutes=30), headers=CG_A).status_code == 400
     assert client.post("/api/v1/records/create", json=payload(caregiver_id=4, benefit_type="home_nursing", duration_minutes=10), headers=NURSE).status_code == 400
@@ -137,7 +137,7 @@ def test_updating_a_bath_record_recalculates_by_mode_and_keeps_rules(env):
     r = client.patch(f"/api/v1/records/daily/{rid}", json={"bath_mode": "no_vehicle"}, headers=CG_A)
     assert r.status_code == 200, r.text
     bill = db.query(models.BillingRecord).filter_by(caregiver_id=2).one()
-    assert (bill.total_cost, bill.amount) == (50100, 42590)
+    assert (bill.total_cost, bill.amount) == (50100, 42585)
     # 목욕 기록의 동행자를 본인으로 바꾸려 하면 거절
     assert client.patch(f"/api/v1/records/daily/{rid}", json={"co_caregiver_id": 2}, headers=CG_A).status_code == 400
 
@@ -153,7 +153,7 @@ def test_bath_under_60_minutes_is_billed_at_80_percent_and_under_40_is_refused(e
     assert client.post("/api/v1/records/create", json=bath(duration_minutes=30), headers=CG_A).status_code == 400
     assert client.post("/api/v1/records/create", json=bath(duration_minutes=45), headers=CG_A).status_code == 200
     bill = db.query(models.BillingRecord).filter_by(caregiver_id=2).one()
-    assert (bill.total_cost, bill.amount) == (71192, 60522)  # 88,990원의 80%, 본인부담 15%(10원 절사)
+    assert (bill.total_cost, bill.amount) == (71192, 60513)  # 88,990원의 80%, 본인부담 15%
 
 
 def test_bath_is_limited_to_once_a_week_unless_a_reason_is_given(env):
@@ -188,7 +188,7 @@ def test_two_caregivers_on_home_care_make_two_linked_records_and_bills(env):
     assert [x.caregiver_id for x in recs] == [2, 3] and [x.caregiver_id for x in bills] == [2, 3]
     assert recs[0].pair_record_id == recs[1].id and recs[1].pair_record_id == recs[0].id
     assert recs[0].co_caregiver_id == 3 and recs[1].co_caregiver_id == 2 and recs[1].special_note.startswith("보호자 동의")
-    assert [(b.total_cost, b.amount) for b in bills] == [(25320, 21530), (25320, 21530)]  # 요양보호사별로 각각 같은 금액
+    assert [(b.total_cost, b.amount) for b in bills] == [(25320, 21522), (25320, 21522)]  # 요양보호사별로 각각 같은 금액
     assert db.query(models.Notification).filter(models.Notification.user_id == 3, models.Notification.kind == "record_pair").count() == 1
 
 

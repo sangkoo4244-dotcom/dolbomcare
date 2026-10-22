@@ -73,8 +73,8 @@ def test_three_visits_show_the_same_money_everywhere(env):
 
     rows = {r.id: r for r in db.query(models.BillingRecord).all()}
     got = {k: (rows[v["billing_id"]].total_cost, rows[v["billing_id"]].amount, rows[v["billing_id"]].extra_amount or 0) for k, v in (("a", a), ("b", b), ("c", c))}
-    assert got["a"] == (25320, 25320 - 3790, 2000)
-    assert got["b"] == (56460, 56460 - 3380, 0)
+    assert got["a"] == (25320, 25320 - 3798, 2000)
+    assert got["b"] == (56460, 56460 - 3388, 0)
     assert got["c"] == (22690, 22690, 0)
 
     # 요양사가 제출 → 센터장이 승인

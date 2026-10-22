@@ -33,7 +33,7 @@ def test_bath_with_companion_gives_each_caregiver_3000_within_the_beneficiary_ca
     primary = db.query(models.BillingRecord).filter_by(caregiver_id=2).one()
     companion = db.query(models.BillingRecord).filter_by(caregiver_id=3).one()
     # 주 담당: 차량 내 목욕 60분 일반 1등급 → 급여 88,990원, 본인부담 15%(13,340원) → 공단 75,650원, 중증 가산 3,000원
-    assert (primary.total_cost, primary.amount, primary.extra_amount) == (88990, 75650, 3000)
+    assert (primary.total_cost, primary.amount, primary.extra_amount) == (88990, 75641, 3000)
     # 동행: 급여비용 0원(주 담당 청구에 이미 포함), 중증 가산 3,000원만
     assert (companion.total_cost, companion.amount, companion.extra_amount, companion.benefit_type) == (0, 0, 3000, "home_bath")
     assert companion.daily_record_id is not None

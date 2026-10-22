@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from app import benefits
 
 VISIT_FEES = {30: 17450, 60: 25320, 90: 34120, 120: 43430, 180: 57020, 240: 70080}
@@ -15,8 +17,9 @@ VALID_DURATIONS = tuple(VISIT_FEES.keys())
 
 
 def _split(total: int, client_type: str | None) -> tuple[int, int, int]:
+    """본인부담금은 원 단위 반올림. 2026 고시 붙임2의 본인부담(예: 방문목욕 80,230원의 15% = 12,035원)과 같다."""
     rate = PATIENT_RATES.get(client_type or "일반", PATIENT_RATES["일반"])
-    patient = int(total * rate) // 10 * 10
+    patient = int(Decimal(total) * Decimal(str(rate)) + Decimal("0.5"))
     return total, patient, total - patient
 
 

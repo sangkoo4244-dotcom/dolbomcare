@@ -70,24 +70,19 @@ def test_fee_rows_use_the_2026_visit_fee_table_and_the_patient_rates(client):
     assert [r["minutes"] for r in rows] == list(VISIT_FEES.keys())
     by_minutes = {r["minutes"]: r for r in rows}
     assert by_minutes[60]["total"] == 25320
-    assert by_minutes[60]["patient"]["일반"] == 3790  # 시스템은 10원 단위 절사. 2026 고시 붙임2의 3,798원과 다르다 (경고로 알림)
+    assert by_minutes[60]["patient"]["일반"] == 3798  # 2026 고시 붙임2와 같은 원 단위 반올림
     assert by_minutes[60]["patient"]["기초생활보장"] == 0
 
 
 def test_low_income_client_gets_six_percent(client):
     data = client.get("/api/v1/contract-terms/draft?resident_id=2", headers=MANAGER).json()["data"]
     assert data["resident"]["client_type"] == "차상위계층"
-    assert {r["minutes"]: r for r in data["fee_rows"]}[60]["patient"]["차상위계층"] == 1510
+    assert {r["minutes"]: r for r in data["fee_rows"]}[60]["patient"]["차상위계층"] == 1519
 
 
 def test_night_surcharge_difference_is_always_flagged(client):
     warnings = client.get("/api/v1/contract-terms/draft?resident_id=1", headers=MANAGER).json()["data"]["warnings"]
-    assert any("야간 20%" in w and "30%" in w for w in warnings)
-
-
-def test_copay_rounding_difference_with_the_official_table_is_flagged(client):
-    warnings = client.get("/api/v1/contract-terms/draft?resident_id=1", headers=MANAGER).json()["data"]["warnings"]
-    assert any("3,798" in w and "3,790" in w for w in warnings)
+    assert any("야간(18~22시) 20%" in w and "심야 30%" in w for w in warnings)
 
 
 def test_missing_recognition_number_is_flagged(client):
