@@ -57,6 +57,8 @@ def _clear_old_demo(db: Session) -> bool:
         db.query(User).filter(User.id.in_(old_user_ids)).delete(synchronize_session=False)
     if old_center_ids:
         db.query(Center).filter(Center.id.in_(old_center_ids)).delete(synchronize_session=False)
+        for stale in [o for o in db.identity_map.values() if isinstance(o, Center) and o.id in old_center_ids]:
+            db.expunge(stale)
     db.commit()
     return True
 

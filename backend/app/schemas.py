@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 from datetime import datetime
 from typing import Optional, List
 
@@ -17,8 +17,7 @@ class UserResponse(UserBase):
     is_active: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -43,8 +42,7 @@ class CenterResponse(CenterBase):
     id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ResidentBase(BaseModel):
     name: str
@@ -74,8 +72,7 @@ class ResidentResponse(ResidentBase):
     client_type: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class DailyRecordBase(BaseModel):
     recorded_date: datetime
@@ -93,8 +90,7 @@ class DailyRecordResponse(DailyRecordBase):
     audio_file_url: Optional[str]
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class HealthMetricBase(BaseModel):
     blood_pressure_sys: Optional[int] = None
@@ -112,8 +108,7 @@ class HealthMetricResponse(HealthMetricBase):
     status: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class DashboardSummary(BaseModel):
     total_residents: int
@@ -147,8 +142,7 @@ class BillingRecordResponse(BaseModel):
     recorded_date: datetime
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class BillingMonthlySummary(BaseModel):
     year_month: str

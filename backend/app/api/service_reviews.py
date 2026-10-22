@@ -242,7 +242,7 @@ def create_conference(body: ConferenceBody, db: Session = Depends(get_db), actor
     c = CaseConference(
         center_id=actor.center_id, resident_id=body.resident_id, conference_date=body.conference_date, author_id=actor.id,
         reason=body.reason.strip(), content=body.content.strip(), plan=body.plan.strip(),
-        attendees=json.dumps([a.dict() for a in body.attendees], ensure_ascii=False),
+        attendees=json.dumps([a.model_dump() for a in body.attendees], ensure_ascii=False),
     )
     db.add(c)
     db.commit()

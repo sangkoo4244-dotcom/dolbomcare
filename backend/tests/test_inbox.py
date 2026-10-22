@@ -107,7 +107,7 @@ def test_submitting_a_claim_notifies_only_managers_of_that_center(env):
     assert [n.kind for n in mine] == ["claim_submitted"]
     assert "요양사A" in mine[0].message and "김이용" in mine[0].message
     assert db.query(models.Notification).filter(models.Notification.user_id == 5).count() == 0  # 다른 센터 센터장
-    assert db.query(models.BillingRecord).get(7).approval_status == "pending"
+    assert db.get(models.BillingRecord, 7).approval_status == "pending"
 
 
 def test_caregiver_board_counts_per_caregiver(env):
@@ -117,7 +117,7 @@ def test_caregiver_board_counts_per_caregiver(env):
         models.User(id=3, email="b@test.com", full_name="요양사B", role="caregiver", center_id=1),
         models.User(id=6, email="x@test.com", full_name="타센터요양사", role="caregiver", center_id=2),
     ])
-    resident = db.query(models.Resident).get(1)
+    resident = db.get(models.Resident, 1)
     resident.primary_caregiver_id = 2
     db.add_all([
         # 오늘 방문: A는 2건 중 1건 도착, 취소 건은 제외

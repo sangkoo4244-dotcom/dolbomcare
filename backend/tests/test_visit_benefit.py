@@ -77,7 +77,7 @@ def test_nursing_is_for_nursing_staff_and_needs_15_minutes(db):
     assert "직종" in err(lambda: normalize_visit_benefit(db, center_id=1, caregiver_id=1, benefit_type="home_nursing", duration_minutes=30))
     assert "15분" in err(lambda: normalize_visit_benefit(db, center_id=1, caregiver_id=3, benefit_type="home_nursing", duration_minutes=10))
     assert "시간" in err(lambda: normalize_visit_benefit(db, center_id=1, caregiver_id=3, benefit_type="home_nursing", require_duration=True))
-    assert job_type_of(None) == "요양보호사" and job_type_of(db.query(models.User).get(1)) == "요양보호사"
+    assert job_type_of(None) == "요양보호사" and job_type_of(db.get(models.User, 1)) == "요양보호사"
 
 
 def test_bath_fee_follows_nhis_time_rule_and_solo_exception():

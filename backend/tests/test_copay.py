@@ -119,7 +119,7 @@ def test_status_recalculates_when_billing_is_later_rejected(client):
     # 청구 1건(34120-29000=5120)이 반려되면 총액이 2650으로 줄어든다 - 이미 7770을 냈으니 여전히 완납 상태여야 한다
     db = client.app.dependency_overrides[__import__("app.database", fromlist=["get_db"]).get_db]
     session = next(db())
-    record = session.query(__import__("app.models", fromlist=["BillingRecord"]).BillingRecord).get(1)
+    record = session.get(models.BillingRecord, 1)
     record.approval_status = "rejected"
     session.commit()
     session.close()
@@ -199,7 +199,7 @@ def test_unrelated_guardian_cannot_see_copay_history(client):
 def test_copay_still_counts_visits_already_reimbursed_and_archived(client):
     """공단 환급까지 끝나 자동 보관된 청구도 이용자 본인부담금은 받아야 한다 (보관 여부로 빠지면 덜 받게 된다)."""
     session = next(client.app.dependency_overrides[get_db]())
-    bill = session.query(models.BillingRecord).get(2)
+    bill = session.get(models.BillingRecord, 2)
     bill.approval_status = "reimbursed"
     bill.is_archived = True
     session.commit()

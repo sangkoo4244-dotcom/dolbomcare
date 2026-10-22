@@ -50,7 +50,7 @@ class Center(Base):
     partner_since = Column(DateTime, nullable=True)  # 파트너(무기한 무료 이벤트) 지정 시각
     partner_note = Column(String, nullable=True)  # 파트너 지정 사유·조건 메모(운영자용)
     trial_ends_at = Column(DateTime, nullable=True)  # 무료 체험 종료 시각. NULL이면 체험 제한 없음(정식 전환 또는 기존 센터)
-    manager_id = Column(Integer, ForeignKey("users.id"))
+    manager_id = Column(Integer, ForeignKey("users.id", use_alter=True))
     residents_count = Column(Integer)
     caregivers_count = Column(Integer)
     created_at = Column(DateTime, default=datetime.now)

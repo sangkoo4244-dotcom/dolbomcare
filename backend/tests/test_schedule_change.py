@@ -62,13 +62,13 @@ def test_original_stays_until_approved_then_moves(ctx):
     client, Session = ctx
     assert request_change(client).status_code == 200
     db = Session()
-    s = db.query(models.Schedule).get(1)
+    s = db.get(models.Schedule, 1)
     assert s.scheduled_date == WHEN and s.change_date is not None
     assert db.query(models.Notification).filter_by(user_id=1, kind="schedule_change_requested").count() == 1
     assert len(client.get("/api/v1/schedule/change-requests", headers=MGR).json()["items"]) == 1
     assert client.post("/api/v1/schedule/1/change-approve", headers=MGR).status_code == 200
     db.expire_all()
-    s = db.query(models.Schedule).get(1)
+    s = db.get(models.Schedule, 1)
     assert s.scheduled_date == datetime.fromisoformat(NEW) and s.change_date is None
     assert db.query(models.Notification).filter_by(user_id=2, kind="schedule_change_approved").count() == 1
 
@@ -78,7 +78,7 @@ def test_reject_needs_reason_and_keeps_original(ctx):
     request_change(client)
     assert client.post("/api/v1/schedule/1/change-reject", json={"user_id": 1, "user_role": "center_manager", "reason": ""}, headers=MGR).status_code == 400
     assert client.post("/api/v1/schedule/1/change-reject", json={"user_id": 1, "user_role": "center_manager", "reason": "그날은 어렵습니다"}, headers=MGR).status_code == 200
-    s = Session().query(models.Schedule).get(1)
+    s = Session().get(models.Schedule, 1)
     assert s.scheduled_date == WHEN and s.change_date is None
 
 
@@ -92,7 +92,7 @@ def test_reason_required_and_only_owner(ctx):
 def test_cannot_change_after_arrival(ctx):
     client, Session = ctx
     db = Session()
-    db.query(models.Schedule).get(1).arrived_at = datetime.now()
+    db.get(models.Schedule, 1).arrived_at = datetime.now()
     db.commit()
     assert request_change(client).status_code == 400
 
@@ -107,31 +107,31 @@ def test_caregiver_can_withdraw(ctx):
     client, Session = ctx
     request_change(client)
     assert client.post("/api/v1/schedule/1/change-cancel", headers=CG).status_code == 200
-    assert Session().query(models.Schedule).get(1).change_date is None
+    assert Session().get(models.Schedule, 1).change_date is None
 
 
 def test_service_and_items_change_applies_only_on_approval(ctx):
     client, Session = ctx
     db = Session()
-    s = db.query(models.Schedule).get(1)
+    s = db.get(models.Schedule, 1)
     s.service_type, s.planned_items = "basic_care", "meal_assist"
     db.commit()
     body = {"scheduled_date": WHEN.isoformat(), "service_type": "medical_care", "planned_items": "meal_assist,bath", "reason": "상태 변화"}
     assert client.post("/api/v1/schedule/1/change-request", json=body, headers=CG).status_code == 200
     db.expire_all()
-    s = db.query(models.Schedule).get(1)
+    s = db.get(models.Schedule, 1)
     assert (s.service_type, s.planned_items) == ("basic_care", "meal_assist")  # 승인 전에는 그대로
     item = client.get("/api/v1/schedule/change-requests", headers=MGR).json()["items"][0]
     assert item["to_service_type"] == "medical_care" and item["to_items"] == ["meal_assist", "bath"]
     assert client.post("/api/v1/schedule/1/change-approve", headers=MGR).status_code == 200
     db.expire_all()
-    s = db.query(models.Schedule).get(1)
+    s = db.get(models.Schedule, 1)
     assert (s.service_type, s.planned_items, s.scheduled_date) == ("medical_care", "meal_assist,bath", WHEN)
     assert s.change_service_type is None and s.change_planned_items is None
 
 
 def test_request_identical_to_current_is_rejected(ctx):
     client, Session = ctx
-    s = Session().query(models.Schedule).get(1)
+    s = Session().get(models.Schedule, 1)
     body = {"scheduled_date": WHEN.isoformat(), "service_type": s.service_type, "reason": "그냥"}
     assert client.post("/api/v1/schedule/1/change-request", json=body, headers=CG).status_code == 400
