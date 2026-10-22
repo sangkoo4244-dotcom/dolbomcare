@@ -643,7 +643,8 @@
             const d = await res.json();
             if (!res.ok) { err.textContent = typeof d.detail === 'string' ? d.detail : '입력 내용을 확인해 주세요'; err.style.display = 'block'; return; }
             closeRecurring();
-            showMessage(`방문 일정 ${d.created}건을 등록했습니다${d.skipped ? ` (이미 있는 ${d.skipped}건은 건너뜀)` : ''}.`, 'success');
+            const notes = [d.skipped ? `이미 있는 ${d.skipped}건은 건너뜀` : '', d.skipped_leave ? `승인된 휴가 ${d.skipped_leave}건은 제외` : ''].filter(Boolean);
+            showMessage(`방문 일정 ${d.created}건을 등록했습니다${notes.length ? ` (${notes.join(', ')})` : ''}.${d.plan_warning ? ' ' + d.plan_warning : ''}`, 'success');
             loadPlans();
         }
 

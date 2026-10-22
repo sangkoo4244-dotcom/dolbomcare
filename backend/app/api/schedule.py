@@ -10,7 +10,7 @@ class PlaceBody(BaseModel):
     lng: Optional[float] = None
     accuracy: Optional[float] = None  # 휴대폰이 알려 준 위치 오차(m)
 from sqlalchemy.orm import Session
-from app.models import Schedule, User, Resident, Center, DailyRecord, Notification
+from app.models import Schedule, User, Resident, Center, DailyRecord, Notification, LeaveRequest, CarePlan
 from app.api.notifications import notify
 from app.review import record_fits_schedule
 from app.visit_benefit import normalize_visit_benefit
@@ -23,6 +23,29 @@ from datetime import datetime, timedelta, date
 def _assert_service_open(resident: Resident, day: date):
     if resident.ended_on and day > resident.ended_on:
         raise HTTPException(status_code=409, detail=f"이용이 종료된 이용자입니다 (종료일 {resident.ended_on.isoformat()})")
+
+
+def _assert_not_on_leave(db: Session, caregiver_id: int, day: date):
+    """승인된 연차·기타 휴가가 있는 날에는 방문을 배정하지 않는다. 반차는 시간이 없어 막지 않는다."""
+    if _leave_days(db, caregiver_id, day, day):
+        raise HTTPException(status_code=409, detail=f"{day.isoformat()}에 승인된 휴가가 있어 방문을 배정할 수 없습니다")
+
+
+def _leave_days(db: Session, caregiver_id: int, start: date, end: date) -> set:
+    rows = db.query(LeaveRequest.leave_date).filter(
+        LeaveRequest.staff_id == caregiver_id,
+        LeaveRequest.leave_date >= start, LeaveRequest.leave_date <= end,
+        LeaveRequest.status == "approved", LeaveRequest.leave_type.in_(("annual", "other")),
+    ).all()
+    return {r.leave_date for r in rows}
+
+
+def _plan_warning(db: Session, resident_id: int, day: date):
+    """그 날짜 이전에 작성한 급여제공계획서가 없으면 알린다. 막지는 않는다(계획서 작성 전 방문을 미리 잡는 경우가 있다)."""
+    has_plan = db.query(CarePlan.id).filter(CarePlan.resident_id == resident_id, CarePlan.written_date <= day).first()
+    if has_plan:
+        return None
+    return f"{day.isoformat()} 이전에 작성한 급여제공계획서가 없습니다. 제공 시작 전에 계획서를 작성해 주세요."
 
 
 class ScheduleCreate(BaseModel):
@@ -125,6 +148,7 @@ async def create_schedule(
         if not resident:
             raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
         _assert_service_open(resident, datetime.fromisoformat(schedule_data.scheduled_date).date())
+        _assert_not_on_leave(db, caregiver.id, datetime.fromisoformat(schedule_data.scheduled_date).date())
 
         center = db.query(Center).filter(Center.id == schedule_data.center_id).first()
         if not center:
@@ -165,7 +189,8 @@ async def create_schedule(
                 "service_type": new_schedule.service_type,
                 "status": new_schedule.status,
                 "notes": new_schedule.notes
-            }
+            },
+            "plan_warning": _plan_warning(db, new_schedule.resident_id, new_schedule.scheduled_date.date()),
         }
     except HTTPException:
         raise
@@ -217,11 +242,14 @@ def create_recurring_schedule(req: RecurringCreate, db: Session = Depends(get_db
         Schedule.scheduled_date >= datetime.combine(start, datetime.min.time()),
         Schedule.scheduled_date < datetime.combine(end + timedelta(days=1), datetime.min.time()),
         Schedule.status != "cancelled").all()}
-    created, skipped = 0, 0
+    on_leave = _leave_days(db, caregiver.id, start, end)
+    created, skipped, skipped_leave = 0, 0, 0
     day = start
     while day <= end:
         if day.weekday() in weekdays:
-            if day in existing:
+            if day in on_leave:
+                skipped_leave += 1
+            elif day in existing:
                 skipped += 1
             else:
                 db.add(Schedule(caregiver_id=caregiver.id, resident_id=resident.id, center_id=actor.center_id,
@@ -234,7 +262,9 @@ def create_recurring_schedule(req: RecurringCreate, db: Session = Depends(get_db
     if created:
         notify(db, caregiver.id, "schedule_assigned", f"{resident.name} 어르신 방문 일정 {created}건이 등록되었습니다. 나의 일정에서 확인해 주세요.")
     db.commit()
-    return {"status": "success", "created": created, "skipped": skipped}
+    plan_missing = _plan_warning(db, resident.id, start)
+    return {"status": "success", "created": created, "skipped": skipped, "skipped_leave": skipped_leave,
+            "plan_warning": plan_missing}
 
 def _codes(value):
     return [c for c in (value or "").split(",") if c]
@@ -571,6 +601,7 @@ def approve_schedule(schedule_id: int, req: ReviewRequest, db: Session = Depends
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
     if schedule.status != "proposed":
         raise HTTPException(status_code=400, detail="승인 대기 중인 계획만 승인할 수 있습니다")
+    _assert_not_on_leave(db, schedule.caregiver_id, schedule.scheduled_date.date())
     schedule.status = "scheduled"
     schedule.review_note = None
     notify(db, schedule.caregiver_id, "plan_approved", f"방문 계획이 승인되었습니다 ({schedule.scheduled_date:%m/%d %H:%M})")
@@ -715,6 +746,7 @@ def approve_schedule_change(schedule_id: int, db: Session = Depends(get_db), act
     schedule = db.query(Schedule).filter(Schedule.id == schedule_id, Schedule.center_id == actor.center_id).first()
     if not schedule or schedule.change_date is None:
         raise HTTPException(status_code=404, detail="대기 중인 변경 요청을 찾을 수 없습니다")
+    _assert_not_on_leave(db, schedule.caregiver_id, schedule.change_date.date())
     schedule.scheduled_date = schedule.change_date
     if schedule.change_duration is not None:
         schedule.duration_minutes = schedule.change_duration
