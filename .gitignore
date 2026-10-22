@@ -41,3 +41,7 @@ backend/.venv/
 mobile/node_modules/
 mobile/.expo/
 *.sqlite3
+*.db
+.claude/settings.json
+.claude/settings.local.json
+.claude/sync-to-usb.ps1
