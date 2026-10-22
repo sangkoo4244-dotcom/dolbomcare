@@ -7,7 +7,7 @@ from app import benefits as benefit_catalog
 from app.review import find_schedule, gate_reason_for
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
-from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary, Notification, DayCareAttendance, RecordAuditLog, Schedule
+from app.models import DailyRecord, BillingRecord, User, Resident, VoiceRecord, MonthlySummary, Notification, DayCareAttendance, RecordAuditLog, Schedule, CarePlan
 from app.schemas import DailyRecordResponse
 from app.database import get_db
 from app.auth import get_current_user, require_manager, assert_self_or_manager, assert_my_center
@@ -177,6 +177,13 @@ def test_endpoint():
     """테스트 엔드포인트"""
     return {"message": "POST 작동 확인"}
 
+def _plan_warning(db: Session, resident_id: int, day):
+    """제공한 날짜 이전에 작성한 급여제공계획서가 없으면 알린다. 기록은 그대로 저장한다."""
+    if db.query(CarePlan.id).filter(CarePlan.resident_id == resident_id, CarePlan.written_date <= day).first():
+        return None
+    return f"{day.isoformat()} 이전에 작성한 급여제공계획서가 없습니다. 계획서를 작성해 두세요."
+
+
 @router.post("/create")
 def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     """일일 기록 생성 및 청구 자동 계산"""
@@ -345,7 +352,8 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
                 "service_type": request.service_type,
                 "benefit_type": visit["benefit_type"],
                 "pair_record_id": pair_record.id if pair_record else None,
-                "recorded_at": daily_record.recorded_date.isoformat() if daily_record.recorded_date else None
+                "recorded_at": daily_record.recorded_date.isoformat() if daily_record.recorded_date else None,
+                "plan_warning": _plan_warning(db, resident.id, daily_record.recorded_date.date()) if daily_record.recorded_date else None,
             }
         }
     except HTTPException:

@@ -11,6 +11,7 @@ from app import models
 from app.api import schedule
 from app.api.users import create_access_token
 from app.database import Base, get_db
+from tests.test_visit_benefit_api import env  # noqa: F401  (env 픽스처 재사용)
 
 MGR = {"Authorization": "Bearer " + create_access_token({"sub": "m@e.com", "uid": 1, "role": "center_manager"}, timedelta(hours=1))}
 VISIT = date(2026, 11, 10)
@@ -70,3 +71,23 @@ def test_recurring_visits_warn_when_no_plan_exists_yet(client):
     })
     assert res.status_code == 200, res.text
     assert res.json()["plan_warning"] is not None
+
+
+
+def test_record_without_a_plan_still_saves_and_warns(env):
+    from tests.test_visit_benefit_api import CG_A, payload
+    db, client = env
+    r = client.post("/api/v1/records/create", json=payload(benefit_type="home_care", duration_minutes=60), headers=CG_A)
+    assert r.status_code == 200, r.text
+    assert r.json()["data"]["plan_warning"] and "계획서" in r.json()["data"]["plan_warning"]
+    assert db.query(models.DailyRecord).count() == 1
+
+
+def test_record_after_a_plan_has_no_warning(env):
+    from tests.test_visit_benefit_api import CG_A, payload
+    db, client = env
+    db.add(models.CarePlan(center_id=1, resident_id=1, author_id=1, written_date=date(2020, 1, 1)))
+    db.commit()
+    r = client.post("/api/v1/records/create", json=payload(benefit_type="home_care", duration_minutes=60), headers=CG_A)
+    assert r.status_code == 200, r.text
+    assert r.json()["data"]["plan_warning"] is None
