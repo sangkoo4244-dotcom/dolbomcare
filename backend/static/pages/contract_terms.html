@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수급자 이용계약서 초안 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+
+        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+        .note { background: #FFF7EB; border: 1px solid #FCE2B5; color: #8A4A07; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+        .field { padding: 9px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; }
+        .field:focus { border-color: var(--teal); outline: none; }
+        .btn-outline { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .form-paper { background: #fff; border: 1px solid #CBD5E1; padding: 20px; font-size: 13px; }
+        .form-paper h2 { font-size: 16px; text-align: center; margin: 0 0 14px; }
+        .form-paper table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+        .form-paper td, .form-paper th { border: 1px solid #CBD5E1; padding: 6px 8px; text-align: left; vertical-align: top; }
+        .form-paper th { background: #F1F5F9; width: 22%; }
+        .blank { color: #94A3B8; }
+        .warn { color: #B45309; font-size: 13px; margin: 6px 0; }
+        .empty-note { color: #94A3B8; font-size: 13px; }
+        @media print { .sidebar, .topbar, .panel, .note { display: none !important; } .main-layout { margin-left: 0 !important; } .form-paper { border: none; } }
+    
+        /* 휴대폰: 표가 화면 폭을 넘지 않게 맞추고 글은 줄바꿈 */
+        @media (max-width: 700px) {
+            table:not(.m-cards) { display: table !important; table-layout: fixed; width: 100%; }
+            th, td { white-space: normal; word-break: keep-all; min-width: 0; }
+        }
+    </style>
+    <link rel="stylesheet" href="theme.css">
+    <script src="menu.js"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>수급자 이용계약서 초안</h1>
+                <div class="breadcrumb">홈 › 방문 운영 › <b>수급자 이용계약서 초안</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-role" id="userRole"></div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="note">장기요양급여 이용 표준약관(방문요양용) 조항을 원문 그대로 실었습니다. 계약기간·요일별 시간·서명은 빈칸이니 센터가 직접 채우세요. 인쇄 전에 아래 확인 필요 사항을 꼭 읽어 주세요.</div>
+
+            <div class="panel" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                <select id="resident" class="field" onchange="load()" style="min-width:200px;"></select>
+                <button class="btn-outline" onclick="window.print()">인쇄</button>
+            </div>
+
+            <div id="paper" class="panel form-paper"><div class="empty-note">이용자를 선택하세요.</div></div>
+        </div>
+    </div>
+
+    <script>
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html';
+            }
+        }
+
+        async function loadResidents() {
+            const rd = await fetch('/api/v1/residents/').then(r => r.json()).catch(() => ({}));
+            const list = Array.isArray(rd) ? rd : (rd.residents || []);
+            document.getElementById('resident').innerHTML = list.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('') || '<option value="">이용자가 없습니다</option>';
+            load();
+        }
+
+        async function load() {
+            const rid = document.getElementById('resident').value;
+            if (!rid) return;
+            const r = await fetch(`/api/v1/contract-terms/draft?resident_id=${rid}`);
+            const d = await r.json().catch(() => ({}));
+            const box = document.getElementById('paper');
+            if (!r.ok) { box.innerHTML = `<div class="empty-note">${esc(typeof d.detail === 'string' ? d.detail : '초안을 불러오지 못했습니다')}</div>`; return; }
+            box.innerHTML = render(d.data);
+        }
+
+        function render(v) {
+            const blank = (text) => `<span class="blank">${esc(text)}</span>`;
+            const feeRows = v.fee_rows.map(x => `<tr>
+                <td>${x.minutes}분</td><td style="text-align:right;">${x.total.toLocaleString()}원</td>
+                ${v.client_types.map(t => `<td style="text-align:right;">${x.patient[t].toLocaleString()}원</td>`).join('')}</tr>`).join('');
+            const terms = v.terms.map(t => `<div style="margin-bottom:10px;"><b>${esc(t.title)}</b><div style="white-space:pre-wrap;">${esc(t.body)}</div></div>`).join('');
+            return `<h2>${esc(v.form)}</h2>
+                <div class="empty-note" style="text-align:center;margin-bottom:12px;">${esc(v.terms_version)}</div>
+                <table>
+                    <tr><th>이용자(갑) 성명</th><td>${esc(v.resident.name)}</td><th>생년월일</th><td>${esc(v.resident.birth_date || '')}</td></tr>
+                    <tr><th>장기요양등급</th><td>${v.resident.care_grade ? v.resident.care_grade + '등급' : '인지지원등급'}</td><th>인정번호</th><td>${v.resident.recognition_number ? esc(v.resident.recognition_number) : blank('입력')}</td></tr>
+                    <tr><th>본인부담 구분</th><td colspan="3">${esc(v.resident.client_type)}</td></tr>
+                    <tr><th>청구지 주소</th><td colspan="3">${v.resident.billing_address ? esc(v.resident.billing_address) : blank('입력')}</td></tr>
+                    <tr><th>제공기관(을)</th><td>${esc(v.center.name)}</td><th>기관기호</th><td>${v.center.institution_code ? esc(v.center.institution_code) : blank('기관 정보에 없음')}</td></tr>
+                    <tr><th>대리인(병) 성명·관계</th><td>${v.guardian.name ? esc(v.guardian.name) : blank('입력')}</td><th>연락처</th><td>${v.guardian.phone ? esc(v.guardian.phone) : blank('입력')}</td></tr>
+                    ${v.additional_guardians.length ? `<tr><th>추가 보호자</th><td colspan="3">${v.additional_guardians.map(g => `${esc(g.name)}${g.relation ? ' (' + esc(g.relation) + ')' : ''} ${esc(g.phone)}`).join(' · ')}</td></tr>` : ''}
+                </table>
+                <div>${terms}</div>
+                <h3>[별표 1] 방문요양 급여비용 및 본인부담 기준 (2026년, 1회당)</h3>
+                <table>
+                    <tr><th>이용시간</th><th>급여비용</th>${v.client_types.map(t => `<th>본인부담 ${esc(t)}</th>`).join('')}</tr>
+                    ${feeRows}
+                </table>
+                <div class="empty-note">등급별 재가급여 월 한도액(2026년): 1등급 2,512,900원 · 2등급 2,331,200원 · 3등급 1,528,200원 · 4등급 1,409,700원 · 5등급 1,208,900원 · 인지지원 676,320원</div>
+                <div style="margin-top:14px;"><b>빈칸으로 남긴 항목</b>: ${v.to_fill.map(esc).join(', ')}</div>
+                ${v.warnings.map(w => `<div class="warn">확인 필요: ${esc(w)}</div>`).join('')}`;
+        }
+
+        (async function init() {
+            if (typeof renderSidebar === 'function') renderSidebar();
+            document.getElementById('userName').textContent = user.full_name || '';
+            document.getElementById('userRole').textContent = user.role === 'social_worker' ? '사회복지사' : '센터장';
+            document.getElementById('month').value = todayLocal().slice(0, 7);
+            loadResidents();
+        })();
+    </script>
+</body>
+</html>

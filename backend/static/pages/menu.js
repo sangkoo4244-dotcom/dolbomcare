@@ -134,6 +134,7 @@ const SIDEBAR_MENUS = {
         { href: 'visit_sheet.html', icon: 'voice', label: '목욕·간호 기록지' },
         { href: 'inspection_log.html', icon: 'schedule_check', label: '점검 기록' },
         { href: 'contract_notice.html', icon: 'stamp', label: '계약통보서 초안' },
+        { href: 'contract_terms.html', icon: 'stamp', label: '수급자 이용계약서 초안' },
         { href: 'day_care.html', icon: 'schedule_check', label: '주야간 이용 기록', benefit: 'day_night' },
         { href: 'today_board.html', icon: 'schedule_check', label: '오늘 방문 현황' },
         { href: 'record_review.html', icon: 'schedule_check', label: '제공 기록 확인' },
