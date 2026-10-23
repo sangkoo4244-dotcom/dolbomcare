@@ -122,7 +122,25 @@
                 <div><label for="fWritten">작성일</label><input type="date" id="fWritten"></div>
                 <div><label for="fStart">급여제공 시작일</label><input type="date" id="fStart"></div>
             </div>
-            <label for="fGoals">장기요양 세부목표</label>
+            <div class="two">
+                <div><label for="fContract">계약일</label><input type="date" id="fContract"></div>
+                <div><label for="fContractStart">계약기간 시작</label><input type="date" id="fContractStart"></div>
+            </div>
+            <div class="two">
+                <div><label for="fContractEnd">계약기간 종료</label><input type="date" id="fContractEnd"></div>
+                <div><label for="fServiceEnd">적용기간 종료</label><input type="date" id="fServiceEnd"></div>
+            </div>
+            <div class="two">
+                <div><label for="fConsenterRel">동의자와 수급자의 관계</label><input id="fConsenterRel" placeholder="예: 딸"></div>
+                <div><label for="fConsenterPhone">동의자 전화번호</label><input id="fConsenterPhone" placeholder="010-0000-0000"></div>
+            </div>
+            <label for="fGoalSummary">목표 (종합 효과)</label>
+            <textarea id="fGoalSummary" placeholder="예: 집에서 안전하게 일상생활을 이어간다"></textarea>
+            <label>급여제공 내용 (행별로 입력)</label>
+            <div id="fItems" style="display:grid;gap:8px;"></div>
+            <button type="button" class="btn-outline" style="margin-top:8px;" onclick="addItemRow()">행 추가</button>
+            <div class="fsub" style="margin-top:6px;">아래 요약 칸을 비워 두면 위 행의 내용으로 자동 채워집니다.</div>
+            <label for="fGoals">장기요양 세부목표 (요약)</label>
             <textarea id="fGoals" placeholder="예: 낙상 없이 일상생활 동작을 유지한다"></textarea>
             <label for="fNeeds">장기요양 필요내용</label>
             <textarea id="fNeeds" placeholder="예: 보행 보조, 식사 준비, 위생 관리"></textarea>
@@ -134,6 +152,9 @@
             </div>
             <label for="fOpinion">종합의견</label>
             <textarea id="fOpinion" placeholder="욕구사정과 위험도 평가 결과를 반영한 종합소견"></textarea>
+            <label for="fSupervisor">총괄 확인자 (목표달성 확인·모니터링 담당)</label>
+            <input id="fSupervisor" placeholder="예: 사회복지사 김OO">
+
             <div class="fsub" style="margin-top:10px;">작성일 이전에 실시한 욕구사정·낙상·욕창·인지기능 평가가 자동으로 반영됩니다. 저장 후 결과에 빠진 평가가 표시됩니다.</div>
             <div class="err" id="fErr"></div>
             <div class="actions">
@@ -321,8 +342,43 @@
             document.getElementById('fFreq').value = base.frequency || '';
             document.getElementById('fDur').value = base.duration_minutes || '';
             document.getElementById('fOpinion').value = base.opinion || '';
+            ['fContract', 'fContractStart', 'fContractEnd', 'fServiceEnd'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('fConsenterRel').value = base.consenter_relation || '';
+            document.getElementById('fConsenterPhone').value = base.consenter_phone || '';
+            document.getElementById('fGoalSummary').value = base.goal_summary || '';
+            document.getElementById('fSupervisor').value = base.supervisor_name || '';
+            document.getElementById('fItems').innerHTML = '';
+            (base.items || []).forEach(addItemRow);
             document.getElementById('fErr').style.display = 'none';
             document.getElementById('formBack').classList.add('open');
+        }
+
+        function addItemRow(it = {}) {
+            const types = ['방문요양', '방문목욕', '방문간호'];
+            const options = types.map(t => `<option ${(it.service_type || '방문요양') === t ? 'selected' : ''}>${t}</option>`).join('');
+            document.getElementById('fItems').insertAdjacentHTML('beforeend', `
+                <div class="item-row" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;border:1px solid #e2e8f0;border-radius:8px;padding:8px;">
+                    <select class="i-type">${options}</select>
+                    <input class="i-area" placeholder="필요영역 (예: 신체활동)" value="${esc(it.area)}">
+                    <input class="i-goal" placeholder="세부목표" value="${esc(it.goal)}">
+                    <input class="i-need" placeholder="필요내용" value="${esc(it.need)}">
+                    <input class="i-detail" placeholder="세부 제공내용" value="${esc(it.detail)}">
+                    <input class="i-freq" placeholder="횟수 (예: 주 5회)" value="${esc(it.frequency)}">
+                    <input class="i-min" type="number" min="0" step="10" placeholder="1회 시간(분)" value="${esc(it.duration_minutes)}">
+                    <input class="i-writer" placeholder="작성자 (직종·성명)" value="${esc(it.writer)}">
+                    <button type="button" class="btn-outline" style="grid-column:1 / -1;" onclick="this.parentElement.remove()">이 행 삭제</button>
+                </div>`);
+        }
+
+        function readItems() {
+            return [...document.querySelectorAll('#fItems .item-row')].map(row => ({
+                service_type: row.querySelector('.i-type').value,
+                area: row.querySelector('.i-area').value, goal: row.querySelector('.i-goal').value,
+                need: row.querySelector('.i-need').value, detail: row.querySelector('.i-detail').value,
+                frequency: row.querySelector('.i-freq').value,
+                duration_minutes: row.querySelector('.i-min').value ? Number(row.querySelector('.i-min').value) : null,
+                writer: row.querySelector('.i-writer').value,
+            })).filter(i => Object.entries(i).some(([k, v]) => k !== 'service_type' && (k === 'duration_minutes' ? v : String(v).trim())));
         }
 
         function closeForm() { document.getElementById('formBack').classList.remove('open'); }
@@ -330,15 +386,23 @@
         async function submitForm() {
             const err = document.getElementById('fErr');
             err.style.display = 'none';
+            const items = readItems();
+            const joined = key => items.map(i => i[key]).filter(v => v && String(v).trim()).join('\n');
+            const v = id => document.getElementById(id).value;
             const body = {
                 resident_id: formCtx.rid, plan_type: formCtx.type,
-                change_reason: document.getElementById('fReason').value || null,
-                written_date: document.getElementById('fWritten').value,
-                service_start_date: document.getElementById('fStart').value || null,
-                goals: document.getElementById('fGoals').value, needs: document.getElementById('fNeeds').value,
-                details: document.getElementById('fDetails').value, frequency: document.getElementById('fFreq').value,
-                duration_minutes: document.getElementById('fDur').value ? Number(document.getElementById('fDur').value) : null,
-                opinion: document.getElementById('fOpinion').value,
+                change_reason: v('fReason') || null,
+                written_date: v('fWritten'),
+                service_start_date: v('fStart') || null,
+                goals: v('fGoals') || joined('goal'), needs: v('fNeeds') || joined('need'),
+                details: v('fDetails') || joined('detail'), frequency: v('fFreq') || joined('frequency'),
+                duration_minutes: v('fDur') ? Number(v('fDur')) : (items[0] && items[0].duration_minutes) || null,
+                opinion: v('fOpinion'),
+                contract_date: v('fContract') || null, contract_start_date: v('fContractStart') || null,
+                contract_end_date: v('fContractEnd') || null, service_end_date: v('fServiceEnd') || null,
+                goal_summary: v('fGoalSummary'), consenter_relation: v('fConsenterRel'),
+                consenter_phone: v('fConsenterPhone'), supervisor_name: v('fSupervisor'),
+                items,
             };
             try {
                 const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });

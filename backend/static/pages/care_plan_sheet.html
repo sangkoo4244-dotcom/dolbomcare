@@ -35,7 +35,7 @@
         <a href="./care_plan.html">← 급여제공계획으로</a>
         <button type="button" onclick="window.print()">인쇄</button>
     </div>
-    <div class="note">공단 서식 「장기요양급여 제공 계획서(방문요양, 방문목욕, 방문간호)」(시행규칙 별지 제11호의3서식, 개정 2021.6.30) 앞쪽 칸 구성에 맞춘 출력물입니다. 돌봄케어 계획서 내용을 채웠고, 계약일·계약기간·이용계획서 번호·전화번호·서명은 시스템에 없으니 손으로 적어 주세요. 작성방법(뒤쪽)은 출력하지 않습니다. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다. 공단 통보는 장기요양정보시스템에서 직접 해야 합니다.</div>
+    <div class="note">공단 서식 「장기요양급여 제공 계획서(방문요양, 방문목욕, 방문간호)」(시행규칙 별지 제11호의3서식, 개정 2021.6.30) 앞쪽 칸 구성에 맞춘 출력물입니다. 돌봄케어 계획서 내용을 채웠고, 개인별장기요양이용계획서 번호·장기요양기관기호·서명은 시스템에 없으니 손으로 적어 주세요. 입력하지 않은 칸은 비어 있습니다. 작성방법(뒤쪽)은 출력하지 않습니다. 이 출력물은 공단 시스템에 전송되는 자료가 아닙니다. 공단 통보는 장기요양정보시스템에서 직접 해야 합니다.</div>
     <div class="paper" id="paper"><div class="empty">불러오는 중...</div></div>
 
     <script src="menu.js"></script>
@@ -49,6 +49,19 @@
             const period = r.recognition_start || r.recognition_end ? `${r.recognition_start || ''} ~ ${r.recognition_end || ''}` : '';
             const kind = p.plan_type === 'change' ? `변경 (${p.change_reason || ''})` : '신규·정기';
             const minutes = p.duration_minutes ? `${p.duration_minutes}분` : '';
+            const range = (a, b) => a || b ? `${a || ''} ~ ${b || ''}` : '';
+            const itemRows = (p.items || []).map(i => `
+                        <tr><td class="fill">${esc(i.service_type)}</td><td class="fill">${esc(i.area)}</td><td class="fill">${esc(i.goal)}</td><td class="fill">${esc(i.need)}</td><td class="fill">${esc(i.detail)}</td><td class="fill">${esc(i.frequency)}</td><td class="fill">${esc(i.duration_minutes ? i.duration_minutes + '분' : '')}</td><td class="fill">${esc(i.writer)}</td></tr>`).join('');
+            const planTable = itemRows ? `
+                    <tr><th>목표</th><td class="fill" colspan="7">${esc(p.goal_summary)}</td></tr>
+                    <tr><th>급여종류</th><th>장기요양 필요영역</th><th>세부목표</th><th>필요내용</th><th>세부 제공내용</th><th>횟수</th><th>시간(1회)</th><th>작성자</th></tr>${itemRows}` : `
+                    <tr><th>목표</th><td class="fill">${esc(p.goal_summary)}</td></tr>
+                    <tr><th>장기요양 세부목표</th><td class="fill">${esc(p.goals)}</td></tr>
+                    <tr><th>장기요양 필요내용</th><td class="fill">${esc(p.needs)}</td></tr>
+                    <tr><th>세부 제공내용</th><td class="fill">${esc(p.details)}</td></tr>
+                    <tr><th>횟수</th><td class="fill">${esc(p.frequency)}</td></tr>
+                    <tr><th>시간(1회)</th><td class="fill">${esc(minutes)}</td></tr>
+                    <tr><th>작성자</th><td class="fill">${esc(p.author_name)}</td></tr>`;
             return `
                 <div class="form-no">[별지 제11호의3서식] &lt;개정 2021. 6. 30.&gt; (앞쪽)</div>
                 <h1>장기요양급여 제공 계획서(방문요양, 방문목욕, 방문간호)</h1>
@@ -64,8 +77,8 @@
 
                 <div class="sec">② 동의자</div>
                 <table>
-                    <tr><th>성명</th><td class="fill">${esc(p.guardian_signer)}</td><th>수급자와의 관계</th><td class="blank"></td></tr>
-                    <tr><th>전화번호(휴대전화번호)</th><td class="fill">${esc(r.guardian_phone)}</td><th>동의일</th><td class="fill">${esc(p.guardian_signed_date)}</td></tr>
+                    <tr><th>성명</th><td class="fill">${esc(p.guardian_signer)}</td><th>수급자와의 관계</th><td class="fill">${esc(p.consenter_relation)}</td></tr>
+                    <tr><th>전화번호(휴대전화번호)</th><td class="fill">${esc(p.consenter_phone || r.guardian_phone)}</td><th>동의일</th><td class="fill">${esc(p.guardian_signed_date)}</td></tr>
                 </table>
 
                 <div class="sec">③ 장기요양기관</div>
@@ -76,22 +89,18 @@
                 <div class="sec">④ 급여제공계획 작성</div>
                 <table>
                     <tr><th>장기요양급여 종류</th><th>장기요양급여 계약일</th><th>장기요양급여 계약기간</th><th>급여제공 계획서 적용기간</th><th>작성일</th><th>통보일</th></tr>
-                    <tr><td class="fill">${esc(p.service_type)}</td><td class="blank"></td><td class="blank"></td><td class="fill">${esc(p.service_start_date)} ~</td><td class="fill">${esc(p.written_date)}</td><td class="fill">${esc(p.nhis_notified_date)}</td></tr>
+                    <tr><td class="fill">${esc(p.service_type)}</td><td class="fill">${esc(p.contract_date)}</td><td class="fill">${esc(range(p.contract_start_date, p.contract_end_date))}</td><td class="fill">${esc(range(p.service_start_date, p.service_end_date))}</td><td class="fill">${esc(p.written_date)}</td><td class="fill">${esc(p.nhis_notified_date)}</td></tr>
                 </table>
 
                 <div class="sec">⑤ 급여제공계획 내용</div>
-                <table>
-                    <tr><th>목표</th><td class="fill">${esc(p.goals)}</td></tr>
-                    <tr><th>장기요양 필요영역</th><td class="fill">${esc(p.needs)}</td></tr>
-                    <tr><th>세부 제공내용</th><td class="fill">${esc(p.details)}</td></tr>
-                    <tr><th>횟수</th><td class="fill">${esc(p.frequency)}</td></tr>
-                    <tr><th>시간(1회)</th><td class="fill">${esc(minutes)}</td></tr>
-                    <tr><th>작성자</th><td class="fill">${esc(p.author_name)}</td></tr>
+                <table>${planTable}
                 </table>
-                <div class="sys">세부목표·필요영역·필요내용이 여러 개면 공단 서식의 해당 칸마다 나눠 적어 주세요. 돌봄케어 기록은 하나의 칸에 모아 두었습니다.</div>
 
                 <div class="sec">종합의견</div>
-                <table><tr><td class="fill">${esc(p.opinion)}</td></tr></table>
+                <table>
+                    <tr><td class="fill">${esc(p.opinion)}</td></tr>
+                    <tr><th>총괄 확인자</th><td class="fill">${esc(p.supervisor_name)}</td></tr>
+                </table>
 
                 <div class="sec">통보</div>
                 <p style="font-size:13px;">「노인장기요양보험법」 제27조 및 같은 법 시행령 제13조, 같은 법 시행규칙 제21조의2에 따라 수급자의 장기요양급여 제공 계획서 내용을 국민건강보험공단에 통보합니다.</p>

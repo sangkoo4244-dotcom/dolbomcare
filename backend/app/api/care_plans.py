@@ -18,12 +18,23 @@ from app.api.notifications import notify
 from app.auth import get_current_user, require_manager, require_social_or_manager
 from app.database import get_db
 from app.care_plan_entry import entry_sheet
-from app.models import CarePlan, CarePlanAck, Center, NeedsAssessment, Resident, RiskAssessment, User
+from app.models import CarePlan, CarePlanAck, CarePlanItem, Center, NeedsAssessment, Resident, RiskAssessment, User
 
 router = APIRouter()
 
 PLAN_TYPES = {"regular": "신규·정기", "change": "변경"}
 ASSESSMENT_LOOKBACK_DAYS = 400  # 계획 작성 전 이만큼 안에 실시한 평가를 반영 대상으로 찾는다
+
+
+class ItemBody(BaseModel):
+    service_type: Optional[str] = None
+    area: Optional[str] = None
+    goal: Optional[str] = None
+    need: Optional[str] = None
+    detail: Optional[str] = None
+    frequency: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    writer: Optional[str] = None
 
 
 class PlanBody(BaseModel):
@@ -39,6 +50,15 @@ class PlanBody(BaseModel):
     frequency: str
     duration_minutes: Optional[int] = None
     opinion: str
+    contract_date: Optional[date] = None
+    contract_start_date: Optional[date] = None
+    contract_end_date: Optional[date] = None
+    service_end_date: Optional[date] = None
+    goal_summary: Optional[str] = None
+    consenter_relation: Optional[str] = None
+    consenter_phone: Optional[str] = None
+    supervisor_name: Optional[str] = None
+    items: list[ItemBody] = []
 
 
 class ProgressBody(BaseModel):
@@ -94,6 +114,20 @@ def _plan_issues(plan: CarePlan, db: Session) -> list:
     return issues
 
 
+def _clean(value: Optional[str]) -> Optional[str]:
+    return (value or "").strip() or None
+
+
+def _items_of(db: Session, plan_id: int) -> list:
+    rows = db.query(CarePlanItem).filter(CarePlanItem.plan_id == plan_id).order_by(CarePlanItem.sort_order, CarePlanItem.id).all()
+    return [{"id": r.id, "service_type": r.service_type, "area": r.area, "goal": r.goal, "need": r.need, "detail": r.detail,
+             "frequency": r.frequency, "duration_minutes": r.duration_minutes, "writer": r.writer} for r in rows]
+
+
+def _iso(value) -> Optional[str]:
+    return value.isoformat() if value else None
+
+
 def _to_dict(plan: CarePlan, db: Session, author_name: Optional[str] = None) -> dict:
     return {
         "id": plan.id, "resident_id": plan.resident_id, "plan_type": plan.plan_type,
@@ -113,6 +147,11 @@ def _to_dict(plan: CarePlan, db: Session, author_name: Optional[str] = None) -> 
         "signed_via": plan.signed_via,
         "has_signature": bool(plan.guardian_signature),
         "caregiver_ack": _ack_info(plan, db),
+        "contract_date": _iso(plan.contract_date), "contract_start_date": _iso(plan.contract_start_date),
+        "contract_end_date": _iso(plan.contract_end_date), "service_end_date": _iso(plan.service_end_date),
+        "goal_summary": plan.goal_summary, "consenter_relation": plan.consenter_relation,
+        "consenter_phone": plan.consenter_phone, "supervisor_name": plan.supervisor_name,
+        "items": _items_of(db, plan.id),
         "issues": _plan_issues(plan, db),
     }
 
@@ -157,10 +196,19 @@ def create_plan(body: PlanBody, db: Session = Depends(get_db), actor: User = Dep
         fall_assessment_id=found["fall"].id if found["fall"] else None,
         pressure_assessment_id=found["pressure"].id if found["pressure"] else None,
         cognitive_assessment_id=found["cognitive"].id if found["cognitive"] else None,
+        contract_date=body.contract_date, contract_start_date=body.contract_start_date,
+        contract_end_date=body.contract_end_date, service_end_date=body.service_end_date,
+        goal_summary=_clean(body.goal_summary), consenter_relation=_clean(body.consenter_relation),
+        consenter_phone=_clean(body.consenter_phone), supervisor_name=_clean(body.supervisor_name),
     )
     db.add(plan)
     db.commit()
     db.refresh(plan)
+    for order, item in enumerate(body.items):
+        db.add(CarePlanItem(plan_id=plan.id, sort_order=order, service_type=_clean(item.service_type), area=_clean(item.area),
+                            goal=_clean(item.goal), need=_clean(item.need), detail=_clean(item.detail),
+                            frequency=_clean(item.frequency), duration_minutes=item.duration_minutes, writer=_clean(item.writer)))
+    db.commit()
     return {"status": "success", "data": _to_dict(plan, db, actor.full_name)}
 
 
@@ -231,7 +279,12 @@ def plan_form(plan_id: int, db: Session = Depends(get_db), actor: User = Depends
             "author_name": author.full_name if author else "",
             "guardian_signer": plan.guardian_signer or "",
             "guardian_signed_date": plan.guardian_signed_date.isoformat() if plan.guardian_signed_date else "",
+            "contract_date": _iso(plan.contract_date) or "", "contract_start_date": _iso(plan.contract_start_date) or "",
+            "contract_end_date": _iso(plan.contract_end_date) or "", "service_end_date": _iso(plan.service_end_date) or "",
+            "goal_summary": plan.goal_summary or "", "consenter_relation": plan.consenter_relation or "",
+            "consenter_phone": plan.consenter_phone or "", "supervisor_name": plan.supervisor_name or "",
         },
+        "items": _items_of(db, plan.id),
     }}
 
 
@@ -242,6 +295,7 @@ def delete_plan(plan_id: int, db: Session = Depends(get_db), actor: User = Depen
         raise HTTPException(status_code=404, detail="계획서를 찾을 수 없습니다")
     if db.query(CarePlan).filter(CarePlan.parent_id == plan_id).first():
         raise HTTPException(status_code=400, detail="이 계획서를 기준으로 작성된 변경 계획서가 있어 삭제할 수 없습니다")
+    db.query(CarePlanItem).filter(CarePlanItem.plan_id == plan_id).delete()
     db.delete(plan)
     db.commit()
     return {"status": "success"}

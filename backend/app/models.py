@@ -642,7 +642,32 @@ class CarePlan(Base):
     shared_at = Column(DateTime, nullable=True)  # 보호자에게 확인·서명을 요청한 시각 (이후부터 보호자에게 보인다)
     guardian_signature = Column(Text, nullable=True)  # 보호자가 앱에서 한 전자서명 (PNG data URL)
     signed_via = Column(String, nullable=True)  # 'app'(보호자 앱 전자서명) / 'manual'(센터가 서명일 직접 기록)
+    contract_date = Column(Date, nullable=True)  # 장기요양급여 계약일 (공단 서식 ④)
+    contract_start_date = Column(Date, nullable=True)  # 계약기간 시작
+    contract_end_date = Column(Date, nullable=True)  # 계약기간 종료
+    service_end_date = Column(Date, nullable=True)  # 적용기간 종료 (시작은 service_start_date)
+    goal_summary = Column(Text, nullable=True)  # 목표 (서식 ⑤ 상단, 종합 효과)
+    consenter_relation = Column(String, nullable=True)  # 동의자와 수급자의 관계 (서식 ②)
+    consenter_phone = Column(String, nullable=True)  # 동의자 전화번호
+    supervisor_name = Column(String, nullable=True)  # 총괄 확인자 (서식 ⑤, 목표달성 확인·모니터링 담당)
     created_at = Column(DateTime, default=datetime.now)
+
+
+class CarePlanItem(Base):
+    """급여제공계획 내용 한 행 - 공단 서식 ⑤의 필요영역·세부목표·필요내용·세부 제공내용·횟수·시간·작성자 칸."""
+    __tablename__ = "care_plan_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, ForeignKey("care_plans.id"), index=True)
+    sort_order = Column(Integer, default=0)
+    service_type = Column(String, nullable=True)  # 방문요양 / 방문목욕 / 방문간호
+    area = Column(String, nullable=True)  # 장기요양 필요영역
+    goal = Column(Text, nullable=True)  # 장기요양 세부목표
+    need = Column(Text, nullable=True)  # 장기요양 필요내용
+    detail = Column(Text, nullable=True)  # 세부 제공내용
+    frequency = Column(String, nullable=True)  # 횟수
+    duration_minutes = Column(Integer, nullable=True)  # 시간(1회, 분)
+    writer = Column(String, nullable=True)  # 작성자 (직종·성명)
 
 
 class CarePlanAck(Base):

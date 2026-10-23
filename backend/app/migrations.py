@@ -3,7 +3,7 @@ from app.models import (
     ResidentGuardian, StaffCertificate, SalaryStatement, GuardianInvite, Notification,
     ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
     RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken,
-    Counseling, CarePlan, ServiceEvaluation, CaseConference,
+    Counseling, CarePlan, CarePlanItem, ServiceEvaluation, CaseConference,
     TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest,
     GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog, FacilityRegistry, SmsLog, CognitivePlan, LeaveRequest, CommitteeMeeting, Equipment, ResidentLog, TrainingCertificate,
 )
@@ -92,6 +92,14 @@ ADDITIVE_COLUMNS = [
     ("care_plans", "shared_at", "TIMESTAMP"),
     ("care_plans", "guardian_signature", "TEXT"),
     ("care_plans", "signed_via", "VARCHAR"),
+    ("care_plans", "contract_date", "DATE"),
+    ("care_plans", "contract_start_date", "DATE"),
+    ("care_plans", "contract_end_date", "DATE"),
+    ("care_plans", "service_end_date", "DATE"),
+    ("care_plans", "goal_summary", "TEXT"),
+    ("care_plans", "consenter_relation", "VARCHAR"),
+    ("care_plans", "consenter_phone", "VARCHAR"),
+    ("care_plans", "supervisor_name", "VARCHAR"),
     ("users", "job_type", "VARCHAR"),
     ("users", "care_bonus_registered", "BOOLEAN DEFAULT FALSE"),
     ("users", "birth_date", "DATE"),
@@ -138,7 +146,7 @@ def run_migrations():
     """
     for table_cls in (ResidentGuardian, StaffCertificate, SalaryStatement, GuardianInvite, Notification,
                        ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
-                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, ServiceEvaluation, CaseConference, TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest, GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog, FacilityRegistry, SmsLog, CognitivePlan, LeaveRequest, CommitteeMeeting, Equipment, ResidentLog, TrainingCertificate):
+                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, CarePlanItem, ServiceEvaluation, CaseConference, TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest, GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog, FacilityRegistry, SmsLog, CognitivePlan, LeaveRequest, CommitteeMeeting, Equipment, ResidentLog, TrainingCertificate):
         try:
             table_cls.__table__.create(bind=engine, checkfirst=True)
         except Exception as e:
