@@ -37,7 +37,7 @@
         .summary-value { font-size: 26px; font-weight: 800; color: var(--navy); line-height: 1.2; font-variant-numeric: tabular-nums; }
         .summary-note { font-size: 12px; color: #94A3B8; margin-top: 1px; }
         @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-        @media (max-width: 1600px) { #saGrid { grid-template-columns: 1fr !important; } }
+        @media (max-width: 1280px) { #saGrid { grid-template-columns: 1fr !important; } }
 
         /* 필터 툴바 */
         .filter-bar { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
@@ -71,6 +71,9 @@
         .plan-table th { text-align: left; font-size: 12px; font-weight: 700; color: #64748B; padding: 10px 12px; background: #F8FAFC; border-bottom: 1px solid var(--line2); white-space: nowrap; }
         .plan-table td { padding: 12px; font-size: 13px; color: var(--charcoal); border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
         .plan-table tr:hover td { background: #FAFBFC; }
+        .plan-table td:last-child, .plan-table th:last-child { white-space: nowrap; }
+        /* 화면이 좁으면 번호·계획 항목 열은 숨기고, 항목은 오른쪽 상세 패널에서 본다 */
+        @media (max-width: 1500px) { .col-opt { display: none; } }
         .status-pill { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
         .sp-proposed { background: #FDF1E3; color: #B45309; }
         .sp-scheduled { background: #E6F7EE; color: #15803D; }
@@ -99,6 +102,12 @@
         .notice-title { font-size: 12.5px; font-weight: 700; color: var(--charcoal); }
         .notice-desc { font-size: 11.5px; color: #94A3B8; margin-top: 1px; line-height: 1.4; }
     
+        /* 상세 정보 패널: 목록에서 고른 계획의 내용을 보고 바로 승인·반려 */
+        .detail-panel { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .detail-panel table td { padding: 7px 0; vertical-align: top; border-bottom: 1px solid #F3F5F8; }
+        .detail-panel table tr:last-child td { border-bottom: none; }
+        .detail-panel table td:first-child { color: #64748B; width: 78px; font-weight: 600; }
+
         /* 휴대폰: 탭이 화면 폭을 넘지 않게 줄바꿈 */
         @media (max-width: 700px) {
             .sa-tabs { width: 100%; flex-wrap: wrap; box-sizing: border-box; }
@@ -207,7 +216,7 @@
                                     <thead>
                                         <tr>
                                             <th><input type="checkbox" id="selectAllBox" onchange="toggleSelectAll(this)"></th>
-                                            <th>No</th><th>방문 일시</th><th>이용자 정보</th><th>담당 요양사</th><th>서비스 유형</th><th>계획 항목</th><th>상태</th><th>관리</th>
+                                            <th class="col-opt">No</th><th>방문 일시</th><th>이용자 정보</th><th>담당 요양사</th><th>서비스 유형</th><th class="col-opt">계획 항목</th><th>상태</th><th>관리</th>
                                         </tr>
                                     </thead>
                                     <tbody id="planTableBody">
@@ -232,6 +241,7 @@
 
                     <!-- 우측 패널 -->
                     <div>
+                        <div class="detail-panel" id="detailPanel"></div>
                         <div class="panel">
                             <div class="panel-head"><span>이번 주 방문 현황</span><span class="panel-sub" id="weekRangeLabel"></span></div>
                             <div id="weekStatusPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
@@ -532,6 +542,12 @@
 
         function renderTable() {
             const rows = visiblePlans();
+            const tabNames = { proposed: '승인 대기', scheduled: '승인 완료', rejected: '반려된 계획', all: '전체 계획' };
+            document.querySelectorAll('.sa-tab').forEach(t => {
+                const key = t.dataset.tab;
+                const n = key === 'all' ? allPlans.length : allPlans.filter(p => p.status === key).length;
+                t.textContent = `${tabNames[key]} (${n})`;
+            });
             const tabLabelMap = { proposed: '승인 대기 계획', scheduled: '승인 완료 계획', rejected: '반려된 계획', all: '전체 계획' };
             document.getElementById('tableTitle').textContent = `${tabLabelMap[currentTab]} (총 ${rows.length}건)`;
 
@@ -560,14 +576,14 @@
                         : (p.status === 'rejected' && p.review_note ? `<span style="font-size:12px;color:#DC2626;" title="${p.review_note.replace(/"/g, '&quot;')}">사유 보기</span>` : '-');
                     return `<tr>
                         <td>${checkbox}</td>
-                        <td>${start + i + 1}</td>
+                        <td class="col-opt">${start + i + 1}</td>
                         <td><div style="font-weight:700;">${dateLine1}</div><div style="font-size:12px;color:#94A3B8;">${dateLine2}</div></td>
                         <td><div style="font-weight:700;">${info.line1}</div><div style="font-size:12px;color:#94A3B8;">${info.line2}</div></td>
                         <td>${p.caregiver_name || '-'} 요양사</td>
                         <td><span class="svc-badge">${SERVICE_TYPE_LABELS[p.service_type] || p.service_type || '-'}</span>${benefitLine(p)}</td>
-                        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${itemsText}">${itemsText}</td>
+                        <td class="col-opt" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${itemsText}">${itemsText}</td>
                         <td><span class="status-pill ${cls}">${label}</span></td>
-                        <td>${actions}</td>
+                        <td><button class="btn-outline" style="padding:6px 12px;margin-right:6px;" onclick="showDetail(${p.schedule_id})">상세</button>${actions}</td>
                     </tr>`;
                 }).join('');
             }
@@ -575,6 +591,47 @@
             document.getElementById('selectAllBox').checked = pageRows.length > 0 && pageRows.every(p => p.status !== 'proposed' || selectedIds.has(p.schedule_id));
             document.getElementById('pageInfoLabel').textContent = rows.length ? `총 ${rows.length}건 중 ${start + 1}-${Math.min(start + pageSize, rows.length)}건을 표시합니다` : '';
             renderPager(totalPages);
+            if (!allPlans.some(p => p.schedule_id === selectedDetailId) && rows.length) selectedDetailId = rows[0].schedule_id;
+            renderDetail();
+        }
+
+        // 목록에서 고른 계획의 상세 정보. 승인 대기 계획이면 여기서 바로 승인하거나 반려할 수 있다
+        let selectedDetailId = null;
+        const escapeText = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+        function showDetail(id) { selectedDetailId = id; renderDetail(); }
+        function renderDetail() {
+            const box = document.getElementById('detailPanel');
+            const p = allPlans.find(x => x.schedule_id === selectedDetailId);
+            if (!p) {
+                box.innerHTML = '<div style="font-size:13px;color:#94A3B8;padding:12px 0;">목록에서 "상세"를 누르면 계획 내용이 여기에 나옵니다.</div>';
+                return;
+            }
+            const [label, cls] = STATUS_LABELS[p.status] || ['-', 'sp-proposed'];
+            const info = residentInfo(p.resident_id);
+            const dateTxt = p.date ? p.date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }) : '-';
+            const timeTxt = p.date ? `${p.date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} · ${p.duration_minutes || '-'}분` : '-';
+            const items = p.planned_items.map(c => CARE_ITEM_LABELS[c] || c).join(', ') || '-';
+            const rejectRow = p.review_note ?`<tr><td>반려 사유</td><td style="color:#DC2626;">${escapeText(p.review_note)}</td></tr>` : '';
+            const buttons = p.status === 'proposed'
+                ? `<div style="display:flex;gap:8px;margin-top:14px;">
+                    <button class="btn-outline" style="flex:1;padding:10px;color:#DC2626;border-color:#FBCFCF;" onclick="reject(${p.schedule_id}, null)">반려하기</button>
+                    <button class="btn-solid" style="flex:1;padding:10px;" onclick="approve(${p.schedule_id}, null)">승인하기</button>
+                   </div>` : '';
+            box.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <span style="font-size:14px;font-weight:800;color:var(--navy);">방문 계획 상세 정보</span>
+                    <span class="status-pill ${cls}">${label}</span>
+                </div>
+                <div style="font-size:15px;font-weight:800;color:var(--charcoal);">${escapeText(p.resident_name || '-')}</div>
+                <div style="font-size:12px;color:#94A3B8;margin-bottom:10px;">${escapeText(info.line2)}</div>
+                <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                    <tr><td>방문일</td><td>${dateTxt}</td></tr>
+                    <tr><td>방문 시간</td><td>${timeTxt}</td></tr>
+                    <tr><td>요양보호사</td><td>${escapeText(p.caregiver_name || '-')} 요양사</td></tr>
+                    <tr><td>서비스 유형</td><td>${SERVICE_TYPE_LABELS[p.service_type] || escapeText(p.service_type || '-')}</td></tr>
+                    <tr><td>제공 항목</td><td>${escapeText(items)}</td></tr>
+                    ${rejectRow}
+                </table>${buttons}`;
         }
 
         function renderPager(totalPages) {
