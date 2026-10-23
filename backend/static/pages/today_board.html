@@ -28,22 +28,84 @@
         .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
         .breadcrumb b { color: var(--charcoal); font-weight: 600; }
 
-        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
-        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
-        .card { background: #fff; border: 1px solid var(--line2); border-radius: 12px; padding: 14px; }
-        .card .k { font-size: 12px; color: #64748B; }
-        .card .v { font-size: 24px; font-weight: 800; margin-top: 4px; }
-        .field { padding: 9px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; }
-        .row { display: grid; grid-template-columns: 70px 1fr 1fr 120px 1fr; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
-        .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-        .b-upcoming { background: #E2E8F0; color: #334155; }
-        .b-in_progress { background: #DBEAFE; color: #1E40AF; }
-        .b-left_unrecorded { background: #FEF3C7; color: #92400E; }
-        .b-check { background: #FEE2E2; color: #991B1B; }
-        .b-recorded { background: #DCFCE7; color: #166534; }
-        .note { font-size: 12px; color: #94A3B8; margin-top: 10px; }
-        .empty-note { color: #94A3B8; font-size: 13px; }
-        @media (max-width: 768px) { .row { grid-template-columns: 1fr 1fr; } }
+        /* 공통 카드 */
+        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .section-title { font-size: 16px; font-weight: 800; color: var(--navy); margin: 0; display: flex; align-items: center; gap: 8px; }
+        .section-title svg { width: 18px; height: 18px; color: var(--teal); }
+        .field { padding: 9px 12px; border: 1px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; color: var(--charcoal); }
+
+        /* 필터 바 */
+        .filter-bar { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+        .filter-item { display: flex; flex-direction: column; gap: 6px; }
+        .filter-item label { font-size: 12px; font-weight: 600; color: #64748B; }
+        .filter-stamp { margin-left: auto; text-align: right; font-size: 12px; color: #94A3B8; }
+        .filter-stamp b { display: block; font-size: 13px; color: var(--charcoal); font-weight: 600; }
+        .btn-primary { padding: 10px 18px; background: var(--teal); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
+        .btn-primary:hover { filter: brightness(0.95); }
+
+        /* 지표 카드 6개 */
+        .cards { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .card { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 16px 18px; display: flex; gap: 12px; align-items: flex-start; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
+        .card-ico { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .card-ico svg { width: 19px; height: 19px; }
+        .card .k { font-size: 13px; font-weight: 700; color: #475569; }
+        .card .v { font-size: 26px; font-weight: 800; color: var(--navy); line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }
+        .card .v small { font-size: 14px; font-weight: 700; margin-left: 2px; }
+        .card .sub { font-size: 12px; color: #94A3B8; margin-top: 4px; }
+        .card-plan .card-ico { background: #E6F7EE; color: #15803D; }
+        .card-rate .card-ico { background: #DDF3F0; color: var(--teal); }
+        .card-rate .v { color: var(--teal); }
+        .card-progress { height: 6px; background: #E6F4F1; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+        .card-progress > span { display: block; height: 100%; background: var(--teal); border-radius: 3px; }
+        .card-going .card-ico { background: #E8F1FC; color: #1D4ED8; }
+        .card-going { background: #F5F9FF; }
+        .card-left .card-ico { background: #FDF1E3; color: #B45309; }
+        .card-left { background: #FFFBF4; }
+        .card-left .v { color: #B45309; }
+        .card-check .card-ico { background: #FDE8E8; color: var(--danger, #DC2626); }
+        .card-check { background: #FFF6F6; }
+        .card-check .v { color: #B91C1C; }
+        .card-upcoming .card-ico { background: #F1ECFB; color: #6D28D9; }
+        .card-upcoming { background: #FAF8FE; }
+
+        /* 요양보호사별 현황 */
+        .caregiver-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+        .cg-card { border: 1px solid var(--line2); border-radius: 12px; padding: 14px 16px; background: #fff; }
+        .cg-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--navy); }
+        .cg-avatar { width: 28px; height: 28px; border-radius: 50%; background: #EEF2F6; color: #64748B; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .cg-avatar svg { width: 15px; height: 15px; }
+        .cg-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 14px; font-weight: 700; color: var(--charcoal); }
+        .cg-meta small { font-size: 12px; color: #94A3B8; font-weight: 600; margin-left: 4px; }
+        .cg-bar { height: 6px; background: #EEF2F6; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+        .cg-bar > span { display: block; height: 100%; background: var(--teal); border-radius: 3px; }
+        .cg-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 12px; color: #94A3B8; }
+
+        /* 방문 표 */
+        .visit-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .visit-table th { text-align: left; font-weight: 700; color: #64748B; font-size: 12px; padding: 11px 12px; background: #F8FAFC; border-bottom: 1px solid var(--line2); }
+        .visit-table td { padding: 12px; border-bottom: 1px solid #F1F5F9; color: var(--charcoal); vertical-align: middle; }
+        .visit-table tbody tr:hover td { background: #FAFBFD; }
+        .visit-table tr:last-child td { border-bottom: none; }
+        .visit-table .num { color: #94A3B8; width: 48px; }
+        .visit-table .name { font-weight: 700; }
+        .visit-table .muted { color: #94A3B8; }
+        .badge { display: inline-block; padding: 4px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .b-upcoming { background: #F1F5F9; color: #64748B; }
+        .b-in_progress { background: #E8F1FC; color: #1D4ED8; }
+        .b-left_unrecorded { background: #FDF1E3; color: #B45309; }
+        .b-check { background: #FDE8E8; color: #B91C1C; }
+        .b-recorded { background: #E6F7EE; color: #15803D; }
+        .empty-note { color: #94A3B8; font-size: 14px; text-align: center; padding: 32px 0; }
+        .info-note { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 12px 14px; background: #F0F9FF; border-radius: 10px; font-size: 13px; color: #334155; }
+        .info-note svg { width: 16px; height: 16px; color: #0284C7; flex: 0 0 auto; }
+
+        @media (max-width: 1280px) { .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media (max-width: 768px) {
+            .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .visit-table { font-size: 13px; }
+            .visit-table .hide-m { display: none; }
+        }
     </style>
     <link rel="stylesheet" href="theme.css">
     <script src="menu.js"></script>
@@ -73,19 +135,30 @@
         </div>
 
         <div class="content">
-            <div class="panel" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                <input id="day" type="date" class="field" onchange="load()">
-                <span id="stamp" style="font-size:13px;color:#64748B;"></span>
-                <button class="logout-btn" onclick="load()">새로고침</button>
-                <select id="filterStatus" class="field" onchange="render()">
-                    <option value="">전체 상태</option>
-                    <option value="left_unrecorded">기록 필요</option>
-                    <option value="check">확인 필요</option>
-                    <option value="in_progress">진행 중</option>
-                    <option value="upcoming">예정</option>
-                    <option value="recorded">기록 완료</option>
-                </select>
-                <select id="filterCaregiver" class="field" onchange="render()"></select>
+            <div class="panel">
+                <div class="filter-bar">
+                    <div class="filter-item">
+                        <label for="day">날짜</label>
+                        <input id="day" type="date" class="field" onchange="load()">
+                    </div>
+                    <div class="filter-item">
+                        <label for="filterStatus">상태</label>
+                        <select id="filterStatus" class="field" onchange="render()">
+                            <option value="">전체</option>
+                            <option value="left_unrecorded">기록 필요</option>
+                            <option value="check">확인 필요</option>
+                            <option value="in_progress">진행 중</option>
+                            <option value="upcoming">예정</option>
+                            <option value="recorded">기록 완료</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="filterCaregiver">요양보호사</label>
+                        <select id="filterCaregiver" class="field" onchange="render()"></select>
+                    </div>
+                    <button class="btn-primary" onclick="load()">새로고침</button>
+                    <div class="filter-stamp"><b id="stampDate"></b><span id="stamp"></span></div>
+                </div>
             </div>
 
             <div class="cards" id="cards"></div>
@@ -93,8 +166,18 @@
             <div class="panel" id="byCaregiver" style="display:none;"></div>
 
             <div class="panel">
+                <div class="section-head">
+                    <h2 class="section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h.01M3 18h.01M3 6h.01M8 12h13M8 18h13M8 6h13"/></svg>
+                        오늘 방문 현황
+                    </h2>
+                    <span id="totalCount" style="font-size:13px;color:#64748B;"></span>
+                </div>
                 <div id="rows"><div class="empty-note">불러오는 중…</div></div>
-                <div class="note" id="note"></div>
+                <div class="info-note" id="note" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    <span id="noteText"></span>
+                </div>
             </div>
         </div>
     </div>
@@ -103,6 +186,17 @@
         const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
         const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
         const LABEL = { upcoming: '예정', in_progress: '진행 중', left_unrecorded: '기록 필요', check: '확인 필요', recorded: '기록 완료' };
+        const ICO = {
+            calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>',
+            check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+            play: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4z"/></svg>',
+            file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>',
+            alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>',
+            clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+            user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+            users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+            info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
+        };
         function logout() {
             if (confirm('로그아웃 하시겠습니까?')) {
                 localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html';
@@ -125,10 +219,21 @@
             const st = document.getElementById('filterStatus').value;
             const cg = document.getElementById('filterCaregiver').value;
             const rows = boardRows.filter(x => (!st || x.status === st) && (!cg || x.caregiver === cg));
-            document.getElementById('rows').innerHTML = rows.length ? rows.map(x => `<div class="row">
-                <div><b>${esc(x.planned)}</b></div><div>${esc(x.resident)}</div><div>${esc(x.caregiver)}</div>
-                <div>${x.arrived ? '도착 ' + esc(x.arrived) : '도착 전'}${x.left ? ' · 퇴실 ' + esc(x.left) : ''}</div>
-                <div><span class="badge b-${x.status}">${LABEL[x.status]}</span></div></div>`).join('')
+            document.getElementById('totalCount').textContent = `총 ${rows.length}건`;
+            document.getElementById('rows').innerHTML = rows.length ? `<table class="visit-table">
+                <thead><tr>
+                    <th class="num">No.</th><th>계획 시간</th><th>이용자</th><th>요양보호사</th><th class="hide-m">도착 시간</th><th class="hide-m">종료 시간</th><th>방문 상태</th>
+                </tr></thead>
+                <tbody>${rows.map((x, i) => `<tr>
+                    <td class="num">${i + 1}</td>
+                    <td><b>${esc(x.planned)}</b></td>
+                    <td class="name">${esc(x.resident)}</td>
+                    <td>${esc(x.caregiver)}</td>
+                    <td class="hide-m">${x.arrived ? esc(x.arrived) : '<span class="muted">-</span>'}</td>
+                    <td class="hide-m">${x.left ? esc(x.left) : '<span class="muted">-</span>'}</td>
+                    <td><span class="badge b-${x.status}">${LABEL[x.status]}</span></td>
+                </tr>`).join('')}</tbody>
+            </table>`
                 : `<div class="empty-note">${boardRows.length ? '조건에 맞는 방문이 없습니다.' : '이 날 계획된 방문이 없습니다.'}</div>`;
         }
 
@@ -139,21 +244,44 @@
             const d = await r.json().catch(() => ({}));
             if (!r.ok) { document.getElementById('rows').innerHTML = `<div class="empty-note">${esc(d.detail || '불러오지 못했습니다')}</div>`; return; }
             const v = d.data;
-            document.getElementById('stamp').textContent = `${v.date} · ${v.generated_at} 기준`;
+            const [y, m, dd] = v.date.split('-');
+            document.getElementById('stampDate').textContent = `${y}년 ${Number(m)}월 ${Number(dd)}일`;
+            document.getElementById('stamp').textContent = `${v.generated_at} 기준 · 최신 데이터로 업데이트됨`;
             const c = v.counts;
+            const byCg = v.by_caregiver || [];
+            const recordedSum = byCg.reduce((s, g) => s + g.recorded, 0);
+            const totalSum = byCg.reduce((s, g) => s + g.total, 0);
+            const rateNote = totalSum ? `${recordedSum} / ${totalSum}건 기록 완료` : '';
+            const rateBar = totalSum && v.record_rate !== null ? `<div class="card-progress"><span style="width:${Math.min(100, v.record_rate)}%"></span></div>` : '';
             document.getElementById('cards').innerHTML = [
-                ['오늘 계획', v.total], ['기록률', v.record_rate === null ? '-' : v.record_rate + '%'],
-                ['진행 중', c.in_progress], ['기록 필요', c.left_unrecorded], ['확인 필요', c.check], ['예정', c.upcoming],
-            ].map(([k, x]) => `<div class="card"><div class="k">${k}</div><div class="v">${esc(x)}</div></div>`).join('');
+                ['card-plan', ICO.calendar, '오늘 계획', `${v.total}`, '<small>건</small>', '계획된 방문 전체'],
+                ['card-rate', ICO.check, '기록률', v.record_rate === null ? '-' : `${v.record_rate}`, '<small>%</small>', rateNote + rateBar],
+                ['card-going', ICO.play, '진행 중', `${c.in_progress}`, '<small>건</small>', '방문 진행 중'],
+                ['card-left', ICO.file, '기록 필요', `${c.left_unrecorded}`, '<small>건</small>', '방문 후 기록 필요'],
+                ['card-check', ICO.alert, '확인 필요', `${c.check}`, '<small>건</small>', '센터장 확인 필요'],
+                ['card-upcoming', ICO.clock, '예정', `${c.upcoming}`, '<small>건</small>', '방문 예정'],
+            ].map(([cls, icon, k, val, unit, sub]) => `<div class="card ${cls}">
+                <div class="card-ico">${icon}</div>
+                <div style="flex:1;min-width:0;"><div class="k">${k}</div><div class="v">${val}${unit}</div><div class="sub">${sub}</div></div>
+            </div>`).join('');
             boardRows = v.rows;
             fillCaregivers();
             render();
             const cg = document.getElementById('byCaregiver');
-            cg.style.display = v.by_caregiver.length ? '' : 'none';
-            cg.innerHTML = '<div style="font-weight:700;margin-bottom:8px;">요양보호사별 기록 현황</div>' + v.by_caregiver.map(g => `<div class="row" style="grid-template-columns:1fr auto auto;">
-                <div>${esc(g.caregiver)}</div><div>기록 ${g.recorded}/${g.total}</div>
-                <div><span class="badge ${g.open ? 'b-check' : 'b-recorded'}">${g.open ? '누락 ' + g.open + '건' : '누락 없음'}</span></div></div>`).join('');
-            document.getElementById('note').textContent = v.note;
+            cg.style.display = byCg.length ? '' : 'none';
+            cg.innerHTML = `<div class="section-head"><h2 class="section-title">${ICO.users}요양보호사별 기록 현황</h2></div>
+                <div class="caregiver-grid">${byCg.map(g => {
+                    const pct = g.total ? Math.round(g.recorded / g.total * 100) : 0;
+                    return `<div class="cg-card">
+                        <div class="cg-name"><span class="cg-avatar">${ICO.user}</span>${esc(g.caregiver)}</div>
+                        <div class="cg-meta"><span>${g.recorded}/${g.total}<small>건</small></span><span class="badge ${g.open ? 'b-check' : 'b-recorded'}">${g.open ? '누락 ' + g.open + '건' : '누락 없음'}</span></div>
+                        <div class="cg-bar"><span style="width:${pct}%"></span></div>
+                        <div class="cg-foot"><span>기록 완료율</span><span>${pct}%</span></div>
+                    </div>`;
+                }).join('')}</div>`;
+            const note = document.getElementById('note');
+            note.style.display = v.note ? '' : 'none';
+            document.getElementById('noteText').textContent = v.note || '';
         }
 
         (async function init() {
