@@ -38,7 +38,7 @@
         .summary-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
         .summary-row > div { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
         .summary-cell { display: flex; flex-direction: column; gap: 10px; }
-        .summary-top { display: flex; align-items: center; justify-content: space-between; }
+        .summary-top { display: flex; align-items: center; gap: 12px; }
         .summary-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
         .summary-icon svg { width: 20px; height: 20px; }
         .summary-row > div:nth-child(1) .summary-icon { background: #E6F7EE; color: #15803D; }
@@ -65,7 +65,10 @@
 
         /* 오늘의 방문 서비스 표 */
         .visit-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .visit-table th { text-align: left; font-weight: 700; color: #64748B; font-size: 12px; padding: 8px 10px; border-bottom: 1px solid #EEF2F6; }
+        .visit-table th { text-align: left; font-weight: 700; color: #64748B; font-size: 12px; padding: 10px 12px; background: #F8FAFC; border-bottom: 1px solid #EEF2F6; }
+        .visit-table th:first-child, .visit-table td:first-child { padding-left: 14px; }
+        .visit-table td { transition: background 0.15s; }
+        .visit-table tbody tr:hover td { background: #FAFBFD; }
         .visit-table td { padding: 10px 10px; border-bottom: 1px solid #F3F5F8; color: var(--charcoal); }
         .visit-table tr:last-child td { border-bottom: none; }
         .visit-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
@@ -315,8 +318,8 @@
             return `<div class="summary-row">${items.map(([label, id, note, icon]) => `
                 <div class="summary-cell">
                     <div class="summary-top">
-                        <div class="summary-label">${label}</div>
                         <div class="summary-icon">${icon}</div>
+                        <div class="summary-label">${label}</div>
                     </div>
                     <div class="summary-value" id="${id}">0</div>
                     <div class="summary-note" id="${id}Note">${note}</div>
