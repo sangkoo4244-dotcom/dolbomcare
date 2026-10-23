@@ -404,6 +404,9 @@
             const weekApproved = weekPlans.length - weekNotApproved.length - weekInProgress.length;
 
             document.getElementById('metricPending').textContent = `${pending.length}건`;
+            const scheduledCount = allPlans.filter(p => p.status === 'scheduled').length;
+            const approvalRate = allPlans.length ? Math.round(scheduledCount / allPlans.length * 100) : 0;
+            document.getElementById('metricApprovedNote').innerHTML = `승인율 <b style="color:#0F8B80;">${approvalRate}%</b>`;
             document.getElementById('metricApproved').textContent = `${weekApproved}건`;
             document.getElementById('metricRejected').textContent = `${rejected.length}건`;
 
@@ -612,35 +615,38 @@
             const info = residentInfo(p.resident_id);
             const dateTxt = p.date ? p.date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }) : '-';
             const timeTxt = p.date ? `${p.date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} · ${p.duration_minutes || '-'}분` : '-';
-            const items = p.planned_items.map(c => CARE_ITEM_LABELS[c] || c).join(', ') || '-';
             const rejectRow = p.review_note ?`<tr><td>반려 사유</td><td style="color:#DC2626;">${escapeText(p.review_note)}</td></tr>` : '';
             const buttons = p.status === 'proposed'
-                ? `<div style="display:flex;gap:8px;margin-top:14px;">
-                    <button class="btn-outline" style="flex:1;padding:10px;color:#DC2626;border-color:#FBCFCF;" onclick="reject(${p.schedule_id}, null)">반려하기</button>
-                    <button class="btn-solid" style="flex:1;padding:10px;" onclick="approve(${p.schedule_id}, null)">승인하기</button>
+                ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;">
+                    <button class="btn-outline" style="padding:11px;color:#DC2626;border-color:#FBCFCF;" onclick="reject(${p.schedule_id}, null)">반려하기</button>
+                    <button class="btn-solid" style="padding:11px;" onclick="approve(${p.schedule_id}, null)">승인하기</button>
                    </div>` : '';
+            const serviceLines = p.planned_items.length
+                ? `<ul style="margin:0;padding-left:16px;">${p.planned_items.map(c => `<li>${escapeText(CARE_ITEM_LABELS[c] || c)}</li>`).join('')}</ul>`
+                : '-';
             box.innerHTML = `
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                    <span style="font-size:14px;font-weight:800;color:var(--navy);">방문 계획 상세 정보</span>
-                    <span class="status-pill ${cls}">${label}</span>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                    <span style="font-size:16px;font-weight:800;color:var(--navy);">방문 계획 상세 정보</span>
+                    <span style="display:flex;align-items:center;gap:8px;"><span class="status-pill ${cls}">${label}</span></span>
                 </div>
-                <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
+                <div style="display:flex;gap:14px;align-items:center;border:1px solid #E8ECF1;border-radius:12px;padding:12px;margin-bottom:14px;">
                     <div style="flex:0 0 auto;text-align:center;">
-                        <img id="detailPhoto" alt="" src="${residentAvatar(p.resident_id)}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:1px solid #E2E8F0;display:block;">
-                        <button type="button" class="btn-outline" style="padding:3px 8px;font-size:11px;margin-top:4px;" onclick="pickResidentPhoto(${p.resident_id})">사진 올리기</button>
+                        <img id="detailPhoto" alt="" src="${residentAvatar(p.resident_id)}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:1px solid #E2E8F0;display:block;">
+                        <button type="button" class="btn-outline" style="padding:3px 8px;font-size:11px;margin-top:6px;" onclick="pickResidentPhoto(${p.resident_id})">사진 올리기</button>
                     </div>
                     <div style="min-width:0;">
-                        <div style="font-size:15px;font-weight:800;color:var(--charcoal);">${escapeText(p.resident_name || '-')}</div>
-                        <div style="font-size:12px;color:#94A3B8;">${escapeText(info.line2)}</div>
-                        <div style="font-size:12px;color:#64748B;margin-top:2px;">${escapeText(residentAddress(p.resident_id) || '주소 미등록')}</div>
+                        <div style="font-size:16px;font-weight:800;color:var(--charcoal);">${escapeText(p.resident_name || '-')}</div>
+                        <div style="font-size:12.5px;color:#64748B;margin-top:3px;">${escapeText(info.line2)}</div>
+                        <div style="font-size:12.5px;color:#64748B;margin-top:3px;">${escapeText(residentAddress(p.resident_id) || '주소 미등록')}</div>
                     </div>
                 </div>
-                <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:6px;">방문 계획 정보</div>
+                <table class="detail-info" style="width:100%;font-size:13px;border-collapse:collapse;">
                     <tr><td>방문일</td><td>${dateTxt}</td></tr>
                     <tr><td>방문 시간</td><td>${timeTxt}</td></tr>
                     <tr><td>요양보호사</td><td>${escapeText(p.caregiver_name || '-')} 요양사</td></tr>
                     <tr><td>서비스 유형</td><td>${SERVICE_TYPE_LABELS[p.service_type] || escapeText(p.service_type || '-')}</td></tr>
-                    <tr><td>제공 항목</td><td>${escapeText(items)}</td></tr>
+                    <tr><td>서비스 내용</td><td>${serviceLines}</td></tr>
                     ${rejectRow}
                 </table>${buttons}`;
             loadResidentPhoto(p.resident_id);
