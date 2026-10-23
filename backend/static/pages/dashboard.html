@@ -252,8 +252,8 @@
         };
 
         function renderCaregiverDashboard() {
-            document.getElementById('pageTitle').textContent = '대시보드';
-            document.getElementById('pageSub').textContent = '오늘의 방문과 기록 현황을 확인하세요.';
+            document.getElementById('pageTitle').textContent = `안녕하세요, ${currentUser.full_name || '요양보호사'}님!`;
+            document.getElementById('pageSub').textContent = '오늘도 이용자들의 건강한 일상을 위해 수고하고 계십니다.';
             document.getElementById('dashboardContent').innerHTML = `
                 <section class="panel" id="onboardPanel" style="display:none; margin-bottom:16px;"></section>
                 ${summaryRow([
