@@ -611,6 +611,7 @@
         let selectedDetailId = null;
         const escapeText = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
         function showDetail(id) { selectedDetailId = id; renderTable(); }
+        function closeDetail() { selectedDetailId = null; renderDetail(); }
         function renderDetail() {
             const box = document.getElementById('detailPanel');
             const p = allPlans.find(x => x.schedule_id === selectedDetailId);
@@ -623,11 +624,10 @@
             const dateTxt = p.date ? p.date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }) : '-';
             const timeTxt = p.date ? `${p.date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} · ${p.duration_minutes || '-'}분` : '-';
             const rejectRow = p.review_note ?`<tr><td>반려 사유</td><td style="color:#DC2626;">${escapeText(p.review_note)}</td></tr>` : '';
-            const memoBox = p.status === 'proposed'
-                ? `<div style="margin-top:14px;">
-                    <div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:6px;">검토 메모 <span style="font-size:11px;font-weight:600;color:#94A3B8;">승인 전 확인 내용을 임시로 저장합니다</span></div>
-                    <textarea id="reviewMemo" rows="3" style="width:100%;box-sizing:border-box;border:1px solid #E2E8F0;border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit;">${escapeText(p.review_memo || '')}</textarea>
-                   </div>` : '';
+            // 특이사항 칸: 승인 대기 계획은 검토 메모를 바로 적고 임시저장할 수 있다
+            const memoCell = p.status === 'proposed'
+                ? `<textarea id="reviewMemo" rows="2" placeholder="확인 내용을 적어 두세요" style="width:100%;box-sizing:border-box;border:1px solid #E2E8F0;border-radius:8px;padding:6px 8px;font-size:12.5px;font-family:inherit;">${escapeText(p.review_memo || '')}</textarea>`
+                : escapeText(p.review_memo || '-');
             const buttons = p.status === 'proposed'
                 ? `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;">
                     <button class="btn-outline" style="padding:11px 6px;color:#DC2626;border-color:#FBCFCF;" onclick="reject(${p.schedule_id}, null)">반려하기</button>
@@ -653,15 +653,18 @@
                     </div>
                 </div>`;
             }).join('');
-            const personSection = `<div style="font-size:14px;font-weight:800;color:var(--navy);margin:4px 0 6px;">이 이용자의 방문 계획 (${personPlans.length}건)</div>
-                <div style="margin-bottom:14px;">${planRows || '<div style="font-size:12.5px;color:#94A3B8;padding:6px 0;">계획이 없습니다</div>'}</div>`;
+            // 이용자의 다른 계획은 접어 두어 상세 화면을 단순하게 유지한다
+            const personSection = `<details style="margin-bottom:14px;">
+                <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--navy);">이 이용자의 다른 방문 계획 (${personPlans.length}건)</summary>
+                <div style="margin-top:6px;">${planRows || '<div style="font-size:12.5px;color:#94A3B8;padding:6px 0;">계획이 없습니다</div>'}</div>
+            </details>`;
             const serviceLines = p.planned_items.length
                 ? `<ul style="margin:0;padding-left:16px;">${p.planned_items.map(c => `<li>${escapeText(CARE_ITEM_LABELS[c] || c)}</li>`).join('')}</ul>`
                 : '-';
             box.innerHTML = `
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
                     <span style="font-size:16px;font-weight:800;color:var(--navy);">방문 계획 상세 정보</span>
-                    <span style="display:flex;align-items:center;gap:8px;"><span class="status-pill ${cls}">${label}</span></span>
+                    <span style="display:flex;align-items:center;gap:8px;"><span class="status-pill ${cls}">${label}</span><button type="button" onclick="closeDetail()" style="border:none;background:none;font-size:18px;color:#94A3B8;cursor:pointer;line-height:1;">&times;</button></span>
                 </div>
                 <div style="display:flex;gap:14px;align-items:center;border:1px solid #E8ECF1;border-radius:12px;padding:12px;margin-bottom:14px;">
                     <div style="flex:0 0 auto;text-align:center;">
@@ -674,16 +677,18 @@
                         <div style="font-size:12.5px;color:#64748B;margin-top:3px;">${escapeText(residentAddress(p.resident_id) || '주소 미등록')}</div>
                     </div>
                 </div>
-                ${personSection}
-                <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:6px;">선택한 방문 계획 정보</div>
+                <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:6px;">방문 계획 정보</div>
                 <table class="detail-info" style="width:100%;font-size:13px;border-collapse:collapse;">
                     <tr><td>방문일</td><td>${dateTxt}</td></tr>
                     <tr><td>방문 시간</td><td>${timeTxt}</td></tr>
                     <tr><td>요양보호사</td><td>${escapeText(p.caregiver_name || '-')} 요양사</td></tr>
                     <tr><td>서비스 유형</td><td>${SERVICE_TYPE_LABELS[p.service_type] || escapeText(p.service_type || '-')}</td></tr>
                     <tr><td>서비스 내용</td><td>${serviceLines}</td></tr>
+                    <tr><td>특이사항</td><td>${memoCell}</td></tr>
                     ${rejectRow}
-                </table>${memoBox}${buttons}`;
+                </table>
+                ${personSection}
+                ${buttons}`;
             loadResidentPhoto(p.resident_id);
         }
 
