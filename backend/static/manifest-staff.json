@@ -1,0 +1,16 @@
+{
+  "id": "/pages/login.html",
+  "name": "돌봄케어",
+  "short_name": "돌봄케어",
+  "description": "요양보호사·센터장을 위한 돌봄 관리 프로그램",
+  "start_url": "/pages/login.html",
+  "scope": "/pages/",
+  "display": "standalone",
+  "background_color": "#F5F7FA",
+  "theme_color": "#14283F",
+  "lang": "ko",
+  "icons": [
+    {"src": "/assets/brand/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/assets/brand/icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}

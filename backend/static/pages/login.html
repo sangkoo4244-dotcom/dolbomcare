@@ -151,6 +151,13 @@
             .trust-icon { background: transparent; color: var(--teal); width: 22px; height: 22px; }
         }
     </style>
+    <!-- 설치형 앱(PWA) 연결 -->
+    <link rel="manifest" href="/manifest-staff.json">
+    <link rel="apple-touch-icon" href="/assets/brand/icon-192.png">
+    <meta name="theme-color" content="#14283F">
+    <script>
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+    </script>
 </head>
 <body>
     <div class="login-shell">

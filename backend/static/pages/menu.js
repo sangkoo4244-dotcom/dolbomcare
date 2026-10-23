@@ -1,4 +1,29 @@
 // 모든 API 요청에 로그인 토큰을 붙이고, 세션이 만료되면 로그인 화면으로 보낸다
+// 설치형 앱(PWA): 직원·센터장 화면에 설치 정보와 서비스 워커를 연결한다. 이미 보호자 설치 정보가 있으면 건드리지 않는다
+(function () {
+    if (!document.querySelector('link[rel="manifest"]')) {
+        const manifest = document.createElement('link');
+        manifest.rel = 'manifest';
+        manifest.href = '/manifest-staff.json';
+        document.head.appendChild(manifest);
+    }
+    if (!document.querySelector('link[rel="apple-touch-icon"]')) {
+        const icon = document.createElement('link');
+        icon.rel = 'apple-touch-icon';
+        icon.href = '/assets/brand/icon-192.png';
+        document.head.appendChild(icon);
+    }
+    if (!document.querySelector('meta[name="theme-color"]')) {
+        const color = document.createElement('meta');
+        color.name = 'theme-color';
+        color.content = '#14283F';
+        document.head.appendChild(color);
+    }
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+})();
+
 (function () {
     const originalFetch = window.fetch.bind(window);
     const isApi = (url) => typeof url === 'string' && url.includes('/api/v1/');
