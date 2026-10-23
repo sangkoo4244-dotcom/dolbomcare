@@ -611,6 +611,29 @@ def save_review_memo(schedule_id: int, req: ReviewMemoRequest, db: Session = Dep
     db.commit()
     return {"status": "success", "schedule_id": schedule.id, "schedule_status": schedule.status}
 
+@router.post("/{schedule_id}/reopen")
+def reopen_schedule(schedule_id: int, req: ReviewRequest, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    """반려된 계획이나 승인된 계획을 다시 승인 대기로 되돌린다.
+    승인 취소는 방문이 시작됐거나 기록이 있으면 막는다 (실제 방문 기록을 흔들지 않기 위해)."""
+    if actor.role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 다시 검토할 수 있습니다")
+    schedule = _my_schedule(db, schedule_id, actor)
+    if not schedule:
+        raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
+    if schedule.status == "rejected":
+        schedule.status = "proposed"
+        schedule.review_note = None
+    elif schedule.status == "scheduled":
+        has_record = db.query(DailyRecord).filter(DailyRecord.schedule_id == schedule.id).first() is not None
+        if schedule.arrived_at or schedule.left_at or has_record:
+            raise HTTPException(status_code=400, detail="방문이 시작되었거나 기록이 있는 계획은 승인을 취소할 수 없습니다")
+        schedule.status = "proposed"
+    else:
+        raise HTTPException(status_code=400, detail="반려되었거나 승인된 계획만 다시 검토 대기로 되돌릴 수 있습니다")
+    notify(db, schedule.caregiver_id, "plan_reopened", f"방문 계획이 다시 검토 대기로 바뀌었습니다 ({schedule.scheduled_date:%m/%d %H:%M})")
+    db.commit()
+    return {"status": "success", "schedule_id": schedule.id, "schedule_status": schedule.status}
+
 @router.post("/{schedule_id}/approve")
 def approve_schedule(schedule_id: int, req: ReviewRequest, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     """센터장이 방문 계획 승인 → 요양사 나의일정에 확정"""
