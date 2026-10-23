@@ -119,6 +119,40 @@
             .day-row-actions { flex: 1 1 100%; }
         }
 
+        /* 지표 카드: 완료율 원형 */
+        .kpi-ring { width: 56px; height: 56px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; background: conic-gradient(var(--teal) calc(var(--p, 0) * 1%), #E6F3F1 0); }
+        .kpi-ring span { width: 42px; height: 42px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: var(--teal); }
+
+        /* 오른쪽 타임라인: 시간 · 점 · 이름 · 상태 */
+        .tl-list { position: relative; }
+        .tl-item { display: grid; grid-template-columns: 56px 14px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px 6px; border-bottom: 1px solid #F1F5F9; cursor: pointer; border-radius: 8px; }
+        .tl-item:last-child { border-bottom: none; }
+        .tl-item:hover { background: #F8FAFC; }
+        .tl-time { font-size: 12.5px; font-weight: 700; color: var(--navy); }
+        .tl-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c, #CBD5E1); box-shadow: 0 0 0 3px #fff, 0 0 0 4px var(--c, #CBD5E1); justify-self: center; }
+        .tl-name { min-width: 0; }
+        .tl-name b { display: block; font-size: 13.5px; color: var(--charcoal); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tl-name small { font-size: 11.5px; color: #94A3B8; }
+
+        /* 하단 통계: 주별 쌓은 막대, 도넛 */
+        .wk-chart { display: flex; align-items: flex-end; gap: 14px; height: 170px; padding: 6px 4px 0; border-bottom: 1px solid #E2E8F0; }
+        .wk-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; min-width: 0; }
+        .wk-stack { display: flex; flex-direction: column-reverse; width: 100%; max-width: 46px; margin: 0 auto; border-radius: 6px 6px 0 0; overflow: hidden; }
+        .wk-stack > i { display: block; width: 100%; }
+        .wk-label { text-align: center; font-size: 12px; color: #64748B; margin-top: 6px; font-weight: 600; }
+        .wk-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #64748B; margin-bottom: 12px; }
+        .wk-legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .wk-legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+        .donut-ring { width: 128px; height: 128px; border-radius: 50%; position: relative; flex: 0 0 auto; }
+        .donut-ring::after { content: ''; position: absolute; inset: 24px; background: #fff; border-radius: 50%; }
+        .donut-row { display: flex; align-items: center; gap: 18px; }
+        .donut-legend2 { flex: 1; min-width: 0; font-size: 12.5px; list-style: none; margin: 0; padding: 0; }
+        .donut-legend2 li { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+        .donut-legend2 i { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+        .donut-legend2 .lbl { flex: 1; color: var(--charcoal); }
+        .donut-legend2 .pct { font-weight: 800; color: var(--navy); }
+        @media (max-width: 700px) { .tl-item { grid-template-columns: 50px 12px minmax(0, 1fr) auto; } .wk-chart { height: 130px; gap: 8px; } }
+
         /* 캘린더 인쇄: 사이드바·상단바·요약·우측패널·목록은 숨기고 캘린더만 출력 */
         @media print {
             .ms-sidebar, .app-header, .summary-row, #sideColumn, #listSection, .view-toggle, #message,
@@ -170,19 +204,19 @@
                 <div class="summary-row">
                     <div>
                         <div class="summary-icon" style="background:#E6F3F1;color:#0F8B80;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
-                        <div><div class="summary-label">오늘 방문 예정</div><div class="summary-value" id="statTodayPlanned">0건</div></div>
+                        <div><div class="summary-label">이번 달 방문 계획</div><div class="summary-value" id="statTodayPlanned">0건</div></div>
                     </div>
                     <div>
                         <div class="summary-icon" style="background:#E8F1FC;color:#1D4ED8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
-                        <div><div class="summary-label">오늘 방문 완료</div><div class="summary-value" id="statTodayDone">0건</div></div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex:1;min-width:0;"><div style="min-width:0;"><div class="summary-label">이번 달 방문 완료</div><div class="summary-value" id="statTodayDone">0건</div><div class="summary-note" id="statDoneNote"></div></div><div class="kpi-ring" id="doneRing"><span id="doneRingText">0%</span></div></div>
                     </div>
                     <div>
                         <div class="summary-icon" style="background:#FDE8E8;color:#DC2626;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg></div>
-                        <div><div class="summary-label">기록 작성 필요</div><div class="summary-value" id="statNeedRecord">0건</div></div>
+                        <div><div class="summary-label">기록 필요</div><div class="summary-value" id="statNeedRecord">0건</div></div>
                     </div>
                     <div>
                         <div class="summary-icon" style="background:#FDF1E3;color:#B45309;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21l7.78-7.55 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/></svg></div>
-                        <div><div class="summary-label">이번 달 방문 계획</div><div class="summary-value" id="statMonthPlanned">0건</div></div>
+                        <div><div class="summary-label">오늘 방문 일정</div><div class="summary-value" id="statMonthPlanned">0건</div></div>
                     </div>
                 </div>
 
@@ -239,6 +273,19 @@
                                 <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>새 방문 계획을 제안하면 센터장 승인 후 반영됩니다.</li>
                             </ul>
                         </div>
+                    </div>
+                </div>
+
+                <!-- 이번 달 통계: 주별 방문 상태, 서비스 유형별 비율 -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+                    <div class="panel2 lg:col-span-2" style="margin-bottom:0;">
+                        <div class="panel2-head"><span>이번 달 방문 통계</span><span style="font-size:12px;color:#94A3B8;font-weight:600;">주차별 방문 상태</span></div>
+                        <div class="wk-legend" id="weekLegend"></div>
+                        <div class="wk-chart" id="weekChart"></div>
+                    </div>
+                    <div class="panel2" style="margin-bottom:0;">
+                        <div class="panel2-head"><span>서비스 유형별 비율</span><span id="serviceTotal" style="font-size:12px;color:#94A3B8;font-weight:600;"></span></div>
+                        <div id="serviceDonut"></div>
                     </div>
                 </div>
 
@@ -569,6 +616,7 @@
             }
             buildResidentColors();
             renderStats();
+            renderBottom();
             renderPeriodTitle();
             renderCalendar();
             renderLegend();
@@ -611,13 +659,78 @@
             const todayKey = dateKey(new Date());
             const todayItems = items.filter(it => it.date === todayKey);
             const todayPlanned = todayItems.filter(it => it.planned).length;
-            const todayDone = todayItems.filter(it => it.state === '완료').length;
             const needRecord = items.filter(it => it.state === '방문완료' || it.state === '미기록').length;
             const monthPlanned = items.filter(it => it.planned).length;
-            document.getElementById('statTodayPlanned').textContent = `${todayPlanned}건`;
-            document.getElementById('statTodayDone').textContent = `${todayDone}건`;
+            const monthDone = items.filter(it => it.planned && it.state === '완료').length;
+            const donePct = monthPlanned ? Math.round(monthDone / monthPlanned * 100) : 0;
+            document.getElementById('statTodayPlanned').textContent = `${monthPlanned}건`;
+            document.getElementById('statTodayDone').textContent = `${monthDone}건`;
+            document.getElementById('statDoneNote').textContent = monthPlanned ? `완료율 ${donePct}%` : '이번 달 계획 없음';
+            document.getElementById('doneRing').style.setProperty('--p', donePct);
+            document.getElementById('doneRingText').textContent = `${donePct}%`;
             document.getElementById('statNeedRecord').textContent = `${needRecord}건`;
-            document.getElementById('statMonthPlanned').textContent = `${monthPlanned}건`;
+            document.getElementById('statMonthPlanned').textContent = `${todayPlanned}건`;
+        }
+
+        // 이번 달 통계: 주차별로 계획 방문의 상태를 쌓아 보여 주고, 서비스 유형별 비율을 도넛으로 보여 준다 (모두 실제 일정 데이터)
+        const WEEK_GROUP = {
+            '완료': { key: 'done', label: '완료', color: '#0F8B80' },
+            '방문중': { key: 'going', label: '진행 중', color: '#3B82F6' },
+            '예정': { key: 'upcoming', label: '예정', color: '#CBD5E1' },
+            '방문완료': { key: 'record', label: '기록 필요', color: '#F59E0B' },
+            '미기록': { key: 'record', label: '기록 필요', color: '#F59E0B' },
+            '도착 미기록': { key: 'record', label: '기록 필요', color: '#F59E0B' },
+            '승인 대기': { key: 'check', label: '확인 필요', color: '#EF4444' },
+            '반려': { key: 'check', label: '확인 필요', color: '#EF4444' },
+        };
+        const SERVICE_COLORS_MY = ['#0F8B80', '#1D4ED8', '#93C5FD', '#A7F3D0', '#B45309'];
+        function renderBottom() {
+            const planned = items.filter(it => it.planned);
+            const legendMap = {};
+            Object.values(WEEK_GROUP).forEach(g => { legendMap[g.key] = g; });
+            const weekCount = Math.max(1, Math.ceil(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate() / 7));
+            const weeks = Array.from({ length: weekCount }, () => ({}));
+            planned.forEach(it => {
+                const day = parseLocalDate(it.date).getDate();
+                const w = Math.min(weekCount - 1, Math.floor((day - 1) / 7));
+                const g = WEEK_GROUP[it.state];
+                if (!g) return;
+                weeks[w][g.key] = (weeks[w][g.key] || 0) + 1;
+            });
+            const order = ['done', 'going', 'upcoming', 'record', 'check'];
+            const max = Math.max(1, ...weeks.map(w => order.reduce((s, k) => s + (w[k] || 0), 0)));
+            document.getElementById('weekLegend').innerHTML = order.map(k => {
+                const g = Object.values(WEEK_GROUP).find(x => x.key === k);
+                return `<span><i style="background:${g.color}"></i>${g.label}</span>`;
+            }).join('');
+            document.getElementById('weekChart').innerHTML = weeks.map((w, i) => {
+                const total = order.reduce((s, k) => s + (w[k] || 0), 0);
+                const height = Math.round(total / max * 140);
+                const segs = order.map(k => {
+                    const n = w[k] || 0;
+                    const g = Object.values(WEEK_GROUP).find(x => x.key === k);
+                    return n ? `<i style="height:${Math.round(n / total * 100)}%;background:${g.color};" title="${g.label} ${n}건"></i>` : '';
+                }).join('');
+                return `<div class="wk-col">
+                    <div class="wk-stack" style="height:${total ? Math.max(height, 4) : 0}px;">${segs}</div>
+                    <div class="wk-label">${i + 1}주 · ${total}건</div></div>`;
+            }).join('');
+
+            const svcCounts = {};
+            planned.forEach(it => { const k = SERVICE_LABELS[it.service_type] || '기타'; svcCounts[k] = (svcCounts[k] || 0) + 1; });
+            const entries = Object.entries(svcCounts).sort((a, b) => b[1] - a[1]);
+            const total = entries.reduce((s, [, n]) => s + n, 0);
+            document.getElementById('serviceTotal').textContent = total ? `총 ${total}건` : '';
+            if (!total) {
+                document.getElementById('serviceDonut').innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">이번 달 계획된 방문이 없습니다</div>';
+                return;
+            }
+            let acc = 0;
+            const stops = entries.map(([, n], i) => { const from = acc; acc += n / total * 100; return `${SERVICE_COLORS_MY[i % SERVICE_COLORS_MY.length]} ${from}% ${acc}%`; }).join(', ');
+            document.getElementById('serviceDonut').innerHTML = `<div class="donut-row">
+                <div class="donut-ring" style="background:conic-gradient(${stops});"></div>
+                <ul class="donut-legend2">${entries.map(([name, n], i) => `<li><i style="background:${SERVICE_COLORS_MY[i % SERVICE_COLORS_MY.length]}"></i><span class="lbl">${escapeHtml(name)}</span><span class="pct">${Math.round(n / total * 100)}%</span></li>`).join('')}</ul>
+            </div>`;
         }
 
         function renderCalendar() {
@@ -693,18 +806,18 @@
                 list.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">오늘의 일정이 없습니다</div>';
                 return;
             }
-            list.innerHTML = todayItems.map(it => {
+            const d = parseLocalDate(todayKey);
+            document.getElementById('todayDateLabel').textContent = `${d.getMonth() + 1}월 ${d.getDate()}일 방문 일정 · 총 ${todayItems.length}건`;
+            list.innerHTML = `<div class="tl-list">${todayItems.map(it => {
                 const c = colorOf(it);
                 return `
-                <button onclick="openItemDetail(${it._idx})" class="w-full text-left flex items-center gap-3 p-2.5 rounded-xl border-l-4 bg-gray-50 hover:bg-gray-100" style="border-color:${c.dot}">
-                    <img src="assets/user_design/${avatarOf(it)}" alt="" class="w-9 h-9 rounded-full object-cover shrink-0">
-                    <div class="flex-1 min-w-0">
-                        <div class="font-bold text-gray-900 text-sm truncate">${escapeHtml(it.resident_name || '기타 일정')}</div>
-                        <div class="text-xs text-gray-500 truncate">${timeRange(it)} · ${it.planned_items.length ? labels(it.planned_items) : '계획 외'}</div>
-                    </div>
+                <div class="tl-item" style="--c:${c.dot};" onclick="openItemDetail(${it._idx})">
+                    <div class="tl-time">${it.time}</div>
+                    <div class="tl-dot"></div>
+                    <div class="tl-name"><b>${escapeHtml(it.resident_name || '기타 일정')}</b><small>${it.planned_items.length ? labels(it.planned_items) : '계획 외'}</small></div>
                     ${badge(it.state)}
-                </button>`;
-            }).join('');
+                </div>`;
+            }).join('')}</div>`;
         }
 
         // 확인이 필요한 일정: 미기록·반려·승인 대기 상태만 모아 보여 준다 (지연 예상 등 추정 데이터는 만들지 않는다)
