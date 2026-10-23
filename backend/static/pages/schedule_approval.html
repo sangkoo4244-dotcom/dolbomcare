@@ -109,6 +109,9 @@
         .detail-panel table tr:last-child td { border-bottom: none; }
         .detail-panel table td:first-child { color: #64748B; width: 78px; font-weight: 600; }
 
+        .info-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+        @media (max-width: 900px) { .info-grid { grid-template-columns: 1fr; } }
+
         /* 휴대폰: 탭이 화면 폭을 넘지 않게 줄바꿈 */
         @media (max-width: 700px) {
             .sa-tabs { width: 100%; flex-wrap: wrap; box-sizing: border-box; }
@@ -238,24 +241,27 @@
                                 <div class="flex items-center gap-1" id="pager"></div>
                             </div>
                         </div>
+                        <!-- 이번 주 현황·요양사별 제안·안내: 오른쪽 상세 패널과 맞추려고 표 아래로 옮겼다 -->
+                        <div class="info-grid" style="margin-top:16px;">
+                            <div class="panel" style="margin-bottom:0;">
+                                <div class="panel-head"><span>이번 주 방문 현황</span><span class="panel-sub" id="weekRangeLabel"></span></div>
+                                <div id="weekStatusPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
+                            </div>
+                            <div class="panel" style="margin-bottom:0;">
+                                <div class="panel-head"><span>요양사별 제안 현황</span><span class="panel-sub">이번 주</span></div>
+                                <div id="caregiverStatsPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
+                                <button type="button" class="panel-link" style="margin-top:10px;" id="cgMoreBtn" onclick="toggleCaregiverMore()">더보기 ›</button>
+                            </div>
+                            <div class="panel" style="margin-bottom:0;">
+                                <div class="panel-head"><span>안내사항</span></div>
+                                <div id="noticePanel"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 우측 패널 -->
                     <div>
                         <div class="detail-panel" id="detailPanel"></div>
-                        <div class="panel">
-                            <div class="panel-head"><span>이번 주 방문 현황</span><span class="panel-sub" id="weekRangeLabel"></span></div>
-                            <div id="weekStatusPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-head"><span>요양사별 제안 현황</span><span class="panel-sub">이번 주</span></div>
-                            <div id="caregiverStatsPanel"><div style="font-size:13px;color:#94A3B8;">불러오는 중...</div></div>
-                            <button type="button" class="panel-link" style="margin-top:10px;" id="cgMoreBtn" onclick="toggleCaregiverMore()">더보기 ›</button>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-head"><span>안내사항</span></div>
-                            <div id="noticePanel"></div>
-                        </div>
                     </div>
                 </div>
             </div>
