@@ -40,3 +40,12 @@ def test_delete_removes_items_too(env):
     plan_id = client.post("/api/v1/care-plans", json=body(items=[ITEM]), headers=MANAGER).json()["data"]["id"]
     assert client.delete(f"/api/v1/care-plans/{plan_id}", headers=MANAGER).status_code == 200
     assert db.query(models.CarePlanItem).filter(models.CarePlanItem.plan_id == plan_id).count() == 0
+
+
+def test_delete_removes_caregiver_acks(env):
+    db, client = env
+    plan_id = client.post("/api/v1/care-plans", json=body(), headers=MANAGER).json()["data"]["id"]
+    db.add(models.CarePlanAck(plan_id=plan_id, caregiver_id=2))
+    db.commit()
+    assert client.delete(f"/api/v1/care-plans/{plan_id}", headers=MANAGER).status_code == 200
+    assert db.query(models.CarePlanAck).filter(models.CarePlanAck.plan_id == plan_id).count() == 0

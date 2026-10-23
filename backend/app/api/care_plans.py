@@ -296,6 +296,7 @@ def delete_plan(plan_id: int, db: Session = Depends(get_db), actor: User = Depen
     if db.query(CarePlan).filter(CarePlan.parent_id == plan_id).first():
         raise HTTPException(status_code=400, detail="이 계획서를 기준으로 작성된 변경 계획서가 있어 삭제할 수 없습니다")
     db.query(CarePlanItem).filter(CarePlanItem.plan_id == plan_id).delete()
+    db.query(CarePlanAck).filter(CarePlanAck.plan_id == plan_id).delete()
     db.delete(plan)
     db.commit()
     return {"status": "success"}
