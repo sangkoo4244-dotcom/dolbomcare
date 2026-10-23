@@ -653,11 +653,19 @@
                     </div>
                 </div>`;
             }).join('');
-            // 이용자의 다른 계획은 접어 두어 상세 화면을 단순하게 유지한다
-            const personSection = `<details style="margin-bottom:14px;">
-                <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--navy);">이 이용자의 다른 방문 계획 (${personPlans.length}건)</summary>
-                <div style="margin-top:6px;">${planRows || '<div style="font-size:12.5px;color:#94A3B8;padding:6px 0;">계획이 없습니다</div>'}</div>
-            </details>`;
+            // 이용자 카드 바로 아래에 이 이용자의 계획과 승인·반려 버튼을 둔다 (승인 대기 계획을 한꺼번에 처리 가능)
+            const pendingForPerson = personPlans.filter(x => x.status === 'proposed').length;
+            const bulkBtns = pendingForPerson
+                ? `<div style="display:flex;gap:6px;flex:0 0 auto;">
+                    <button class="btn-outline" style="padding:4px 10px;color:#DC2626;border-color:#FBCFCF;" onclick="rejectPersonPlans(${p.resident_id})">모두 반려</button>
+                    <button class="btn-solid" style="padding:4px 10px;" onclick="approvePersonPlans(${p.resident_id})">모두 승인</button>
+                   </div>` : '';
+            const personSection = `<div style="border:1px solid #E8ECF1;border-radius:12px;padding:10px 12px;margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;">
+                    <span style="font-size:13px;font-weight:800;color:var(--navy);white-space:nowrap;">방문 계획 ${personPlans.length}건</span>${bulkBtns}
+                </div>
+                ${planRows || '<div style="font-size:12.5px;color:#94A3B8;padding:6px 0;">계획이 없습니다</div>'}
+            </div>`;
             const serviceLines = p.planned_items.length
                 ? `<ul style="margin:0;padding-left:16px;">${p.planned_items.map(c => `<li>${escapeText(CARE_ITEM_LABELS[c] || c)}</li>`).join('')}</ul>`
                 : '-';
@@ -677,6 +685,7 @@
                         <div style="font-size:12.5px;color:#64748B;margin-top:3px;">${escapeText(residentAddress(p.resident_id) || '주소 미등록')}</div>
                     </div>
                 </div>
+                ${personSection}
                 <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:6px;">방문 계획 정보</div>
                 <table class="detail-info" style="width:100%;font-size:13px;border-collapse:collapse;">
                     <tr><td>방문일</td><td>${dateTxt}</td></tr>
@@ -687,7 +696,6 @@
                     <tr><td>특이사항</td><td>${memoCell}</td></tr>
                     ${rejectRow}
                 </table>
-                ${personSection}
                 ${buttons}`;
             loadResidentPhoto(p.resident_id);
         }
@@ -702,6 +710,22 @@
             const r = residents.find(x => x.id == residentId);
             return r ? r.address : '';
         }
+        // 이용자 한 명의 승인 대기 계획을 한꺼번에 승인·반려한다
+        function approvePersonPlans(residentId) {
+            const ids = allPlans.filter(x => x.resident_id === residentId && x.status === 'proposed').map(x => x.schedule_id);
+            if (!ids.length) return;
+            if (!confirm(`이 이용자의 승인 대기 계획 ${ids.length}건을 모두 승인하시겠습니까?`)) return;
+            runBulk(ids, 'approve');
+        }
+        function rejectPersonPlans(residentId) {
+            const ids = allPlans.filter(x => x.resident_id === residentId && x.status === 'proposed').map(x => x.schedule_id);
+            if (!ids.length) return;
+            const reason = prompt(`${ids.length}건에 적용할 반려 사유를 입력하세요:`);
+            if (reason === null) return;
+            if (!reason.trim()) { showMessage('반려 사유를 입력해 주세요', 'error'); return; }
+            runBulk(ids, 'reject', reason);
+        }
+
         // 임시저장: 검토 메모만 저장한다. 계획의 상태(승인 대기)는 바뀌지 않는다
         async function saveReviewMemo(scheduleId) {
             const memo = document.getElementById('reviewMemo').value;
