@@ -324,8 +324,8 @@
         }
 
         function renderManagerDashboard() {
-            document.getElementById('pageTitle').textContent = '대시보드';
-            document.getElementById('pageSub').textContent = '센터장의 오늘도 따뜻한 돌봄을 응원합니다.';
+            document.getElementById('pageTitle').textContent = `안녕하세요, ${currentUser.full_name || '센터장'}님!`;
+            document.getElementById('pageSub').textContent = '오늘도 이용자들의 건강한 일상을 위해 수고하고 계십니다.';
             document.getElementById('dashboardContent').innerHTML = `
                 <section class="panel" id="onboardPanel" style="display:none; margin-bottom:16px;"></section>
                 ${summaryRow([
@@ -619,15 +619,19 @@
                 <li><span class="dot" style="background:${colors[i]};"></span><span class="lbl">${escapeHtml(d.label)}</span><span class="pct">${total ? Math.round(d.value / total * 100) : 0}%</span></li>`).join('');
         }
 
-        function barChart(canvasId, labels, values) {
+        // 서비스 종류별로 쌓아 올린 월별 막대. datasets: [{ label, data, color }]
+        function stackedBarChart(canvasId, labels, datasets) {
             const ctx = document.getElementById(canvasId);
             if (charts[canvasId]) charts[canvasId].destroy();
             charts[canvasId] = new Chart(ctx, {
                 type: 'bar',
-                data: { labels, datasets: [{ label: '방문 건수', data: values, backgroundColor: '#0F8B80', borderRadius: 4, maxBarThickness: 28 }] },
+                data: { labels, datasets: datasets.map(d => ({ label: d.label, data: d.data, backgroundColor: d.color, borderRadius: 3, maxBarThickness: 28 })) },
                 options: {
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#EEF2F6' } }, x: { grid: { display: false } } },
+                    plugins: { legend: { position: 'top', align: 'start', labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, font: { size: 12 }, color: '#475569' } } },
+                    scales: {
+                        x: { stacked: true, grid: { display: false }, ticks: { color: '#64748B' } },
+                        y: { stacked: true, beginAtZero: true, ticks: { precision: 0, color: '#94A3B8' }, grid: { color: '#EEF2F6' } },
+                    },
                     maintainAspectRatio: false,
                 }
             });
@@ -760,16 +764,21 @@
                 const healthData = Object.entries(healthCounts).map(([label, value]) => ({ label, value }));
                 donutChart('chartHealth', 'healthCenterNum', 'healthLegend', healthData, ['#15803D', '#B45309', '#DC2626', '#94A3B8']);
 
-                // 월별 방문 건수 추이 (최근 6개월, 승인 청구 건수 = 실제 방문 수 근사치)
+                // 월별 방문 서비스 현황 (최근 6개월, 서비스 종류별로 쌓기 — 청구 기록 기준)
                 const monthLabels = [];
-                const monthCounts = [];
+                const monthKeys = [];
                 for (let i = 5; i >= 0; i--) {
                     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                    const key = monthKey(d);
+                    monthKeys.push(monthKey(d));
                     monthLabels.push(`${d.getMonth() + 1}월`);
-                    monthCounts.push(bRecords.filter(b => monthKey(b.recorded_date) === key).length);
                 }
-                barChart('chartMonthly', monthLabels, monthCounts);
+                const SERVICE_COLORS = { basic_care: '#14283F', meal_service: '#0F8B80', medical_care: '#93C5FD', emergency: '#A7F3D0' };
+                const stackDatasets = Object.keys(SERVICE_LABEL).map(code => ({
+                    label: SERVICE_LABEL[code],
+                    color: SERVICE_COLORS[code],
+                    data: monthKeys.map(k => bRecords.filter(b => b.service_type === code && monthKey(b.recorded_date) === k).length),
+                }));
+                stackedBarChart('chartMonthly', monthLabels, stackDatasets);
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
                 document.getElementById('visitTable').innerHTML = emptyState('데이터를 불러오지 못했습니다.');
