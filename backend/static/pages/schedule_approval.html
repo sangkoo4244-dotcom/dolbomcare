@@ -653,7 +653,6 @@
         }
 
         // 이용자 사진: 전용 프로필 사진이 없어서 사진첩의 가장 최근 사진을 쓰고, 없으면 성별에 맞는 기본 이미지를 보여 준다
-        const residentPhotoCache = {};
         function residentAvatar(residentId) {
             const r = residents.find(x => x.id == residentId);
             const male = r && (r.gender === 'male' || r.gender === '남');
@@ -682,7 +681,6 @@
                     body: JSON.stringify({ resident_id: Number(rid), image_data: dataUrl, caption: '프로필 사진' })
                 });
                 if (!r.ok) { const e = await r.json().catch(() => ({})); showMessage(typeof e.detail === 'string' ? e.detail : '사진 업로드에 실패했습니다', 'error'); return; }
-                delete residentPhotoCache[rid];
                 showMessage('사진을 올렸습니다', 'success');
                 loadResidentPhoto(Number(rid));
             } catch (e) { showMessage('사진을 처리하지 못했습니다', 'error'); }
@@ -707,17 +705,16 @@
             });
         }
 
+        // 매번 서버에서 받는다 (사진은 다른 화면에서도 지워질 수 있어 캐시하지 않는다). 사진이 없으면 기본 이미지로 돌아간다
         async function loadResidentPhoto(residentId) {
-            if (!(residentId in residentPhotoCache)) {
-                try {
-                    const d = await (await fetch(`${API_URL}/resident-media/resident/${residentId}`)).json();
-                    residentPhotoCache[residentId] = (d.media && d.media[0] && d.media[0].image_data) || null;
-                } catch (e) { residentPhotoCache[residentId] = null; }
-            }
+            let photo = null;
+            try {
+                const d = await (await fetch(`${API_URL}/resident-media/resident/${residentId}`)).json();
+                photo = (d.media && d.media[0] && d.media[0].image_data) || null;
+            } catch (e) { photo = null; }
             const img = document.getElementById('detailPhoto');
-            if (img && residentPhotoCache[residentId] && selectedDetailId && allPlans.find(x => x.schedule_id === selectedDetailId && x.resident_id == residentId)) {
-                img.src = residentPhotoCache[residentId];
-            }
+            const stillShown = allPlans.some(x => x.schedule_id === selectedDetailId && x.resident_id == residentId);
+            if (img && stillShown) img.src = photo || residentAvatar(residentId);
         }
 
         function renderPager(totalPages) {
