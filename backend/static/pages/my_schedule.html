@@ -815,7 +815,7 @@
         }
 
         // 확인이 필요한 일정: 미기록·반려·승인 대기 상태만 모아 보여 준다 (지연 예상 등 추정 데이터는 만들지 않는다)
-        const ATTENTION_LABEL = { '미기록': '기록 필요', '반려': '반려 사유 확인', '승인 대기': '승인 대기 중' };
+        const ATTENTION_LABEL = { '방문완료': '기록 작성 필요', '미기록': '기록 필요', '도착 미기록': '도착 기록 확인', '반려': '반려 사유 확인', '승인 대기': '승인 대기 중' };
         function renderAttention() {
             const rows = items.filter(it => it.state in ATTENTION_LABEL)
                 .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
