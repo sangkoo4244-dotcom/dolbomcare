@@ -105,6 +105,10 @@
         /* 상세 정보 패널: 목록에서 고른 계획의 내용을 보고 바로 승인·반려 */
         .plan-table tr.sel-row td { background: #E6F4F1; }
         .plan-table tr.sel-row td:first-child { box-shadow: inset 4px 0 0 var(--teal); }
+        /* 선택된 이용자 표시: 행 앞의 동그란 점 */
+        .plan-table td:first-child { white-space: nowrap; width: 56px; }
+        .pick-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #CBD5E1; background: #fff; margin-right: 8px; vertical-align: middle; }
+        .pick-dot.on { border-color: var(--teal); background: var(--teal); box-shadow: 0 0 0 3px #CDEBE7; }
         .detail-panel { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
         .detail-panel table td { padding: 7px 0; vertical-align: top; border-bottom: 1px solid #F3F5F8; }
         .detail-panel table tr:last-child td { border-bottom: none; }
@@ -209,12 +213,6 @@
                         <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h2 class="text-lg font-bold text-gray-900" id="tableTitle">승인 대기 계획 (총 0건)</h2>
-                                <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                                    <button type="button" class="btn-outline" onclick="openRecurring()">반복 방문 등록</button>
-                                    <button type="button" class="btn-outline" onclick="bulkApprove()">✓ 선택 승인</button>
-                                    <button type="button" class="btn-outline" style="color:#DC2626;border-color:#FBCFCF;" onclick="bulkReject()">✕ 선택 반려</button>
-                                    <button type="button" class="btn-solid" onclick="approveAllPlans()">승인 대기 계획 모두 승인</button>
-                                </div>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="plan-table">
@@ -581,14 +579,14 @@
                     const dateLine2 = p.date ? p.date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '';
                     const checked = selectedIds.has(p.schedule_id) ? 'checked' : '';
                     const checkbox = p.status === 'proposed'
-                        ? `<input type="checkbox" data-id="${p.schedule_id}" ${checked} onchange="toggleSelect(${p.schedule_id}, this.checked)">`
+                        ? `<input type="checkbox" data-id="${p.schedule_id}" ${checked} onclick="event.stopPropagation()" onchange="toggleSelect(${p.schedule_id}, this.checked)">`
                         : '';
                     const actions = p.status === 'proposed'
                         ? `<button class="btn-solid" style="padding:6px 12px;" onclick="approve(${p.schedule_id}, this)">승인</button>
                            <button class="btn-outline" style="padding:6px 12px;color:#DC2626;border-color:#FBCFCF;margin-left:6px;" onclick="reject(${p.schedule_id}, this)">반려</button>`
                         : (p.status === 'rejected' && p.review_note ? `<span style="font-size:12px;color:#DC2626;" title="${p.review_note.replace(/"/g, '&quot;')}">사유 보기</span>` : '-');
                     return `<tr class="${p.schedule_id === selectedDetailId ? 'sel-row' : ''}" style="cursor:pointer;" onclick="showDetail(${p.schedule_id})">
-                        <td onclick="event.stopPropagation()">${checkbox}</td>
+                        <td><span class="pick-dot ${p.schedule_id === selectedDetailId ? 'on' : ''}"></span>${checkbox}</td>
                         <td class="col-opt">${start + i + 1}</td>
                         <td><div style="font-weight:700;">${dateLine1}</div><div style="font-size:12px;color:#94A3B8;">${dateLine2}</div></td>
                         <td><div style="font-weight:700;">${info.line1}</div><div style="font-size:12px;color:#94A3B8;">${info.line2}</div></td>
@@ -612,11 +610,21 @@
         const escapeText = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
         function showDetail(id) { selectedDetailId = id; renderTable(); }
         function closeDetail() { selectedDetailId = null; renderDetail(); }
+        // 이용자 카드 아래에 두는 관리 버튼: 반복 방문 등록, 체크한 계획 승인·반려, 승인 대기 전체 승인
+        function actionBarHtml() {
+            return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+                <button type="button" class="btn-outline" style="padding:6px 10px;" onclick="openRecurring()">반복 방문 등록</button>
+                <button type="button" class="btn-outline" style="padding:6px 10px;" onclick="bulkApprove()">✓ 선택 승인</button>
+                <button type="button" class="btn-outline" style="padding:6px 10px;color:#DC2626;border-color:#FBCFCF;" onclick="bulkReject()">✕ 선택 반려</button>
+                <button type="button" class="btn-solid" style="padding:6px 10px;" onclick="approveAllPlans()">승인 대기 전체 승인</button>
+            </div>`;
+        }
+
         function renderDetail() {
             const box = document.getElementById('detailPanel');
             const p = allPlans.find(x => x.schedule_id === selectedDetailId);
             if (!p) {
-                box.innerHTML = '<div style="font-size:13px;color:#94A3B8;padding:12px 0;">목록에서 "상세"를 누르면 계획 내용이 여기에 나옵니다.</div>';
+                box.innerHTML = actionBarHtml() + '<div style="font-size:13px;color:#94A3B8;padding:12px 0;">목록에서 이용자를 누르면 상세 내용이 여기에 나옵니다.</div>';
                 return;
             }
             const [label, cls] = STATUS_LABELS[p.status] || ['-', 'sp-proposed'];
@@ -654,16 +662,8 @@
                 </div>`;
             }).join('');
             // 이용자 카드 바로 아래에 이 이용자의 계획과 승인·반려 버튼을 둔다 (승인 대기 계획을 한꺼번에 처리 가능)
-            const pendingForPerson = personPlans.filter(x => x.status === 'proposed').length;
-            const bulkBtns = pendingForPerson
-                ? `<div style="display:flex;gap:6px;flex:0 0 auto;">
-                    <button class="btn-outline" style="padding:4px 10px;color:#DC2626;border-color:#FBCFCF;" onclick="rejectPersonPlans(${p.resident_id})">모두 반려</button>
-                    <button class="btn-solid" style="padding:4px 10px;" onclick="approvePersonPlans(${p.resident_id})">모두 승인</button>
-                   </div>` : '';
             const personSection = `<div style="border:1px solid #E8ECF1;border-radius:12px;padding:10px 12px;margin-bottom:14px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;">
-                    <span style="font-size:13px;font-weight:800;color:var(--navy);white-space:nowrap;">방문 계획 ${personPlans.length}건</span>${bulkBtns}
-                </div>
+                <div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:4px;">이 이용자의 방문 계획 ${personPlans.length}건</div>
                 ${planRows || '<div style="font-size:12.5px;color:#94A3B8;padding:6px 0;">계획이 없습니다</div>'}
             </div>`;
             const serviceLines = p.planned_items.length
@@ -685,6 +685,7 @@
                         <div style="font-size:12.5px;color:#64748B;margin-top:3px;">${escapeText(residentAddress(p.resident_id) || '주소 미등록')}</div>
                     </div>
                 </div>
+                ${actionBarHtml()}
                 ${personSection}
                 <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:6px;">방문 계획 정보</div>
                 <table class="detail-info" style="width:100%;font-size:13px;border-collapse:collapse;">
@@ -710,22 +711,6 @@
             const r = residents.find(x => x.id == residentId);
             return r ? r.address : '';
         }
-        // 이용자 한 명의 승인 대기 계획을 한꺼번에 승인·반려한다
-        function approvePersonPlans(residentId) {
-            const ids = allPlans.filter(x => x.resident_id === residentId && x.status === 'proposed').map(x => x.schedule_id);
-            if (!ids.length) return;
-            if (!confirm(`이 이용자의 승인 대기 계획 ${ids.length}건을 모두 승인하시겠습니까?`)) return;
-            runBulk(ids, 'approve');
-        }
-        function rejectPersonPlans(residentId) {
-            const ids = allPlans.filter(x => x.resident_id === residentId && x.status === 'proposed').map(x => x.schedule_id);
-            if (!ids.length) return;
-            const reason = prompt(`${ids.length}건에 적용할 반려 사유를 입력하세요:`);
-            if (reason === null) return;
-            if (!reason.trim()) { showMessage('반려 사유를 입력해 주세요', 'error'); return; }
-            runBulk(ids, 'reject', reason);
-        }
-
         // 임시저장: 검토 메모만 저장한다. 계획의 상태(승인 대기)는 바뀌지 않는다
         async function saveReviewMemo(scheduleId) {
             const memo = document.getElementById('reviewMemo').value;
