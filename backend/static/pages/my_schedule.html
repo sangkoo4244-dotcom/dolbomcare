@@ -61,6 +61,7 @@
         .cal-count { display: inline-block; white-space: nowrap; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 800; background: #E6F3F1; color: #0F8B80; }
         .cal-dots { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 4px; }
         .cal-dots i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+        .cal-more { font-style: normal; font-size: 10px; font-weight: 700; color: #94A3B8; line-height: 7px; }
         .day-panel { margin-top: 16px; padding-top: 14px; border-top: 1px solid #F1F5F9; }
         .day-panel-head { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 800; color: var(--navy); margin-bottom: 8px; }
         .day-panel-list { max-height: 360px; overflow-y: auto; overscroll-behavior: contain; }
@@ -754,13 +755,10 @@
                 const dayItems = items.filter(it => it.date === key);
                 const cell = document.createElement('div');
                 cell.className = `cal-cell ${key === todayKey ? 'today' : ''} ${key === selectedDate ? 'selected' : ''}`;
-                // 3건까지는 이름·시간, 4건부터는 건수 + 색 점(최대 4개)만 보여 칸이 넘치지 않게 한다
-                const summary = dayItems.length <= 3
-                    ? dayItems.map(it => {
-                        const c = colorOf(it);
-                        return `<div class="cal-pill" style="background:${c.bg};color:${c.text};">${escapeHtml(it.resident_name || '기타')}<br>${timeRange(it)}</div>`;
-                    }).join('')
-                    : `<span class="cal-count">${dayItems.length}건</span><div class="cal-dots">${dayItems.slice(0, 4).map(it => `<i style="background:${colorOf(it).dot}"></i>`).join('')}</div>`;
+                // 칸에는 건수와 이용자 색 점만 보여 준다. 이름과 시간은 날짜를 눌러 여는 목록에서 본다 (이용자가 많아도 칸이 넘치지 않게)
+                const summary = dayItems.length
+                    ? `<span class="cal-count">${dayItems.length}건</span><div class="cal-dots">${dayItems.slice(0, 6).map(it => `<i style="background:${colorOf(it).dot}"></i>`).join('')}${dayItems.length > 6 ? `<em class="cal-more">+${dayItems.length - 6}</em>` : ''}</div>`
+                    : '';
                 cell.innerHTML = `<div class="text-sm font-bold text-gray-800 mb-1">${day}</div>${summary}`;
                 cell.onclick = () => {
                     selectedDate = key;
