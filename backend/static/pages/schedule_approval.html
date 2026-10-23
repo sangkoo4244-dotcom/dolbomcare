@@ -372,7 +372,7 @@
                 const proposals = ((await proposalsResp.json()).items || []).map(p => ({
                     schedule_id: p.schedule_id, status: p.status, caregiver_id: p.caregiver_id, caregiver_name: p.caregiver_name,
                     resident_id: p.resident_id, resident_name: p.resident_name, date: parseScheduleDate(p.scheduled_date),
-                    duration_minutes: p.duration_minutes, planned_items: p.planned_items || [], review_note: p.review_note,
+                    duration_minutes: p.duration_minutes, planned_items: p.planned_items || [], review_note: p.review_note, review_memo: p.review_memo,
                     service_type: p.service_type, arrived_at: null, left_at: null,
                     benefit_type: p.benefit_type, bath_mode: p.bath_mode, co_caregiver_name: p.co_caregiver_name
                 }));
@@ -622,10 +622,16 @@
             const dateTxt = p.date ? p.date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }) : '-';
             const timeTxt = p.date ? `${p.date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} · ${p.duration_minutes || '-'}분` : '-';
             const rejectRow = p.review_note ?`<tr><td>반려 사유</td><td style="color:#DC2626;">${escapeText(p.review_note)}</td></tr>` : '';
+            const memoBox = p.status === 'proposed'
+                ? `<div style="margin-top:14px;">
+                    <div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:6px;">검토 메모 <span style="font-size:11px;font-weight:600;color:#94A3B8;">승인 전 확인 내용을 임시로 저장합니다</span></div>
+                    <textarea id="reviewMemo" rows="3" style="width:100%;box-sizing:border-box;border:1px solid #E2E8F0;border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit;">${escapeText(p.review_memo || '')}</textarea>
+                   </div>` : '';
             const buttons = p.status === 'proposed'
-                ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;">
-                    <button class="btn-outline" style="padding:11px;color:#DC2626;border-color:#FBCFCF;" onclick="reject(${p.schedule_id}, null)">반려하기</button>
-                    <button class="btn-solid" style="padding:11px;" onclick="approve(${p.schedule_id}, null)">승인하기</button>
+                ? `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;">
+                    <button class="btn-outline" style="padding:11px 6px;color:#DC2626;border-color:#FBCFCF;" onclick="reject(${p.schedule_id}, null)">반려하기</button>
+                    <button class="btn-outline" style="padding:11px 6px;" onclick="saveReviewMemo(${p.schedule_id})">임시저장</button>
+                    <button class="btn-solid" style="padding:11px 6px;" onclick="approve(${p.schedule_id}, null)">승인하기</button>
                    </div>` : '';
             const serviceLines = p.planned_items.length
                 ? `<ul style="margin:0;padding-left:16px;">${p.planned_items.map(c => `<li>${escapeText(CARE_ITEM_LABELS[c] || c)}</li>`).join('')}</ul>`
@@ -654,7 +660,7 @@
                     <tr><td>서비스 유형</td><td>${SERVICE_TYPE_LABELS[p.service_type] || escapeText(p.service_type || '-')}</td></tr>
                     <tr><td>서비스 내용</td><td>${serviceLines}</td></tr>
                     ${rejectRow}
-                </table>${buttons}`;
+                </table>${memoBox}${buttons}`;
             loadResidentPhoto(p.resident_id);
         }
 
@@ -668,6 +674,18 @@
             const r = residents.find(x => x.id == residentId);
             return r ? r.address : '';
         }
+        // 임시저장: 검토 메모만 저장한다. 계획의 상태(승인 대기)는 바뀌지 않는다
+        async function saveReviewMemo(scheduleId) {
+            const memo = document.getElementById('reviewMemo').value;
+            const r = await fetch(`${API_URL}/schedule/${scheduleId}/review-memo`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: currentUser.id, user_role: 'center_manager', memo })
+            });
+            if (!r.ok) { const e = await r.json().catch(() => ({})); showMessage(typeof e.detail === 'string' ? e.detail : '메모 저장에 실패했습니다', 'error'); return; }
+            showMessage('검토 메모를 임시 저장했습니다', 'success');
+            loadPlans();
+        }
+
         // 사진 올리기: 고른 사진을 긴 변 800px로 줄여 사진첩에 올린다 (서버 한도 안에 들도록 화질을 낮출 수 있다)
         function pickResidentPhoto(residentId) {
             const input = document.getElementById('photoInput');

@@ -255,6 +255,7 @@ class Schedule(Base):
     depart_check = Column(String, nullable=True)
     depart_distance_m = Column(Integer, nullable=True)
     review_note = Column(String, nullable=True)  # 계획 반려 사유
+    review_memo = Column(Text, nullable=True)  # 승인 전 센터장 검토 메모(임시 저장, 상태는 승인 대기 그대로)
     service_type = Column(String, default="basic_care")  # 'basic_care', 'meal_service', 'medical_care'
     # 승인된 일정의 변경 요청: 센터장이 승인하기 전까지 원래 일정은 그대로 유지된다
     change_date = Column(DateTime, nullable=True)

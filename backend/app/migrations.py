@@ -48,6 +48,7 @@ ADDITIVE_COLUMNS = [
     ("schedules", "depart_distance_m", "INTEGER"),
     ("schedules", "left_at", "TIMESTAMP"),
     ("schedules", "review_note", "VARCHAR"),
+    ("schedules", "review_memo", "TEXT"),
     ("schedules", "change_date", "TIMESTAMP"),
     ("schedules", "change_duration", "INTEGER"),
     ("schedules", "change_reason", "VARCHAR"),

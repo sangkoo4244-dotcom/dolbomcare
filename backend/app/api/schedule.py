@@ -518,6 +518,11 @@ class ReviewRequest(BaseModel):
     user_role: str
     reason: str = ""
 
+class ReviewMemoRequest(BaseModel):
+    user_id: int
+    user_role: str
+    memo: str = ""
+
 class ResubmitRequest(BaseModel):
     user_id: int
     user_role: str
@@ -581,6 +586,7 @@ def list_proposals(center_id: int, db: Session = Depends(get_db), actor: User = 
                 "duration_minutes": s.duration_minutes,
                 "planned_items": _codes(s.planned_items),
                 "review_note": s.review_note,
+                "review_memo": s.review_memo,
                 "service_type": s.service_type,
                 "benefit_type": s.benefit_type or "home_care",
                 "bath_mode": s.bath_mode,
@@ -590,6 +596,20 @@ def list_proposals(center_id: int, db: Session = Depends(get_db), actor: User = 
             for s in rows
         ]
     }
+
+@router.post("/{schedule_id}/review-memo")
+def save_review_memo(schedule_id: int, req: ReviewMemoRequest, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    """승인 대기 계획에 센터장 검토 메모를 임시 저장한다. 상태는 바뀌지 않는다"""
+    if actor.role != "center_manager":
+        raise HTTPException(status_code=403, detail="센터장만 메모를 저장할 수 있습니다")
+    schedule = _my_schedule(db, schedule_id, actor)
+    if not schedule:
+        raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다")
+    if schedule.status != "proposed":
+        raise HTTPException(status_code=400, detail="승인 대기 중인 계획에만 메모를 저장할 수 있습니다")
+    schedule.review_memo = req.memo.strip() or None
+    db.commit()
+    return {"status": "success", "schedule_id": schedule.id, "schedule_status": schedule.status}
 
 @router.post("/{schedule_id}/approve")
 def approve_schedule(schedule_id: int, req: ReviewRequest, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
