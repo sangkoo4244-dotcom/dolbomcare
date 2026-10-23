@@ -103,7 +103,8 @@
         .notice-desc { font-size: 11.5px; color: #94A3B8; margin-top: 1px; line-height: 1.4; }
     
         /* 상세 정보 패널: 목록에서 고른 계획의 내용을 보고 바로 승인·반려 */
-        .plan-table tr.sel-row td { background: #EEF7F6; }
+        .plan-table tr.sel-row td { background: #E6F4F1; }
+        .plan-table tr.sel-row td:first-child { box-shadow: inset 4px 0 0 var(--teal); }
         .detail-panel { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
         .detail-panel table td { padding: 7px 0; vertical-align: top; border-bottom: 1px solid #F3F5F8; }
         .detail-panel table tr:last-child td { border-bottom: none; }
@@ -633,6 +634,27 @@
                     <button class="btn-outline" style="padding:11px 6px;" onclick="saveReviewMemo(${p.schedule_id})">임시저장</button>
                     <button class="btn-solid" style="padding:11px 6px;" onclick="approve(${p.schedule_id}, null)">승인하기</button>
                    </div>` : '';
+            // 이 이용자의 모든 방문 계획을 승인 완료·반려 관리와 함께 보여 준다 (승인 대기는 바로 승인·반려 가능)
+            const personPlans = allPlans.filter(x => x.resident_id === p.resident_id).sort((a, b) => (a.date || 0) - (b.date || 0));
+            const planRows = personPlans.map(x => {
+                const [l, c] = STATUS_LABELS[x.status] || ['-', 'sp-proposed'];
+                const when = x.date ? `${x.date.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })} ${x.date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}` : '-';
+                let act = '';
+                if (x.status === 'proposed') act = `<button class="btn-outline" style="padding:4px 10px;color:#DC2626;border-color:#FBCFCF;" onclick="reject(${x.schedule_id}, null)">반려</button> <button class="btn-solid" style="padding:4px 10px;" onclick="approve(${x.schedule_id}, null)">승인</button>`;
+                else if (x.status === 'rejected') act = `<span style="font-size:12px;color:#DC2626;">${escapeText(x.review_note || '사유 없음')}</span>`;
+                return `<div style="padding:9px 0;border-bottom:1px solid #F3F5F8;font-size:12.5px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                        <span style="font-weight:700;color:var(--navy);">${when}</span>
+                        <span class="status-pill ${c}">${l}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;">
+                        <span style="color:#64748B;">${SERVICE_TYPE_LABELS[x.service_type] || ''}</span>
+                        <span style="white-space:nowrap;">${act}</span>
+                    </div>
+                </div>`;
+            }).join('');
+            const personSection = `<div style="font-size:14px;font-weight:800;color:var(--navy);margin:4px 0 6px;">이 이용자의 방문 계획 (${personPlans.length}건)</div>
+                <div style="margin-bottom:14px;">${planRows || '<div style="font-size:12.5px;color:#94A3B8;padding:6px 0;">계획이 없습니다</div>'}</div>`;
             const serviceLines = p.planned_items.length
                 ? `<ul style="margin:0;padding-left:16px;">${p.planned_items.map(c => `<li>${escapeText(CARE_ITEM_LABELS[c] || c)}</li>`).join('')}</ul>`
                 : '-';
@@ -652,7 +674,8 @@
                         <div style="font-size:12.5px;color:#64748B;margin-top:3px;">${escapeText(residentAddress(p.resident_id) || '주소 미등록')}</div>
                     </div>
                 </div>
-                <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:6px;">방문 계획 정보</div>
+                ${personSection}
+                <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:6px;">선택한 방문 계획 정보</div>
                 <table class="detail-info" style="width:100%;font-size:13px;border-collapse:collapse;">
                     <tr><td>방문일</td><td>${dateTxt}</td></tr>
                     <tr><td>방문 시간</td><td>${timeTxt}</td></tr>
