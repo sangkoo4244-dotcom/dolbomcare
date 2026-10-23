@@ -103,6 +103,7 @@
         .notice-desc { font-size: 11.5px; color: #94A3B8; margin-top: 1px; line-height: 1.4; }
     
         /* 상세 정보 패널: 목록에서 고른 계획의 내용을 보고 바로 승인·반려 */
+        .plan-table tr.sel-row td { background: #EEF7F6; }
         .detail-panel { background: #fff; border: 1px solid #E8ECF1; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(20,40,63,0.04); }
         .detail-panel table td { padding: 7px 0; vertical-align: top; border-bottom: 1px solid #F3F5F8; }
         .detail-panel table tr:last-child td { border-bottom: none; }
@@ -542,6 +543,7 @@
 
         function renderTable() {
             const rows = visiblePlans();
+            if (!rows.some(p => p.schedule_id === selectedDetailId) && rows.length) selectedDetailId = rows[0].schedule_id;
             const tabNames = { proposed: '승인 대기', scheduled: '승인 완료', rejected: '반려된 계획', all: '전체 계획' };
             document.querySelectorAll('.sa-tab').forEach(t => {
                 const key = t.dataset.tab;
@@ -574,8 +576,8 @@
                         ? `<button class="btn-solid" style="padding:6px 12px;" onclick="approve(${p.schedule_id}, this)">승인</button>
                            <button class="btn-outline" style="padding:6px 12px;color:#DC2626;border-color:#FBCFCF;margin-left:6px;" onclick="reject(${p.schedule_id}, this)">반려</button>`
                         : (p.status === 'rejected' && p.review_note ? `<span style="font-size:12px;color:#DC2626;" title="${p.review_note.replace(/"/g, '&quot;')}">사유 보기</span>` : '-');
-                    return `<tr>
-                        <td>${checkbox}</td>
+                    return `<tr class="${p.schedule_id === selectedDetailId ? 'sel-row' : ''}" style="cursor:pointer;" onclick="showDetail(${p.schedule_id})">
+                        <td onclick="event.stopPropagation()">${checkbox}</td>
                         <td class="col-opt">${start + i + 1}</td>
                         <td><div style="font-weight:700;">${dateLine1}</div><div style="font-size:12px;color:#94A3B8;">${dateLine2}</div></td>
                         <td><div style="font-weight:700;">${info.line1}</div><div style="font-size:12px;color:#94A3B8;">${info.line2}</div></td>
@@ -591,14 +593,13 @@
             document.getElementById('selectAllBox').checked = pageRows.length > 0 && pageRows.every(p => p.status !== 'proposed' || selectedIds.has(p.schedule_id));
             document.getElementById('pageInfoLabel').textContent = rows.length ? `총 ${rows.length}건 중 ${start + 1}-${Math.min(start + pageSize, rows.length)}건을 표시합니다` : '';
             renderPager(totalPages);
-            if (!allPlans.some(p => p.schedule_id === selectedDetailId) && rows.length) selectedDetailId = rows[0].schedule_id;
             renderDetail();
         }
 
         // 목록에서 고른 계획의 상세 정보. 승인 대기 계획이면 여기서 바로 승인하거나 반려할 수 있다
         let selectedDetailId = null;
         const escapeText = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
-        function showDetail(id) { selectedDetailId = id; renderDetail(); }
+        function showDetail(id) { selectedDetailId = id; renderTable(); }
         function renderDetail() {
             const box = document.getElementById('detailPanel');
             const p = allPlans.find(x => x.schedule_id === selectedDetailId);
@@ -622,8 +623,14 @@
                     <span style="font-size:14px;font-weight:800;color:var(--navy);">방문 계획 상세 정보</span>
                     <span class="status-pill ${cls}">${label}</span>
                 </div>
-                <div style="font-size:15px;font-weight:800;color:var(--charcoal);">${escapeText(p.resident_name || '-')}</div>
-                <div style="font-size:12px;color:#94A3B8;margin-bottom:10px;">${escapeText(info.line2)}</div>
+                <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
+                    <img id="detailPhoto" alt="" src="${residentAvatar(p.resident_id)}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:1px solid #E2E8F0;flex:0 0 auto;">
+                    <div style="min-width:0;">
+                        <div style="font-size:15px;font-weight:800;color:var(--charcoal);">${escapeText(p.resident_name || '-')}</div>
+                        <div style="font-size:12px;color:#94A3B8;">${escapeText(info.line2)}</div>
+                        <div style="font-size:12px;color:#64748B;margin-top:2px;">${escapeText(residentAddress(p.resident_id) || '주소 미등록')}</div>
+                    </div>
+                </div>
                 <table style="width:100%;font-size:13px;border-collapse:collapse;">
                     <tr><td>방문일</td><td>${dateTxt}</td></tr>
                     <tr><td>방문 시간</td><td>${timeTxt}</td></tr>
@@ -632,6 +639,31 @@
                     <tr><td>제공 항목</td><td>${escapeText(items)}</td></tr>
                     ${rejectRow}
                 </table>${buttons}`;
+            loadResidentPhoto(p.resident_id);
+        }
+
+        // 이용자 사진: 전용 프로필 사진이 없어서 사진첩의 가장 최근 사진을 쓰고, 없으면 성별에 맞는 기본 이미지를 보여 준다
+        const residentPhotoCache = {};
+        function residentAvatar(residentId) {
+            const r = residents.find(x => x.id == residentId);
+            const male = r && (r.gender === 'male' || r.gender === '남');
+            return `assets/user_design/${male ? 'resident_avatar_male.png' : 'resident_avatar_female.png'}`;
+        }
+        function residentAddress(residentId) {
+            const r = residents.find(x => x.id == residentId);
+            return r ? r.address : '';
+        }
+        async function loadResidentPhoto(residentId) {
+            if (!(residentId in residentPhotoCache)) {
+                try {
+                    const d = await (await fetch(`${API_URL}/resident-media/resident/${residentId}`)).json();
+                    residentPhotoCache[residentId] = (d.media && d.media[0] && d.media[0].image_data) || null;
+                } catch (e) { residentPhotoCache[residentId] = null; }
+            }
+            const img = document.getElementById('detailPhoto');
+            if (img && residentPhotoCache[residentId] && selectedDetailId && allPlans.find(x => x.schedule_id === selectedDetailId && x.resident_id == residentId)) {
+                img.src = residentPhotoCache[residentId];
+            }
         }
 
         function renderPager(totalPages) {
