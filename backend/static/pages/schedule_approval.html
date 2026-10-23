@@ -191,12 +191,6 @@
                             </select>
                             <input id="searchInput" type="search" placeholder="이용자명, 요양사명, 계획항목 검색" class="filter-input" style="width:220px;">
                             <button type="button" class="btn-outline" onclick="resetFilters()">초기화</button>
-                            <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
-                                <button type="button" class="btn-outline" onclick="openRecurring()">반복 방문 등록</button>
-                                <button type="button" class="btn-outline" onclick="bulkApprove()">✓ 선택 승인</button>
-                                <button type="button" class="btn-outline" style="color:#DC2626;border-color:#FBCFCF;" onclick="bulkReject()">✕ 선택 반려</button>
-                                <button type="button" class="btn-solid" onclick="approveAllPlans()">승인 대기 계획 모두 승인</button>
-                            </div>
                         </div>
 
                         <!-- 상태 탭 -->
@@ -211,6 +205,12 @@
                         <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h2 class="text-lg font-bold text-gray-900" id="tableTitle">승인 대기 계획 (총 0건)</h2>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                    <button type="button" class="btn-outline" onclick="openRecurring()">반복 방문 등록</button>
+                                    <button type="button" class="btn-outline" onclick="bulkApprove()">✓ 선택 승인</button>
+                                    <button type="button" class="btn-outline" style="color:#DC2626;border-color:#FBCFCF;" onclick="bulkReject()">✕ 선택 반려</button>
+                                    <button type="button" class="btn-solid" onclick="approveAllPlans()">승인 대기 계획 모두 승인</button>
+                                </div>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="plan-table">
