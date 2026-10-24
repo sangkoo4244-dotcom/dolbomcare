@@ -373,8 +373,13 @@
                     </div>
                     <div class="cm-chips2">
                         <button class="btn-outline" onclick="approveCleanBilling()">정상 건 일괄 승인</button>
-                        <button class="btn-outline" onclick="exportCsv()">엑셀 다운로드</button>
-                        <button class="btn-outline" onclick="window.print()">청구서 인쇄</button>
+                        <details class="cm-more-tools" style="display:inline-block;">
+                            <summary class="btn-outline" style="list-style:none;cursor:pointer;display:inline-block;">더 보기 (내보내기·인쇄) ▾</summary>
+                            <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+                                <button class="btn-outline" onclick="exportCsv()">엑셀 다운로드</button>
+                                <button class="btn-outline" onclick="window.print()">청구서 인쇄</button>
+                            </div>
+                        </details>
                     </div>
 
                     <!-- Table -->
