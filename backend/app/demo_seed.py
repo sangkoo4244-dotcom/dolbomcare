@@ -130,8 +130,15 @@ def seed_demo(db: Session, trial_ends_at: datetime | None = None) -> dict:
                 notify(db, resident.guardian_id, "visit_completed", guardian_visit_summary(resident.name, service_type, duration, "good"))
     db.commit()
 
-    # 앞으로 3일치 예정 방문 일정 - 나의 일정에서 일정 변경 요청 등을 체험할 수 있게 한다
+    # 오늘 남은 방문 일정 + 앞으로 3일치 예정 방문 일정 - "오늘 방문 예정"에서 바로 기록하기와 나의 일정 변경 요청을 체험할 수 있게 한다
     schedule_count = 0
+    now = datetime.now()
+    for i, resident in enumerate(residents):
+        when = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1 + i)
+        if when.date() == now.date() and when.hour <= 22:
+            db.add(Schedule(caregiver_id=caregiver.id, resident_id=resident.id, center_id=center.id, scheduled_date=when, duration_minutes=60,
+                            planned_items="meal_assist,mobility", service_type="basic_care", status="scheduled"))
+            schedule_count += 1
     for day_offset in (1, 2, 3):
         for i, resident in enumerate(residents):
             when = (datetime.now() + timedelta(days=day_offset)).replace(hour=9 + i * 2, minute=0, second=0, microsecond=0)
