@@ -1292,22 +1292,37 @@
             document.getElementById('careDetailToggleLabel').textContent = shown ? '더보기 (세부 항목)' : '접기';
         }
 
-        // 음성 녹음: 브라우저 내장 Web Speech API 사용 (서버 음성인식 없음, 크롬 계열에서만 동작)
+        // 음성 녹음: 브라우저 내장 Web Speech API 사용. Chrome의 기본 인식은 음성을 인식 서비스로 보내는 방식이므로
+        // 개인정보 처리방침과 위탁 계약에 반드시 반영해야 한다 (이 화면에서 외부 전송이 없다고 가정하면 안 된다)
+        const NOTE_LIMIT = 1000;
+        const VOICE_ERROR_MESSAGES = {
+            'not-allowed': '마이크 사용이 허용되지 않았습니다. 주소창의 마이크 권한을 허용해 주세요.',
+            'service-not-allowed': '마이크 사용이 허용되지 않았습니다. 주소창의 마이크 권한을 허용해 주세요.',
+            'audio-capture': '마이크를 찾지 못했습니다. 마이크 연결을 확인해 주세요.',
+            'network': '음성 인식 서비스에 연결하지 못했습니다. 인터넷 연결을 확인하거나 직접 입력해 주세요.',
+        };
         let recognition = null;
         let isRecording = false;
+        let manualStop = false;
         function toggleVoiceRecording() {
             const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
             const btn = document.getElementById('voiceRecordBtn');
             if (!SR) {
-                showMessage('이 브라우저는 음성 인식을 지원하지 않습니다 (Chrome 권장)', 'error');
+                showMessage('이 브라우저는 음성 입력을 지원하지 않습니다. Chrome에서 쓰거나 직접 입력해 주세요.', 'error');
                 return;
             }
             if (isRecording) {
+                manualStop = true;
                 recognition && recognition.stop();
                 return;
             }
             const textarea = document.getElementById('notes');
+            if (textarea.value.length >= NOTE_LIMIT) {
+                showMessage(`기록 내용이 ${NOTE_LIMIT.toLocaleString()}자에 가까워 더 받아쓸 수 없습니다. 내용을 줄인 뒤 다시 시작해 주세요.`, 'error');
+                return;
+            }
             let baseText = textarea.value ? textarea.value.trim() + ' ' : '';
+            manualStop = false;
             recognition = new SR();
             recognition.lang = 'ko-KR';
             recognition.continuous = true;
@@ -1321,15 +1336,25 @@
                     else interim += t;
                 }
                 if (finalText) baseText += finalText;
-                textarea.value = (baseText + interim).slice(0, 1000);
+                textarea.value = (baseText + interim).slice(0, NOTE_LIMIT);
                 document.getElementById('noteCount').textContent = textarea.value.length + ' / 1,000';
+                if (baseText.length + interim.length >= NOTE_LIMIT) {
+                    recognition.stop();
+                    showMessage(`기록 내용이 ${NOTE_LIMIT.toLocaleString()}자에 도달해 녹음을 멈췄습니다.`, 'error');
+                }
             };
             recognition.onerror = (e) => {
                 console.error('음성 인식 오류:', e.error);
-                if (e.error !== 'no-speech') showMessage('음성 인식 오류: ' + e.error, 'error');
+                if (e.error === 'no-speech' || e.error === 'aborted') return;
+                showMessage(VOICE_ERROR_MESSAGES[e.error] || `음성 인식을 시작하지 못했습니다 (${e.error}). 직접 입력해 주세요.`, 'error');
             };
-            recognition.onend = () => { stopRecordingUI(); };
+            recognition.onend = () => {
+                if (isRecording && !manualStop) showMessage('녹음이 자동으로 멈췄습니다. 필요하면 다시 눌러 이어서 받아쓰세요.', 'error');
+                stopRecordingUI();
+            };
             recognition.start();
+            textarea.readOnly = true;
+            textarea.placeholder = '녹음 중에는 직접 고칠 수 없습니다. 녹음을 멈춘 뒤 고쳐 주세요.';
             isRecording = true;
             btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/></svg> 녹음 중지';
             btn.style.background = '#DC2626';
@@ -1339,6 +1364,9 @@
 
         function stopRecordingUI() {
             isRecording = false;
+            const textarea = document.getElementById('notes');
+            textarea.readOnly = false;
+            textarea.placeholder = '음성 기록을 통해 전달된 내용을 요약하여 입력하세요.';
             const btn = document.getElementById('voiceRecordBtn');
             btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></svg> 음성 녹음 시작';
             btn.style.background = '#FDE8E8';
@@ -1351,7 +1379,7 @@
             msg.textContent = text;
             msg.className = `${type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'} mb-6 p-4 rounded-lg`;
             msg.classList.remove('hidden');
-            setTimeout(() => msg.classList.add('hidden'), 4000);
+            setTimeout(() => msg.classList.add('hidden'), type === 'error' ? 8000 : 4000);
         }
 
         function logout() {
@@ -1405,7 +1433,11 @@
             if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
                 const btn = document.getElementById('voiceRecordBtn');
                 btn.disabled = true;
-                btn.title = '이 브라우저는 음성 인식을 지원하지 않습니다 (Chrome 권장)';
+                btn.title = '이 브라우저는 음성 입력을 지원하지 않습니다 (Chrome 권장)';
+                const hint = document.createElement('p');
+                hint.className = 'text-xs text-red-600 mt-1';
+                hint.textContent = '이 브라우저는 음성 입력을 지원하지 않습니다. Chrome에서 쓰거나 아래 칸에 직접 입력해 주세요.';
+                btn.parentNode.insertBefore(hint, btn.nextSibling);
             }
             renderSidebar();
             BenefitFields.load(user.center_id).then(() => {
