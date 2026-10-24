@@ -148,7 +148,7 @@ const SIDEBAR_MENUS = {
         { href: 'ltci_guide.html', icon: 'stamp', label: '장기요양 신청 안내' },
         { href: 'center_directory.html', icon: 'center', label: '센터 찾기' },
         { href: 'notifications.html', icon: 'notify', label: '알림' },
-        { href: 'messages.html', icon: 'messages', label: '센터와 메시지' }
+        { href: 'messages.html', icon: 'messages', label: '메시지' }
     ],
     center_manager: [
         { href: 'dashboard.html', icon: 'dashboard', label: '대시보드' },
