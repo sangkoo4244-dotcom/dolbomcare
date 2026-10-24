@@ -77,7 +77,7 @@ def run_precheck(db: Session, center_id: int, days: int = 14, now: datetime = No
     for c in detect_caregiver_changes(db, center_id, now.date()):
         if c["status"] == "overdue":
             issues.append({"type": "caregiver_change_counsel", "resident_id": c["resident_id"], "resident": c["resident_name"],
-                           "detail": f"담당 요양보호사가 {c['from_caregiver']}에서 {c['to_caregiver']}(으)로 바뀐 뒤({c['changed_on']}) "
+                           "detail": f"담당 요양보호사 변경({c['from_caregiver']} → {c['to_caregiver']}, {c['changed_on']}) 이후 "
                                      f"14일 이내 상담 기한({c['deadline']})이 지났습니다 (평가 지표: 직원변경)"})
 
     from app.api.care_plans import center_plan_status
@@ -107,7 +107,7 @@ def run_precheck(db: Session, center_id: int, days: int = 14, now: datetime = No
     for t in ts["topics"]:
         if t["missing"]:
             issues.append({"type": "training_missing", "resident_id": None, "resident": "센터 전체",
-                           "detail": f"{t['label']}을(를) 이번 {'연도' if t['cadence'] == 'year' else '반기'}에 받지 않은 직원이 {len(t['missing'])}명 있습니다 "
+                           "detail": f"'{t['label']}' 항목을 이번 {'연도' if t['cadence'] == 'year' else '반기'}에 받지 않은 직원이 {len(t['missing'])}명 있습니다 "
                                      f"({', '.join(m['name'] for m in t['missing'][:4])}{' 외' if len(t['missing']) > 4 else ''})"})
     if ts["new_staff_overdue"]:
         issues.append({"type": "new_staff_training", "resident_id": None, "resident": "센터 전체",

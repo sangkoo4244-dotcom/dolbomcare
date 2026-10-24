@@ -176,7 +176,7 @@ def create_plan(body: PlanBody, db: Session = Depends(get_db), actor: User = Dep
     for label, value in (("장기요양 세부목표", body.goals), ("장기요양 필요내용", body.needs), ("세부제공내용", body.details),
                          ("횟수", body.frequency), ("종합의견", body.opinion)):
         if not (value or "").strip():
-            raise HTTPException(status_code=400, detail=f"{label}을(를) 입력해 주세요")
+            raise HTTPException(status_code=400, detail=f"{label} 칸을 입력해 주세요")
     if body.plan_type == "change" and not (body.change_reason or "").strip():
         raise HTTPException(status_code=400, detail="변경 계획서는 변경 사유(기능상태 변화, 수급자 욕구, 보호자 요구 등)를 기록해야 합니다")
 

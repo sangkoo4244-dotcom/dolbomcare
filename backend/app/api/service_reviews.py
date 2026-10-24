@@ -49,7 +49,7 @@ def quarter_range(d: date) -> tuple:
 
 def _need_text(label: str, value: Optional[str]):
     if len((value or "").strip()) < MIN_TEXT:
-        raise HTTPException(status_code=400, detail=f"{label}을(를) {MIN_TEXT}자 이상 구체적으로 입력해 주세요")
+        raise HTTPException(status_code=400, detail=f"{label} 내용을 {MIN_TEXT}자 이상 구체적으로 입력해 주세요")
 
 
 # ---------------- 급여제공 결과평가 ----------------
