@@ -135,6 +135,7 @@
                 <h2>이번 달 방문 확인이 빠진 이용자</h2>
                 <div id="missingList" style="font-size:14px;line-height:1.8;"><span class="empty-note">불러오는 중…</span></div>
                 <div id="gapList" style="font-size:14px;line-height:1.8;margin-top:10px;color:#B91C1C;"></div>
+                <div id="incompleteList" style="font-size:14px;line-height:1.8;margin-top:10px;color:#B45309;"></div>
             </div>
         </div>
     </div>
@@ -159,7 +160,9 @@
                 document.getElementById('missingList').innerHTML = mon.data.missing.length
                     ? mon.data.missing.map(m => esc(m.name)).join(', ') : '모두 완료했습니다.';
                 document.getElementById('gapList').innerHTML = mon.data.three_month_gap.length
-                    ? `세 달 연속 방문 확인 누락 (가산 불가): ${mon.data.three_month_gap.map(m => esc(m.name)).join(', ')}` : '';
+                    ? `세 달 연속 누락 (가산 불가): ${mon.data.three_month_gap.map(m => esc(m.name)).join(', ')}` : '';
+                document.getElementById('incompleteList').innerHTML = mon.data.this_month_incomplete.length
+                    ? `이번 달 방문·욕구사정·계획 중 빠진 이용자: ${mon.data.this_month_incomplete.map(m => esc(m.name)).join(', ')}` : '';
             }
             if (cou) document.getElementById('cardCounseling').textContent = cou.residents_missing;
             if (plan) {

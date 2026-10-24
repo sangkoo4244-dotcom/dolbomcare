@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.api.needs_assessments import _to_dict as assessment_to_dict
 from app.auth import require_social_or_manager
 from app.database import get_db
-from app.models import MonthlyMonitoring, NeedsAssessment, Resident, SocialVisitPlan, SocialWorkLog, User
+from app.models import CarePlan, MonthlyMonitoring, NeedsAssessment, Resident, SocialVisitPlan, SocialWorkLog, User
 
 router = APIRouter()
 
@@ -132,14 +132,31 @@ def monitoring_status(year_month: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-
     for m in db.query(MonthlyMonitoring).filter(MonthlyMonitoring.center_id == actor.center_id,
                                                 MonthlyMonitoring.year_month.in_(window)).all():
         checked.setdefault(m.resident_id, set()).add(m.year_month)
+    # 고시 제57조 제2항: 급여관리 업무 = 매월 가정 방문 확인 + 매월 욕구사정과 급여제공계획 수립·기록.
+    # 한 달이 완료되려면 세 가지가 모두 있어야 한다고 해석한다(엄격하게 판정해 누락을 놓치지 않는다).
+    assessed = {}
+    for a in db.query(NeedsAssessment).filter(NeedsAssessment.resident_id.in_([r.id for r in residents])).all():
+        if a.assessed_date and a.assessed_date.strftime("%Y-%m") in window:
+            assessed.setdefault(a.resident_id, set()).add(a.assessed_date.strftime("%Y-%m"))
+    planned = {}
+    for p in db.query(CarePlan).filter(CarePlan.center_id == actor.center_id, CarePlan.written_date.isnot(None)).all():
+        if p.written_date.strftime("%Y-%m") in window:
+            planned.setdefault(p.resident_id, set()).add(p.written_date.strftime("%Y-%m"))
+
+    def month_complete(resident_id, ym):
+        return (ym in checked.get(resident_id, set()) and ym in assessed.get(resident_id, set())
+                and ym in planned.get(resident_id, set()))
+
     window_start = date(int(window[0][:4]), int(window[0][5:]), 1)
     gap = [r for r in residents if (r.admission_date is None or r.admission_date.date() < window_start)
-           and not checked.get(r.id)]
+           and not any(month_complete(r.id, ym) for ym in window)]
+    this_month_incomplete = [r for r in residents if not month_complete(r.id, year_month)]
     return {"status": "success", "data": {
         "year_month": year_month,
         "done": [{"resident_id": r.id, "name": r.name} for r in residents if r.id in done],
         "missing": [{"resident_id": r.id, "name": r.name} for r in residents if r.id not in done],
         "three_month_gap": [{"resident_id": r.id, "name": r.name} for r in gap],
+        "this_month_incomplete": [{"resident_id": r.id, "name": r.name} for r in this_month_incomplete],
     }}
 
 

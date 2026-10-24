@@ -110,6 +110,8 @@ def test_orphan_demo_guardian_left_by_a_center_delete_does_not_block_a_new_seed(
     db.query(models.LeaveRequest).filter_by(center_id=demo_center.id).delete()
     db.query(models.CarePlan).filter_by(center_id=demo_center.id).delete()
     db.query(models.MonthlyMonitoring).filter_by(center_id=demo_center.id).delete()
+    db.query(models.NeedsAssessment).filter(models.NeedsAssessment.resident_id.in_(
+        [r.id for r in db.query(models.Resident).filter_by(center_id=demo_center.id).all()])).delete(synchronize_session=False)
     db.query(models.Resident).filter_by(center_id=demo_center.id).delete()
     db.query(models.User).filter(models.User.center_id == demo_center.id).delete()
     db.delete(demo_center)
@@ -173,9 +175,9 @@ def test_demo_work_flows_reach_the_other_roles(env):
     }
 
     mine = client.get("/api/v1/care-plans/mine", headers=headers["caregiver"]).json()["plans"]
-    assert [p["resident_name"] for p in mine] == ["김복동"]  # 요양보호사는 담당 이용자의 계획서만 본다
+    assert sorted({p["resident_name"] for p in mine}) == ["김복동", "이순자"]  # 요양보호사는 담당 이용자의 계획서만 본다
     plans = client.get(f"/api/v1/care-plans?resident_id={kim.id}", headers=headers["social"]).json()["plans"]
-    assert len(plans) == 1 and plans[0]["author_name"] == "데모 사회복지사"
+    assert plans and all(p["author_name"] == "데모 사회복지사" for p in plans)
 
     for role in ("social", "manager", "caregiver"):  # 사고 보고: 요양보호사 본인 것이므로 요양보호사·사회복지사·센터장 모두 본다
         reports = client.get("/api/v1/incidents", headers=headers[role]).json()["reports"]

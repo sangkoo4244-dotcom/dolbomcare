@@ -91,10 +91,26 @@ def test_three_month_gap_flags_only_residents_missing_for_three_months(env):
     db.add(models.MonthlyMonitoring(center_id=1, resident_id=1, year_month="2026-08", visit_date=datetime(2026, 8, 10).date(),
                                     author_id=3, service_checked=True))
     db.commit()
+    # 고시 제57조: 방문 확인만 있고 욕구사정·급여제공계획이 없으면 그 달은 완료가 아니다 → 김이용도 누락
     data = client.get("/api/v1/social-work/monitoring/status", params={"year_month": "2026-10"}, headers=MANAGER).json()["data"]
-    assert [x["resident_id"] for x in data["three_month_gap"]] == [2]
+    assert [x["resident_id"] for x in data["three_month_gap"]] == [1, 2]
     data = client.get("/api/v1/social-work/monitoring/status", params={"year_month": "2026-11"}, headers=MANAGER).json()["data"]
     assert [x["resident_id"] for x in data["three_month_gap"]] == [1, 2]  # 8월 확인은 9~11월 창 밖이라 김이용도 빠진다. 최입소는 입소월(9월)이 창에 있어 제외
+
+
+def test_a_complete_month_clears_the_three_month_gap(env):
+    """방문 확인, 욕구사정, 급여제공계획이 모두 있는 달이 창 안에 하나라도 있으면 3개월 누락이 아니다."""
+    db, client = env
+    db.add_all([
+        models.NeedsAssessment(resident_id=1, assessed_date=datetime(2026, 10, 3)),
+        models.CarePlan(center_id=1, resident_id=1, written_date=datetime(2026, 10, 3).date(), author_id=3),
+        models.MonthlyMonitoring(center_id=1, resident_id=1, year_month="2026-10", visit_date=datetime(2026, 10, 5).date(),
+                                 author_id=3, service_checked=True),
+    ])
+    db.commit()
+    data = client.get("/api/v1/social-work/monitoring/status", params={"year_month": "2026-10"}, headers=MANAGER).json()["data"]
+    assert [x["resident_id"] for x in data["three_month_gap"]] == [2]
+    assert [x["resident_id"] for x in data["this_month_incomplete"]] == [2]
 
 
 def test_monthly_status_lists_who_is_still_missing(env):

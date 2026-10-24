@@ -16,7 +16,7 @@ from app.billing_rules import split_visit
 from app.database import Base
 from app.plans import PLAN_TRIAL
 from app.models import (BillingRecord, CarePlan, Center, DailyRecord, HandoverNote, IncidentReport, LeaveRequest, MonthlyMonitoring,
-                        Notification, Resident, ResidentMessage, Schedule, User)
+                        NeedsAssessment, Notification, Resident, ResidentMessage, Schedule, User)
 
 DEMO_PASSWORD = "demo1234!"
 DEMO_CENTER_NAME = "데모 체험 센터"
@@ -167,9 +167,16 @@ def seed_demo(db: Session, trial_ends_at: datetime | None = None) -> dict:
         for _ in range(months_back):
             first = (first - timedelta(days=1)).replace(day=1)
         for resident in residents[:2]:
+            month_day = first + timedelta(days=4 if months_back else 0)
             db.add(MonthlyMonitoring(center_id=center.id, resident_id=resident.id, year_month=first.strftime("%Y-%m"),
-                                     visit_date=first + timedelta(days=4 if months_back else 0), author_id=social_worker.id,
+                                     visit_date=month_day, author_id=social_worker.id,
                                      service_checked=True, note="데모 데이터: 가정 방문 확인"))
+            # 고시 제57조: 매월 욕구사정과 급여제공계획도 있어야 그 달이 완료된다
+            db.add(NeedsAssessment(resident_id=resident.id, assessed_by=social_worker.id, assessed_date=datetime.combine(month_day, datetime.min.time())))
+            db.add(CarePlan(center_id=center.id, resident_id=resident.id, plan_type="regular", service_type="방문요양",
+                            written_date=month_day, service_start_date=month_day, author_id=social_worker.id,
+                            goals="데모 데이터: 목표", needs="데모 데이터: 필요 내용", details="데모 데이터: 제공 내용",
+                            frequency="주 5회", duration_minutes=60, opinion="데모 데이터: 계획대로 제공 중"))
     db.commit()
 
     # 보호자 소통 데모 메시지 (한 번씩 주고받은 형태)
