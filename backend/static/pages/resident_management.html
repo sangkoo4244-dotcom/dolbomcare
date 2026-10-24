@@ -451,7 +451,10 @@
 
         .ptable { width: 100%; border-collapse: collapse; font-size: 13px; }
         .ptable th { text-align: left; font-weight: 700; color: #64748B; font-size: 12px; padding: 10px 8px; border-bottom: 1px solid #EEF2F6; white-space: nowrap; }
-        .ptable td { padding: 11px 8px; border-bottom: 1px solid #F3F5F8; color: var(--charcoal); vertical-align: middle; white-space: nowrap; }
+        .ptable td { padding: 11px 8px; border-bottom: 1px solid #F3F5F8; color: var(--charcoal); vertical-align: middle; white-space: nowrap; text-align: left; }
+        .ptable td:last-child { text-align: center; }
+        .ptable th:last-child { text-align: center; }
+        @media (max-width: 1366px) { .ptable td { padding: 11px 5px; } .ptable td:last-child { min-width: 180px; } .ptable td:last-child .action-buttons { gap: 4px; max-width: 180px; } }
         .ptable tr:last-child td { border-bottom: none; }
         .ptable tr:hover td { background: #F8FAFC; }
         .p-grade { display: inline-block; min-width: 46px; text-align: center; padding: 3px 9px; border-radius: 8px; font-weight: 700; font-size: 12px; }
@@ -1369,7 +1372,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td>${(r.birth_date || '-').replaceAll('-', '.')} / ${r.gender || '-'} / ${age}세</td>
+                        <td>${r.birth_date ? r.birth_date.replaceAll('-', '.') : '생년월일 미등록'} / ${r.gender || '-'} / ${age}세</td>
                         <td><span class="p-grade ${gradeClass(r.care_grade)}">${gradeLabel(r.care_grade)}</span></td>
                         <td>${escapeHtml(r._serviceType || '-')}</td>
                         <td>${statusBadge}</td>
