@@ -152,8 +152,8 @@ def test_voice_record_path_creates_the_same_billing_for_manager(env):
     env.post("/api/v1/schedule/", headers=MANAGER, json={
         "caregiver_id": 2, "resident_id": 1, "center_id": 1,
         "scheduled_date": VISIT_AT.isoformat(), "duration_minutes": 60, "benefit_type": "home_care"})
-    r = env.post("/api/v1/records/voice/create", headers=CG_A, params={
-        "resident_id": 1, "service_type": "basic_care", "duration_minutes": 60, "transcription": "식사 도움과 청소"})
+    r = env.post("/api/v1/records/create", headers=CG_A, json={
+        "caregiver_id": 2, "resident_id": 1, "service_type": "basic_care", "duration_minutes": 60, "notes": "식사 도움과 청소"})
     assert r.status_code == 200, r.text
     mine = env.get("/api/v1/billing/", headers=CG_A).json()
     mine = mine if isinstance(mine, list) else mine.get("data", mine.get("records", []))

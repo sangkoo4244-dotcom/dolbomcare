@@ -199,8 +199,9 @@ def test_guardians_cannot_read_schedules_or_record_arrival(env):
     assert db.query(models.Schedule).filter_by(id=1).one().arrived_at is None
 
 
-def test_voice_create_reports_a_missing_resident_as_404_not_500(env):
+def test_record_create_reports_another_centers_resident_as_404_not_500(env):
     _, client = env
-    r = client.post("/api/v1/records/voice/create", params={"resident_id": 1}, headers=CG_B)
+    body = {"caregiver_id": 2, "resident_id": 1, "service_type": "basic_care", "duration_minutes": 60}
+    r = client.post("/api/v1/records/create", json=body, headers=CG_B)
     assert r.status_code == 404
-    assert client.post("/api/v1/records/voice/create", params={"resident_id": 1}, headers=GUARD_B).status_code == 403
+    assert client.post("/api/v1/records/create", json=body, headers=GUARD_B).status_code == 403
