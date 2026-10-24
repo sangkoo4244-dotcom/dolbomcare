@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데이터 내보내기 - 돌봄케어</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar { width: 288px; color: white; position: fixed; left: 0; top: 0; height: 100vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+        .sidebar-nav { padding: 20px 0; overflow: hidden; }
+        .main-layout { margin-left: 288px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-title h1 { margin: 0; font-size: 24px; }
+        .user-menu { display: flex; align-items: center; gap: 16px; }
+        .user-info { text-align: right; }
+        .user-name { font-weight: 600; font-size: 13px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .logout-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .content { flex: 1; padding: 30px; }
+        @media (max-width: 768px) { .main-layout { margin-left: 0; } .content { padding: 16px; } }
+        :root { --navy: #14283F; --teal: #0F8B80; --bg: #F5F7FA; --charcoal: #243247; --line2: #E2E8F0; }
+        html, body { background: var(--bg) !important; }
+        body, .content { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, system-ui, sans-serif !important; color: var(--charcoal) !important; }
+        .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0E1D30 100%) !important; }
+        .sidebar .side-item.active { background: var(--teal) !important; color: #fff !important; }
+        .breadcrumb { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+        .breadcrumb b { color: var(--charcoal); font-weight: 600; }
+        .panel { background: #fff; border: 1px solid var(--line2); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+        .panel h2 { margin: 0 0 12px; font-size: 16px; }
+        .field { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 2px solid var(--line2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; }
+        .field:focus { border-color: var(--teal); outline: none; }
+        .lbl { display: block; font-size: 12px; font-weight: 700; color: #64748B; margin: 10px 0 4px; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn-solid { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: none; background: var(--teal); color: #fff; cursor: pointer; font-family: inherit; }
+        .btn-outline { padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line2); background: #fff; color: var(--charcoal); cursor: pointer; font-family: inherit; }
+        .meta { font-size: 13px; color: #64748B; line-height: 1.6; }
+        .msg { font-size: 13px; margin-top: 12px; display: none; }
+        .msg.err { color: #DC2626; display: block; }
+        .msg.ok { color: #15803D; display: block; }
+        @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+    </style>
+    <link rel="stylesheet" href="theme.css">
+    <script src="menu.js"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 18px; font-weight: 700;">돌봄케어</div>
+            <div style="font-size: 12px; color: #9ca3af;">Care Management</div>
+        </div>
+        <nav class="sidebar-nav"></nav>
+    </aside>
+    <div class="main-layout">
+        <div class="topbar">
+            <div class="topbar-title">
+                <h1>데이터 내보내기</h1>
+                <div class="breadcrumb">홈 › 직원·센터 › <b>데이터 내보내기</b></div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-role">센터장</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+        <div class="content">
+            <div class="panel">
+                <h2>내보낼 기간</h2>
+                <div class="grid2">
+                    <div><label class="lbl" for="sDate">시작일</label><input type="date" id="sDate" class="field"></div>
+                    <div><label class="lbl" for="eDate">종료일</label><input type="date" id="eDate" class="field"></div>
+                </div>
+                <p class="meta">한 번에 최대 1년까지 받을 수 있습니다. 이용자 정보와 제공 기록이 들어 있으니 받은 파일은 안전한 곳에 보관해 주세요. 비밀번호 등 인증 정보는 포함되지 않습니다.</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+                    <button class="btn-solid" onclick="download('json')">전체 자료 (JSON)</button>
+                    <button class="btn-outline" onclick="download('csv')">제공 기록만 (CSV, 엑셀에서 열 수 있음)</button>
+                </div>
+                <div class="msg" id="msg"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = './login.html';
+            }
+        }
+        function setMsg(text, ok) { const m = document.getElementById('msg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+        function csvCell(v) {
+            const s = v === null || v === undefined ? '' : String(v);
+            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        }
+        function toCsv(rows) {
+            const head = ['기록번호', '이용자', '요양보호사', '제공 일시', '서비스', '제공 시간(분)', '제공 항목', '상태', '특이사항'];
+            const lines = rows.map(r => [r.id, r.resident_name, r.caregiver_name, r.recorded_at, r.service_type, r.duration_minutes, r.care_items, r.condition, r.notes].map(csvCell).join(','));
+            return '﻿' + [head.join(','), ...lines].join('\r\n');  // BOM: 엑셀에서 한글이 깨지지 않게
+        }
+
+        async function download(kind) {
+            const start = document.getElementById('sDate').value;
+            const end = document.getElementById('eDate').value;
+            if (!start || !end) { setMsg('시작일과 종료일을 모두 골라 주세요', false); return; }
+            setMsg('준비하는 중입니다...', true);
+            try {
+                const r = await fetch(`/api/v1/data-export/center?start=${start}&end=${end}`, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok) throw new Error(typeof d.detail === 'string' ? d.detail : '내보내지 못했습니다');
+                const isJson = kind === 'json';
+                const blob = isJson
+                    ? new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' })
+                    : new Blob([toCsv(d.daily_records)], { type: 'text/csv;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `돌봄케어_${isJson ? '전체자료' : '제공기록'}_${start}_${end}.${isJson ? 'json' : 'csv'}`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(link.href);
+                setMsg(`받았습니다: 이용자 ${d.residents.length}명, 제공 기록 ${d.daily_records.length}건`, true);
+            } catch (e) { setMsg(e.message, false); }
+        }
+
+        (function init() {
+            if (typeof renderSidebar === 'function') renderSidebar();
+            document.getElementById('userName').textContent = user.full_name || '';
+            const today = todayLocal();
+            document.getElementById('eDate').value = today;
+            document.getElementById('sDate').value = today.slice(0, 8) + '01';
+        })();
+    </script>
+</body>
+</html>

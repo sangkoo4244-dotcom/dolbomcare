@@ -194,6 +194,7 @@ const SIDEBAR_MENUS = {
         { href: 'leave.html', icon: 'schedule', label: '연차 승인' },
         { href: 'committee.html', icon: 'messages', label: '운영위원회 회의록' },
         { href: 'duty_table.html', icon: 'schedule_check', label: '업무분장표' },
+        { href: 'data_export.html', icon: 'billing', label: '데이터 내보내기' },
         { href: 'complaints.html', icon: 'messages', label: '민원·고충 대장' },
         { href: 'equipment.html', icon: 'staff', label: '비품 관리대장' },
         { href: 'center_settings.html', icon: 'center', label: '센터 정보' },
@@ -232,29 +233,34 @@ SIDEBAR_MENUS.social_worker = [
 const SIDEBAR_GROUPS_BY_ROLE = {
     center_manager: [
         ['메인', ['대시보드', '알림']],
-        ['방문 관리', ['방문 일정 승인', '오늘 방문 현황', '방문 지도', '제공 기록 관리', '제공 기록 확인', '제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '인수인계', '사고·응급 보고']],
-        ['청구·정산', ['청구관리', '청구 입력 도우미', '공단 태그 대조', '본인부담금', '월별정산', '급여 확정', '급여 지급 대장', '수익분석', '이번 달 성과']],
-        ['수급자·보호자', ['수급자 관리', '보호자 관리', '보호자 소통', '민원·고충 대장', '문자 보내기', '계약통보서 초안']],
-        ['서비스 계획·평가', ['급여제공계획', '기초평가 현황', '인지활동 계획', '상담 기록', '관찰일지·의견 기록', '결과평가·사례관리', '평가 준비 자료', '교육·안내 기록']],
-        ['직원·센터', ['직원관리', '업무분장표', '직원 규정준수', '교육 수료증', '근무 현황', '연차 승인', '점검 기록', '운영위원회 회의록', '비품 관리대장', '센터 정보']],
+        ['방문 관리', ['방문 일정 승인', '오늘 방문 현황', '방문 지도', '제공 기록 관리', '제공 기록 확인', '인수인계', '사고·응급 보고']],
+        ['청구·정산', ['청구관리', '월별정산', '급여 확정']],
+        ['수급자·보호자', ['수급자 관리', '보호자 소통', '민원·고충 대장']],
+        ['서비스 계획·평가', ['급여제공계획', '기초평가 현황', '결과평가·사례관리']],
+        ['직원·센터', ['직원관리', '업무분장표', '연차 승인', '데이터 내보내기', '센터 정보']],
+        ['더 보기', ['제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '청구 입력 도우미', '공단 태그 대조', '본인부담금', '급여 지급 대장', '수익분석', '이번 달 성과', '보호자 관리', '문자 보내기', '계약통보서 초안', '인지활동 계획', '상담 기록', '관찰일지·의견 기록', '평가 준비 자료', '교육·안내 기록', '직원 규정준수', '교육 수료증', '근무 현황', '점검 기록', '운영위원회 회의록', '비품 관리대장']],
         ['도움말', ['센터장 안내']],
     ],
     caregiver: [
         ['메인', ['대시보드', '알림']],
-        ['오늘 업무', ['나의 일정', '방문 지도', '제공 기록', '제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '인수인계', '사고·응급 보고', '점검 기록']],
+        ['오늘 업무', ['나의 일정', '방문 지도', '제공 기록', '인수인계', '사고·응급 보고']],
         ['수급자·보호자', ['담당 수급자', '급여제공계획 확인', '관찰일지·의견 기록', '보호자 소통']],
         ['나의 청구·급여', ['나의 청구', '나의 급여']],
-        ['근무·교육', ['출퇴근', '연차 신청', '나의 기록', '교육 이력', '교육 수료증']],
+        ['근무·교육', ['출퇴근', '연차 신청']],
+        ['더 보기', ['제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '점검 기록', '나의 기록', '교육 이력', '교육 수료증']],
         ['도움말', ['사용 안내']],
     ],
     social_worker: [
         ['메인', ['대시보드', '알림']],
-        ['사례 관리', ['수급자 관리', '기초평가 현황', '인지활동 계획', '급여제공계획', '상담 기록', '업무수행일지', '관찰일지·의견 기록', '결과평가·사례관리', '보호자 소통', '민원·고충 대장']],
-        ['방문·기록', ['방문 지도', '제공 기록 확인', '사고·응급 보고', '제공기록지', '평가 준비 자료']],
-        ['근무·교육', ['출퇴근', '연차 신청', '나의 기록', '교육 수료증']],
+        ['사례 관리', ['수급자 관리', '기초평가 현황', '급여제공계획', '상담 기록', '업무수행일지', '관찰일지·의견 기록', '보호자 소통', '민원·고충 대장']],
+        ['방문·기록', ['방문 지도', '제공 기록 확인', '사고·응급 보고', '제공기록지']],
+        ['근무·교육', ['출퇴근', '연차 신청']],
+        ['더 보기', ['인지활동 계획', '결과평가·사례관리', '평가 준비 자료', '나의 기록', '교육 수료증']],
         ['도움말', ['사용 안내']],
     ],
 };
+
+const MORE_GROUP = '더 보기';
 
 function applySidebarGroups(nav, roleMenu) {
     const groups = SIDEBAR_GROUPS_BY_ROLE[roleMenu];
@@ -266,6 +272,18 @@ function applySidebarGroups(nav, roleMenu) {
     groups.forEach(([label, names]) => {
         const found = names.map(n => byLabel[n]).filter(Boolean);
         if (!found.length) return;
+        if (label === MORE_GROUP) {  // 자주 쓰지 않는 메뉴는 접어 둔다. 주소는 그대로이고 현재 화면이 들어 있으면 자동으로 펼친다
+            const box = document.createElement('details');
+            box.className = 'side-more';
+            const summary = document.createElement('summary');
+            summary.className = 'side-group-label';
+            summary.textContent = `${label} (${found.length})`;
+            box.appendChild(summary);
+            found.forEach(a => box.appendChild(a));
+            if (found.some(a => a.classList.contains('active'))) box.open = true;
+            frag.appendChild(box);
+            return;
+        }
         const h = document.createElement('div');
         h.className = 'side-group-label';
         h.textContent = label;
@@ -279,6 +297,10 @@ function applySidebarGroups(nav, roleMenu) {
 
 const SIDEBAR_STYLE = `
 .side-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7E93AC; padding: 16px 16px 6px; }
+.side-more > summary { list-style: none; cursor: pointer; }
+.side-more > summary::-webkit-details-marker { display: none; }
+.side-more > summary::after { content: ' ▾'; }
+.side-more[open] > summary::after { content: ' ▴'; }
 /* 메뉴가 화면보다 길면 사이드바 안에서 스크롤된다. 스크롤 막대는 가늘고 은은하게 보이게 한다 */
 #navContent, .sidebar-nav { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent; overscroll-behavior: contain; }
 #navContent::-webkit-scrollbar, .sidebar-nav::-webkit-scrollbar { width: 6px; }

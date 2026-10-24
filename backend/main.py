@@ -39,7 +39,7 @@ from app.api import audit_prep, visit_precheck, counseling, care_plans, service_
 from app.api import staff_records
 from app.api import record_review
 from app.api import leave
-from app.api import committee, equipment, resident_logs, training_certs, copay_estimate, complaints
+from app.api import committee, equipment, resident_logs, training_certs, copay_estimate, complaints, data_export
 from app.api import resident_media
 from app.api import centers
 from app.api import center_directory
@@ -105,6 +105,7 @@ app.include_router(record_review.router, prefix="/api/v1/record-review", tags=["
 app.include_router(leave.router, prefix="/api/v1/leave", tags=["leave"], dependencies=[Depends(get_current_user)])
 app.include_router(committee.router, prefix="/api/v1/committee", tags=["committee"], dependencies=[Depends(get_current_user)])
 app.include_router(complaints.router, prefix="/api/v1/complaints", tags=["complaints"], dependencies=[Depends(get_current_user)])
+app.include_router(data_export.router, prefix="/api/v1/data-export", tags=["data-export"], dependencies=[Depends(get_current_user)])
 app.include_router(equipment.router, prefix="/api/v1/equipment", tags=["equipment"], dependencies=[Depends(get_current_user)])
 app.include_router(resident_logs.router, prefix="/api/v1/resident-logs", tags=["resident_logs"], dependencies=[Depends(get_current_user)])
 app.include_router(training_certs.router, prefix="/api/v1/training-certs", tags=["training_certs"], dependencies=[Depends(get_current_user)])
