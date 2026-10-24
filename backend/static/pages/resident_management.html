@@ -275,9 +275,9 @@
         /* 관리 버튼: 글자가 세로로 쪼개지지 않게 한 줄 유지하고, 칸이 좁으면 버튼 단위로 줄바꿈한다 */
         .btn-detail { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
         #residentsTable { overflow-x: auto; }
-        .ptable td:nth-child(3) { min-width: 170px; word-break: keep-all; overflow-wrap: break-word; }
-        .ptable td:last-child { min-width: 260px; }
-        .ptable td:last-child .action-buttons { flex-wrap: wrap; justify-content: center; max-width: 260px; margin: 0 auto; }
+        .ptable td:nth-child(3) { min-width: 130px; white-space: normal; word-break: keep-all; overflow-wrap: break-word; }
+        .ptable td:last-child { min-width: 200px; }
+        .ptable td:last-child .action-buttons { flex-wrap: wrap; justify-content: center; max-width: 200px; margin: 0 auto; }
         .btn-kebab { width: 36px; height: 36px; border: none; background: transparent; color: #6B7280; cursor: pointer; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
         .btn-kebab svg { width: 18px; height: 18px; }
         .btn-kebab:hover { background: #FEE2E2; color: #B91C1C; }
@@ -644,10 +644,6 @@
                     <div class="side-panel">
                         <div class="side-panel-head">최근 등록된 이용자</div>
                         <div id="recentList"></div>
-                    </div>
-                    <div class="brand-panel">
-                        <p>이용자 맞춤 케어로<br>더 행복한 일상을 함께합니다.</p>
-                        <img src="assets/user_design/resident_banner.jpg" alt="" style="opacity:0.9;">
                     </div>
                 </div>
             </div>
