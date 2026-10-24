@@ -616,13 +616,55 @@
                 .filter(([code, words]) => !checked.has(code) && words.some(w => text.includes(w)))
                 .map(([code]) => code);
         }
+        // 신체·식사·인지 변화와 대변·소변 실수 횟수도 기록 문장에서 찾아 제안한다 (눌러야 반영)
+        const CHANGE_FIELDS = [
+            { id: 'physicalChange', name: '신체기능', keys: ['신체기능', '신체 기능'] },
+            { id: 'mealChange', name: '식사기능', keys: ['식사기능', '식사 기능'] },
+            { id: 'cognitiveChange', name: '인지기능', keys: ['인지기능', '인지 기능'] },
+        ];
+        const CHANGE_VALUES = [
+            { value: 'improved', label: '호전', words: ['호전', '좋아졌', '나아졌'] },
+            { value: 'worsened', label: '악화', words: ['악화', '나빠졌', '떨어졌'] },
+            { value: 'maintained', label: '유지', words: ['유지', '변함없', '그대로'] },
+        ];
+        const ACCIDENT_FIELDS = [
+            { id: 'stoolAccidents', label: '대변 실수', re: /대변\s*(?:실수\s*)?(\d+)\s*회/ },
+            { id: 'urineAccidents', label: '소변 실수', re: /소변\s*(?:실수\s*)?(\d+)\s*회/ },
+        ];
+        let pendingChanges = [];
+        function suggestChanges(text) {
+            const out = [];
+            const sentences = text.split(/[.\n,!?]/);
+            CHANGE_FIELDS.forEach(f => {
+                const sel = document.getElementById(f.id);
+                if (!sel || sel.value) return;
+                const sentence = sentences.find(s => f.keys.some(k => s.includes(k)));
+                const v = sentence && CHANGE_VALUES.find(c => c.words.some(w => sentence.includes(w)));
+                if (v) out.push({ text: `${f.name} ${v.label}`, apply: () => { sel.value = v.value; } });
+            });
+            ACCIDENT_FIELDS.forEach(f => {
+                const el = document.getElementById(f.id);
+                const m = text.match(f.re);
+                if (el && m && !el.value) out.push({ text: `${f.label} ${m[1]}회`, apply: () => { el.value = m[1]; } });
+            });
+            return out;
+        }
+        function applyChange(index) {
+            const change = pendingChanges[index];
+            if (change) change.apply();
+            renderItemSuggest();
+        }
         function renderItemSuggest() {
             const box = document.getElementById('itemSuggest');
-            const codes = suggestItems(document.getElementById('notes').value);
-            if (!codes.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+            const text = document.getElementById('notes').value;
+            const codes = suggestItems(text);
+            pendingChanges = suggestChanges(text);
+            if (!codes.length && !pendingChanges.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
             box.style.display = '';
-            box.innerHTML = '<span class="text-xs text-gray-500 mr-2">기록 내용에서 찾은 제공 항목 (눌러서 추가)</span>' +
-                codes.map(c => `<button type="button" class="quick-tag" onclick="addSuggestedItem('${c}')">+ ${CARE_ITEM_LABELS[c]}</button>`).join(' ');
+            const itemButtons = codes.map(c => `<button type="button" class="quick-tag" onclick="addSuggestedItem('${c}')">+ ${CARE_ITEM_LABELS[c]}</button>`).join(' ');
+            const changeButtons = pendingChanges.map((c, i) => `<button type="button" class="quick-tag" onclick="applyChange(${i})">+ ${c.text}</button>`).join(' ');
+            box.innerHTML = (codes.length ? '<span class="text-xs text-gray-500 mr-2">기록 내용에서 찾은 제공 항목 (눌러서 추가)</span>' + itemButtons : '') +
+                (pendingChanges.length ? `<div class="mt-2"><span class="text-xs text-gray-500 mr-2">기록 내용에서 찾은 변화·실수 (눌러서 반영)</span>${changeButtons}</div>` : '');
         }
         function addSuggestedItem(code) {
             const cb = document.querySelector(`input[name="careItem"][value="${code}"]`);
