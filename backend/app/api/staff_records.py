@@ -2,15 +2,17 @@ from datetime import date, datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.auth import require_manager
 from app.database import get_db
 from app.labor_rules import annual_leave_days, retirement_estimate
-from app.models import SalaryStatement, StaffRecord, User
+from app.models import LeaveRequest, SalaryStatement, StaffRecord, User
 
 router = APIRouter()
+
+LEAVE_USE_DAYS = {"annual": 1, "half_am": 0.5, "half_pm": 0.5}  # 기타 휴가(other)는 연차를 쓴 것이 아니라 0일
 
 # 근로기준법·공단평가가 요구하는 직원 규정준수 기록 종류.
 # 연차 발생일수·퇴직금 산정 같은 구체적인 계산식은 반영하지 않고, 날짜·내용·숫자값을
@@ -118,6 +120,21 @@ def list_staff_records(
     }
 
 
+def _anniversary(hire: date, year: int) -> date:
+    try:
+        return hire.replace(year=year)
+    except ValueError:  # 2월 29일 입사
+        return date(year, 2, 28)
+
+
+def _leave_period_start(hire: date, as_of: date) -> date:
+    """연차 year의 시작일: 입사기념일(첫 1년은 입사일)."""
+    start = _anniversary(hire, as_of.year)
+    if start > as_of:
+        start = _anniversary(hire, as_of.year - 1)
+    return max(start, hire)
+
+
 @router.get("/staff/{staff_id}/annual-leave")
 def get_annual_leave_estimate(
     staff_id: int,
@@ -125,14 +142,34 @@ def get_annual_leave_estimate(
     db: Session = Depends(get_db),
     actor: User = Depends(require_manager),
 ):
-    """근로기준법 제60조 기준 연차유급휴가 발생일수 (참고용 자동계산)."""
+    """근로기준법 제60조 기준 연차유급휴가 발생일수 (참고용 자동계산) + 같은 연차 year에 승인된 사용 일수."""
     staff = db.query(User).filter(User.id == staff_id).first()
     if not staff or staff.center_id != actor.center_id:
         raise HTTPException(status_code=404, detail="직원을 찾을 수 없습니다")
     if not staff.hire_date:
         raise HTTPException(status_code=400, detail="입사일이 등록되지 않아 계산할 수 없습니다")
 
-    return annual_leave_days(staff.hire_date, as_of or date.today())
+    as_of = as_of or date.today()
+    period_start = _leave_period_start(staff.hire_date, as_of)
+    approved = (
+        db.query(LeaveRequest)
+        .filter(
+            LeaveRequest.staff_id == staff_id,
+            LeaveRequest.status == "approved",
+            LeaveRequest.leave_date >= period_start,
+            LeaveRequest.leave_date <= as_of,
+        )
+        .all()
+    )
+    used_days = sum(LEAVE_USE_DAYS.get(r.leave_type, 0) for r in approved)
+
+    result = annual_leave_days(staff.hire_date, as_of)
+    result.update({
+        "period_start": period_start.isoformat(),
+        "used_days": used_days,
+        "remaining_days": result["days"] - used_days,
+    })
+    return result
 
 
 @router.get("/staff/{staff_id}/retirement-estimate")
@@ -163,6 +200,36 @@ def get_retirement_estimate(
         (s.year_month, s.wage_base if s.wage_base is not None else s.billing_total) for s in reversed(recent)
     ]
     return retirement_estimate(staff.hire_date, as_of or date.today(), recent_monthly_wages)
+
+
+class DutyBody(BaseModel):
+    duty_summary: str = Field("", max_length=2000)
+
+
+@router.get("/duties")
+def list_duties(db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    """업무분장표: 같은 센터 직원의 직급·직무·맡은 업무 (센터장 전용)."""
+    staff = (
+        db.query(User)
+        .filter(User.center_id == actor.center_id, User.role.in_(("center_manager", "caregiver", "social_worker")))
+        .order_by(User.full_name)
+        .all()
+    )
+    return {"status": "success", "data": [
+        {"staff_id": u.id, "full_name": u.full_name, "role": u.role, "position": u.position,
+         "job_type": u.job_type, "duty_summary": u.duty_summary or ""}
+        for u in staff
+    ]}
+
+
+@router.put("/duties/{staff_id}")
+def update_duty(staff_id: int, body: DutyBody, db: Session = Depends(get_db), actor: User = Depends(require_manager)):
+    staff = db.query(User).filter(User.id == staff_id, User.center_id == actor.center_id).first()
+    if not staff:
+        raise HTTPException(status_code=404, detail="직원을 찾을 수 없습니다")
+    staff.duty_summary = body.duty_summary.strip() or None
+    db.commit()
+    return {"status": "success"}
 
 
 @router.delete("/{record_id}")

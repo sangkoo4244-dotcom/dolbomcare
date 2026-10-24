@@ -15,7 +15,8 @@ from app.api.users import get_password_hash
 from app.billing_rules import split_visit
 from app.database import Base
 from app.plans import PLAN_TRIAL
-from app.models import BillingRecord, Center, DailyRecord, Notification, Resident, ResidentMessage, Schedule, User
+from app.models import (BillingRecord, CarePlan, Center, DailyRecord, HandoverNote, IncidentReport, LeaveRequest, Notification,
+                        Resident, ResidentMessage, Schedule, User)
 
 DEMO_PASSWORD = "demo1234!"
 DEMO_CENTER_NAME = "데모 체험 센터"
@@ -85,21 +86,21 @@ def seed_demo(db: Session, trial_ends_at: datetime | None = None) -> dict:
     center.manager_id = manager.id
     db.commit()
 
-    # 이용자 3명 (그중 1명은 데모 보호자와 연결)
+    # 이용자 3명 (그중 1명은 데모 보호자와 연결, 2명은 데모 요양사가 담당 - 나머지 1명은 미배정으로 둔다)
     # 주소와 좌표는 서울 도심의 공개 장소를 쓴다 (실제 사람의 주소가 아님). 좌표를 미리 넣어 두어 방문 지도에 점이 바로 찍힌다.
     residents_spec = [
-        dict(name="김복동", age=84, care_grade=2, client_type="일반", guardian_id=None,
+        dict(name="김복동", age=84, care_grade=2, client_type="일반", guardian_id=None, primary=caregiver.id,
              address="서울특별시 중구 세종대로 110", latitude=37.5663, longitude=126.9779),
-        dict(name="이순자", age=79, care_grade=3, client_type="차상위계층", guardian_id=guardian.id,
+        dict(name="이순자", age=79, care_grade=3, client_type="차상위계층", guardian_id=guardian.id, primary=caregiver.id,
              address="서울특별시 중구 태평로1가 31", latitude=37.5652, longitude=126.9768),
-        dict(name="박만수", age=88, care_grade=1, client_type="일반", guardian_id=None,
+        dict(name="박만수", age=88, care_grade=1, client_type="일반", guardian_id=None, primary=None,
              address="서울특별시 중구 세종대로 99", latitude=37.5658, longitude=126.9751),
     ]
     residents = []
     for spec in residents_spec:
         r = Resident(center_id=center.id, name=spec["name"], age=spec["age"], admission_date=datetime.now() - timedelta(days=200),
                      health_status="stable", guardian_id=spec["guardian_id"], care_grade=spec["care_grade"],
-                     client_type=spec["client_type"], gender="여",
+                     client_type=spec["client_type"], gender="여", primary_caregiver_id=spec["primary"],
                      address=spec["address"], latitude=spec["latitude"], longitude=spec["longitude"])
         db.add(r)
         residents.append(r)
@@ -137,6 +138,22 @@ def seed_demo(db: Session, trial_ends_at: datetime | None = None) -> dict:
             db.add(Schedule(caregiver_id=caregiver.id, resident_id=resident.id, center_id=center.id, scheduled_date=when, duration_minutes=60,
                             planned_items="meal_assist,mobility", service_type="basic_care", status="scheduled"))
             schedule_count += 1
+    db.commit()
+
+    # 역할 간 업무 흐름 데모: 사회복지사가 쓴 급여제공계획, 요양보호사가 올린 사고 보고·인계 메모, 요양보호사의 승인 대기 연차
+    today = datetime.now().date()
+    db.add(CarePlan(center_id=center.id, resident_id=residents[0].id, plan_type="regular", service_type="방문요양",
+                    written_date=today - timedelta(days=30), service_start_date=today - timedelta(days=30), author_id=social_worker.id,
+                    goals="낙상 없이 일상생활 동작을 유지한다", needs="보행 시 보조가 필요함", details="보행 보조, 식사 준비 보조",
+                    frequency="주 5회", duration_minutes=60, opinion="데모 데이터: 계획대로 제공 중", supervisor_name="데모 사회복지사"))
+    db.add(IncidentReport(center_id=center.id, resident_id=residents[1].id, reporter_id=caregiver.id, occurred_date=today - timedelta(days=2),
+                          incident_type="fall", description="데모 데이터: 화장실 앞에서 미끄러져 넘어짐 (외상 없음)",
+                          action_taken="즉시 일으켜 세우고 활력징후 확인", guardian_notified_date=today - timedelta(days=2),
+                          prevention="욕실 바닥 매트 설치, 화장실 동행"))
+    db.add(HandoverNote(center_id=center.id, resident_id=residents[2].id, author_id=caregiver.id,
+                        content="데모 데이터: 최근 식사량이 줄었음. 다음 방문 때 확인 부탁"))
+    db.add(LeaveRequest(center_id=center.id, staff_id=caregiver.id, leave_date=today + timedelta(days=5), leave_type="annual",
+                        reason="데모 데이터: 개인 사정", status="pending"))
     db.commit()
 
     # 보호자 소통 데모 메시지 (한 번씩 주고받은 형태)

@@ -193,6 +193,8 @@ const SIDEBAR_MENUS = {
         { href: 'attendance.html', icon: 'schedule', label: '근무 현황' },
         { href: 'leave.html', icon: 'schedule', label: '연차 승인' },
         { href: 'committee.html', icon: 'messages', label: '운영위원회 회의록' },
+        { href: 'duty_table.html', icon: 'schedule_check', label: '업무분장표' },
+        { href: 'complaints.html', icon: 'messages', label: '민원·고충 대장' },
         { href: 'equipment.html', icon: 'staff', label: '비품 관리대장' },
         { href: 'center_settings.html', icon: 'center', label: '센터 정보' },
         { href: 'guide_manager.html', icon: 'stamp', label: '센터장 안내' }
@@ -211,6 +213,7 @@ SIDEBAR_MENUS.social_worker = [
     { href: 'care_plan.html', icon: 'schedule_check', label: '급여제공계획' },
     { href: 'counseling.html', icon: 'messages', label: '상담 기록' },
     { href: 'social_work.html', icon: 'schedule_check', label: '업무수행일지' },
+    { href: 'complaints.html', icon: 'messages', label: '민원·고충 대장' },
     { href: 'resident_logs.html', icon: 'messages', label: '관찰일지·의견 기록' },
     { href: 'service_review.html', icon: 'profit', label: '결과평가·사례관리' },
     { href: 'record_review.html', icon: 'schedule_check', label: '제공 기록 확인' },
@@ -231,9 +234,9 @@ const SIDEBAR_GROUPS_BY_ROLE = {
         ['메인', ['대시보드', '알림']],
         ['방문 관리', ['방문 일정 승인', '오늘 방문 현황', '방문 지도', '제공 기록 관리', '제공 기록 확인', '제공기록지', '목욕·간호 기록지', '방문간호 지시서', '주야간 이용 기록', '인수인계', '사고·응급 보고']],
         ['청구·정산', ['청구관리', '청구 입력 도우미', '공단 태그 대조', '본인부담금', '월별정산', '급여 확정', '급여 지급 대장', '수익분석', '이번 달 성과']],
-        ['수급자·보호자', ['수급자 관리', '보호자 관리', '보호자 소통', '문자 보내기', '계약통보서 초안']],
+        ['수급자·보호자', ['수급자 관리', '보호자 관리', '보호자 소통', '민원·고충 대장', '문자 보내기', '계약통보서 초안']],
         ['서비스 계획·평가', ['급여제공계획', '기초평가 현황', '인지활동 계획', '상담 기록', '관찰일지·의견 기록', '결과평가·사례관리', '평가 준비 자료', '교육·안내 기록']],
-        ['직원·센터', ['직원관리', '직원 규정준수', '교육 수료증', '근무 현황', '연차 승인', '점검 기록', '운영위원회 회의록', '비품 관리대장', '센터 정보']],
+        ['직원·센터', ['직원관리', '업무분장표', '직원 규정준수', '교육 수료증', '근무 현황', '연차 승인', '점검 기록', '운영위원회 회의록', '비품 관리대장', '센터 정보']],
         ['도움말', ['센터장 안내']],
     ],
     caregiver: [
@@ -246,7 +249,7 @@ const SIDEBAR_GROUPS_BY_ROLE = {
     ],
     social_worker: [
         ['메인', ['대시보드', '알림']],
-        ['사례 관리', ['수급자 관리', '기초평가 현황', '인지활동 계획', '급여제공계획', '상담 기록', '업무수행일지', '관찰일지·의견 기록', '결과평가·사례관리', '보호자 소통']],
+        ['사례 관리', ['수급자 관리', '기초평가 현황', '인지활동 계획', '급여제공계획', '상담 기록', '업무수행일지', '관찰일지·의견 기록', '결과평가·사례관리', '보호자 소통', '민원·고충 대장']],
         ['방문·기록', ['방문 지도', '제공 기록 확인', '사고·응급 보고', '제공기록지', '평가 준비 자료']],
         ['근무·교육', ['출퇴근', '연차 신청', '나의 기록', '교육 수료증']],
         ['도움말', ['사용 안내']],

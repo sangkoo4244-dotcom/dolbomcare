@@ -84,6 +84,19 @@ def test_one_monitoring_visit_per_resident_per_month(env):
     assert client.post("/api/v1/social-work/monitoring", json={**body, "visit_date": "2026-09-30T10:00:00"}, headers=SOCIAL).status_code == 400
 
 
+def test_three_month_gap_flags_only_residents_missing_for_three_months(env):
+    """고시: 세 달 연속 방문 확인이 빠지면 가산 점수를 받을 수 없다. 8월에 한 번이라도 확인했거나 9월 입소한 이용자는 제외."""
+    db, client = env
+    db.add(models.Resident(id=3, center_id=1, name="최입소", care_grade=2, admission_date=datetime(2026, 9, 15)))
+    db.add(models.MonthlyMonitoring(center_id=1, resident_id=1, year_month="2026-08", visit_date=datetime(2026, 8, 10).date(),
+                                    author_id=3, service_checked=True))
+    db.commit()
+    data = client.get("/api/v1/social-work/monitoring/status", params={"year_month": "2026-10"}, headers=MANAGER).json()["data"]
+    assert [x["resident_id"] for x in data["three_month_gap"]] == [2]
+    data = client.get("/api/v1/social-work/monitoring/status", params={"year_month": "2026-11"}, headers=MANAGER).json()["data"]
+    assert [x["resident_id"] for x in data["three_month_gap"]] == [1, 2]  # 8월 확인은 9~11월 창 밖이라 김이용도 빠진다. 최입소는 입소월(9월)이 창에 있어 제외
+
+
 def test_monthly_status_lists_who_is_still_missing(env):
     _, client = env
     client.post("/api/v1/social-work/monitoring", json={"resident_id": 1, "year_month": "2026-10", "visit_date": "2026-10-14T10:00:00"}, headers=SOCIAL)

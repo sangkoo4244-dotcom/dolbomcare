@@ -19,6 +19,7 @@ class User(Base):
     phone = Column(String, nullable=True)
     hire_date = Column(Date, nullable=True)  # 고용 시작일
     position = Column(String, nullable=True)  # 직급: '요양사', '팀장', '관리사' 등
+    duty_summary = Column(Text, nullable=True)  # 업무분장: 맡은 업무 요약 (센터장이 작성, 업무분장표에 출력)
     emergency_contact = Column(String, nullable=True)  # 긴급 연락처
     employment_status = Column(String, default="active")  # 'active', 'inactive', 'leave'
     job_type = Column(String, nullable=True)  # 직종: '요양보호사'(NULL=요양보호사), '간호사', '간호조무사'. 방문간호는 간호직만 제공할 수 있다
@@ -889,6 +890,25 @@ class LeaveRequest(Base):
     decided_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     decided_at = Column(DateTime, nullable=True)
     decision_note = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+
+
+class Complaint(Base):
+    """민원·고충 대장 - 보호자나 이용자가 접수한 불만·요청을 접수부터 처리 결과까지 남긴다.
+    처리 결과를 적지 않으면 처리 완료로 바꿀 수 없다 (민원 처리 기록이 남는 것이 목적이다)."""
+    __tablename__ = "complaints"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), nullable=True, index=True)  # 특정 이용자와 관계없는 민원은 비운다
+    complainant = Column(String)  # 접수인 (이름·관계, 예: 김영희(딸))
+    received_date = Column(Date, index=True)
+    category = Column(String)  # service / caregiver / facility / other
+    content = Column(Text)
+    status = Column(String, default="open", index=True)  # open / resolved
+    action_taken = Column(Text, nullable=True)  # 처리 내용
+    resolved_date = Column(Date, nullable=True)
+    recorded_by = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.now)
 
 

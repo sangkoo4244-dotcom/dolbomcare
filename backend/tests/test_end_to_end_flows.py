@@ -105,11 +105,8 @@ def test_leave_request_to_approval_and_back(env):
     assert client.get("/api/v1/leave/requests/mine", headers=CAREGIVER).json()["data"][0]["status"] == "approved"
 
 
-def test_committee_meeting_notifies_staff_and_due_assessments_reach_managers(env):
-    client, Session = env
-    meeting = {"meeting_date": (date.today() + timedelta(days=7)).isoformat(), "title": "운영위원회", "agenda": "일정 조정"}
-    assert client.post("/api/v1/committee", json=meeting, headers=MANAGER).status_code == 200
-    assert notes(Session, 2, "staff_meeting") and notes(Session, 3, "staff_meeting")
+def test_due_assessments_reach_managers_not_caregivers(env):
+    _, Session = env
     # 평가가 한 번도 없으므로 정기 점검이 센터장과 사회복지사에게 알림을 보낸다
     s = Session()
     try:

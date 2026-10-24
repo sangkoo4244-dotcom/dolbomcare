@@ -847,7 +847,7 @@
                     const r = await fetch(`${API_URL}/staff-records/staff/${recordsStaffId}/annual-leave`);
                     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || '계산 실패');
                     const d = await r.json();
-                    box.innerHTML = `<div class="st-calc-box"><b>법정 연차 발생일수 (참고용)</b>: ${d.days}일 <span class="st-muted">· ${escapeAttr(d.basis)} · 근속 ${d.service_days}일</span></div>`;
+                    box.innerHTML = `<div class="st-calc-box"><b>법정 연차 발생일수 (참고용)</b>: ${d.days}일 · 사용 ${d.used_days}일 · 잔여 ${d.remaining_days}일 <span class="st-muted">· 연차 기간 ${d.period_start}부터 승인된 신청 기준 · ${escapeAttr(d.basis)} · 근속 ${d.service_days}일</span></div>`;
                 } catch (e) {
                     box.innerHTML = `<div class="st-muted">${escapeAttr(e.message)}</div>`;
                 }

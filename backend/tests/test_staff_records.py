@@ -117,6 +117,38 @@ def test_annual_leave_endpoint_uses_hire_date(client):
     assert body["days"] == 15
 
 
+def test_annual_leave_counts_approved_use_in_current_period(client):
+    """승인된 연차만 현재 연차 year(입사기념일 기준)에서 센다. 반차 0.5일, 기타 휴가·대기·이전 연도는 제외."""
+    db = client.app.dependency_overrides[get_db]
+    session = next(db())
+    session.add_all([
+        models.LeaveRequest(center_id=1, staff_id=2, leave_date=date(2026, 2, 10), leave_type="annual", status="approved"),
+        models.LeaveRequest(center_id=1, staff_id=2, leave_date=date(2026, 2, 11), leave_type="half_am", status="approved"),
+        models.LeaveRequest(center_id=1, staff_id=2, leave_date=date(2026, 2, 12), leave_type="other", status="approved"),
+        models.LeaveRequest(center_id=1, staff_id=2, leave_date=date(2026, 2, 13), leave_type="annual", status="pending"),
+        models.LeaveRequest(center_id=1, staff_id=2, leave_date=date(2025, 6, 1), leave_type="annual", status="approved"),
+        models.LeaveRequest(center_id=1, staff_id=2, leave_date=date(2026, 6, 1), leave_type="annual", status="approved"),
+    ])
+    session.commit()
+    session.close()
+
+    res = client.get("/api/v1/staff-records/staff/2/annual-leave?as_of=2026-03-01", headers=MANAGER)
+    assert res.status_code == 200
+    body = res.json()
+    assert body["days"] == 15
+    assert body["period_start"] == "2026-01-01"
+    assert body["used_days"] == 1.5
+    assert body["remaining_days"] == 13.5
+
+
+def test_annual_leave_first_year_period_starts_at_hire_date(client):
+    res = client.get("/api/v1/staff-records/staff/2/annual-leave?as_of=2025-06-01", headers=MANAGER)
+    assert res.status_code == 200
+    body = res.json()
+    assert body["period_start"] == "2025-01-01"
+    assert body["used_days"] == 0
+
+
 def test_annual_leave_endpoint_requires_hire_date(client):
     res = client.get("/api/v1/staff-records/staff/3/annual-leave", headers=MANAGER)
     assert res.status_code == 404  # 다른 센터 직원
@@ -167,6 +199,20 @@ def test_retirement_uses_wage_base_not_billing_total_when_ratio_applied(client):
     body = res.json()
     assert body["average_daily_wage"] == 50000
     assert body["estimated_amount"] == 1_500_000
+
+
+def test_duty_table_lists_only_own_center_staff_and_saves_text(client):
+    res = client.get("/api/v1/staff-records/duties", headers=MANAGER)
+    assert res.status_code == 200
+    assert sorted(d["staff_id"] for d in res.json()["data"]) == [1, 2]  # 다른 센터 직원(3)은 빠진다
+
+    res = client.put("/api/v1/staff-records/duties/2", headers=MANAGER, json={"duty_summary": "  방문요양 일정·기록 관리  "})
+    assert res.status_code == 200
+    row = next(d for d in client.get("/api/v1/staff-records/duties", headers=MANAGER).json()["data"] if d["staff_id"] == 2)
+    assert row["duty_summary"] == "방문요양 일정·기록 관리"
+
+    assert client.put("/api/v1/staff-records/duties/3", headers=MANAGER, json={"duty_summary": "x"}).status_code == 404
+    assert client.get("/api/v1/staff-records/duties", headers=CAREGIVER).status_code == 403
 
 
 def test_caregiver_cannot_see_annual_leave_or_retirement(client):

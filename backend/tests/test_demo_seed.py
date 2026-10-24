@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 from app import models
-from app.api import admin, users
+from app.api import admin, care_plans, handovers, incidents, leave, users
 from app.api.users import create_access_token
 from app.database import Base, get_db
 from app.demo_seed import DEMO_CAREGIVER_EMAIL, DEMO_CENTER_NAME, DEMO_GUARDIAN_EMAIL, DEMO_MANAGER_EMAIL, DEMO_SOCIAL_EMAIL
@@ -45,6 +45,10 @@ def env(tmp_path, monkeypatch):
     app = FastAPI()
     app.include_router(admin.router, prefix="/api/v1/admin")
     app.include_router(users.router, prefix="/api/v1/users")
+    app.include_router(care_plans.router, prefix="/api/v1/care-plans")
+    app.include_router(handovers.router, prefix="/api/v1/handovers")
+    app.include_router(incidents.router, prefix="/api/v1/incidents")
+    app.include_router(leave.router, prefix="/api/v1/leave")
 
     def override():
         s = Session()
@@ -100,6 +104,10 @@ def test_orphan_demo_guardian_left_by_a_center_delete_does_not_block_a_new_seed(
     db.query(models.DailyRecord).delete()
     db.query(models.ResidentMessage).delete()
     db.query(models.Notification).delete()
+    db.query(models.IncidentReport).filter_by(center_id=demo_center.id).delete()
+    db.query(models.HandoverNote).filter_by(center_id=demo_center.id).delete()
+    db.query(models.LeaveRequest).filter_by(center_id=demo_center.id).delete()
+    db.query(models.CarePlan).filter_by(center_id=demo_center.id).delete()
     db.query(models.Resident).filter_by(center_id=demo_center.id).delete()
     db.query(models.User).filter(models.User.center_id == demo_center.id).delete()
     db.delete(demo_center)
@@ -144,6 +152,38 @@ def test_demo_login_resets_a_stale_demo_only_once_a_day_and_keeps_the_trial_end(
     assert client.post("/api/v1/users/login", json={"email": DEMO_MANAGER_EMAIL, "password": "demo1234!"}).status_code == 200
     db.expire_all()
     assert db.query(models.Center).filter_by(name=DEMO_CENTER_NAME).one().id == refreshed.id  # 같은 날 두 번째 로그인은 다시 만들지 않는다
+
+
+def test_demo_work_flows_reach_the_other_roles(env):
+    """요양보호사가 올린 기록이 사회복지사·센터장 화면에 나오고, 사회복지사의 계획서가 담당 요양보호사에게 보여야 체험이 의미 있다."""
+    db, client = env
+    assert client.post("/api/v1/admin/demo/reset", headers=OPERATOR).status_code == 200
+    demo = db.query(models.Center).filter_by(name=DEMO_CENTER_NAME).one()
+    caregiver = db.query(models.User).filter_by(email=DEMO_CAREGIVER_EMAIL).one()
+    social = db.query(models.User).filter_by(email=DEMO_SOCIAL_EMAIL).one()
+    manager = db.query(models.User).filter_by(email=DEMO_MANAGER_EMAIL).one()
+    kim = db.query(models.Resident).filter_by(center_id=demo.id, name="김복동").one()
+    park = db.query(models.Resident).filter_by(center_id=demo.id, name="박만수").one()
+    headers = {
+        "caregiver": auth(caregiver.id, DEMO_CAREGIVER_EMAIL, "caregiver"),
+        "social": auth(social.id, DEMO_SOCIAL_EMAIL, "social_worker"),
+        "manager": auth(manager.id, DEMO_MANAGER_EMAIL, "center_manager"),
+    }
+
+    mine = client.get("/api/v1/care-plans/mine", headers=headers["caregiver"]).json()["plans"]
+    assert [p["resident_name"] for p in mine] == ["김복동"]  # 요양보호사는 담당 이용자의 계획서만 본다
+    plans = client.get(f"/api/v1/care-plans?resident_id={kim.id}", headers=headers["social"]).json()["plans"]
+    assert len(plans) == 1 and plans[0]["author_name"] == "데모 사회복지사"
+
+    for role in ("social", "manager", "caregiver"):  # 사고 보고: 요양보호사 본인 것이므로 요양보호사·사회복지사·센터장 모두 본다
+        reports = client.get("/api/v1/incidents", headers=headers[role]).json()["reports"]
+        assert [r["incident_type"] for r in reports] == ["fall"], role
+
+    notes = client.get("/api/v1/handovers", headers=headers["manager"]).json()["notes"]
+    assert [n["resident_id"] for n in notes] == [park.id]
+
+    pending = client.get("/api/v1/leave/requests?status=pending", headers=headers["manager"]).json()["data"]
+    assert len(pending) == 1 and pending[0]["staff_id"] == caregiver.id
 
 
 def test_demo_residents_have_addresses_and_points_for_the_visit_map(env):

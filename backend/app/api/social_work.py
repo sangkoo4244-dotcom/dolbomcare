@@ -107,17 +107,39 @@ def record_monitoring(body: MonitoringBody, db: Session = Depends(get_db), actor
     return {"status": "success", "data": {"id": row.id, "resident_id": row.resident_id, "year_month": row.year_month}}
 
 
+def _months_ending_at(year_month: str, count: int) -> list[str]:
+    year, month = map(int, year_month.split("-"))
+    months = []
+    for _ in range(count):
+        months.append(f"{year:04d}-{month:02d}")
+        month -= 1
+        if month == 0:
+            year, month = year - 1, 12
+    return list(reversed(months))
+
+
 @router.get("/monitoring/status")
 def monitoring_status(year_month: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"), db: Session = Depends(get_db),
                       actor: User = Depends(require_social_or_manager)):
-    """이번 달 방문 확인이 빠진 이용자 목록 (고시 제57조: 가산 대상 모든 수급자 매월 1회 이상)."""
+    """이번 달 방문 확인이 빠진 이용자 목록 (고시 제57조: 가산 대상 모든 수급자 매월 1회 이상).
+    세 달 연속 방문 확인이 빠지면 그 수급자는 가산 점수를 받을 수 없으므로 three_month_gap에 따로 모은다.
+    입소한 지 세 달이 안 된 이용자는 판단하지 않는다."""
     residents = db.query(Resident).filter(Resident.center_id == actor.center_id).all()
     done = {m.resident_id for m in db.query(MonthlyMonitoring).filter(MonthlyMonitoring.center_id == actor.center_id,
                                                                      MonthlyMonitoring.year_month == year_month).all()}
+    window = _months_ending_at(year_month, 3)
+    checked = {}
+    for m in db.query(MonthlyMonitoring).filter(MonthlyMonitoring.center_id == actor.center_id,
+                                                MonthlyMonitoring.year_month.in_(window)).all():
+        checked.setdefault(m.resident_id, set()).add(m.year_month)
+    window_start = date(int(window[0][:4]), int(window[0][5:]), 1)
+    gap = [r for r in residents if (r.admission_date is None or r.admission_date.date() < window_start)
+           and not checked.get(r.id)]
     return {"status": "success", "data": {
         "year_month": year_month,
         "done": [{"resident_id": r.id, "name": r.name} for r in residents if r.id in done],
         "missing": [{"resident_id": r.id, "name": r.name} for r in residents if r.id not in done],
+        "three_month_gap": [{"resident_id": r.id, "name": r.name} for r in gap],
     }}
 
 
