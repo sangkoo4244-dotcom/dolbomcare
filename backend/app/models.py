@@ -999,6 +999,21 @@ class VisitObjection(Base):
     resolution_note = Column(Text, nullable=True)
 
 
+class DataExportLog(Base):
+    """센터 데이터 내보내기 이력: 누가 어느 기간의 자료를 받았는지 남긴다(개인정보 보호 점검용). 내보낸 내용은 저장하지 않는다."""
+    __tablename__ = "data_export_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    center_id = Column(Integer, ForeignKey("centers.id"), index=True)
+    actor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    actor_name = Column(String, nullable=True)
+    period_start = Column(Date)
+    period_end = Column(Date)
+    resident_count = Column(Integer, default=0)
+    record_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.now, index=True)
+
+
 class RecordAuditLog(Base):
     """일일 기록의 수정·삭제 이력. 기록이 지워져도 이력은 남는다(record_id는 외래키가 아니다)."""
     __tablename__ = "record_audit_logs"

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import require_manager
 from app.database import get_db
-from app.models import DailyRecord, Resident, User
+from app.models import DailyRecord, DataExportLog, Resident, User
 
 router = APIRouter()
 
@@ -58,6 +58,11 @@ def export_center_data(
             }
             for r in rows
         ]
+
+    db.add(DataExportLog(center_id=actor.center_id, actor_id=actor.id, actor_name=actor.full_name,
+                         period_start=start, period_end=end,
+                         resident_count=len(residents), record_count=len(records)))
+    db.commit()
 
     return {
         "exported_at": datetime.now().isoformat(timespec="seconds"),

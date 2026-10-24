@@ -5,7 +5,7 @@ from app.models import (
     RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken,
     Counseling, CarePlan, CarePlanItem, ServiceEvaluation, CaseConference,
     TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest,
-    GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog, FacilityRegistry, SmsLog, CognitivePlan, LeaveRequest, CommitteeMeeting, Equipment, ResidentLog, TrainingCertificate, Complaint,
+    GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog, FacilityRegistry, SmsLog, CognitivePlan, LeaveRequest, CommitteeMeeting, Equipment, ResidentLog, TrainingCertificate, Complaint, DataExportLog,
 )
 from sqlalchemy import text
 from app.models import VisitObjection, RecordAuditLog
@@ -147,7 +147,7 @@ def run_migrations():
     """
     for table_cls in (ResidentGuardian, StaffCertificate, SalaryStatement, GuardianInvite, Notification,
                        ResidentMessage, ResidentThreadRead, NeedsAssessment, CopayInvoice,
-                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, CarePlanItem, ServiceEvaluation, CaseConference, TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest, GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog, FacilityRegistry, SmsLog, CognitivePlan, LeaveRequest, CommitteeMeeting, Equipment, ResidentLog, TrainingCertificate, Complaint):
+                       RiskAssessment, StaffRecord, ResidentMedia, AlimtalkUsage, PasswordResetToken, Counseling, CarePlan, CarePlanItem, ServiceEvaluation, CaseConference, TrainingSession, ResidentNotice, CarePlanAck, IncidentReport, HandoverNote, DayCareAttendance, TrialRequest, GuardianViewLog, NursingOrder, SocialWorkLog, MonthlyMonitoring, WorkLog, SocialVisitPlan, InspectionLog, FacilityRegistry, SmsLog, CognitivePlan, LeaveRequest, CommitteeMeeting, Equipment, ResidentLog, TrainingCertificate, Complaint, DataExportLog):
         try:
             table_cls.__table__.create(bind=engine, checkfirst=True)
         except Exception as e:

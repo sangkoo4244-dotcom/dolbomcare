@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.schemas import LoginRequest, LoginResponse, UserCreate, UserResponse
 from app.models import User, Center, PasswordResetToken
 from app.database import get_db
+from app import login_guard
 from app.plans import plan_info_with_usage
 from app.trial_notice import maybe_notify_trial
 from app.auth import SECRET_KEY, get_current_user, require_manager
@@ -154,13 +155,30 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
         except Exception as e:
             db.rollback()
             print(f"⚠️ 데모 초기화 실패 (로그인은 계속 진행): {e}")
+    guarded = request.email not in DEMO_LOGIN_EMAILS  # 체험 계정은 잠그지 않는다(체험자가 막히면 안 됨)
+    if guarded:
+        try:
+            wait = login_guard.seconds_until_unlocked(request.email)
+        except Exception:
+            wait = 0  # 잠금 확인이 실패해도 로그인은 막지 않는다
+        if wait:
+            raise HTTPException(status_code=429, detail=f"로그인 시도가 너무 많습니다. 약 {wait // 60 + 1}분 뒤에 다시 시도해 주세요")
+
     user = db.query(User).filter(User.email == request.email).first()
 
-    if not user:
+    if not user or not verify_password(request.password, user.hashed_password):
+        if guarded:
+            try:
+                login_guard.record_failure(request.email)
+            except Exception:
+                pass
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    if not verify_password(request.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    if guarded:
+        try:
+            login_guard.clear(request.email)
+        except Exception:
+            pass
 
     plan_info = None
     if user.center_id:

@@ -21,8 +21,6 @@ router = APIRouter()
 
 ChangeStatus = Literal["improved", "maintained", "worsened"]  # 호전 / 유지 / 악화
 
-UPLOAD_DIR = "uploads/audio"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def get_year_month(date: datetime) -> str:
     """날짜로부터 YYYY-MM 형식의 정산월 추출"""
@@ -415,80 +413,6 @@ def batch_delete_records(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/upload-audio")
-async def upload_audio(
-    caregiver_id: int,
-    resident_id: int,
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db),
-    actor: User = Depends(get_current_user)
-):
-    """
-    음성 파일 업로드
-    실제 Whisper API 연동 시 텍스트 변환
-    """
-    if actor.role not in ("caregiver", "center_manager"):
-        raise HTTPException(status_code=403, detail="권한이 없습니다")
-    assert_self_or_manager(actor, caregiver_id, db)
-    upload_target = db.query(Resident).filter(Resident.id == resident_id).first()
-    if not upload_target or upload_target.center_id != actor.center_id:
-        raise HTTPException(status_code=404, detail="이용자를 찾을 수 없습니다")
-    try:
-        # 파일 저장
-        filename = f"{caregiver_id}_{resident_id}_{datetime.utcnow().timestamp()}.wav"
-        filepath = os.path.join(UPLOAD_DIR, filename)
-
-        with open(filepath, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
-
-        # 음성 파일로 기록 생성
-        resident = db.query(Resident).filter(Resident.id == resident_id).first()
-        daily_record = DailyRecord(
-            resident_id=resident_id,
-            caregiver_id=caregiver_id,
-            recorded_date=datetime.now(),  # 로컬 시간 사용
-            morning_care=True,
-            meal_intake="full",
-            medicine_given=False,
-            notes="음성 기록으로 자동 생성",
-            service_type="basic_care",
-            audio_file_url=filepath
-        )
-        db.add(daily_record)
-        db.commit()
-        db.refresh(daily_record)
-
-        total_cost, _, amount = split_visit(60, resident.client_type)
-
-        billing_record = BillingRecord(
-            daily_record_id=daily_record.id,
-            caregiver_id=caregiver_id,
-            resident_id=resident_id,
-            center_id=resident.center_id,
-            service_category="재가급여",
-            service_type="basic_care",
-            amount=amount,
-            total_cost=total_cost,
-            recorded_date=datetime.now(),  # 로컬 시간 사용
-            approval_status="draft",  # 요양사 제출 전 작성중
-            status="draft"  # 아직 미제출 상태
-        )
-        db.add(billing_record)
-        db.commit()
-
-        return {
-            "status": "success",
-            "message": "음성 파일이 저장되고 자동으로 청구되었습니다",
-            "data": {
-                "filename": filename,
-                "record_id": daily_record.id,
-                "billing_amount": 30000
-            }
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/recent")
 async def get_recent_records(

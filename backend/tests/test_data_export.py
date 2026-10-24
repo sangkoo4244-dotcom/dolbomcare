@@ -81,6 +81,17 @@ def test_other_manager_sees_only_their_own_center(client):
     assert [r["notes"] for r in body["daily_records"]] == ["다른 센터"]
 
 
+def test_every_export_is_logged_with_counts_but_not_the_content(client):
+    client.get("/api/v1/data-export/center?start=2026-10-01&end=2026-10-31", headers=MANAGER)
+    db = next(client.app.dependency_overrides[get_db]())
+    logs = db.query(models.DataExportLog).all()
+    assert len(logs) == 1
+    assert logs[0].center_id == 1 and logs[0].actor_name == "센터장"
+    assert logs[0].resident_count == 1 and logs[0].record_count == 1
+    assert logs[0].period_start.isoformat() == "2026-10-01" and logs[0].period_end.isoformat() == "2026-10-31"
+    assert "식사 보조" not in str(vars(logs[0]))  # 내보낸 내용은 기록하지 않는다
+
+
 def test_invalid_period_is_refused(client):
     assert client.get("/api/v1/data-export/center?start=2026-10-31&end=2026-10-01", headers=MANAGER).status_code == 400
     assert client.get("/api/v1/data-export/center?start=2025-01-01&end=2026-10-01", headers=MANAGER).status_code == 400
