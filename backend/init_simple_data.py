@@ -173,9 +173,9 @@ try:
             resident_id=resident_id,
             recorded_date=today,
             service_type=service_type,
-            morning_care=True,
-            meal_intake="full",
-            medicine_given=False,
+            morning_care=None,  # 확인된 값이 없으면 비워 둔다 (추정해 사실처럼 저장하지 않음)
+            meal_intake=None,
+            medicine_given=None,
             notes=f"{resident.name} 기본요양"
         )
         db.add(daily_record)

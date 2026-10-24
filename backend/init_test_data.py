@@ -105,9 +105,9 @@ try:
                 resident_id=resident_id,
                 recorded_date=now - timedelta(days=day_offset),
                 service_type="basic_care",
-                morning_care=True,
-                meal_intake="full",
-                medicine_given=True,
+                morning_care=None,  # 확인된 값이 없으면 비워 둔다 (추정해 사실처럼 저장하지 않음)
+                meal_intake=None,
+                medicine_given=None,
                 notes=f"이용자 {i+1}의 {day_offset}일전 기록"
             )
             db.add(daily_record)

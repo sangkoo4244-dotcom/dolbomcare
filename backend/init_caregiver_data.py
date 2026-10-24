@@ -121,9 +121,9 @@ try:
                     resident_id=resident_id,
                     recorded_date=recorded_date,
                     service_type=service_type,
-                    morning_care=(service_type == "basic_care"),
-                    meal_intake="full" if service_type == "meal_service" else "partial",
-                    medicine_given=(service_type == "medical_care"),
+                    morning_care=None,  # 확인된 값이 없으면 비워 둔다 (서비스 종류로 추정하지 않음)
+                    meal_intake=None,
+                    medicine_given=None,
                     notes=f"{residents_data[resident_idx]['name']} {day_offset}일전 {service_labels[service_idx]}"
                 )
                 db.add(daily_record)
