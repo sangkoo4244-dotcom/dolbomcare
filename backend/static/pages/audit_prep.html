@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>평가 준비 자료 - 돌봄케어</title>
+    <title>평가 대비 자료 - 돌봄케어</title>
     <link rel="stylesheet" href="design-system.css">
     <style>
         body { margin: 0; padding: 0; }
@@ -82,8 +82,8 @@
     <div class="main-layout">
         <div class="topbar">
             <div class="topbar-title">
-                <h1>평가 준비 자료</h1>
-                <div class="breadcrumb">홈 › 서비스 품질·평가 › <b>평가 준비 자료</b></div>
+                <h1>평가 대비 자료</h1>
+                <div class="breadcrumb">홈 › 서비스 품질·평가 › <b>평가 대비 자료</b></div>
             </div>
             <div class="user-menu">
                 <div class="user-info">
@@ -156,7 +156,7 @@
             });
 
             box.innerHTML = `
-                <h2>${r.name} 어르신 평가 준비 자료</h2>
+                <h2>${r.name} 어르신 평가 대비 자료</h2>
                 <div class="sub">등급 ${r.care_grade ?? '인지지원'}등급 · ${r.client_type || '-'} · 인정번호 ${r.recognition_number || '-'} · 기간 ${data.period.start} ~ ${data.period.end}</div>
 
                 <div class="packet-section">
@@ -243,7 +243,7 @@
 
         function renderCenterPacket(data) {
             document.getElementById('packetBox').innerHTML = `
-                <h2>센터 공통 평가 준비 자료</h2>
+                <h2>센터 공통 평가 대비 자료</h2>
                 <div class="sub">기간 ${data.period.start} ~ ${data.period.end}</div>
                 <div class="packet-section"><h3>직원 교육 (${data.trainings.length}건)</h3>
                     ${data.trainings.length ? `<table class="plain-table"><thead><tr><th>교육일</th><th>종류</th><th>방법</th><th>강사</th><th>교육내용</th><th>참석자(서명)</th></tr></thead>
