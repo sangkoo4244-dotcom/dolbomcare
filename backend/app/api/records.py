@@ -226,9 +226,10 @@ def create_record(request: CreateRecordRequest, db: Session = Depends(get_db), a
             resident_id=request.resident_id,
             caregiver_id=caregiver_id,
             recorded_date=now,
-            morning_care=request.service_type == "basic_care",
-            meal_intake="full" if request.service_type == "meal_service" else "partial",
-            medicine_given=request.service_type == "medical_care",
+            # 아침 돌봄·식사량·투약은 요양보호사가 확인한 값이 없으면 비워 둔다(서비스 종류로 추정해 사실처럼 저장하지 않는다)
+            morning_care=None,
+            meal_intake=None,
+            medicine_given=None,
             notes=request.notes,
             care_items=request.care_items or None,
             item_minutes=clean_item_minutes(request.item_minutes, request.care_items),
