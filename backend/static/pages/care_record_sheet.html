@@ -147,6 +147,8 @@
         // 보호자가 이 이용자의 방문 기록을 언제 열어 봤는지 (공단 Q&A Q57: 전자 열람은 기록지 제공의 증빙)
         async function loadViewLog(rid) {
             const box = document.getElementById('viewLogBox');
+            const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+            if (user.role !== 'center_manager') { box.textContent = ''; return; }  // 열람 기록은 센터장만 볼 수 있다
             const r = await fetch(`/api/v1/guardian/view-logs?resident_id=${rid}&limit=5`);
             if (!r.ok) { box.textContent = ''; return; }
             const data = await r.json();

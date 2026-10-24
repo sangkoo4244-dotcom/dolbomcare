@@ -1032,7 +1032,7 @@
                 const centerId = currentUser.center_id || 1;
                 const [response, scheduleRes, usersRes] = await Promise.all([
                     fetch(url),
-                    fetch(`${API_URL}/schedule/?center_id=${centerId}`).catch(() => null),
+                    currentUser.role === 'social_worker' ? Promise.resolve(null) : fetch(`${API_URL}/schedule/?center_id=${centerId}`).catch(() => null),  // 사회복지사는 일정 조회 권한이 없다
                     fetch(`${API_URL}/users/?center_id=${centerId}`).catch(() => null),
                 ]);
                 if (!response.ok) throw new Error('이용자 정보 조회 실패');

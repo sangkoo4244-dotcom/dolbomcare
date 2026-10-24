@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 from app import models
-from app.api import admin, care_plans, handovers, incidents, leave, users
+from app.api import admin, care_plans, handovers, incidents, leave, social_work, users
 from app.api.users import create_access_token
 from app.database import Base, get_db
 from app.demo_seed import DEMO_CAREGIVER_EMAIL, DEMO_CENTER_NAME, DEMO_GUARDIAN_EMAIL, DEMO_MANAGER_EMAIL, DEMO_SOCIAL_EMAIL
@@ -49,6 +49,7 @@ def env(tmp_path, monkeypatch):
     app.include_router(handovers.router, prefix="/api/v1/handovers")
     app.include_router(incidents.router, prefix="/api/v1/incidents")
     app.include_router(leave.router, prefix="/api/v1/leave")
+    app.include_router(social_work.router, prefix="/api/v1/social-work")
 
     def override():
         s = Session()
@@ -108,6 +109,7 @@ def test_orphan_demo_guardian_left_by_a_center_delete_does_not_block_a_new_seed(
     db.query(models.HandoverNote).filter_by(center_id=demo_center.id).delete()
     db.query(models.LeaveRequest).filter_by(center_id=demo_center.id).delete()
     db.query(models.CarePlan).filter_by(center_id=demo_center.id).delete()
+    db.query(models.MonthlyMonitoring).filter_by(center_id=demo_center.id).delete()
     db.query(models.Resident).filter_by(center_id=demo_center.id).delete()
     db.query(models.User).filter(models.User.center_id == demo_center.id).delete()
     db.delete(demo_center)
@@ -184,6 +186,21 @@ def test_demo_work_flows_reach_the_other_roles(env):
 
     pending = client.get("/api/v1/leave/requests?status=pending", headers=headers["manager"]).json()["data"]
     assert len(pending) == 1 and pending[0]["staff_id"] == caregiver.id
+
+
+def test_demo_monitoring_shows_one_resident_in_the_three_month_gap(env):
+    """데모 체험 첫 화면은 경고 하나만 보여야 한다: 김복동·이순자는 최근 세 달 확인했고 박만수만 누락."""
+    db, client = env
+    assert client.post("/api/v1/admin/demo/reset", headers=OPERATOR).status_code == 200
+    manager = db.query(models.User).filter_by(email=DEMO_MANAGER_EMAIL).one()
+    social = db.query(models.User).filter_by(email=DEMO_SOCIAL_EMAIL).one()
+    today = datetime.now().date()
+    year_month = today.strftime("%Y-%m")
+    data = client.get("/api/v1/social-work/monitoring/status", params={"year_month": year_month},
+                      headers=auth(social.id, DEMO_SOCIAL_EMAIL, "social_worker")).json()["data"]
+    assert [x["name"] for x in data["three_month_gap"]] == ["박만수"]
+    assert {x["name"] for x in data["done"]} == {"김복동", "이순자"}
+    assert manager.center_id == social.center_id
 
 
 def test_demo_residents_have_addresses_and_points_for_the_visit_map(env):

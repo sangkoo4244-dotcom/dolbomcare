@@ -494,6 +494,8 @@ function renderMobileTabbar(items, current, roleMenu) {
 
 // 제공 기록 확인 메뉴에 사회복지사 확인을 기다리는 기록 수를 표시한다 (실패해도 메뉴는 그대로 둔다)
 async function showRecordReviewBadge() {
+    const user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+    if (!['center_manager', 'social_worker'].includes(user.role)) return;  // 요양보호사는 이 API 권한이 없다
     try {
         const r = await fetch('/api/v1/record-review/pending-count', { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
         if (!r.ok) return;

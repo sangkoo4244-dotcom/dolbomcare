@@ -15,8 +15,8 @@ from app.api.users import get_password_hash
 from app.billing_rules import split_visit
 from app.database import Base
 from app.plans import PLAN_TRIAL
-from app.models import (BillingRecord, CarePlan, Center, DailyRecord, HandoverNote, IncidentReport, LeaveRequest, Notification,
-                        Resident, ResidentMessage, Schedule, User)
+from app.models import (BillingRecord, CarePlan, Center, DailyRecord, HandoverNote, IncidentReport, LeaveRequest, MonthlyMonitoring,
+                        Notification, Resident, ResidentMessage, Schedule, User)
 
 DEMO_PASSWORD = "demo1234!"
 DEMO_CENTER_NAME = "데모 체험 센터"
@@ -154,6 +154,15 @@ def seed_demo(db: Session, trial_ends_at: datetime | None = None) -> dict:
                         content="데모 데이터: 최근 식사량이 줄었음. 다음 방문 때 확인 부탁"))
     db.add(LeaveRequest(center_id=center.id, staff_id=caregiver.id, leave_date=today + timedelta(days=5), leave_type="annual",
                         reason="데모 데이터: 개인 사정", status="pending"))
+    # 사회복지사 월 방문 확인: 최근 세 달 모두 김복동·이순자는 확인했고, 박만수는 빠뜨려 "세 달 연속 누락" 경고를 체험하게 한다
+    for months_back in (2, 1, 0):
+        first = today.replace(day=1)
+        for _ in range(months_back):
+            first = (first - timedelta(days=1)).replace(day=1)
+        for resident in residents[:2]:
+            db.add(MonthlyMonitoring(center_id=center.id, resident_id=resident.id, year_month=first.strftime("%Y-%m"),
+                                     visit_date=first + timedelta(days=4 if months_back else 0), author_id=social_worker.id,
+                                     service_checked=True, note="데모 데이터: 가정 방문 확인"))
     db.commit()
 
     # 보호자 소통 데모 메시지 (한 번씩 주고받은 형태)
